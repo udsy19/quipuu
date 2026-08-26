@@ -3,6 +3,12 @@
 //! Full `clap` derive integration follows per SPEC.md §11. For now the CLI
 //! supports a minimal `scan <path>` subcommand wiring together every scanner
 //! and emitter the workspace ships.
+//!
+//! ## Subcommands
+//! * `scan <path> [FLAGS]`  — file/directory scan (existing)
+//! * `mcp-serve [FLAGS]`    — JSON-RPC 2.0 MCP server over stdio
+
+mod mcp;
 
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -39,6 +45,11 @@ fn main() -> ExitCode {
                 ExitCode::FAILURE
             }
         },
+        Some("mcp-serve") => {
+            let allow_network = args[2..].iter().any(|a| a == "--allow-network");
+            mcp::run(allow_network);
+            ExitCode::SUCCESS
+        }
         Some(other) => {
             eprintln!("cryptoscope: unknown command `{other}`");
             print_help();
@@ -53,6 +64,11 @@ fn print_help() {
 
 USAGE:
     cryptoscope scan <path> [FLAGS]
+    cryptoscope mcp-serve [--allow-network]
+
+MCP SERVER:
+    mcp-serve                 Start JSON-RPC 2.0 MCP server over stdin/stdout
+    --allow-network           Enable scan_network verb and scan_certs host-mode
 
 SCAN MODES (default: --source --deps; --certs and --net are opt-in):
     --source                  Scan source code (tree-sitter, Go + Python today)
