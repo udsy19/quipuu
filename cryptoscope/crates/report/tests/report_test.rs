@@ -1,0 +1,301 @@
+//! Integration tests for the `cryptoscope-report` crate.
+//!
+//! Tests use fixtures from `../scan-source/tests/fixtures/` to produce real
+//! findings, then assert the three emitters meet their correctness contracts.
+
+use std::path::PathBuf;
+
+use cryptoscope_core::load_builtins;
+use cryptoscope_report::{ReportOptions, emit_html, emit_sarif, emit_summary_json};
+use cryptoscope_scan_source::Scanner;
+
+fn fixtures_root() -> PathBuf {
+    // Navigate from this crate's manifest dir to scan-source's fixtures.
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../scan-source/tests/fixtures")
+}
+
+/// Produce a stable set of findings from the Go fixture file.
+fn make_findings() -> (
+    Vec<cryptoscope_core::Finding>,
+    cryptoscope_core::AlgorithmTable,
+    cryptoscope_core::Policy,
+) {
+    let b = load_builtins().expect("builtins load");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("go/main.go"))
+        .expect("scan succeeds");
+    (findings, b.algorithms, b.policy)
+}
+
+fn default_opts() -> ReportOptions {
+    ReportOptions {
+        scan_target: "tests/fixtures/go/main.go".to_string(),
+        timestamp: "2026-06-15T00:00:00Z".to_string(),
+    }
+}
+
+// ── SARIF tests ──────────────────────────────────────────────────────────────
+
+/// T1 — emit_sarif returns valid JSON with correct version and $schema.
+#[test]
+fn sarif_is_valid_json_with_version_and_schema() {
+    let (findings, algorithms, policy) = make_findings();
+    let json_str = emit_sarif(&findings, &algorithms, &policy, &default_opts())
+        .expect("emit_sarif should succeed");
+
+    let val: serde_json::Value =
+        serde_json::from_str(&json_str).expect("SARIF output must be valid JSON");
+
+    assert_eq!(
+        val["version"].as_str().unwrap(),
+        "2.1.0",
+        "version must be \"2.1.0\""
+    );
+    assert!(
+        val["$schema"].is_string() && !val["$schema"].as_str().unwrap().is_empty(),
+        "$schema must be a non-empty string"
+    );
+
+    let runs = val["runs"].as_array().expect("runs must be an array");
+    assert!(!runs.is_empty(), "runs must not be empty");
+
+    let rules = runs[0]["tool"]["driver"]["rules"]
+        .as_array()
+        .expect("rules must be an array");
+    let results = runs[0]["results"]
+        .as_array()
+        .expect("results must be an array");
+
+    // At least one rule per distinct rule_id.
+    let mut rule_ids: std::collections::HashSet<&str> = std::collections::HashSet::new();
+    for f in &findings {
+        rule_ids.insert(f.rule_id.as_str());
+    }
+    assert!(
+        rules.len() >= rule_ids.len(),
+        "expected ≥{} rules (one per distinct rule_id), got {}",
+        rule_ids.len(),
+        rules.len()
+    );
+
+    // results.len() == findings.len()
+    assert_eq!(
+        results.len(),
+        findings.len(),
+        "results count must equal findings count"
+    );
+
+    // Every result has a primaryLocationLineHash of exactly 16 hex chars.
+    for (i, result) in results.iter().enumerate() {
+        let hash = result["partialFingerprints"]["primaryLocationLineHash"]
+            .as_str()
+            .unwrap_or_else(|| panic!("result[{i}] missing primaryLocationLineHash"));
+        assert_eq!(
+            hash.len(),
+            16,
+            "result[{i}] primaryLocationLineHash must be 16 chars, got {hash:?}"
+        );
+        assert!(
+            hash.chars().all(|c| c.is_ascii_hexdigit()),
+            "result[{i}] primaryLocationLineHash must be lowercase hex, got {hash:?}"
+        );
+    }
+}
+
+/// T2 — SARIF severity mapping: a Critical finding gets level "error" and
+///       security-severity "9.0" on its rule.
+#[test]
+fn sarif_critical_finding_maps_to_error_and_9_0() {
+    use cryptoscope_core::{Exposure, Severity, UsageContext};
+
+    let (mut findings, algorithms, policy) = make_findings();
+
+    // Force the first RSA-2048 finding to be Critical by upgrading its context.
+    let critical_rule_id = {
+        let rsa2048 = findings
+            .iter_mut()
+            .find(|f| f.algorithm_id == "rsa-2048")
+            .expect("RSA-2048 finding must exist");
+        rsa2048.usage_context = UsageContext::KeyEstablishmentLongLived;
+        rsa2048.exposure = Exposure::PublicInternet;
+        rsa2048.shelf_life_bucket = "long".to_string();
+        // Verify the score is actually Critical before asserting SARIF output.
+        let algo = algorithms.get("rsa-2048").unwrap();
+        let score = cryptoscope_core::QuantumRiskScore::compute(rsa2048, algo, &policy);
+        assert_eq!(
+            score.severity,
+            Severity::Critical,
+            "pre-condition: RSA-2048 long-lived public-internet must score Critical"
+        );
+        rsa2048.rule_id.clone()
+    };
+
+    let json_str = emit_sarif(&findings, &algorithms, &policy, &default_opts())
+        .expect("emit_sarif should succeed");
+    let val: serde_json::Value = serde_json::from_str(&json_str).unwrap();
+
+    let rules = val["runs"][0]["tool"]["driver"]["rules"]
+        .as_array()
+        .unwrap();
+    let results = val["runs"][0]["results"].as_array().unwrap();
+
+    // Find the result for the critical finding.
+    let critical_result = results
+        .iter()
+        .find(|r| r["ruleId"].as_str() == Some(critical_rule_id.as_str()))
+        .expect("critical result must appear");
+
+    let level = critical_result["level"].as_str().unwrap();
+    assert_eq!(level, "error", "Critical finding must have level=error");
+
+    // Find the corresponding rule.
+    let rule = rules
+        .iter()
+        .find(|r| r["id"].as_str() == Some(critical_rule_id.as_str()))
+        .expect("rule for critical finding must exist");
+
+    let sec_sev = rule["properties"]["security-severity"]
+        .as_str()
+        .expect("security-severity must be a string on the rule");
+    assert_eq!(
+        sec_sev, "9.0",
+        "Critical rule must have security-severity=9.0"
+    );
+}
+
+// ── HTML tests ───────────────────────────────────────────────────────────────
+
+/// T3 — emit_html returns a string starting with DOCTYPE or html, containing
+///       scan target, policy name, and at least one algorithm display name.
+#[test]
+fn html_starts_with_doctype_and_contains_key_content() {
+    let (findings, algorithms, policy) = make_findings();
+    let html = emit_html(&findings, &algorithms, &policy, &default_opts())
+        .expect("emit_html should succeed");
+
+    let lower = html.to_lowercase();
+    assert!(
+        lower.starts_with("<!doctype html") || lower.starts_with("<html"),
+        "HTML output must start with <!DOCTYPE html or <html"
+    );
+
+    assert!(
+        html.contains(&default_opts().scan_target),
+        "HTML must contain the scan target name"
+    );
+
+    assert!(
+        html.contains(&policy.meta.name) || html.contains(&policy.meta.display_name),
+        "HTML must contain the policy name"
+    );
+
+    // At least one algorithm display name must appear.
+    let has_any_algo = algorithms
+        .iter()
+        .any(|a| html.contains(a.display_name.as_str()));
+    assert!(
+        has_any_algo,
+        "HTML must contain at least one algorithm display name"
+    );
+}
+
+/// T4 — emit_html contains CSS with the required severity colour codes.
+#[test]
+fn html_contains_severity_css_colors() {
+    let (findings, algorithms, policy) = make_findings();
+    let html = emit_html(&findings, &algorithms, &policy, &default_opts())
+        .expect("emit_html should succeed");
+
+    for (color, name) in [
+        ("#dc2626", "Critical"),
+        ("#ea580c", "High"),
+        ("#ca8a04", "Medium"),
+        ("#2563eb", "Low"),
+        ("#16a34a", "Safe"),
+    ] {
+        assert!(
+            html.contains(color),
+            "HTML must contain CSS color {color} for {name}"
+        );
+    }
+}
+
+// ── Summary JSON tests ───────────────────────────────────────────────────────
+
+/// T5 — emit_summary_json parses as JSON and has correct totals.
+#[test]
+fn summary_json_parses_and_has_correct_totals() {
+    let (findings, algorithms, policy) = make_findings();
+    let json_str = emit_summary_json(&findings, &algorithms, &policy, &default_opts())
+        .expect("emit_summary_json should succeed");
+
+    let val: serde_json::Value =
+        serde_json::from_str(&json_str).expect("summary_json must be valid JSON");
+
+    let total = val["totals"]["findings"]
+        .as_u64()
+        .expect("totals.findings must be a number");
+    assert_eq!(
+        total,
+        findings.len() as u64,
+        "totals.findings must match the number of findings"
+    );
+
+    // The individual severity counts must sum to the total.
+    let sum_by_sev = val["totals"]["critical"].as_u64().unwrap_or(0)
+        + val["totals"]["high"].as_u64().unwrap_or(0)
+        + val["totals"]["medium"].as_u64().unwrap_or(0)
+        + val["totals"]["low"].as_u64().unwrap_or(0)
+        + val["totals"]["safe"].as_u64().unwrap_or(0);
+    assert_eq!(
+        sum_by_sev, total,
+        "sum of per-severity counts must equal totals.findings"
+    );
+
+    // Structural checks.
+    assert!(val["tool"]["name"].is_string());
+    assert!(val["tool"]["version"].is_string());
+    assert!(val["policy"].is_string());
+    assert!(val["scan_target"].is_string());
+    assert!(val["timestamp"].is_string());
+}
+
+/// T6 — emit_summary_json by_algorithm is sorted with highest-count first;
+///       when counts tie, order is alphabetical by algorithm_id.
+#[test]
+fn summary_json_by_algorithm_sorted_by_count_desc_then_alpha() {
+    let (findings, algorithms, policy) = make_findings();
+    let json_str = emit_summary_json(&findings, &algorithms, &policy, &default_opts())
+        .expect("emit_summary_json should succeed");
+
+    let val: serde_json::Value = serde_json::from_str(&json_str).unwrap();
+    let by_algo = val["by_algorithm"]
+        .as_array()
+        .expect("by_algorithm must be an array");
+
+    if by_algo.len() < 2 {
+        return; // Nothing to check.
+    }
+
+    for pair in by_algo.windows(2) {
+        let a_count = pair[0]["count"].as_u64().unwrap_or(0);
+        let b_count = pair[1]["count"].as_u64().unwrap_or(0);
+        let a_id = pair[0]["algorithm_id"].as_str().unwrap_or("");
+        let b_id = pair[1]["algorithm_id"].as_str().unwrap_or("");
+
+        if a_count == b_count {
+            assert!(
+                a_id <= b_id,
+                "when counts are equal, by_algorithm must be alphabetical: \
+                 {a_id} should precede {b_id}"
+            );
+        } else {
+            assert!(
+                a_count >= b_count,
+                "by_algorithm must be sorted by count descending: \
+                 count={a_count} for {a_id} should be ≥ count={b_count} for {b_id}"
+            );
+        }
+    }
+}

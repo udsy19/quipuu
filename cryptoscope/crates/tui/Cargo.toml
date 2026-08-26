@@ -10,3 +10,5 @@ description = "cryptoscope tui crate (scaffold)."
 cryptoscope-core = { path = "../core" }
 serde.workspace = true
 thiserror.workspace = true
+ratatui.workspace = true
+crossterm.workspace = true

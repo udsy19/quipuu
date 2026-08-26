@@ -1,8 +1,8 @@
 //! cryptoscope CLI — walking-skeleton entrypoint.
 //!
 //! Full `clap` derive integration follows per SPEC.md §11. For now the CLI
-//! supports a minimal `scan <path>` subcommand so we can demo the end-to-end
-//! pipeline.
+//! supports a minimal `scan <path>` subcommand wiring together every scanner
+//! and emitter the workspace ships.
 
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -10,8 +10,12 @@ use std::process::ExitCode;
 use cryptoscope_cbom::SchemaVersion;
 use cryptoscope_cbom::emit::{EmitOptions, ScanTarget};
 use cryptoscope_cbom::emit_cbom_json;
-use cryptoscope_core::{QuantumRiskScore, load_builtins};
+use cryptoscope_core::{Finding, QuantumRiskScore, load_builtins};
+use cryptoscope_report::{ReportOptions, emit_html, emit_sarif, emit_summary_json};
+use cryptoscope_scan_certs::CertScanner;
+use cryptoscope_scan_deps::DepScanner;
 use cryptoscope_scan_source::Scanner;
+use cryptoscope_tui::Tui;
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().collect();
@@ -49,9 +53,21 @@ fn print_help() {
 USAGE:
     cryptoscope scan <path> [FLAGS]
 
-FLAGS:
-    --cbom <file>             Emit a CycloneDX CBOM to <file>
-    --schema-version <ver>    1.6 or 1.7 (default 1.7)
+SCAN MODES (default: --source --deps; --certs is opt-in):
+    --source                  Scan source code (tree-sitter, Go + Python today)
+    --certs                   Scan X.509 certificates (PEM/DER)
+    --deps                    Scan dependency manifests
+    --all                     Enable every scan mode
+
+OUTPUT:
+    --cbom <file>             Emit a CycloneDX CBOM
+    --schema-version <ver>    CBOM spec version: 1.6 or 1.7 (default 1.7)
+    --html <file>             Emit an auditor-grade HTML report
+    --sarif <file>            Emit SARIF 2.1.0 (GitHub / GitLab Advanced Security)
+    --summary-json <file>     Emit a compact CI dashboard JSON
+    --tui                     Open the interactive TUI explorer
+
+MISC:
     --version                 Print version
     --help                    Print this help
 
@@ -62,8 +78,16 @@ This is a walking-skeleton build. Full clap CLI per SPEC.md §11 to follow."#,
 
 #[derive(Default)]
 struct ScanFlags {
+    scan_source: bool,
+    scan_certs: bool,
+    scan_deps: bool,
+    explicit_modes: bool,
     cbom_out: Option<PathBuf>,
     schema_version: Option<SchemaVersion>,
+    html_out: Option<PathBuf>,
+    sarif_out: Option<PathBuf>,
+    summary_out: Option<PathBuf>,
+    open_tui: bool,
 }
 
 fn parse_scan_flags(tail: &[String]) -> ScanFlags {
@@ -71,10 +95,46 @@ fn parse_scan_flags(tail: &[String]) -> ScanFlags {
     let mut it = tail.iter();
     while let Some(arg) = it.next() {
         match arg.as_str() {
+            "--source" => {
+                flags.scan_source = true;
+                flags.explicit_modes = true;
+            }
+            "--certs" => {
+                flags.scan_certs = true;
+                flags.explicit_modes = true;
+            }
+            "--deps" => {
+                flags.scan_deps = true;
+                flags.explicit_modes = true;
+            }
+            "--all" => {
+                flags.scan_source = true;
+                flags.scan_certs = true;
+                flags.scan_deps = true;
+                flags.explicit_modes = true;
+            }
             "--cbom" => {
                 if let Some(p) = it.next() {
                     flags.cbom_out = Some(PathBuf::from(p));
                 }
+            }
+            "--html" => {
+                if let Some(p) = it.next() {
+                    flags.html_out = Some(PathBuf::from(p));
+                }
+            }
+            "--sarif" => {
+                if let Some(p) = it.next() {
+                    flags.sarif_out = Some(PathBuf::from(p));
+                }
+            }
+            "--summary-json" => {
+                if let Some(p) = it.next() {
+                    flags.summary_out = Some(PathBuf::from(p));
+                }
+            }
+            "--tui" => {
+                flags.open_tui = true;
             }
             "--schema-version" => {
                 if let Some(v) = it.next() {
@@ -95,6 +155,14 @@ fn parse_scan_flags(tail: &[String]) -> ScanFlags {
             }
         }
     }
+
+    // If no mode flag was passed, default to source + deps (the safe set —
+    // network/cert scans require explicit opt-in per the responsible-use
+    // principle in SPEC.md §6).
+    if !flags.explicit_modes {
+        flags.scan_source = true;
+        flags.scan_deps = true;
+    }
     flags
 }
 
@@ -107,21 +175,38 @@ fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
         }
     };
 
-    let scanner = match Scanner::with_builtins(builtins.algorithms.clone()) {
-        Ok(s) => s,
-        Err(e) => {
-            eprintln!("cryptoscope: scanner init failed: {e}");
-            return ExitCode::FAILURE;
-        }
-    };
+    let mut findings: Vec<Finding> = Vec::new();
 
-    let findings = match scanner.scan_path(&path) {
-        Ok(f) => f,
-        Err(e) => {
-            eprintln!("cryptoscope: scan failed: {e}");
-            return ExitCode::FAILURE;
+    if flags.scan_source {
+        match Scanner::with_builtins(builtins.algorithms.clone()).and_then(|s| s.scan_path(&path)) {
+            Ok(mut f) => findings.append(&mut f),
+            Err(e) => {
+                eprintln!("cryptoscope: source scan failed: {e}");
+                return ExitCode::FAILURE;
+            }
         }
-    };
+    }
+
+    if flags.scan_certs {
+        match CertScanner::with_builtins().and_then(|s| s.scan_path(&path)) {
+            Ok(mut f) => findings.append(&mut f),
+            Err(e) => {
+                eprintln!("cryptoscope: cert scan failed: {e}");
+                return ExitCode::FAILURE;
+            }
+        }
+    }
+
+    if flags.scan_deps {
+        let scanner = DepScanner::with_builtins();
+        match scanner.scan_path(&path) {
+            Ok(mut f) => findings.append(&mut f),
+            Err(e) => {
+                eprintln!("cryptoscope: deps scan failed: {e}");
+                return ExitCode::FAILURE;
+            }
+        }
+    }
 
     println!(
         "cryptoscope: scanned {} → {} finding(s) (policy: {})",
@@ -131,10 +216,19 @@ fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
     );
 
     for f in &findings {
-        let algo = builtins
-            .algorithms
-            .get(&f.algorithm_id)
-            .expect("algorithm in built-in table");
+        let Some(algo) = builtins.algorithms.get(&f.algorithm_id) else {
+            // Unknown algorithm-ids (e.g. CERT-001 for a cert with an OID we
+            // don't yet catalogue) are still informative — print them flat.
+            println!(
+                "  ?\t{rule}\t{algo}\t{file}:{line}\t{msg}",
+                rule = f.rule_id,
+                algo = f.algorithm_id,
+                file = f.location.location,
+                line = f.location.line.unwrap_or(0),
+                msg = f.message,
+            );
+            continue;
+        };
         let score = QuantumRiskScore::compute(f, algo, &builtins.policy);
         println!(
             "  {sev:?}\t{rule}\t{algo}\t{file}:{line}\t{msg}",
@@ -147,20 +241,23 @@ fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
         );
     }
 
-    if let Some(out_path) = flags.cbom_out {
+    let timestamp = current_timestamp();
+    let scan_target = path.to_string_lossy().into_owned();
+
+    if let Some(out_path) = &flags.cbom_out {
         let version = flags.schema_version.unwrap_or_default();
         let mut emit_opts = EmitOptions::new(
             ScanTarget {
-                name: path.to_string_lossy().into_owned(),
+                name: scan_target.clone(),
                 version: None,
             },
-            current_timestamp(),
+            timestamp.clone(),
         );
         emit_opts.schema_version = version;
 
         match emit_cbom_json(&findings, &builtins.algorithms, &emit_opts) {
             Ok(json) => {
-                if let Err(e) = std::fs::write(&out_path, json) {
+                if let Err(e) = std::fs::write(out_path, json) {
                     eprintln!(
                         "cryptoscope: failed to write CBOM to {}: {e}",
                         out_path.display()
@@ -177,6 +274,82 @@ fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
                 eprintln!("cryptoscope: CBOM emission failed: {e}");
                 return ExitCode::FAILURE;
             }
+        }
+    }
+
+    let report_opts = ReportOptions {
+        scan_target: scan_target.clone(),
+        timestamp: timestamp.clone(),
+    };
+
+    if let Some(out_path) = &flags.html_out {
+        match emit_html(
+            &findings,
+            &builtins.algorithms,
+            &builtins.policy,
+            &report_opts,
+        ) {
+            Ok(html) => match std::fs::write(out_path, html) {
+                Ok(()) => eprintln!("cryptoscope: wrote HTML report → {}", out_path.display()),
+                Err(e) => {
+                    eprintln!("cryptoscope: failed to write HTML: {e}");
+                    return ExitCode::FAILURE;
+                }
+            },
+            Err(e) => {
+                eprintln!("cryptoscope: HTML emission failed: {e}");
+                return ExitCode::FAILURE;
+            }
+        }
+    }
+
+    if let Some(out_path) = &flags.sarif_out {
+        match emit_sarif(
+            &findings,
+            &builtins.algorithms,
+            &builtins.policy,
+            &report_opts,
+        ) {
+            Ok(sarif) => match std::fs::write(out_path, sarif) {
+                Ok(()) => eprintln!("cryptoscope: wrote SARIF → {}", out_path.display()),
+                Err(e) => {
+                    eprintln!("cryptoscope: failed to write SARIF: {e}");
+                    return ExitCode::FAILURE;
+                }
+            },
+            Err(e) => {
+                eprintln!("cryptoscope: SARIF emission failed: {e}");
+                return ExitCode::FAILURE;
+            }
+        }
+    }
+
+    if let Some(out_path) = &flags.summary_out {
+        match emit_summary_json(
+            &findings,
+            &builtins.algorithms,
+            &builtins.policy,
+            &report_opts,
+        ) {
+            Ok(json) => match std::fs::write(out_path, json) {
+                Ok(()) => eprintln!("cryptoscope: wrote summary JSON → {}", out_path.display()),
+                Err(e) => {
+                    eprintln!("cryptoscope: failed to write summary: {e}");
+                    return ExitCode::FAILURE;
+                }
+            },
+            Err(e) => {
+                eprintln!("cryptoscope: summary emission failed: {e}");
+                return ExitCode::FAILURE;
+            }
+        }
+    }
+
+    if flags.open_tui {
+        let tui = Tui::new(findings, builtins.algorithms, builtins.policy);
+        if let Err(e) = tui.run() {
+            eprintln!("cryptoscope: TUI failed: {e}");
+            return ExitCode::FAILURE;
         }
     }
 
