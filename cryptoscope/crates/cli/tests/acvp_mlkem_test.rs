@@ -1,147 +1,144 @@
 //! Integration tests for the ML-KEM ACVP KAT runner.
 //!
-//! These tests exercise the `acvp::run_kat` function directly without spawning
-//! the MCP server binary. They validate that:
-//!   - Correct candidate outputs (matching pinned vectors) → overall "pass"
-//!   - Wrong candidate outputs → overall "fail" with tc_id listed in failures
+//! Tests build their candidate-output map by harvesting expected values
+//! directly from the bundled vectors (which are the real NIST ACVP vectors
+//! since Phase 4 — see `tools/fetch_acvp_vectors.py`). This pattern survives
+//! vector refreshes: the tests verify the runner's *comparison logic*, not
+//! specific pinned hex values.
 //!
-//! The test vectors are the same representative subset bundled in
-//! `data/acvp-vectors/`. These tests DO NOT validate real ML-KEM outputs —
-//! they validate that the runner correctly compares supplied values against
-//! the pinned NIST ACVP expected values (P4: no code execution).
+//! Per P4: no ML-KEM implementation runs here. We compare supplied candidate
+//! outputs against the NIST-pinned expected values.
 
 use std::collections::HashMap;
 
 use cryptoscope::mcp::acvp;
-use serde_json::json;
+use cryptoscope::mcp::acvp::vectors;
+use serde_json::{Value, json};
 
-// ── ML-KEM-512 keyGen — happy path ────────────────────────────────────────────
+/// Harvest the first N test cases' expected outputs from a vector JSON.
+/// Returns a map suitable for passing as `candidate_outputs` to `run_kat`.
+fn expected_candidates(vector_data: &Value, fields: &[&str], n: usize) -> HashMap<String, Value> {
+    let mut out = HashMap::new();
+    let mut taken = 0;
+    for tg in vector_data["testGroups"].as_array().unwrap_or(&Vec::new()) {
+        for tc in tg["tests"].as_array().unwrap_or(&Vec::new()) {
+            if taken >= n {
+                return out;
+            }
+            let tc_id = tc["tcId"].as_u64().unwrap_or(0).to_string();
+            let mut row = serde_json::Map::new();
+            for &f in fields {
+                if let Some(v) = tc.get(f) {
+                    row.insert(f.to_string(), v.clone());
+                }
+            }
+            if !row.is_empty() {
+                out.insert(tc_id, Value::Object(row));
+                taken += 1;
+            }
+        }
+    }
+    out
+}
+
+// ── ML-KEM-512 keyGen ────────────────────────────────────────────────────────
 
 #[test]
 fn mlkem512_keygen_correct_outputs_pass() {
-    let mut candidates = HashMap::new();
-    // tcId=1: supply the exact expected values from the pinned vector
-    candidates.insert(
-        "1".to_string(),
-        json!({
-            "ek": "a1a2e3d22e6b4b53c1b0a0ab5d3e9f7b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8",
-            "dk": "b2b3f4e33f7c5c64d2c1b1bc6e4f0a8c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9"
-        }),
-    );
-    candidates.insert(
-        "2".to_string(),
-        json!({
-            "ek": "c3c4e5f44e8d6d75e3d2c2cd7f5e1b9d6e5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9",
-            "dk": "d4d5f6e55f9e7e86f4e3d3de8e6f2c0e7f6e5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0"
-        }),
-    );
-    candidates.insert(
-        "3".to_string(),
-        json!({
-            "ek": "e5e6a7b66eaf8f97e5f4e4ef9f7e3d1f8e7f6e5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1",
-            "dk": "f6f7b8c77fbf9ea8f6e5f5f0a08f4e2e9f8e7f6e5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2"
-        }),
-    );
+    let v = vectors::ml_kem_512_keygen();
+    let candidates = expected_candidates(&v, &["ek", "dk"], 3);
+    assert!(!candidates.is_empty(), "harvest produced no candidates");
 
     let result = acvp::run_kat("ML-KEM", "ML-KEM-512", "keyGen", &candidates)
         .expect("run_kat should not error on valid parameter set");
 
-    assert_eq!(result.overall, "pass", "all correct outputs should pass");
-    assert!(
-        result.failures.is_empty(),
-        "no failures expected, got: {:?}",
-        result.failures
-    );
-    let total: usize = result.groups.iter().map(|g| g.total).sum();
-    assert_eq!(total, 3, "expected 3 test cases total");
+    let total_supplied = candidates.len();
     let passed: usize = result.groups.iter().map(|g| g.passed).sum();
-    assert_eq!(passed, 3, "all 3 should pass");
-}
-
-// ── ML-KEM-512 keyGen — failure path ─────────────────────────────────────────
-
-#[test]
-fn mlkem512_keygen_wrong_outputs_fail_with_tc_id() {
-    let mut candidates = HashMap::new();
-    // tcId=1: wrong ek (all zeros)
-    candidates.insert(
-        "1".to_string(),
-        json!({
-            "ek": "0000000000000000000000000000000000000000000000000000000000000000",
-            "dk": "b2b3f4e33f7c5c64d2c1b1bc6e4f0a8c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9"
-        }),
+    assert_eq!(
+        passed, total_supplied,
+        "every supplied tc should pass: got result {:?}",
+        result
     );
-
-    let result = acvp::run_kat("ML-KEM", "ML-KEM-512", "keyGen", &candidates)
-        .expect("run_kat should not error");
-
-    assert_eq!(result.overall, "fail");
-    // At least one failure recorded for tcId=1
     assert!(
         result
             .failures
             .iter()
-            .any(|f| f.tc_id == 1 && f.field == "ek"),
-        "expected failure for tc_id=1 field=ek, got: {:?}",
+            .all(|f| { !candidates.contains_key(&f.tc_id.to_string()) }),
+        "any failures must be for tcIds we did NOT supply, got: {:?}",
         result.failures
     );
 }
 
-// ── ML-KEM-768 encapDecap — happy path ───────────────────────────────────────
+#[test]
+fn mlkem512_keygen_wrong_outputs_fail_with_tc_id() {
+    // Pick tcId=1 with all-zero ek — any tc has tcId 1 in the harvested set.
+    let v = vectors::ml_kem_512_keygen();
+    let mut candidates = expected_candidates(&v, &["ek", "dk"], 1);
+    // Find which tcId we harvested first and corrupt it.
+    let tc_id = candidates.keys().next().cloned().expect("at least one tc");
+    candidates.insert(
+        tc_id.clone(),
+        json!({
+            "ek": "00".repeat(32),
+            "dk": "ff".repeat(32),
+        }),
+    );
+
+    let result = acvp::run_kat("ML-KEM", "ML-KEM-512", "keyGen", &candidates).expect("run_kat ok");
+
+    assert_eq!(result.overall, "fail");
+    let tc_num: u64 = tc_id.parse().unwrap();
+    assert!(
+        result
+            .failures
+            .iter()
+            .any(|f| f.tc_id == tc_num && f.field == "ek"),
+        "expected failure on tc {} field ek, got: {:?}",
+        tc_num,
+        result.failures
+    );
+}
+
+// ── ML-KEM-768 encapDecap ────────────────────────────────────────────────────
 
 #[test]
 fn mlkem768_encapdecap_correct_outputs_pass() {
-    let mut candidates = HashMap::new();
-    candidates.insert(
-        "1".to_string(),
-        json!({
-            "ct": "b3c4d5e6f7081929304152637485968778695a4b3c2d1e0fb3c4d5e6f7081929304152637485968778695a4b3c2d1e0fb3c4d5e6f7081929304152637485968778695a4b3c2d1e0fb3c4d5e6f7081929304152637485968778695a4b3c2d1e0f",
-            "ss": "c4d5e6f7081929304152637485968778695a4b3c2d1e0fc4d5e6f708192930415263748596877869"
-        }),
-    );
-    candidates.insert(
-        "2".to_string(),
-        json!({
-            "ct": "c4d5e6f70819293041526374859687786a7b8c9daebfcde0f1020304050607c4d5e6f70819293041526374859687786a7b8c9daebfcde0f1020304050607c4d5e6f70819293041526374859687786a7b8c9daebfcde0f1020304050607c4d5e6f7",
-            "ss": "d5e6f70819293041526374859687786a7b8c9daebfcde0f1020304d5e6f70819293041526374859687786a"
-        }),
+    let v = vectors::ml_kem_768_encap_decap();
+    // ML-KEM encapDecap uses "c" and "k" per FIPS 203 / ACVP schema.
+    let candidates = expected_candidates(&v, &["c", "k"], 3);
+    assert!(
+        !candidates.is_empty(),
+        "harvest produced no encapDecap tests"
     );
 
     let result = acvp::run_kat("ML-KEM", "ML-KEM-768", "encapDecap", &candidates)
         .expect("run_kat should not error");
 
-    assert_eq!(result.overall, "pass");
-    assert!(result.failures.is_empty());
+    let passed: usize = result.groups.iter().map(|g| g.passed).sum();
+    assert!(
+        passed >= candidates.len(),
+        "expected at least {} passes, got {} (failures: {:?})",
+        candidates.len(),
+        passed,
+        result.failures
+    );
 }
 
-// ── ML-KEM-1024 keyGen — happy path ──────────────────────────────────────────
+// ── ML-KEM-1024 keyGen ───────────────────────────────────────────────────────
 
 #[test]
 fn mlkem1024_keygen_correct_outputs_pass() {
-    let mut candidates = HashMap::new();
-    candidates.insert(
-        "1".to_string(),
-        json!({
-            "ek": "f0e1d2c3b4a500112233445566778899f0e1d2c3b4a500112233445566778899f0e1d2c3b4a500112233445566778899f0e1d2c3b4a500112233445566778899f0e1d2c3b4a500112233445566778899f0e1d2c3b4a500112233445566778899",
-            "dk": "e1f2a3b4c5d6001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899"
-        }),
-    );
-    candidates.insert(
-        "2".to_string(),
-        json!({
-            "ek": "22334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788",
-            "dk": "334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788"
-        }),
-    );
+    let v = vectors::ml_kem_1024_keygen();
+    let candidates = expected_candidates(&v, &["ek", "dk"], 2);
+    assert!(!candidates.is_empty());
 
     let result = acvp::run_kat("ML-KEM", "ML-KEM-1024", "keyGen", &candidates)
         .expect("run_kat should not error");
-
-    assert_eq!(result.overall, "pass");
-    assert!(result.failures.is_empty());
+    let passed: usize = result.groups.iter().map(|g| g.passed).sum();
+    assert!(passed >= candidates.len());
 }
 
-// ── Result metadata ───────────────────────────────────────────────────────────
+// ── Result metadata ──────────────────────────────────────────────────────────
 
 #[test]
 fn mlkem512_result_metadata_fields() {
@@ -152,6 +149,6 @@ fn mlkem512_result_metadata_fields() {
     assert_eq!(result.parameter_set, "ML-KEM-512");
     assert_eq!(result.acvp_mode, "keyGen");
     assert_eq!(result.vector_source.authority, "NIST-ACVP");
-    // All tcIds absent → all fail
+    // All tcIds absent → all fail.
     assert_eq!(result.overall, "fail");
 }

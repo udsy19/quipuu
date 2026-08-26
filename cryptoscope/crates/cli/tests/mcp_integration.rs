@@ -336,9 +336,36 @@ fn test_network_disabled_error() {
 
 #[test]
 fn test_run_acvp_kats_sha256() {
-    let mut s = McpSession::start(false);
+    // ML-KEM-512 keyGen against real NIST ACVP vectors (Phase 4).
+    // Harvest the first 3 expected (ek, dk) pairs from the bundled vectors
+    // and feed them back as candidate outputs — pass should be unanimous.
+    use cryptoscope::mcp::acvp::vectors;
 
-    // ML-KEM-512 keyGen with pinned ACVP vectors — supply exact expected outputs
+    let v = vectors::ml_kem_512_keygen();
+    let mut candidates = serde_json::Map::new();
+    let mut taken = 0;
+    'outer: for tg in v["testGroups"].as_array().unwrap_or(&Vec::new()) {
+        for tc in tg["tests"].as_array().unwrap_or(&Vec::new()) {
+            if taken >= 3 {
+                break 'outer;
+            }
+            let tc_id = tc["tcId"].as_u64().unwrap_or(0).to_string();
+            candidates.insert(
+                tc_id,
+                json!({
+                    "ek": tc["ek"].as_str().unwrap_or(""),
+                    "dk": tc["dk"].as_str().unwrap_or(""),
+                }),
+            );
+            taken += 1;
+        }
+    }
+    assert!(
+        !candidates.is_empty(),
+        "no tcs harvested from bundled vectors"
+    );
+
+    let mut s = McpSession::start(false);
     let resp = s.request(
         15,
         "run_acvp_kats",
@@ -347,20 +374,7 @@ fn test_run_acvp_kats_sha256() {
             "parameterSet": "ML-KEM-512",
             "mode": "vectorsOnly",
             "acvpMode": "keyGen",
-            "candidateOutputs": {
-                "1": {
-                    "ek": "a1a2e3d22e6b4b53c1b0a0ab5d3e9f7b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8",
-                    "dk": "b2b3f4e33f7c5c64d2c1b1bc6e4f0a8c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9"
-                },
-                "2": {
-                    "ek": "c3c4e5f44e8d6d75e3d2c2cd7f5e1b9d6e5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9",
-                    "dk": "d4d5f6e55f9e7e86f4e3d3de8e6f2c0e7f6e5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0"
-                },
-                "3": {
-                    "ek": "e5e6a7b66eaf8f97e5f4e4ef9f7e3d1f8e7f6e5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1",
-                    "dk": "f6f7b8c77fbf9ea8f6e5f5f0a08f4e2e9f8e7f6e5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2"
-                }
-            }
+            "candidateOutputs": candidates,
         }),
     );
 
@@ -370,7 +384,23 @@ fn test_run_acvp_kats_sha256() {
     let kat = &result["result"];
     assert_eq!(kat["algorithm"], "ML-KEM");
     assert_eq!(kat["parameter_set"], "ML-KEM-512");
-    assert_eq!(kat["overall"], "pass");
+    // The bundled vector set has 25 test cases; we only supplied 3, so the
+    // other 22 will count as failures (missing tcId). What we care about is
+    // that NONE of the failures match the tcIds we DID supply.
+    let supplied_tc_ids: Vec<u64> = candidates
+        .keys()
+        .map(|k| k.parse::<u64>().unwrap())
+        .collect();
+    let failures = kat["failures"].as_array().expect("failures array");
+    for f in failures {
+        let tc_id = f["tc_id"].as_u64().unwrap_or(0);
+        assert!(
+            !supplied_tc_ids.contains(&tc_id),
+            "tcId {} should have passed (we supplied the real expected value) but it's in failures: {}",
+            tc_id,
+            f
+        );
+    }
 
     s.close();
 }
