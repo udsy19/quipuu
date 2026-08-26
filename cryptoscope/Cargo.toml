@@ -48,6 +48,22 @@ regex = "1"
 jsonschema = { version = "0.46", default-features = false }
 uuid = { version = "1", features = ["v4"] }
 
+# scan-certs — X.509 parsing
+x509-parser = "0.18"
+pem = "3"
+
+# scan-deps — manifest parsers + glob walking (use existing serde_json/toml for JSON/TOML)
+quick-xml = { version = "0.38", features = ["serialize"] }   # pom.xml, *.csproj
+
+# report — HTML templating (askama is small + compile-time)
+askama = { version = "0.14", default-features = false, features = ["std"] }
+# General-purpose hashing for SARIF partialFingerprints
+sha2 = "0.10"
+
+# tui — terminal UI
+ratatui = "0.30"
+crossterm = "0.29"
+
 # Test-only
 insta = { version = "1.39", features = ["yaml"] }
 
