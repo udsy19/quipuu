@@ -1,0 +1,22 @@
+{
+  "scanId": "7c9e6679-7425-40de-944b-e07fc1f90ae8",
+  "schemaVersion": "0.1.0",
+  "startedAt": "2026-06-15T09:00:00Z",
+  "completedAt": "2026-06-15T09:05:00Z",
+  "target": {
+    "kind": "source",
+    "path": "/home/user/bigproject"
+  },
+  "policyName": "default",
+  "findings": [],
+  "totalFindings": 500,
+  "pageSize": 50,
+  "cursor": "eyJwYWdlIjogMSwgIm9mZnNldCI6IDUwfQ==",
+  "summary": {
+    "critical": 10,
+    "high": 20,
+    "medium": 50,
+    "low": 100,
+    "safe": 320
+  }
+}

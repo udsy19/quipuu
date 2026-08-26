@@ -1,0 +1,15 @@
+{
+  "algorithmId": "ml-dsa-65",
+  "mode": "vectorsOnly",
+  "testVectorSetId": 7,
+  "passed": false,
+  "totalVectors": 500,
+  "failedVectors": 3,
+  "acvpVersion": "1.0",
+  "runAt": "2026-06-15T11:00:00Z",
+  "details": [
+    { "vectorId": 12, "passed": false, "note": "output mismatch" },
+    { "vectorId": 47, "passed": false, "note": "output mismatch" },
+    { "vectorId": 99, "passed": false, "note": "length error" }
+  ]
+}

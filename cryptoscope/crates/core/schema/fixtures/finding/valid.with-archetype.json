@@ -1,0 +1,20 @@
+{
+  "id": "6ba7b811-9dad-11d1-80b4-00c04fd430c8",
+  "identity": "CRYPTO-003:ecdsa-p256:SignatureLongLived",
+  "ruleId": "CRYPTO-003",
+  "algorithmId": "ecdsa-p256",
+  "location": {
+    "location": "auth/signer.py",
+    "line": 88,
+    "symbol": "ECDSA",
+    "snippet": "signer = ECDSA(key, SHA256())"
+  },
+  "message": "ECDSA P-256 signature found; vulnerable to Shor's algorithm.",
+  "confidence": "TypeName",
+  "usageContext": "SignatureLongLived",
+  "exposure": "InternalService",
+  "shelfLifeBucket": "medium",
+  "hndlCritical": false,
+  "provenance": "deterministic",
+  "callerArchetype": "web-service"
+}

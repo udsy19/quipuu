@@ -1,0 +1,20 @@
+{
+  "scanId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+  "schemaVersion": "not-semver",
+  "startedAt": "2026-06-15T10:00:00Z",
+  "completedAt": "2026-06-15T10:01:23Z",
+  "target": {
+    "kind": "source",
+    "path": "/home/user/myproject"
+  },
+  "policyName": "default",
+  "findings": [],
+  "totalFindings": 0,
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "safe": 0
+  }
+}

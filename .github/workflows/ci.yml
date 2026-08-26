@@ -113,3 +113,19 @@ jobs:
 
       - name: Run tests/check.py
         run: python3 tests/check.py
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # schema-contract
+  #   Runs the two JSON Schema 2020-12 contract test suites against the
+  #   vendored meta-schemas and the 8 contract schemas under
+  #   crates/core/schema/.  All validation is fully offline.
+  # ─────────────────────────────────────────────────────────────────────────
+  schema-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Contract is executable
+        working-directory: cryptoscope
+        run: cargo test -p cryptoscope-core --test schema_roundtrip --test schema_meta -- --nocapture

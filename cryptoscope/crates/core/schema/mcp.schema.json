@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cryptoscope.dev/schema/0.1.0/mcp.schema.json",
+  "title": "McpEnvelope",
+  "description": "MCP (Model Context Protocol) request/response envelopes and method catalogue for cryptoscope.",
+  "type": "object",
+  "properties": {
+    "jsonrpc": {
+      "type": "string",
+      "const": "2.0"
+    },
+    "id": {
+      "description": "Request/response correlation id.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "integer" },
+        { "type": "null" }
+      ]
+    },
+    "method": {
+      "type": "string",
+      "description": "MCP method name.",
+      "enum": [
+        "scan_source",
+        "scan_certs",
+        "scan_deps",
+        "scan_network",
+        "emit_cbom",
+        "emit_sarif",
+        "validate_cbom",
+        "run_acvp_kats",
+        "query_findings",
+        "get_scan_results",
+        "get_capabilities"
+      ]
+    },
+    "params": {
+      "type": "object",
+      "description": "Method-specific request parameters.",
+      "additionalProperties": true
+    },
+    "result": {
+      "description": "Successful response payload.",
+      "oneOf": [
+        { "type": "object" },
+        { "type": "array" },
+        { "type": "null" }
+      ]
+    },
+    "error": {
+      "$ref": "https://cryptoscope.dev/schema/0.1.0/error.schema.json"
+    }
+  },
+  "required": ["jsonrpc"],
+  "additionalProperties": false,
+  "$defs": {
+    "methods": {
+      "description": "Enumeration of all MCP methods with metadata.",
+      "type": "object",
+      "properties": {
+        "scan_source": {
+          "$ref": "#/$defs/MethodDescriptor",
+          "description": "Scan source code for cryptographic usages.",
+          "default": {
+            "streaming": false,
+            "errors": ["SCAN_ERROR", "PATH_NOT_FOUND", "PERMISSION_DENIED"]
+          }
+        },
+        "scan_certs": {
+          "$ref": "#/$defs/MethodDescriptor",
+          "description": "Scan X.509 certificates for weak algorithms.",
+          "default": {
+            "streaming": false,
+            "errors": ["SCAN_ERROR", "PATH_NOT_FOUND", "CERT_PARSE_ERROR"]
+          }
+        },
+        "scan_deps": {
+          "$ref": "#/$defs/MethodDescriptor",
+          "description": "Scan dependency manifests for cryptographic libraries.",
+          "default": {
+            "streaming": false,
+            "errors": ["SCAN_ERROR", "PATH_NOT_FOUND", "MANIFEST_PARSE_ERROR"]
+          }
+        },
+        "scan_network": {
+          "$ref": "#/$defs/MethodDescriptor",
+          "description": "Probe network endpoints for TLS/cipher negotiation.",
+          "default": {
+            "streaming": false,
+            "errors": ["SCAN_ERROR", "NETWORK_ERROR", "TLS_ERROR"]
+          }
+        },
+        "emit_cbom": {
+          "$ref": "#/$defs/MethodDescriptor",
+          "description": "Emit a CycloneDX CBOM from accumulated findings.",
+          "default": {
+            "streaming": false,
+            "errors": ["EMIT_ERROR", "NO_SCAN_RESULTS"]
+          }
+        },
+        "emit_sarif": {
+          "$ref": "#/$defs/MethodDescriptor",
+          "description": "Emit a SARIF report from accumulated findings.",
+          "default": {
+            "streaming": false,
+            "errors": ["EMIT_ERROR", "NO_SCAN_RESULTS"]
+          }
+        },
+        "validate_cbom": {
+          "$ref": "#/$defs/MethodDescriptor",
+          "description": "Validate a CBOM document against the CycloneDX schema.",
+          "default": {
+            "streaming": false,
+            "errors": ["VALIDATION_ERROR", "SCHEMA_COMPILE_ERROR"]
+          }
+        },
+        "run_acvp_kats": {
+          "$ref": "#/$defs/MethodDescriptor",
+          "description": "Run ACVP Known-Answer Tests for a specified algorithm. Mode must be vectorsOnly (P4).",
+          "default": {
+            "streaming": true,
+            "errors": ["KAT_ERROR", "ALGORITHM_NOT_SUPPORTED", "VECTOR_SET_NOT_FOUND"]
+          }
+        },
+        "query_findings": {
+          "$ref": "#/$defs/MethodDescriptor",
+          "description": "Query findings with filtering and cursor-based pagination (SEP-1686).",
+          "default": {
+            "streaming": false,
+            "errors": ["QUERY_ERROR", "INVALID_CURSOR"]
+          }
+        },
+        "get_scan_results": {
+          "$ref": "#/$defs/MethodDescriptor",
+          "description": "Retrieve a completed scan result by scanId.",
+          "default": {
+            "streaming": false,
+            "errors": ["SCAN_NOT_FOUND"]
+          }
+        },
+        "get_capabilities": {
+          "$ref": "#/$defs/MethodDescriptor",
+          "description": "Return the capabilities and supported algorithms of this cryptoscope instance.",
+          "default": {
+            "streaming": false,
+            "errors": []
+          }
+        }
+      },
+      "required": [
+        "scan_source",
+        "scan_certs",
+        "scan_deps",
+        "scan_network",
+        "emit_cbom",
+        "emit_sarif",
+        "validate_cbom",
+        "run_acvp_kats",
+        "query_findings",
+        "get_scan_results",
+        "get_capabilities"
+      ],
+      "additionalProperties": false
+    },
+    "MethodDescriptor": {
+      "type": "object",
+      "description": "Metadata for a single MCP method.",
+      "properties": {
+        "streaming": {
+          "type": "boolean",
+          "description": "True if the method produces a streaming response."
+        },
+        "errors": {
+          "type": "array",
+          "description": "Error codes this method may return.",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "required": ["streaming", "errors"],
+      "additionalProperties": false
+    }
+  }
+}

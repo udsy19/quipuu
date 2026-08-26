@@ -1,0 +1,9 @@
+{
+  "algorithmVulnerability": 0,
+  "usageContext": 5,
+  "dataShelfLife": 0,
+  "exposure": 1,
+  "detectionConfidence": 8,
+  "total": 14,
+  "severity": "Low"
+}

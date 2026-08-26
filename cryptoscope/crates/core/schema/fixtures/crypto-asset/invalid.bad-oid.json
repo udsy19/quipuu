@@ -1,0 +1,7 @@
+{
+  "algorithmId": "rsa-2048",
+  "displayName": "RSA-2048",
+  "family": "RSA",
+  "quantumStatus": "BrokenByShor",
+  "oid": "not-an-oid"
+}

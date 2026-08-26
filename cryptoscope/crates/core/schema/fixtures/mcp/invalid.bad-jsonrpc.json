@@ -1,0 +1,6 @@
+{
+  "jsonrpc": "1.0",
+  "id": "1",
+  "method": "scan_source",
+  "params": {}
+}

@@ -1,0 +1,10 @@
+{
+  "algorithmId": "ml-kem-768",
+  "displayName": "ML-KEM-768",
+  "family": "ML-KEM",
+  "primitive": "kem",
+  "nistQuantumSecurityLevel": 3,
+  "quantumStatus": "PqcFinal",
+  "fips": "FIPS 203",
+  "oid": "2.16.840.1.101.3.4.4.2"
+}

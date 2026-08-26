@@ -1,0 +1,12 @@
+{
+  "algorithmId": "rsa-2048",
+  "displayName": "RSA-2048",
+  "family": "RSA",
+  "primitive": "pke",
+  "classicalSecurityBits": 112,
+  "nistQuantumSecurityLevel": 0,
+  "quantumStatus": "BrokenByShor",
+  "replacement": "ml-kem-768",
+  "oid": "1.2.840.113549.1.1.1",
+  "notes": "Classical asymmetric; broken by Shor's algorithm."
+}

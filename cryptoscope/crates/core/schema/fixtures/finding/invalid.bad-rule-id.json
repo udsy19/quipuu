@@ -1,0 +1,16 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440002",
+  "identity": "BADFORMAT:rsa-2048:KeyEstablishmentLongLived",
+  "ruleId": "BAD-RULE",
+  "algorithmId": "rsa-2048",
+  "location": {
+    "location": "src/main.go"
+  },
+  "message": "Rule id in wrong format.",
+  "confidence": "LiteralArg",
+  "usageContext": "KeyEstablishmentLongLived",
+  "exposure": "PublicInternet",
+  "shelfLifeBucket": "long",
+  "hndlCritical": false,
+  "provenance": "deterministic"
+}

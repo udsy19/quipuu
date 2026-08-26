@@ -1,0 +1,48 @@
+{
+  "scanId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+  "schemaVersion": "0.1.0",
+  "startedAt": "2026-06-15T10:00:00Z",
+  "completedAt": "2026-06-15T10:01:23Z",
+  "target": {
+    "kind": "source",
+    "path": "/home/user/myproject"
+  },
+  "policyName": "default",
+  "findings": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "identity": "CRYPTO-002:rsa-2048:KeyEstablishmentLongLived",
+      "ruleId": "CRYPTO-002",
+      "algorithmId": "rsa-2048",
+      "location": {
+        "location": "src/main.go",
+        "line": 42,
+        "symbol": "rsa.GenerateKey"
+      },
+      "message": "RSA-2048 key generation found.",
+      "confidence": "LiteralArg",
+      "usageContext": "KeyEstablishmentLongLived",
+      "exposure": "PublicInternet",
+      "shelfLifeBucket": "long",
+      "hndlCritical": true,
+      "provenance": "deterministic",
+      "score": {
+        "algorithmVulnerability": 40,
+        "usageContext": 25,
+        "dataShelfLife": 15,
+        "exposure": 10,
+        "detectionConfidence": 10,
+        "total": 100,
+        "severity": "Critical"
+      }
+    }
+  ],
+  "totalFindings": 1,
+  "summary": {
+    "critical": 1,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "safe": 0
+  }
+}

@@ -1,0 +1,213 @@
+# Fixture manifest for schema contract tests.
+# Each [[case]] entry drives schema_roundtrip.rs.
+#
+# Fields:
+#   schema      - schema name (without .schema.json suffix)
+#   file        - path relative to the fixtures/ directory
+#   expect      - "valid" or "invalid"
+#   rust_type   - optional: Rust type to serde round-trip (fully qualified)
+#   error_instance_path - optional: JSON Pointer where we expect the error
+#   error_keyword       - optional: JSON Schema keyword that must trigger
+
+# ── finding ──────────────────────────────────────────────────────────────────
+
+[[case]]
+schema = "finding"
+file   = "finding/valid.rsa2048-critical.json"
+expect = "valid"
+
+[[case]]
+schema = "finding"
+file   = "finding/valid.aes256-no-score.json"
+expect = "valid"
+
+[[case]]
+schema = "finding"
+file   = "finding/valid.with-archetype.json"
+expect = "valid"
+
+# P3 guard: provenance = "ai-assisted" must fail the enum constraint
+[[case]]
+schema = "finding"
+file   = "finding/invalid.provenance-ai.json"
+expect = "invalid"
+error_instance_path = "/provenance"
+error_keyword = "enum"
+
+[[case]]
+schema = "finding"
+file   = "finding/invalid.bad-rule-id.json"
+expect = "invalid"
+error_instance_path = "/ruleId"
+error_keyword = "pattern"
+
+[[case]]
+schema = "finding"
+file   = "finding/invalid.missing-required.json"
+expect = "invalid"
+
+# ── crypto-asset ──────────────────────────────────────────────────────────────
+
+[[case]]
+schema = "crypto-asset"
+file   = "crypto-asset/valid.rsa2048.json"
+expect = "valid"
+
+[[case]]
+schema = "crypto-asset"
+file   = "crypto-asset/valid.ml-kem-768.json"
+expect = "valid"
+
+[[case]]
+schema = "crypto-asset"
+file   = "crypto-asset/invalid.bad-oid.json"
+expect = "invalid"
+error_instance_path = "/oid"
+error_keyword = "pattern"
+
+[[case]]
+schema = "crypto-asset"
+file   = "crypto-asset/invalid.bad-quantum-status.json"
+expect = "invalid"
+error_instance_path = "/quantumStatus"
+error_keyword = "enum"
+
+# ── risk-score ────────────────────────────────────────────────────────────────
+
+[[case]]
+schema = "risk-score"
+file   = "risk-score/valid.critical.json"
+expect = "valid"
+
+[[case]]
+schema = "risk-score"
+file   = "risk-score/valid.safe.json"
+expect = "valid"
+
+[[case]]
+schema = "risk-score"
+file   = "risk-score/invalid.total-over-100.json"
+expect = "invalid"
+error_instance_path = "/total"
+error_keyword = "maximum"
+
+[[case]]
+schema = "risk-score"
+file   = "risk-score/invalid.bad-severity.json"
+expect = "invalid"
+error_instance_path = "/severity"
+error_keyword = "enum"
+
+# ── policy ────────────────────────────────────────────────────────────────────
+
+[[case]]
+schema = "policy"
+file   = "policy/valid.default.json"
+expect = "valid"
+
+[[case]]
+schema = "policy"
+file   = "policy/invalid.missing-meta.json"
+expect = "invalid"
+
+# ── kat-result ────────────────────────────────────────────────────────────────
+
+[[case]]
+schema = "kat-result"
+file   = "kat-result/valid.ml-kem-pass.json"
+expect = "valid"
+
+[[case]]
+schema = "kat-result"
+file   = "kat-result/valid.with-failures.json"
+expect = "valid"
+
+# P4 guard: mode = "library" must fail the enum constraint
+[[case]]
+schema = "kat-result"
+file   = "kat-result/invalid.mode-library.json"
+expect = "invalid"
+error_instance_path = "/mode"
+error_keyword = "enum"
+
+[[case]]
+schema = "kat-result"
+file   = "kat-result/invalid.missing-required.json"
+expect = "invalid"
+
+# ── error ─────────────────────────────────────────────────────────────────────
+
+[[case]]
+schema = "error"
+file   = "error/valid.scan-error.json"
+expect = "valid"
+
+[[case]]
+schema = "error"
+file   = "error/valid.with-data.json"
+expect = "valid"
+
+[[case]]
+schema = "error"
+file   = "error/invalid.missing-message.json"
+expect = "invalid"
+
+[[case]]
+schema = "error"
+file   = "error/invalid.extra-field.json"
+expect = "invalid"
+
+# ── scan-result ───────────────────────────────────────────────────────────────
+
+[[case]]
+schema = "scan-result"
+file   = "scan-result/valid.source-scan.json"
+expect = "valid"
+
+[[case]]
+schema = "scan-result"
+file   = "scan-result/valid.with-cursor.json"
+expect = "valid"
+
+[[case]]
+schema = "scan-result"
+file   = "scan-result/valid.certs-scan.json"
+expect = "valid"
+
+[[case]]
+schema = "scan-result"
+file   = "scan-result/invalid.missing-scan-id.json"
+expect = "invalid"
+
+[[case]]
+schema = "scan-result"
+file   = "scan-result/invalid.bad-schema-version.json"
+expect = "invalid"
+error_instance_path = "/schemaVersion"
+error_keyword = "pattern"
+
+# ── mcp ───────────────────────────────────────────────────────────────────────
+
+[[case]]
+schema = "mcp"
+file   = "mcp/valid.request.json"
+expect = "valid"
+
+[[case]]
+schema = "mcp"
+file   = "mcp/valid.response.json"
+expect = "valid"
+
+[[case]]
+schema = "mcp"
+file   = "mcp/invalid.bad-method.json"
+expect = "invalid"
+error_instance_path = "/method"
+error_keyword = "enum"
+
+[[case]]
+schema = "mcp"
+file   = "mcp/invalid.bad-jsonrpc.json"
+expect = "invalid"
+error_instance_path = "/jsonrpc"
+error_keyword = "const"

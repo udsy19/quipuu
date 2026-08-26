@@ -1,0 +1,5 @@
+{
+  "code": -32000,
+  "message": "Something failed",
+  "unexpectedField": "should not be here"
+}

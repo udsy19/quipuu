@@ -1,0 +1,4 @@
+{
+  "code": -32000,
+  "message": "Scan failed: permission denied on /etc/secrets"
+}

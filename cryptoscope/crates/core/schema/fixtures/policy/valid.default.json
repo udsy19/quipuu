@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "name": "default",
+    "displayName": "Default NIST IR 8547 Policy",
+    "sourceUrl": "https://csrc.nist.gov/pubs/ir/8547/ipd",
+    "notes": "Default policy based on NIST IR 8547 IPD."
+  },
+  "deprecation": {
+    "asymmetric112bitDeprecatedAfter": 2030,
+    "asymmetric112bitDisallowedAfter": 2035,
+    "asymmetric128bitPlusDisallowedAfter": 2035,
+    "aes128Acceptable": true,
+    "aes192Acceptable": true,
+    "aes256Acceptable": true,
+    "sha256Acceptable": true,
+    "sha384Acceptable": true,
+    "sha512Acceptable": true,
+    "classicallyBroken": ["md5", "sha1", "des", "rc4", "3des"]
+  },
+  "riskWeights": {
+    "algorithmVulnerability": 40,
+    "usageContext": 25,
+    "dataShelfLife": 15,
+    "exposure": 10,
+    "detectionConfidence": 10
+  },
+  "algorithmVulnerability": {
+    "BrokenClassically": 40,
+    "BrokenByShor": 40,
+    "WeakenedByGrover": 20,
+    "QuantumSafe": 0,
+    "PqcFinal": 0,
+    "PqcDraft": 5
+  },
+  "usageContextWeights": {
+    "keyEstablishmentLongLived": 25,
+    "keyEstablishmentEphemeral": 20,
+    "dataAtRestEncryption": 20,
+    "signatureLongLived": 20,
+    "signatureEphemeral": 15,
+    "authenticationOnly": 15,
+    "hashing": 10,
+    "unknown": 15
+  },
+  "dataShelfLife": {
+    "ephemeral": 0,
+    "short": 5,
+    "medium": 10,
+    "long": 15
+  },
+  "exposure": {
+    "publicInternet": 10,
+    "internalService": 7,
+    "localOnly": 1
+  },
+  "detectionConfidence": {
+    "literalArg": 10,
+    "typeName": 8,
+    "variable": 5,
+    "stringTable": 3,
+    "unknown": 1
+  },
+  "severityBands": {
+    "critical": 75,
+    "high": 50,
+    "medium": 25,
+    "low": 10,
+    "safe": 0
+  },
+  "hndlFlag": {
+    "requireQuantumStatusIn": ["BrokenByShor"],
+    "requireUsageContextIn": ["key_establishment_long_lived", "data_at_rest_encryption"],
+    "requireMinShelfLifeBucket": "medium"
+  },
+  "ci": {
+    "failOn": "High"
+  }
+}

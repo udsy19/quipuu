@@ -1,0 +1,10 @@
+{
+  "algorithmId": "ml-kem-768",
+  "mode": "library",
+  "testVectorSetId": 42,
+  "passed": true,
+  "totalVectors": 100,
+  "failedVectors": 0,
+  "acvpVersion": "1.0",
+  "runAt": "2026-06-15T10:00:00Z"
+}

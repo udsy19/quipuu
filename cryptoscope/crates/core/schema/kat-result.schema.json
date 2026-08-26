@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cryptoscope.dev/schema/0.1.0/kat-result.schema.json",
+  "title": "KatResult",
+  "description": "Result of a Known-Answer Test (KAT) via ACVP. P4 invariant: mode must be vectorsOnly.",
+  "type": "object",
+  "properties": {
+    "algorithmId": {
+      "type": "string",
+      "description": "Canonical algorithm id under test.",
+      "minLength": 1
+    },
+    "mode": {
+      "type": "string",
+      "description": "KAT execution mode. P4 invariant: only vectorsOnly is permitted.",
+      "enum": ["vectorsOnly"]
+    },
+    "testVectorSetId": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "ACVP test vector set identifier."
+    },
+    "passed": {
+      "type": "boolean",
+      "description": "True when all vectors in the set passed."
+    },
+    "totalVectors": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of test vectors evaluated."
+    },
+    "failedVectors": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of failed test vectors (0 when passed is true)."
+    },
+    "acvpVersion": {
+      "type": "string",
+      "description": "ACVP specification version used (e.g. 1.0).",
+      "minLength": 1
+    },
+    "runAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the KAT run completed."
+    },
+    "details": {
+      "type": "array",
+      "description": "Per-vector detail records (included when failedVectors > 0).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "vectorId": { "type": "integer", "minimum": 1 },
+          "passed":   { "type": "boolean" },
+          "note":     { "type": "string" }
+        },
+        "required": ["vectorId", "passed"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "algorithmId",
+    "mode",
+    "testVectorSetId",
+    "passed",
+    "totalVectors",
+    "failedVectors",
+    "acvpVersion",
+    "runAt"
+  ],
+  "additionalProperties": false
+}

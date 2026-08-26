@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cryptoscope.dev/schema/0.1.0/finding.schema.json",
+  "title": "Finding",
+  "description": "One cryptographic finding emitted by any scanner.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Per-finding UUID (v4). Stable within a scan, regenerated each run."
+    },
+    "identity": {
+      "type": "string",
+      "description": "Path-independent stable fingerprint (ruleId + algorithmId + usage hash). Present alongside id.",
+      "minLength": 1
+    },
+    "ruleId": {
+      "type": "string",
+      "pattern": "^CRYPTO-[0-9]{3}$",
+      "description": "SARIF rule id (CRYPTO-NNN)."
+    },
+    "algorithmId": {
+      "type": "string",
+      "description": "Canonical algorithm id from the algorithm table.",
+      "minLength": 1
+    },
+    "location": {
+      "$ref": "#/$defs/Location"
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable description of the finding.",
+      "minLength": 1
+    },
+    "confidence": {
+      "type": "string",
+      "description": "Detection confidence at extraction time.",
+      "enum": ["LiteralArg", "TypeName", "Variable", "StringTable", "Unknown"]
+    },
+    "usageContext": {
+      "type": "string",
+      "description": "How the algorithm is being used.",
+      "enum": [
+        "KeyEstablishmentLongLived",
+        "KeyEstablishmentEphemeral",
+        "DataAtRestEncryption",
+        "SignatureLongLived",
+        "SignatureEphemeral",
+        "AuthenticationOnly",
+        "Hashing",
+        "Unknown"
+      ]
+    },
+    "exposure": {
+      "type": "string",
+      "description": "Exposure axis.",
+      "enum": ["PublicInternet", "InternalService", "LocalOnly"]
+    },
+    "shelfLifeBucket": {
+      "type": "string",
+      "description": "Shelf-life bucket resolved from policy.shelf_life_tags.",
+      "enum": ["ephemeral", "short", "medium", "long"]
+    },
+    "hndlCritical": {
+      "type": "boolean",
+      "description": "True when this finding meets the HNDL flagging criteria."
+    },
+    "provenance": {
+      "type": "string",
+      "description": "How the finding was generated. P3 invariant: OSS binary emits only deterministic.",
+      "enum": ["deterministic"]
+    },
+    "score": {
+      "$ref": "https://cryptoscope.dev/schema/0.1.0/risk-score.schema.json",
+      "description": "Computed QuantumRiskScore for this finding."
+    },
+    "callerArchetype": {
+      "type": "string",
+      "description": "Caller archetype hint (optional; OSS binary does not emit this field).",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "id",
+    "identity",
+    "ruleId",
+    "algorithmId",
+    "location",
+    "message",
+    "confidence",
+    "usageContext",
+    "exposure",
+    "shelfLifeBucket",
+    "hndlCritical",
+    "provenance"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "Location": {
+      "type": "object",
+      "description": "A code/network/cert location.",
+      "properties": {
+        "location": {
+          "type": "string",
+          "description": "File path (relative for source scans), host:port for net, cert path for certs.",
+          "minLength": 1
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1-based line number when available."
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Byte offset when available."
+        },
+        "symbol": {
+          "type": "string",
+          "description": "API symbol matched (e.g. rsa.GenerateKey).",
+          "minLength": 1
+        },
+        "snippet": {
+          "type": "string",
+          "description": "Sanitised code snippet for the report."
+        }
+      },
+      "required": ["location"],
+      "additionalProperties": false
+    }
+  }
+}
