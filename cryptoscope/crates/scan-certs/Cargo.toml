@@ -1,0 +1,12 @@
+[package]
+name = "cryptoscope-scan-certs"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "cryptoscope scan-certs crate (scaffold)."
+
+[dependencies]
+cryptoscope-core = { path = "../core" }
+serde.workspace = true
+thiserror.workspace = true

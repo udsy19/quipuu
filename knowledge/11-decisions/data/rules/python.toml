@@ -1,0 +1,368 @@
+# Python detection rules — two-layer (extract → classify), per D-07
+#
+# Reference format documented in rules/go.toml header.
+
+# ============================================================================
+# cryptography.hazmat — modern primary Python crypto library
+# ============================================================================
+
+[[extract]]
+id = "PY-001"
+language = "python"
+query = """
+(call
+  function: (attribute
+    object: (attribute
+      object: (identifier) @rsa_mod (#eq? @rsa_mod "rsa")
+      attribute: (identifier))
+    attribute: (identifier) @fn (#eq? @fn "generate_private_key"))
+  arguments: (argument_list
+    (keyword_argument
+      name: (identifier) @kw1 (#eq? @kw1 "public_exponent")
+      value: (integer) @public_exponent)
+    (keyword_argument
+      name: (identifier) @kw2 (#eq? @kw2 "key_size")
+      value: (integer) @key_size)))
+"""
+captures = { rsa_mod = "ident", fn = "ident", kw1 = "ident", public_exponent = "literal_int", kw2 = "ident", key_size = "literal_int" }
+api = "cryptography.hazmat.rsa.generate_private_key"
+description = "RSA key generation via cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key()."
+
+[[classify]]
+id = "CRYPTO-101"
+when.api = "^cryptography\\.hazmat\\.rsa\\.generate_private_key$"
+when.args.key_size = { lt = 2048 }
+algorithm_id = "rsa-1024"
+severity_hint = "critical"
+message = "RSA key size {key_size} bits below 2048-bit floor. Classically insecure (CWE-326)."
+
+[[classify]]
+id = "CRYPTO-102"
+when.api = "^cryptography\\.hazmat\\.rsa\\.generate_private_key$"
+when.args.key_size = 2048
+algorithm_id = "rsa-2048"
+severity_hint = "auto"
+message = "RSA-2048 — NIST IR 8547 deprecates after 2030, disallows after 2035."
+
+[[classify]]
+id = "CRYPTO-103"
+when.api = "^cryptography\\.hazmat\\.rsa\\.generate_private_key$"
+when.args.key_size = { ge = 3072 }
+algorithm_id = "rsa-3072"
+severity_hint = "auto"
+message = "RSA-{key_size} — quantum-vulnerable to Shor regardless of key size."
+
+# ec — Elliptic curve key generation
+
+[[extract]]
+id = "PY-010"
+language = "python"
+query = """
+(call
+  function: (attribute
+    object: (attribute
+      object: (identifier) @ec_mod (#eq? @ec_mod "ec")
+      attribute: (identifier))
+    attribute: (identifier) @fn (#eq? @fn "generate_private_key"))
+  arguments: (argument_list
+    (call
+      function: (attribute
+        object: (identifier) @ec_curve_mod (#eq? @ec_curve_mod "ec")
+        attribute: (identifier) @curve_name))))
+"""
+captures = { ec_mod = "ident", fn = "ident", ec_curve_mod = "ident", curve_name = "ident" }
+api = "cryptography.hazmat.ec.generate_private_key"
+description = "EC key generation via ec.generate_private_key(ec.SECP256R1())."
+
+[[classify]]
+id = "CRYPTO-110"
+when.api = "^cryptography\\.hazmat\\.ec\\.generate_private_key$"
+when.args.curve_name = { regex = "^SECP224R1$" }
+algorithm_id = "ecdsa-p256"
+severity_hint = "critical"
+message = "P-224 is below 128-bit security floor."
+
+[[classify]]
+id = "CRYPTO-111"
+when.api = "^cryptography\\.hazmat\\.ec\\.generate_private_key$"
+when.args.curve_name = { regex = "^SECP256R1$" }
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "ECDSA P-256 — quantum-vulnerable. Replace with ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-112"
+when.api = "^cryptography\\.hazmat\\.ec\\.generate_private_key$"
+when.args.curve_name = { regex = "^SECP384R1$" }
+algorithm_id = "ecdsa-p384"
+severity_hint = "auto"
+message = "ECDSA P-384 — quantum-vulnerable. Replace with ML-DSA-87."
+
+[[classify]]
+id = "CRYPTO-113"
+when.api = "^cryptography\\.hazmat\\.ec\\.generate_private_key$"
+when.args.curve_name = { regex = "^SECP521R1$" }
+algorithm_id = "ecdsa-p521"
+severity_hint = "auto"
+message = "ECDSA P-521 — quantum-vulnerable. Replace with ML-DSA-87."
+
+[[classify]]
+id = "CRYPTO-114"
+when.api = "^cryptography\\.hazmat\\.ec\\.generate_private_key$"
+when.args.curve_name = { regex = "^SECP256K1$" }
+algorithm_id = "ecdsa-secp256k1"
+severity_hint = "auto"
+message = "ECDSA secp256k1 — Bitcoin/Ethereum curve, quantum-vulnerable."
+
+# ed25519 / ed448 / x25519 / x448
+
+[[extract]]
+id = "PY-020"
+language = "python"
+query = """
+(call
+  function: (attribute
+    object: (identifier) @mod (#match? @mod "^(ed25519|ed448|x25519|x448)$")
+    attribute: (identifier) @cls)
+  arguments: (argument_list (attribute (identifier) (identifier) @fn (#eq? @fn "generate"))))
+"""
+captures = { mod = "ident", cls = "ident", fn = "ident" }
+api = "cryptography.hazmat.{mod}.generate"
+description = "EdDSA / X25519 / X448 key generation."
+
+[[classify]]
+id = "CRYPTO-120"
+when.api = "^cryptography\\.hazmat\\.ed25519\\.generate$"
+algorithm_id = "ed25519"
+severity_hint = "auto"
+message = "Ed25519 — quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-121"
+when.api = "^cryptography\\.hazmat\\.ed448\\.generate$"
+algorithm_id = "ed448"
+severity_hint = "auto"
+message = "Ed448 — quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-122"
+when.api = "^cryptography\\.hazmat\\.x25519\\.generate$"
+algorithm_id = "x25519"
+severity_hint = "auto"
+message = "X25519 — quantum-vulnerable as a standalone group. Use X25519MLKEM768 hybrid."
+
+[[classify]]
+id = "CRYPTO-123"
+when.api = "^cryptography\\.hazmat\\.x448\\.generate$"
+algorithm_id = "x448"
+severity_hint = "auto"
+message = "X448 — quantum-vulnerable."
+
+# AES via cryptography.hazmat.ciphers — capture the algorithm class name
+
+[[extract]]
+id = "PY-030"
+language = "python"
+query = """
+(call
+  function: (attribute
+    object: (identifier) @cipher_mod (#eq? @cipher_mod "ciphers")
+    attribute: (identifier) @cls (#eq? @cls "Cipher"))
+  arguments: (argument_list
+    (call
+      function: (attribute
+        object: (identifier) @algos (#eq? @algos "algorithms")
+        attribute: (identifier) @algo)
+      arguments: (_))
+    (call
+      function: (attribute
+        object: (identifier) @modes (#eq? @modes "modes")
+        attribute: (identifier) @mode)
+      arguments: (_))))
+"""
+captures = { cipher_mod = "ident", cls = "ident", algos = "ident", algo = "ident", modes = "ident", mode = "ident" }
+api = "cryptography.hazmat.ciphers.Cipher"
+description = "Symmetric cipher Cipher(algorithms.X, modes.Y) construction."
+
+[[classify]]
+id = "CRYPTO-130"
+when.api = "^cryptography\\.hazmat\\.ciphers\\.Cipher$"
+when.args.algo = { regex = "^TripleDES$" }
+algorithm_id = "3des"
+severity_hint = "critical"
+message = "3DES disallowed for new encryption use (NIST SP 800-131A, 2023)."
+
+[[classify]]
+id = "CRYPTO-131"
+when.api = "^cryptography\\.hazmat\\.ciphers\\.Cipher$"
+when.args.algo = { regex = "^ARC4$" }
+algorithm_id = "rc4"
+severity_hint = "critical"
+message = "RC4 is broken — many distinguishing/key-recovery attacks."
+
+[[classify]]
+id = "CRYPTO-132"
+when.api = "^cryptography\\.hazmat\\.ciphers\\.Cipher$"
+when.args.algo = { regex = "^AES" }
+when.args.mode = { regex = "^ECB$" }
+algorithm_id = "aes-128-ecb"
+severity_hint = "high"
+message = "AES-ECB leaks plaintext patterns. Use GCM or CBC+HMAC."
+
+# hashlib
+
+[[extract]]
+id = "PY-040"
+language = "python"
+query = """
+(call
+  function: (attribute
+    object: (identifier) @mod (#eq? @mod "hashlib")
+    attribute: (identifier) @fn))
+"""
+captures = { mod = "ident", fn = "ident" }
+api = "hashlib.{fn}"
+description = "hashlib hash function call."
+
+[[classify]]
+id = "CRYPTO-140"
+when.api = "^hashlib\\.md5$"
+algorithm_id = "md5"
+severity_hint = "critical"
+message = "MD5 classically broken."
+
+[[classify]]
+id = "CRYPTO-141"
+when.api = "^hashlib\\.sha1$"
+algorithm_id = "sha-1"
+severity_hint = "critical"
+message = "SHA-1 classically broken (SHAttered, 2017)."
+
+[[classify]]
+id = "CRYPTO-142"
+when.api = "^hashlib\\.new$"
+when.args.fn = { regex = "^new$" }   # placeholder; resolve string arg in v1.1
+algorithm_id = "md5"
+severity_hint = "low"
+message = "hashlib.new(<dynamic>) — string-argument hash; confidence low until value-flow analysis lands."
+
+# ssl — TLS context configuration
+
+[[extract]]
+id = "PY-050"
+language = "python"
+query = """
+(call
+  function: (attribute
+    object: (identifier) @mod (#eq? @mod "ssl")
+    attribute: (identifier) @fn (#eq? @fn "SSLContext"))
+  arguments: (argument_list (attribute
+    object: (identifier) @ssl2 (#eq? @ssl2 "ssl")
+    attribute: (identifier) @proto)))
+"""
+captures = { mod = "ident", fn = "ident", ssl2 = "ident", proto = "ident" }
+api = "ssl.SSLContext"
+description = "Python SSL context — protocol selection."
+
+[[classify]]
+id = "CRYPTO-150"
+when.api = "^ssl\\.SSLContext$"
+when.args.proto = { regex = "^(PROTOCOL_SSLv2|PROTOCOL_SSLv3|PROTOCOL_TLSv1|PROTOCOL_TLSv1_1)$" }
+algorithm_id = "rsa-2048"   # placeholder — protocol-level finding
+severity_hint = "critical"
+message = "Insecure TLS protocol {proto}. Use PROTOCOL_TLS_CLIENT/PROTOCOL_TLS_SERVER with TLS 1.2+ only."
+
+# PyJWT
+
+[[extract]]
+id = "PY-060"
+language = "python"
+query = """
+(call
+  function: (attribute
+    object: (identifier) @jwt (#eq? @jwt "jwt")
+    attribute: (identifier) @fn (#eq? @fn "encode"))
+  arguments: (argument_list
+    (_)
+    (_)
+    (keyword_argument
+      name: (identifier) @kw (#eq? @kw "algorithm")
+      value: (string) @alg)))
+"""
+captures = { jwt = "ident", fn = "ident", kw = "ident", alg = "literal_string" }
+api = "jwt.encode"
+description = "PyJWT signing call with explicit algorithm kwarg."
+
+[[classify]]
+id = "CRYPTO-160"
+when.api = "^jwt\\.encode$"
+when.args.alg = { regex = "^[\"']?none[\"']?$" }
+algorithm_id = "rsa-1024"   # placeholder
+severity_hint = "critical"
+message = "JWT algorithm='none' — signature verification disabled."
+
+[[classify]]
+id = "CRYPTO-161"
+when.api = "^jwt\\.encode$"
+when.args.alg = { regex = "^[\"']?HS256[\"']?$" }
+algorithm_id = "sha-256"   # HMAC-SHA256; treated as symmetric-OK but flag for weak-secret risk in v1.5
+severity_hint = "low"
+message = "JWT HS256 (HMAC-SHA256) — confirm signing key has ≥256 bits of entropy."
+
+[[classify]]
+id = "CRYPTO-162"
+when.api = "^jwt\\.encode$"
+when.args.alg = { regex = "^[\"']?RS256[\"']?$" }
+algorithm_id = "rsa-pkcs1-sha256-2048"
+severity_hint = "auto"
+message = "JWT RS256 — RSA-PKCS1 signature, quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-163"
+when.api = "^jwt\\.encode$"
+when.args.alg = { regex = "^[\"']?ES256[\"']?$" }
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "JWT ES256 — ECDSA P-256, quantum-vulnerable."
+
+# pycryptodome — Crypto.PublicKey.RSA
+
+[[extract]]
+id = "PY-070"
+language = "python"
+query = """
+(call
+  function: (attribute
+    object: (attribute
+      object: (identifier) @crypto_mod (#eq? @crypto_mod "Crypto")
+      attribute: (identifier))
+    attribute: (identifier) @fn (#eq? @fn "generate"))
+  arguments: (argument_list (integer) @bits))
+"""
+captures = { crypto_mod = "ident", fn = "ident", bits = "literal_int" }
+api = "Crypto.PublicKey.RSA.generate"
+description = "pycryptodome RSA.generate(bits)."
+
+[[classify]]
+id = "CRYPTO-170"
+when.api = "^Crypto\\.PublicKey\\.RSA\\.generate$"
+when.args.bits = { lt = 2048 }
+algorithm_id = "rsa-1024"
+severity_hint = "critical"
+message = "pycryptodome RSA.generate({bits}) — below 2048-bit floor."
+
+[[classify]]
+id = "CRYPTO-171"
+when.api = "^Crypto\\.PublicKey\\.RSA\\.generate$"
+when.args.bits = 2048
+algorithm_id = "rsa-2048"
+severity_hint = "auto"
+message = "pycryptodome RSA-2048 — NIST IR 8547 deprecation 2030."
+
+[[classify]]
+id = "CRYPTO-172"
+when.api = "^Crypto\\.PublicKey\\.RSA\\.generate$"
+when.args.bits = { ge = 3072 }
+algorithm_id = "rsa-3072"
+severity_hint = "auto"
+message = "pycryptodome RSA-{bits} — quantum-vulnerable regardless of key size."

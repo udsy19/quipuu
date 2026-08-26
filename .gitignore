@@ -1,0 +1,19 @@
+# Rust build artifacts
+target/
+**/*.rs.bk
+Cargo.lock.bak
+
+# macOS
+.DS_Store
+
+# Editor leftovers
+.idea/
+.vscode/
+*.swp
+
+# Scratch
+/tmp/
+*.tmp
+
+# Demo outputs
+/cryptoscope-demo/

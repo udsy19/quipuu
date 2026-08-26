@@ -1,0 +1,328 @@
+# Go detection rules — two-layer (extract → classify), per D-07
+#
+# LAYER 1: [[extract]] — find AST sites with tree-sitter S-expression queries,
+#          capture parameter values (literal ints, type names, strings).
+# LAYER 2: [[classify]] — given extracted (api, arg0, arg1, ...) tuples, emit
+#          a finding with algorithm_id and severity hints.
+#
+# The classify layer is intentionally schema-compatible with the CBOMkit
+# cryptobom-forge rule files (knowledge/sources/cryptobom-forge-cryptocheck_*.{yml,json})
+# so we round-trip with their algorithm taxonomy.
+#
+# Field reference:
+#   [[extract]]
+#     id          stable rule id, format: GO-NNN
+#     language    "go"  (matches tree-sitter grammar)
+#     query       tree-sitter S-expression
+#     captures    map of capture-name → kind (literal_int | literal_string | type | ident)
+#     api         logical API name we matched (used by the classify layer)
+#     description human-readable
+#
+#   [[classify]]
+#     id          CRYPTO-NNN (SARIF rule id)
+#     when.api    extract.api regex
+#     when.args   tuple match on captured values; supports literals, ranges, regexes
+#     algorithm_id  from data/algorithm-table.toml
+#     severity_hint  "critical" | "high" | "medium" | "low" | "auto"
+#                   ("auto" defers to QuantumRiskScore)
+#     message     SARIF message text; supports {arg0}, {arg1}, ... substitution
+#     help_uri    docs URL (filled by build script)
+#     cwe         CWE identifier where applicable
+
+# ============================================================================
+# crypto/rsa — RSA key generation
+# ============================================================================
+
+[[extract]]
+id = "GO-001"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg
+    field: (field_identifier) @fn (#eq? @fn "GenerateKey"))
+  arguments: (argument_list
+    (identifier) @rng
+    (int_literal) @bits))
+(#eq? @pkg "rsa")
+"""
+captures = { pkg = "ident", fn = "ident", rng = "ident", bits = "literal_int" }
+api = "crypto/rsa.GenerateKey"
+description = "RSA key generation via crypto/rsa.GenerateKey(rand.Reader, bits)."
+
+[[classify]]
+id = "CRYPTO-001"
+when.api = "^crypto/rsa\\.GenerateKey$"
+when.args.bits = { lt = 2048 }
+algorithm_id = "rsa-1024"
+severity_hint = "critical"
+message = "RSA key generation with key size {bits} bits is below the 2048-bit minimum and classically insecure."
+cwe = "CWE-326"
+
+[[classify]]
+id = "CRYPTO-002"
+when.api = "^crypto/rsa\\.GenerateKey$"
+when.args.bits = 2048
+algorithm_id = "rsa-2048"
+severity_hint = "auto"
+message = "RSA-2048 key generation. Quantum-vulnerable: NIST IR 8547 deprecates after 2030, disallows after 2035."
+
+[[classify]]
+id = "CRYPTO-003"
+when.api = "^crypto/rsa\\.GenerateKey$"
+when.args.bits = 3072
+algorithm_id = "rsa-3072"
+severity_hint = "auto"
+message = "RSA-3072 key generation. Quantum-vulnerable to Shor's algorithm regardless of key size."
+
+[[classify]]
+id = "CRYPTO-004"
+when.api = "^crypto/rsa\\.GenerateKey$"
+when.args.bits = { ge = 4096 }
+algorithm_id = "rsa-4096"
+severity_hint = "auto"
+message = "RSA-{bits} key generation. Larger key does NOT protect against Shor's algorithm."
+
+# ============================================================================
+# crypto/ecdsa — ECDSA key generation
+# ============================================================================
+
+[[extract]]
+id = "GO-010"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg
+    field: (field_identifier) @fn (#eq? @fn "GenerateKey"))
+  arguments: (argument_list
+    (call_expression
+      function: (selector_expression
+        operand: (identifier) @curve_pkg (#eq? @curve_pkg "elliptic")
+        field: (field_identifier) @curve_fn))
+    (identifier) @rng))
+(#eq? @pkg "ecdsa")
+"""
+captures = { pkg = "ident", fn = "ident", curve_pkg = "ident", curve_fn = "ident", rng = "ident" }
+api = "crypto/ecdsa.GenerateKey"
+description = "ECDSA key generation via crypto/ecdsa.GenerateKey(elliptic.P256(), rand.Reader)."
+
+[[classify]]
+id = "CRYPTO-010"
+when.api = "^crypto/ecdsa\\.GenerateKey$"
+when.args.curve_fn = "P224"
+algorithm_id = "ecdsa-p256"      # P-224 below 128-bit; map to nearest baseline
+severity_hint = "critical"
+message = "ECDSA P-224 is below the 128-bit security floor (NIST SP 800-131A)."
+
+[[classify]]
+id = "CRYPTO-011"
+when.api = "^crypto/ecdsa\\.GenerateKey$"
+when.args.curve_fn = "P256"
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "ECDSA P-256 — quantum-vulnerable to Shor. Replace with ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-012"
+when.api = "^crypto/ecdsa\\.GenerateKey$"
+when.args.curve_fn = "P384"
+algorithm_id = "ecdsa-p384"
+severity_hint = "auto"
+message = "ECDSA P-384 — quantum-vulnerable. Replace with ML-DSA-87."
+
+[[classify]]
+id = "CRYPTO-013"
+when.api = "^crypto/ecdsa\\.GenerateKey$"
+when.args.curve_fn = "P521"
+algorithm_id = "ecdsa-p521"
+severity_hint = "auto"
+message = "ECDSA P-521 — quantum-vulnerable. Replace with ML-DSA-87."
+
+# ============================================================================
+# crypto/ed25519 / crypto/ecdh
+# ============================================================================
+
+[[extract]]
+id = "GO-020"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "ed25519")
+    field: (field_identifier) @fn (#eq? @fn "GenerateKey")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "crypto/ed25519.GenerateKey"
+description = "Ed25519 keypair generation."
+
+[[classify]]
+id = "CRYPTO-020"
+when.api = "^crypto/ed25519\\.GenerateKey$"
+algorithm_id = "ed25519"
+severity_hint = "auto"
+message = "Ed25519 — quantum-vulnerable to Shor. Replace with ML-DSA-65."
+
+# ============================================================================
+# crypto/tls — TLS config
+# ============================================================================
+
+[[extract]]
+id = "GO-030"
+language = "go"
+query = """
+(keyed_element
+  (literal_element (identifier) @key (#eq? @key "MinVersion"))
+  (literal_element (selector_expression
+    operand: (identifier) @tls_pkg (#eq? @tls_pkg "tls")
+    field: (field_identifier) @version)))
+"""
+captures = { key = "ident", tls_pkg = "ident", version = "ident" }
+api = "crypto/tls.Config.MinVersion"
+description = "TLS minimum version setting."
+
+[[classify]]
+id = "CRYPTO-030"
+when.api = "^crypto/tls\\.Config\\.MinVersion$"
+when.args.version = { regex = "^VersionSSL30|VersionTLS10|VersionTLS11$" }
+algorithm_id = "rsa-2048"   # placeholder; rule emits a protocol-level finding via reporter
+severity_hint = "critical"
+message = "TLS minimum version is {version} — TLS < 1.2 is broken (POODLE, BEAST). Use tls.VersionTLS12 or tls.VersionTLS13."
+cwe = "CWE-326"
+
+# CipherSuites whitelisting (string-literal capture)
+
+[[extract]]
+id = "GO-031"
+language = "go"
+query = """
+(keyed_element
+  (literal_element (identifier) @key (#eq? @key "CipherSuites"))
+  (literal_element (composite_literal
+    body: (literal_value (literal_element
+      (selector_expression
+        operand: (identifier) @tls_pkg (#eq? @tls_pkg "tls")
+        field: (field_identifier) @suite))))))
+"""
+captures = { key = "ident", tls_pkg = "ident", suite = "ident" }
+api = "crypto/tls.Config.CipherSuites"
+description = "TLS cipher suite list."
+
+# ============================================================================
+# crypto/aes — AES with mode detection requires a multi-step extract.
+# These are simplified for v1 (key size via crypto/aes.NewCipher arg length).
+# ============================================================================
+
+[[extract]]
+id = "GO-040"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "aes")
+    field: (field_identifier) @fn (#eq? @fn "NewCipher"))
+  arguments: (argument_list (_) @key_arg))
+"""
+captures = { pkg = "ident", fn = "ident", key_arg = "ident" }
+api = "crypto/aes.NewCipher"
+description = "AES cipher instantiation; key size determined by key byte slice length."
+
+# Note: the classify layer for AES needs key-length flow analysis at v1.5; ship
+# detection now, mark confidence low until the analysis lands.
+
+[[classify]]
+id = "CRYPTO-040"
+when.api = "^crypto/aes\\.NewCipher$"
+algorithm_id = "aes-128-gcm"   # conservative; refine when key-flow lands
+severity_hint = "low"
+message = "AES cipher in use (key length not statically resolved; confirm 32-byte key for AES-256)."
+
+# ============================================================================
+# crypto/md5 / crypto/sha1 — classically broken
+# ============================================================================
+
+[[extract]]
+id = "GO-050"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#match? @pkg "^(md5|sha1)$")
+    field: (field_identifier) @fn (#eq? @fn "New")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "crypto/md5_sha1.New"
+description = "MD5 or SHA-1 hash construction."
+
+[[classify]]
+id = "CRYPTO-050"
+when.api = "^crypto/md5_sha1\\.New$"
+when.args.pkg = "md5"
+algorithm_id = "md5"
+severity_hint = "critical"
+message = "MD5 is classically broken (collision attacks since 2004). Use SHA-256 or stronger."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-051"
+when.api = "^crypto/md5_sha1\\.New$"
+when.args.pkg = "sha1"
+algorithm_id = "sha-1"
+severity_hint = "critical"
+message = "SHA-1 is classically broken (SHAttered, 2017). Use SHA-256 or stronger."
+cwe = "CWE-327"
+
+# ============================================================================
+# golang-jwt / jwt-go — JWT signing
+# ============================================================================
+
+[[extract]]
+id = "GO-060"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @jwt (#match? @jwt "^(jwt|jwt_go|jwtgo)$")
+    field: (field_identifier) @fn (#eq? @fn "NewWithClaims"))
+  arguments: (argument_list
+    (selector_expression
+      operand: (identifier) @method_pkg
+      field: (field_identifier) @alg)
+    (_)))
+"""
+captures = { jwt = "ident", fn = "ident", method_pkg = "ident", alg = "ident" }
+api = "jwt.NewWithClaims"
+description = "JWT signing method (RS256, ES256, EdDSA, …)."
+
+[[classify]]
+id = "CRYPTO-060"
+when.api = "^jwt\\.NewWithClaims$"
+when.args.alg = { regex = "^(SigningMethodNone|None)$" }
+algorithm_id = "rsa-1024"   # placeholder; the report renders this as "alg=none"
+severity_hint = "critical"
+message = "JWT alg=none — signature verification disabled. CVE-2015-9235 class."
+cwe = "CWE-347"
+
+[[classify]]
+id = "CRYPTO-061"
+when.api = "^jwt\\.NewWithClaims$"
+when.args.alg = { regex = "^(SigningMethodRS|RS)256$" }
+algorithm_id = "rsa-pkcs1-sha256-2048"
+severity_hint = "auto"
+message = "JWT signed with RS256 — RSA-PKCS1 signature, quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-062"
+when.api = "^jwt\\.NewWithClaims$"
+when.args.alg = { regex = "^(SigningMethodES|ES)256$" }
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "JWT signed with ES256 — ECDSA P-256, quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-063"
+when.api = "^jwt\\.NewWithClaims$"
+when.args.alg = { regex = "^(SigningMethodEdDSA|EdDSA)$" }
+algorithm_id = "ed25519"
+severity_hint = "auto"
+message = "JWT signed with EdDSA (Ed25519) — quantum-vulnerable."

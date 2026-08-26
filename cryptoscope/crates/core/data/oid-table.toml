@@ -1,0 +1,323 @@
+# OID Table — OID → algorithm-id
+#
+# Maps X.509 / PKCS / NIST CSOR OIDs to the canonical algorithm-id used in
+# `algorithm-table.toml`. Used by scan-certs (x509-parser PublicKey::Unknown
+# fallback path) and scan-source for OID-string literals in code.
+#
+# Two flavours of OID matter here:
+#   - SubjectPublicKeyInfo.algorithm OID    (the *key* type)
+#   - Certificate.signatureAlgorithm OID    (how it was signed)
+# An algorithm-id may legitimately appear as both (RSA key + RSA signature).
+#
+# Sources:
+#   * RFC 3279, 4055, 4491, 5480, 5912, 8017 — classical
+#   * RFC 9881 (ML-DSA cert OIDs), RFC 9909 (SLH-DSA), RFC 9935 (ML-KEM)
+#   * NIST CSOR (csrc.nist.gov/csrc/media/Projects/Computer-Security-Objects-Register)
+#   * IANA TLS Parameters (knowledge/sources/iana-tls-*.csv) for TLS codepoints
+#
+# Format: each entry is [[oid]] with `oid`, `algorithm_id`, optional `also_signature`
+# flag meaning "this OID also appears as a signature algorithm OID."
+
+# -----------------------------------------------------------------------------
+# RSA — key + signature OIDs
+# -----------------------------------------------------------------------------
+
+[[oid]]
+oid = "1.2.840.113549.1.1.1"
+algorithm_id = "rsa-2048"   # generic; resolver picks rsa-1024/2048/3072/4096 by modulus length
+note = "rsaEncryption — SPKI key type. Modulus length determines variant."
+
+[[oid]]
+oid = "1.2.840.113549.1.1.10"
+algorithm_id = "rsa-pss-sha256-2048"   # generic RSASSA-PSS
+note = "id-RSASSA-PSS — signature. Hash determined by parameters."
+
+[[oid]]
+oid = "1.2.840.113549.1.1.4"
+algorithm_id = "rsa-pkcs1-md5"
+note = "md5WithRSAEncryption — BROKEN."
+
+[[oid]]
+oid = "1.2.840.113549.1.1.5"
+algorithm_id = "rsa-pkcs1-sha1"
+note = "sha1WithRSAEncryption — BROKEN."
+
+[[oid]]
+oid = "1.2.840.113549.1.1.11"
+algorithm_id = "rsa-pkcs1-sha256-2048"
+note = "sha256WithRSAEncryption."
+
+[[oid]]
+oid = "1.2.840.113549.1.1.12"
+algorithm_id = "rsa-pkcs1-sha384-3072"
+note = "sha384WithRSAEncryption."
+
+[[oid]]
+oid = "1.2.840.113549.1.1.13"
+algorithm_id = "rsa-pkcs1-sha512-4096"
+note = "sha512WithRSAEncryption."
+
+[[oid]]
+oid = "1.2.840.113549.1.1.7"
+algorithm_id = "rsa-2048"
+note = "id-RSAES-OAEP — RSA-OAEP encryption."
+
+# -----------------------------------------------------------------------------
+# ECDSA / EC public key
+# -----------------------------------------------------------------------------
+
+[[oid]]
+oid = "1.2.840.10045.2.1"
+algorithm_id = "ecdsa-p256"   # generic; resolver picks curve by curve OID in params
+note = "id-ecPublicKey — SPKI key type. Curve OID in algorithm.parameters."
+
+[[oid]]
+oid = "1.2.840.10045.4.1"
+algorithm_id = "ecdsa-sha1"
+note = "ecdsa-with-SHA1 — BROKEN."
+
+[[oid]]
+oid = "1.2.840.10045.4.3.2"
+algorithm_id = "ecdsa-p256"
+note = "ecdsa-with-SHA256."
+
+[[oid]]
+oid = "1.2.840.10045.4.3.3"
+algorithm_id = "ecdsa-p384"
+note = "ecdsa-with-SHA384."
+
+[[oid]]
+oid = "1.2.840.10045.4.3.4"
+algorithm_id = "ecdsa-p521"
+note = "ecdsa-with-SHA512."
+
+# EC curve OIDs (in SubjectPublicKeyInfo.algorithm.parameters)
+
+[[oid]]
+oid = "1.2.840.10045.3.1.7"
+algorithm_id = "ecdsa-p256"
+note = "secp256r1 / NIST P-256."
+
+[[oid]]
+oid = "1.3.132.0.34"
+algorithm_id = "ecdsa-p384"
+note = "secp384r1 / NIST P-384."
+
+[[oid]]
+oid = "1.3.132.0.35"
+algorithm_id = "ecdsa-p521"
+note = "secp521r1 / NIST P-521."
+
+[[oid]]
+oid = "1.3.132.0.10"
+algorithm_id = "ecdsa-secp256k1"
+note = "secp256k1 — Bitcoin/Ethereum."
+
+# -----------------------------------------------------------------------------
+# Ed25519 / Ed448 / X25519 / X448
+# -----------------------------------------------------------------------------
+
+[[oid]]
+oid = "1.3.101.110"
+algorithm_id = "x25519"
+note = "X25519 — RFC 8410."
+
+[[oid]]
+oid = "1.3.101.111"
+algorithm_id = "x448"
+note = "X448 — RFC 8410."
+
+[[oid]]
+oid = "1.3.101.112"
+algorithm_id = "ed25519"
+note = "Ed25519 — RFC 8410."
+
+[[oid]]
+oid = "1.3.101.113"
+algorithm_id = "ed448"
+note = "Ed448 — RFC 8410."
+
+# -----------------------------------------------------------------------------
+# DSA / DH
+# -----------------------------------------------------------------------------
+
+[[oid]]
+oid = "1.2.840.10040.4.1"
+algorithm_id = "dsa-2048"
+note = "id-dsa."
+
+[[oid]]
+oid = "1.2.840.10040.4.3"
+algorithm_id = "dsa-2048"
+note = "id-dsa-with-sha1 — deprecated."
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.3.2"
+algorithm_id = "dsa-2048"
+note = "id-dsa-with-sha256."
+
+[[oid]]
+oid = "1.2.840.113549.1.3.1"
+algorithm_id = "dh-2048"
+note = "dhKeyAgreement — PKCS #3."
+
+[[oid]]
+oid = "1.2.840.10046.2.1"
+algorithm_id = "dh-2048"
+note = "dhpublicnumber — X9.42."
+
+# -----------------------------------------------------------------------------
+# Hashes
+# -----------------------------------------------------------------------------
+
+[[oid]]
+oid = "1.2.840.113549.2.5"
+algorithm_id = "md5"
+note = "md5 — BROKEN."
+
+[[oid]]
+oid = "1.3.14.3.2.26"
+algorithm_id = "sha-1"
+note = "sha1 — BROKEN."
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.2.4"
+algorithm_id = "sha-224"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.2.1"
+algorithm_id = "sha-256"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.2.2"
+algorithm_id = "sha-384"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.2.3"
+algorithm_id = "sha-512"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.2.8"
+algorithm_id = "sha3-256"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.2.10"
+algorithm_id = "sha3-512"
+
+# -----------------------------------------------------------------------------
+# AES
+# -----------------------------------------------------------------------------
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.1.2"
+algorithm_id = "aes-128-cbc"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.1.6"
+algorithm_id = "aes-128-gcm"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.1.22"
+algorithm_id = "aes-192-gcm"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.1.42"
+algorithm_id = "aes-256-cbc"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.1.46"
+algorithm_id = "aes-256-gcm"
+
+# -----------------------------------------------------------------------------
+# PQC — ML-KEM (FIPS 203, RFC 9935)
+# Arc 2.16.840.1.101.3.4.4.{1,2,3}
+# -----------------------------------------------------------------------------
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.4.1"
+algorithm_id = "ml-kem-512"
+note = "id-alg-ml-kem-512 — RFC 9935."
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.4.2"
+algorithm_id = "ml-kem-768"
+note = "id-alg-ml-kem-768 — RFC 9935."
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.4.3"
+algorithm_id = "ml-kem-1024"
+note = "id-alg-ml-kem-1024 — RFC 9935."
+
+# -----------------------------------------------------------------------------
+# PQC — ML-DSA (FIPS 204, RFC 9881)
+# Arc 2.16.840.1.101.3.4.3.{17,18,19}
+# -----------------------------------------------------------------------------
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.3.17"
+algorithm_id = "ml-dsa-44"
+note = "id-ml-dsa-44 — RFC 9881."
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.3.18"
+algorithm_id = "ml-dsa-65"
+note = "id-ml-dsa-65 — RFC 9881."
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.3.19"
+algorithm_id = "ml-dsa-87"
+note = "id-ml-dsa-87 — RFC 9881."
+
+# -----------------------------------------------------------------------------
+# PQC — SLH-DSA (FIPS 205, RFC 9909)
+# Arc 2.16.840.1.101.3.4.3.{20..31} pure variants
+# (Pre-hash variants {35..46} also exist — extend when needed.)
+# -----------------------------------------------------------------------------
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.3.20"
+algorithm_id = "slh-dsa-sha2-128s"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.3.21"
+algorithm_id = "slh-dsa-sha2-128f"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.3.22"
+algorithm_id = "slh-dsa-sha2-192s"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.3.23"
+algorithm_id = "slh-dsa-sha2-192f"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.3.24"
+algorithm_id = "slh-dsa-sha2-256s"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.3.25"
+algorithm_id = "slh-dsa-sha2-256f"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.3.26"
+algorithm_id = "slh-dsa-shake-128s"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.3.27"
+algorithm_id = "slh-dsa-shake-128f"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.3.28"
+algorithm_id = "slh-dsa-shake-192s"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.3.29"
+algorithm_id = "slh-dsa-shake-192f"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.3.30"
+algorithm_id = "slh-dsa-shake-256s"
+
+[[oid]]
+oid = "2.16.840.1.101.3.4.3.31"
+algorithm_id = "slh-dsa-shake-256f"

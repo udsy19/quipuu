@@ -1,0 +1,58 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/core",
+    "crates/scan-source",
+    "crates/scan-network",
+    "crates/scan-certs",
+    "crates/scan-deps",
+    "crates/risk",
+    "crates/cbom",
+    "crates/report",
+    "crates/tui",
+    "crates/cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.96"
+license = "Apache-2.0"
+repository = "https://github.com/cryptoscope/cryptoscope"
+readme = "../README.md"
+
+[workspace.dependencies]
+# Serde + TOML + JSON for data loading and CBOM emission
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+
+# Errors
+thiserror = "2"
+
+# Logging
+tracing = "0.1"
+
+# Source parsing — tree-sitter + per-language grammars
+tree-sitter = "0.26"
+tree-sitter-go = "0.25"
+tree-sitter-python = "0.25"
+
+# Walk source trees respecting .gitignore
+ignore = "0.4"
+
+# Regex for `when.args.<field> = { regex = "..." }` in classify rules
+regex = "1"
+
+# CBOM emitter dependencies
+jsonschema = { version = "0.46", default-features = false }
+uuid = { version = "1", features = ["v4"] }
+
+# Test-only
+insta = { version = "1.39", features = ["yaml"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true

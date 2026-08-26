@@ -1,0 +1,24 @@
+[package]
+name = "cryptoscope"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "cryptoscope — open-source cryptographic discovery scanner."
+
+[[bin]]
+name = "cryptoscope"
+path = "src/main.rs"
+
+[dependencies]
+cryptoscope-core = { path = "../core" }
+cryptoscope-scan-source = { path = "../scan-source" }
+cryptoscope-scan-network = { path = "../scan-network" }
+cryptoscope-scan-certs = { path = "../scan-certs" }
+cryptoscope-scan-deps = { path = "../scan-deps" }
+cryptoscope-risk = { path = "../risk" }
+cryptoscope-cbom = { path = "../cbom" }
+cryptoscope-report = { path = "../report" }
+cryptoscope-tui = { path = "../tui" }
+serde.workspace = true
+serde_json.workspace = true

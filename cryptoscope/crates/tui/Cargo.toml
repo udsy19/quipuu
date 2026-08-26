@@ -1,0 +1,12 @@
+[package]
+name = "cryptoscope-tui"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "cryptoscope tui crate (scaffold)."
+
+[dependencies]
+cryptoscope-core = { path = "../core" }
+serde.workspace = true
+thiserror.workspace = true
