@@ -641,3 +641,184 @@ fn end_to_end_rsa_keygen_scores_high() {
         score.total
     );
 }
+
+// ============================================================================
+// Phase 1: jjwt + java-jwt + nimbus-jose-jwt + jose4j enum-constant detection
+// V2 corpus run revealed that scanning jjwt produced ZERO findings because
+// the scanner only handled method_invocation / object_creation_expression,
+// not field_access nodes. These tests guard against that class of regression.
+// ============================================================================
+
+#[test]
+fn phase1_jjwt_rs256_detected_as_field_access() {
+    // The single most important regression test in the file.
+    // Before Phase 1, this returned 0 findings.
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Jwt.java"))
+        .expect("scan succeeds");
+    assert!(
+        !findings.is_empty(),
+        "REGRESSION: scanning java/Jwt.java must produce findings (V2 corpus revealed silent zero)"
+    );
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-242" && f.algorithm_id == "rsa-pkcs1-sha256-2048"),
+        "expected CRYPTO-242 for jjwt SignatureAlgorithm.RS256/RS512: {:?}",
+        findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn phase1_jjwt_none_critical() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Jwt.java"))
+        .expect("scan succeeds");
+    // SignatureAlgorithm.NONE → signature verification disabled.
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-240"),
+        "expected CRYPTO-240 for SignatureAlgorithm.NONE"
+    );
+}
+
+#[test]
+fn phase1_jjwt_hs256_low_severity() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Jwt.java"))
+        .expect("scan succeeds");
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-241"),
+        "expected CRYPTO-241 for SignatureAlgorithm.HS256 (HMAC)"
+    );
+}
+
+#[test]
+fn phase1_jjwt_es256_ecdsa() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Jwt.java"))
+        .expect("scan succeeds");
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-244" && f.algorithm_id == "ecdsa-p256"),
+        "expected CRYPTO-244 for SignatureAlgorithm.ES256"
+    );
+}
+
+#[test]
+fn phase1_jjwt_ps384_rsapss() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Jwt.java"))
+        .expect("scan succeeds");
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-243"),
+        "expected CRYPTO-243 for SignatureAlgorithm.PS384 (RSA-PSS)"
+    );
+}
+
+#[test]
+fn phase1_nimbus_jwsalgorithm_rs384() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Jwt.java"))
+        .expect("scan succeeds");
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-250"),
+        "expected CRYPTO-250 for nimbus JWSAlgorithm.RS384"
+    );
+}
+
+#[test]
+fn phase1_nimbus_jwsalgorithm_es512() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Jwt.java"))
+        .expect("scan succeeds");
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-251"),
+        "expected CRYPTO-251 for nimbus JWSAlgorithm.ES512"
+    );
+}
+
+#[test]
+fn phase1_nimbus_jwsalgorithm_eddsa() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Jwt.java"))
+        .expect("scan succeeds");
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-253"),
+        "expected CRYPTO-253 for nimbus JWSAlgorithm.EdDSA"
+    );
+}
+
+#[test]
+fn phase1_nimbus_jwealgorithm_rsa_oaep() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Jwt.java"))
+        .expect("scan succeeds");
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-254"),
+        "expected CRYPTO-254 for nimbus JWEAlgorithm.RSA_OAEP_256"
+    );
+}
+
+#[test]
+fn phase1_jose4j_rsa_using_sha256() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Jwt.java"))
+        .expect("scan succeeds");
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-260"),
+        "expected CRYPTO-260 for jose4j AlgorithmIdentifiers.RSA_USING_SHA256"
+    );
+}
+
+#[test]
+fn phase1_jose4j_none_critical() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Jwt.java"))
+        .expect("scan succeeds");
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-264"),
+        "expected CRYPTO-264 for jose4j AlgorithmIdentifiers.NONE"
+    );
+}
+
+#[test]
+fn phase1_main_java_unchanged() {
+    // Sanity: Phase 1 must not break the existing Java fixture detections.
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Main.java"))
+        .expect("scan succeeds");
+
+    // The original 4 rule IDs must still fire on Main.java.
+    for expected in ["CRYPTO-200", "CRYPTO-201", "CRYPTO-220", "CRYPTO-221"] {
+        assert!(
+            findings.iter().any(|f| f.rule_id == expected),
+            "regression: Main.java must still produce {} after Phase 1 changes",
+            expected
+        );
+    }
+}

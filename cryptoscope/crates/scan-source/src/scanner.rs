@@ -221,6 +221,19 @@ fn walk(node: Node<'_>, source: &[u8], language: Language, out: &mut Vec<RawMatc
     if is_call_like && let Some(m) = match_call(node, source, language) {
         out.push(m);
     }
+    // Java enum-constant references like `SignatureAlgorithm.RS256` are
+    // `field_access` nodes — not calls. The jjwt / java-jwt / jose4j /
+    // nimbus-jose-jwt libraries surface algorithm choice this way, so
+    // detecting them is essential for any non-trivial Java JWT scan.
+    // See V2 corpus run: scanning jjwt itself produced ZERO findings
+    // because tree-sitter-java parses SignatureAlgorithm.RS256 as a
+    // field_access, not a call_expression.
+    if language == Language::Java
+        && kind == "field_access"
+        && let Some(m) = match_java_field_access(node, source)
+    {
+        out.push(m);
+    }
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
         walk(child, source, language, out);
@@ -379,6 +392,65 @@ fn match_java_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)
         _ => return None,
     };
     Some((api.into(), HashMap::new()))
+}
+
+/// Handle Java enum-constant references like `SignatureAlgorithm.RS256`.
+///
+/// These are `field_access` nodes — NOT calls. The jjwt, java-jwt, jose4j
+/// and nimbus-jose-jwt libraries are the canonical Java JWT stacks and they
+/// all surface algorithm choice this way (e.g. `Jwts.builder().signWith(key,
+/// SignatureAlgorithm.RS256)`). Without this matcher, the scanner produces
+/// silent zero findings on every codebase using these libraries.
+///
+/// The detection is narrow on purpose: we only fire on known crypto-enum
+/// classes. A general "any field_access" pattern would flood the output
+/// with false positives. Adding a new library = adding its enum class to
+/// `KNOWN_CRYPTO_ENUM_CLASSES` and a classify rule in `java.toml`.
+fn match_java_field_access(node: Node<'_>, source: &[u8]) -> Option<RawMatch> {
+    // tree-sitter-java field_access has children: object, field
+    // For `SignatureAlgorithm.RS256` → object="SignatureAlgorithm", field="RS256"
+    let object = node.child_by_field_name("object")?;
+    let field = node.child_by_field_name("field")?;
+
+    let class_name = node_text(object, source);
+    let member_name = node_text(field, source);
+
+    // The object must be a simple identifier matching a known crypto-enum class.
+    // We don't try to handle qualified imports here (e.g. `io.jsonwebtoken.SignatureAlgorithm.RS256`
+    // would appear as a nested field_access whose innermost object is `SignatureAlgorithm`;
+    // tree-sitter walks that recursively so we'll still see the right node).
+    if object.kind() != "identifier" {
+        return None;
+    }
+
+    let api = match class_name.as_str() {
+        // jjwt
+        "SignatureAlgorithm" => "io.jsonwebtoken.SignatureAlgorithm",
+        // auth0 java-jwt
+        "Algorithm" => "com.auth0.jwt.Algorithm",
+        // nimbus-jose-jwt
+        "JWSAlgorithm" => "com.nimbusds.jose.JWSAlgorithm",
+        "JWEAlgorithm" => "com.nimbusds.jose.JWEAlgorithm",
+        "EncryptionMethod" => "com.nimbusds.jose.EncryptionMethod",
+        // jose4j
+        "AlgorithmIdentifiers" => "org.jose4j.jws.AlgorithmIdentifiers",
+        // Apache Shiro
+        "DefaultPasswordService" => return None, // not an enum
+        _ => return None,
+    };
+
+    let mut args = HashMap::new();
+    args.insert("member".into(), ArgValue::Str(member_name));
+
+    let start = node.start_position();
+    Some(RawMatch {
+        api: api.into(),
+        args,
+        line: (start.row + 1) as u32,
+        offset: node.start_byte() as u32,
+        symbol: node_text(node, source),
+        snippet: node_text(node, source),
+    })
 }
 
 fn match_java_ctor(class_name: &str) -> Option<(String, HashMap<String, ArgValue>)> {
