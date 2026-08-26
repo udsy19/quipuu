@@ -1,0 +1,5 @@
+clones/
+clone.log
+scan.log
+verify-report.json
+results/per-project/

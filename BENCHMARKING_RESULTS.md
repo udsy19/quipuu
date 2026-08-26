@@ -1,0 +1,228 @@
+# cryptoscope V3 — 150-project corpus benchmark
+
+**Corpus:** corpus-b-realworld  
+**Projects scanned:** 150  
+**Elapsed:** 19.0s  
+**Default filter:** quantum-safe inventory hidden from alert output (Phase 2; pass --include-safe to unhide)  
+
+This is the V3 corpus run after the Phase 1 (jjwt enum-constant detection) and Phase 2 (signal-to-noise) commits. Numbers below are stratified by ecosystem and reported without projected values — only what was actually scanned.
+
+## Headline numbers
+
+- **577 total findings** across 150 projects in 19.0s
+- **436 audible** (76%) surfaced for analyst review; **141 suppressed** (24%) as quantum-safe inventory
+- **41 / 150 projects** produced at least one finding; **10 / 150** had scan errors (mostly missing clones — see below)
+- **Avg scan time:** 0.13s per project (release build, single-threaded)
+
+### Phase 1 verification — Java JWT libraries now produce findings
+
+Pre-Phase-1 (the V2 corpus run), these projects produced **zero** findings because the scanner only walked `method_invocation` / `object_creation_expression` and missed every `SignatureAlgorithm.RS256`-style enum-constant reference. After the field_access walk fix (commit 5223e3a):
+
+- `maven:com.nimbusds:nimbus-jose-jwt` — **78 findings** (was 0)
+- `maven:org.bitbucket.b_c:jose4j` — **15 findings** (was 0)
+
+### Phase 2 verification — noise filter hides QuantumSafe inventory
+
+`crates-io:rustls`: 10 total findings, of which **0 audible** and **10 suppressed** as quantum-safe (AES-256-GCM, ChaCha20-Poly1305, SHA-256, etc.). Before Phase 2 (commit 943dcda) every one of those would have been a Medium-severity alert competing for the user's attention.
+
+## Findings by ecosystem
+
+| Ecosystem | Projects | Total findings | Audible | Suppressed (safe) | Errored | Avg scan time |
+|---|---|---|---|---|---|---|
+| crates-io | 25 | 109 | 27 | 82 | 0 | 0.05s |
+| crypto-adjacent | 25 | 6 | 4 | 2 | 2 | 0.03s |
+| go-modules | 25 | 58 | 58 | 0 | 3 | 0.06s |
+| maven | 25 | 296 | 243 | 53 | 4 | 0.38s |
+| npm | 25 | 74 | 70 | 4 | 0 | 0.10s |
+| pypi | 25 | 34 | 34 | 0 | 1 | 0.12s |
+
+## Top 10 projects by total finding count
+
+| Project | Total | Audible | Suppressed | Scan time |
+|---|---|---|---|---|
+| `maven:org.eclipse.jetty:jetty-server` | 117 | 111 | 6 | 3.48s |
+| `crates-io:rustls-pemfile` | 85 | 24 | 61 | 0.23s |
+| `maven:com.nimbusds:nimbus-jose-jwt` | 78 | 51 | 27 | 0.14s |
+| `npm:jsonwebtoken` | 64 | 64 | 0 | 0.06s |
+| `maven:com.google.crypto.tink:tink` | 60 | 56 | 4 | 1.71s |
+| `go-modules:github.com/hashicorp/vault` | 50 | 50 | 0 | 0.32s |
+| `maven:org.bitbucket.b_c:jose4j` | 15 | 12 | 3 | 0.09s |
+| `pypi:pynacl` | 11 | 11 | 0 | 0.48s |
+| `crates-io:rustls` | 10 | 0 | 10 | 0.13s |
+| `maven:org.apache.httpcomponents.client5:httpclient5` | 8 | 5 | 3 | 0.17s |
+
+## Coverage gaps — expected-non-zero projects with 0 findings
+
+These are well-known crypto libraries / consumers where we expect to find *something*. A zero-finding result here is a signal that the scanner has a missing rule or an unsupported language pattern.
+
+- `crates-io:ring`
+- `npm:crypto-js`
+- `pypi:cryptography`
+- `pypi:paramiko`
+- `pypi:pyjwt`
+
+### All zero-finding projects (109 / 150)
+
+Note: many of these are zero for legitimate reasons. The expected-non-zero list above is the actionable subset. The remaining categories are:
+
+- **Crypto _libraries_** (vs. consumers): `ring`, `openssl`, `libsodium`, `mbedtls`, `boringssl`, `aws-lc`, `wolfssl`, etc. These implement crypto primitives but expose them through opaque type-based APIs (e.g. `RsaPublicKey::new()`) that don't carry algorithm strings the way consumer code does (`SignatureAlgorithm.RS256`). They're inventory targets for `--deps` / SBOM, not source-pattern targets.
+- **PQC reference implementations**: `liboqs`, `liboqs-python`, `liboqs-rust`, `oqs-provider`, `kyber`, `dilithium`, `sphincsplus`, `pqcrypto`, `swift-crypto`, `tink-go`. These are post-quantum-safe by design — expected zero alert-level findings.
+- **Pure dependency consumers**: `axios`, `react`, `express`, `lodash`, `chalk`, `commander`, `glob`, `helmet`, `ms`, `semver`, `debug`, `charset-normalizer`, `idna`, `pyasn1`, `python-dateutil`, `six` — these don't directly use crypto APIs. Expected zero.
+- **Go modules**: 22/25 produced zero findings. The Go ecosystem maps many crypto operations through interface-based dispatch (`crypto.Signer`, `cipher.Block`) plus runtime-string `tls.CipherSuite` lookups. A Go-specific Phase 7 pass (string-table detection across Go switch-case blocks) would likely 5–10× the Go finding count. This is the biggest known coverage gap on the corpus.
+
+<details><summary>Full list of zero-finding projects</summary>
+
+- `crates-io:argon2`
+- `crates-io:ed25519-dalek`
+- `crates-io:hmac`
+- `crates-io:md-5`
+- `crates-io:p256`
+- `crates-io:p384`
+- `crates-io:pbkdf2`
+- `crates-io:ring`
+- `crates-io:rsa`
+- `crates-io:rustls-native-certs`
+- `crates-io:rustls-pki-types`
+- `crates-io:rustls-webpki`
+- `crates-io:scrypt`
+- `crates-io:sha-1`
+- `crates-io:sha2`
+- `crates-io:tokio-rustls`
+- `crates-io:webpki`
+- `crates-io:x25519-dalek`
+- `crypto-adjacent:github.com/Mbed-TLS/mbedtls`
+- `crypto-adjacent:github.com/apple/swift-crypto`
+- `crypto-adjacent:github.com/aws/aws-encryption-sdk-c`
+- `crypto-adjacent:github.com/aws/aws-lc`
+- `crypto-adjacent:github.com/curl/curl`
+- `crypto-adjacent:github.com/facebookresearch/CrypTen`
+- `crypto-adjacent:github.com/google/boringssl`
+- `crypto-adjacent:github.com/jedisct1/libsodium`
+- `crypto-adjacent:github.com/microsoft/SymCrypt-OpenSSL`
+- `crypto-adjacent:github.com/microsoft/SymCrypt`
+- `crypto-adjacent:github.com/nabla-c0d3/sslyze`
+- `crypto-adjacent:github.com/nodejs/node`
+- `crypto-adjacent:github.com/open-quantum-safe/liboqs-python`
+- `crypto-adjacent:github.com/open-quantum-safe/liboqs-rust`
+- `crypto-adjacent:github.com/open-quantum-safe/liboqs`
+- `crypto-adjacent:github.com/open-quantum-safe/oqs-provider`
+- `crypto-adjacent:github.com/openssl/openssl`
+- `crypto-adjacent:github.com/pq-crystals/dilithium`
+- `crypto-adjacent:github.com/pyca/cryptography`
+- `crypto-adjacent:github.com/rustpq/pqcrypto`
+- `crypto-adjacent:github.com/sphincsplus/sphincsplus`
+- `crypto-adjacent:github.com/tink-crypto/tink-go`
+- `crypto-adjacent:github.com/wolfSSL/wolfssl`
+- `go-modules:github.com/aws/aws-sdk-go-v2`
+- `go-modules:github.com/aws/aws-sdk-go`
+- `go-modules:github.com/cloudflare/circl`
+- `go-modules:github.com/containerd/containerd`
+- `go-modules:github.com/coredns/coredns`
+- `go-modules:github.com/dgrijalva/jwt-go`
+- `go-modules:github.com/gin-gonic/gin`
+- `go-modules:github.com/go-jose/go-jose`
+- `go-modules:github.com/golang-jwt/jwt`
+- `go-modules:github.com/grafana/grafana`
+- `go-modules:github.com/jackc/pgx`
+- `go-modules:github.com/labstack/echo`
+- `go-modules:github.com/lestrrat-go/jwx`
+- `go-modules:github.com/minio/minio`
+- `go-modules:github.com/moby/moby`
+- `go-modules:github.com/ory/hydra`
+- `go-modules:github.com/prometheus/prometheus`
+- `go-modules:github.com/redis/go-redis`
+- `go-modules:go.etcd.io/etcd`
+- `go-modules:go.mongodb.org/mongo-driver`
+- `go-modules:golang.org/x/crypto`
+- `go-modules:k8s.io/kubernetes`
+- `maven:com.amazonaws:aws-java-sdk-kms`
+- `maven:com.auth0:java-jwt`
+- `maven:com.azure:azure-security-keyvault-keys`
+- `maven:com.squareup.okhttp3:okhttp`
+- `maven:com.unboundid:unboundid-ldapsdk`
+- `maven:commons-codec:commons-codec`
+- `maven:org.apache.directory.api:api-ldap-codec-standalone`
+- `maven:org.apache.shiro:shiro-crypto-core`
+- `maven:org.bouncycastle:bcpkix-jdk18on`
+- `maven:org.bouncycastle:bcprov-jdk18on`
+- `maven:org.eclipse.parsson:parsson`
+- `maven:software.amazon.awssdk:s3`
+- `npm:axios`
+- `npm:bcryptjs`
+- `npm:chalk`
+- `npm:commander`
+- `npm:cookie`
+- `npm:crypto-js`
+- `npm:debug`
+- `npm:express`
+- `npm:glob`
+- `npm:helmet`
+- `npm:jsrsasign`
+- `npm:lodash`
+- `npm:ms`
+- `npm:node-rsa`
+- `npm:oauth`
+- `npm:openpgp`
+- `npm:passport`
+- `npm:react`
+- `npm:semver`
+- `npm:ssh2`
+- `pypi:bcrypt`
+- `pypi:certifi`
+- `pypi:cffi`
+- `pypi:charset-normalizer`
+- `pypi:cryptography`
+- `pypi:idna`
+- `pypi:paramiko`
+- `pypi:pyasn1`
+- `pypi:pycryptodome`
+- `pypi:pyjwt`
+- `pypi:python-dateutil`
+- `pypi:rsa`
+- `pypi:setuptools`
+- `pypi:six`
+
+</details>
+
+## Scan errors
+
+10 project(s) produced non-empty error output:
+
+- `pypi:setuptools`
+    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/pypi/setuptools
+- `maven:org.bouncycastle:bcpkix-jdk18on`
+    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/bcpkix-jdk18on
+- `maven:com.amazonaws:aws-java-sdk-kms`
+    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/aws-java-sdk-kms
+- `maven:com.azure:azure-security-keyvault-keys`
+    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/azure-security-keyvault-keys
+- `maven:software.amazon.awssdk:s3`
+    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/aws-sdk-java-v2-s3
+- `go-modules:github.com/aws/aws-sdk-go`
+    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/aws-sdk-go
+- `go-modules:github.com/aws/aws-sdk-go-v2`
+    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/aws-sdk-go-v2
+- `go-modules:github.com/grafana/grafana`
+    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/grafana
+- `crypto-adjacent:github.com/wolfSSL/wolfssl`
+    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/crypto-adjacent/wolfssl
+- `crypto-adjacent:github.com/sphincsplus/sphincsplus`
+    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/crypto-adjacent/sphincsplus
+
+## Trust invariants observed during this run
+
+- **P1 (no LLM at runtime):** scanner is pure Rust; no network calls from `scan-source` or `scan-deps` paths.
+- **P2 (no listening sockets):** `--net` was not enabled; no inbound connections opened.
+- **P3 (every finding traces to source):** all findings carry `location.file:line` and `snippet`.
+- **P4 (no customer-code execution):** the scanner only opened files for reading; no project code was run.
+
+## Reproducing this run
+
+```
+cd benchmarks/corpus-b-realworld
+./clone_all.sh                          # ~30-60 min, 150 repos
+./verify.sh                             # confirm SHA pins (optional)
+python3 scan_corpus.py                  # ~5-15 min
+python3 render_results.py               # writes ../../BENCHMARKING_RESULTS.md
+```
+
