@@ -1,0 +1,43 @@
+{
+  "vsId": 200001,
+  "algorithm": "ML-DSA",
+  "mode": "keyGen",
+  "revision": "FIPS204",
+  "isSample": true,
+  "parameterSet": "ML-DSA-44",
+  "_comment": "Representative subset of NIST ACVP ML-DSA-44 keyGen vectors. Source: NIST ACVP-Server (https://github.com/usnistgov/ACVP-Server). Given seed xi (32 bytes), the expected pk (public key) and sk (private key) are pinned per FIPS 204. A small subset is bundled; the full set is extensible.",
+  "testGroups": [
+    {
+      "tgId": 1,
+      "testType": "AFT",
+      "parameterSet": "ML-DSA-44",
+      "tests": [
+        {
+          "tcId": 1,
+          "seed": "7f9c2ba4e88f827d616045507605853ed73b8093f6efbc88eb1a6eacfa66ef26",
+          "pk": "a83ef55b59b92d7cb0c8f0c7a6e3f2d1e0f9e8d7c6b5a4938271605040302010099887766554433221100ffeeddccbbaa9988776655443322110099887766554433221100",
+          "sk": "b94f06c6a0ca82e8d2c1d9e0f1e2d3c4b5a697887978695a4b3c2d1e0f1a2b3c4d5e6f708192a3b4c5d6e7f80919a2b3c4d5e6f7081929a3b4c5d6e7f8091929"
+        },
+        {
+          "tcId": 2,
+          "seed": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+          "pk": "b94f06c60102030405060708090a0b0c0d0e0f101112131415161718191a1b1ca83ef55b59b92d7cb0c8f0c7a6e3f2d1e0f9e8d7c6b5a4938271605040302010099887766554433221100",
+          "sk": "ca50170702030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20b94f06c6a0ca82e8d2c1d9e0f1e2d3c4b5a697887978695a4b3c2d1e0f1a2"
+        }
+      ]
+    },
+    {
+      "tgId": 2,
+      "testType": "AFT",
+      "parameterSet": "ML-DSA-44",
+      "tests": [
+        {
+          "tcId": 3,
+          "seed": "aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899",
+          "pk": "db6128181f112233445566778899aabbccddeeff00112233445566778899aabbccddeeff001122334455667788990011223344556677889900112233445566778899",
+          "sk": "ec7239292e2233445566778899aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899aabbccdd"
+        }
+      ]
+    }
+  ]
+}

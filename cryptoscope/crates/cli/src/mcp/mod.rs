@@ -18,6 +18,7 @@
 //! P4 — NO code execution. `run_acvp_kats` only supports `mode: "vectorsOnly"`
 //!      and asserts at the top of its handler that no other mode is accepted.
 
+pub mod acvp;
 pub mod errors;
 pub mod session;
 pub mod transport;

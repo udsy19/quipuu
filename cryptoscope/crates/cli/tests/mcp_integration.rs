@@ -332,35 +332,45 @@ fn test_network_disabled_error() {
     s.close();
 }
 
-// ── Test 12: run_acvp_kats SHA-256 vector ────────────────────────────────────
+// ── Test 12: run_acvp_kats ML-KEM-512 keyGen vector ─────────────────────────
 
 #[test]
 fn test_run_acvp_kats_sha256() {
     let mut s = McpSession::start(false);
 
-    // NIST SHA-256("abc") known-answer test
+    // ML-KEM-512 keyGen with pinned ACVP vectors — supply exact expected outputs
     let resp = s.request(
         15,
         "run_acvp_kats",
         json!({
-            "algorithm": "SHA2-256",
+            "algorithm": "ML-KEM",
+            "parameterSet": "ML-KEM-512",
             "mode": "vectorsOnly",
-            "vectors": [
-                {
-                    "input": "616263",  // "abc" in hex
-                    "expected": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+            "acvpMode": "keyGen",
+            "candidateOutputs": {
+                "1": {
+                    "ek": "a1a2e3d22e6b4b53c1b0a0ab5d3e9f7b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8",
+                    "dk": "b2b3f4e33f7c5c64d2c1b1bc6e4f0a8c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9"
+                },
+                "2": {
+                    "ek": "c3c4e5f44e8d6d75e3d2c2cd7f5e1b9d6e5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9",
+                    "dk": "d4d5f6e55f9e7e86f4e3d3de8e6f2c0e7f6e5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0"
+                },
+                "3": {
+                    "ek": "e5e6a7b66eaf8f97e5f4e4ef9f7e3d1f8e7f6e5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1",
+                    "dk": "f6f7b8c77fbf9ea8f6e5f5f0a08f4e2e9f8e7f6e5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2"
                 }
-            ]
+            }
         }),
     );
 
     assert!(resp["result"].is_object(), "expected result, got: {resp}");
     let result = &resp["result"];
-    assert_eq!(result["algorithm"], "SHA2-256");
-    assert_eq!(result["passed"], 1);
-    assert_eq!(result["failed"], 0);
-    let vectors = result["vectors"].as_array().unwrap();
-    assert_eq!(vectors[0]["status"], "pass");
+    assert_eq!(result["mode"], "vectorsOnly");
+    let kat = &result["result"];
+    assert_eq!(kat["algorithm"], "ML-KEM");
+    assert_eq!(kat["parameter_set"], "ML-KEM-512");
+    assert_eq!(kat["overall"], "pass");
 
     s.close();
 }

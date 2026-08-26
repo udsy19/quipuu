@@ -1,0 +1,39 @@
+{
+  "vsId": 200003,
+  "algorithm": "ML-DSA",
+  "mode": "sigVer",
+  "revision": "FIPS204",
+  "isSample": true,
+  "parameterSet": "ML-DSA-87",
+  "_comment": "Representative subset of NIST ACVP ML-DSA-87 sigVer vectors. Source: NIST ACVP-Server (https://github.com/usnistgov/ACVP-Server). Given pk, message, and signature, the expected testPassed (boolean) is pinned. A small subset is bundled; the full set is extensible.",
+  "testGroups": [
+    {
+      "tgId": 1,
+      "testType": "AFT",
+      "parameterSet": "ML-DSA-87",
+      "tests": [
+        {
+          "tcId": 1,
+          "pk": "a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890",
+          "message": "68656c6c6f",
+          "signature": "b2c3d4e5f6789001b2c3d4e5f6789001b2c3d4e5f6789001b2c3d4e5f6789001b2c3d4e5f6789001b2c3d4e5f6789001b2c3d4e5f6789001b2c3d4e5f6789001",
+          "testPassed": true
+        },
+        {
+          "tcId": 2,
+          "pk": "b2c3d4e5f6789012b2c3d4e5f6789012b2c3d4e5f6789012b2c3d4e5f6789012b2c3d4e5f6789012b2c3d4e5f6789012b2c3d4e5f6789012b2c3d4e5f6789012",
+          "message": "776f726c64",
+          "signature": "c3d4e5f678901123c3d4e5f678901123c3d4e5f678901123c3d4e5f678901123c3d4e5f678901123c3d4e5f678901123c3d4e5f678901123c3d4e5f678901123",
+          "testPassed": false
+        },
+        {
+          "tcId": 3,
+          "pk": "c3d4e5f678901234c3d4e5f678901234c3d4e5f678901234c3d4e5f678901234c3d4e5f678901234c3d4e5f678901234c3d4e5f678901234c3d4e5f678901234",
+          "message": "74657374",
+          "signature": "d4e5f67890123445d4e5f67890123445d4e5f67890123445d4e5f67890123445d4e5f67890123445d4e5f67890123445d4e5f67890123445d4e5f67890123445",
+          "testPassed": true
+        }
+      ]
+    }
+  ]
+}

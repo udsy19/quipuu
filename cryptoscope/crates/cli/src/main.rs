@@ -8,7 +8,7 @@
 //! * `scan <path> [FLAGS]`  — file/directory scan (existing)
 //! * `mcp-serve [FLAGS]`    — JSON-RPC 2.0 MCP server over stdio
 
-mod mcp;
+use cryptoscope::mcp;
 
 use std::path::PathBuf;
 use std::process::ExitCode;
