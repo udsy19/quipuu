@@ -1,0 +1,281 @@
+# Release workflow for cryptoscope
+#
+# Triggered when a tag matching "v*" (e.g. v0.1.0) is pushed.
+# Builds fully-static / native binaries for every supported target,
+# strips + packages them, attaches them to the GitHub Release, and
+# publishes a single SHA256SUMS file produced by a final aggregator job.
+#
+# Target matrix:
+#   x86_64-unknown-linux-musl     — fully static Linux (amd64)
+#   aarch64-unknown-linux-musl    — fully static Linux (arm64)
+#   x86_64-apple-darwin           — macOS Intel
+#   aarch64-apple-darwin          — macOS Apple Silicon
+#   x86_64-pc-windows-msvc        — Windows x64
+#
+# Secrets required:
+#   GITHUB_TOKEN is auto-provisioned; no extra secrets needed.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  RUST_TOOLCHAIN: stable
+  CARGO_TERM_COLOR: always
+  # The binary name must match the [[bin]] name in crates/cli/Cargo.toml.
+  BIN_NAME: cryptoscope
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # build-release
+  #   One matrix entry per target triple.  Each entry:
+  #     1. Adds the cross-compilation target to rustup
+  #     2. Installs musl-tools on Linux musl targets (static linking)
+  #     3. Compiles the binary in release mode
+  #     4. Strips the binary (Linux + macOS only)
+  #     5. Packages as .tar.gz (Linux/macOS) or .zip (Windows)
+  #     6. Generates a .sha256 sidecar
+  #     7. Uploads the package + sidecar as a workflow artifact
+  #     8. Attaches both files to the GitHub Release
+  # ─────────────────────────────────────────────────────────────────────────
+  build-release:
+    name: release (${{ matrix.target }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ── Linux x86_64 static ────────────────────────────────────────────
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            archive_ext: tar.gz
+            strip: true
+            musl: true
+
+          # ── Linux aarch64 static ───────────────────────────────────────────
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+            archive_ext: tar.gz
+            strip: true
+            musl: true
+
+          # ── macOS Intel ───────────────────────────────────────────────────
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            archive_ext: tar.gz
+            strip: true
+            musl: false
+
+          # ── macOS Apple Silicon ───────────────────────────────────────────
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            archive_ext: tar.gz
+            strip: true
+            musl: false
+
+          # ── Windows x64 ───────────────────────────────────────────────────
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            archive_ext: zip
+            strip: false
+            musl: false
+
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        working-directory: cryptoscope
+
+    steps:
+      # ── 1. Checkout (full history so the tag ref is available) ────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── 2. Install Rust + cross-compilation target ────────────────────────
+      - name: Install Rust (${{ env.RUST_TOOLCHAIN }})
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          targets: ${{ matrix.target }}
+
+      # ── 3. Install musl-tools (required to link against musl libc) ────────
+      #
+      # musl-tools provides musl-gcc and the static musl libc.  The aarch64
+      # cross-linker (gcc-aarch64-linux-gnu) is also needed for the arm64
+      # musl target.
+      - name: Install musl-tools (Linux musl targets only)
+        if: matrix.musl == true
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y musl-tools
+          # aarch64 cross-linker for the arm64 musl target
+          if [ "${{ matrix.target }}" = "aarch64-unknown-linux-musl" ]; then
+            sudo apt-get install -y gcc-aarch64-linux-gnu
+          fi
+        working-directory: ${{ github.workspace }}
+
+      # Configure linker for aarch64-musl in Cargo config
+      - name: Configure aarch64-musl linker
+        if: matrix.target == 'aarch64-unknown-linux-musl'
+        run: |
+          mkdir -p .cargo
+          cat >> .cargo/config.toml <<'EOF'
+          [target.aarch64-unknown-linux-musl]
+          linker = "aarch64-linux-gnu-gcc"
+          EOF
+
+      # ── Cargo cache ───────────────────────────────────────────────────────
+      - name: Cargo cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "cryptoscope -> target"
+
+      # ── 4. Build the release binary ───────────────────────────────────────
+      #
+      # -p cryptoscope targets only the cli crate (the binary).
+      # --locked ensures we use the exact dependency versions from Cargo.lock.
+      - name: cargo build --release
+        run: >
+          cargo build
+          --release
+          --target ${{ matrix.target }}
+          --bin ${{ env.BIN_NAME }}
+          -p cryptoscope
+          --locked
+
+      # ── 5. Strip the binary (Linux + macOS) ──────────────────────────────
+      #
+      # `strip = true` in Cargo.toml [profile.release] handles this on the
+      # native target, but we do it explicitly here for cross-compiled targets
+      # where Cargo's built-in strip may not invoke the right strip binary.
+      - name: Strip binary (Linux x86_64)
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: strip target/${{ matrix.target }}/release/${{ env.BIN_NAME }}
+
+      - name: Strip binary (Linux aarch64)
+        if: matrix.target == 'aarch64-unknown-linux-musl'
+        run: aarch64-linux-gnu-strip target/${{ matrix.target }}/release/${{ env.BIN_NAME }}
+
+      - name: Strip binary (macOS)
+        if: runner.os == 'macOS'
+        run: strip target/${{ matrix.target }}/release/${{ env.BIN_NAME }}
+
+      # ── 6. Package the binary ─────────────────────────────────────────────
+      #
+      # VERSION is extracted from the git tag (strips the leading "v").
+      # The archive is placed at /tmp/ so it is accessible outside the
+      # working-directory.
+      - name: Package (Linux / macOS — tar.gz)
+        if: matrix.archive_ext == 'tar.gz'
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          ARCHIVE_NAME="${{ env.BIN_NAME }}-${VERSION}-${{ matrix.target }}.tar.gz"
+          STAGING_DIR="/tmp/pkg-${{ matrix.target }}"
+          mkdir -p "${STAGING_DIR}"
+          cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}" "${STAGING_DIR}/"
+          # Include README and LICENSE if present (the README lives one level up
+          # from the workspace, and LICENSE may not exist yet in early dev).
+          cp "${GITHUB_WORKSPACE}/README.md" "${STAGING_DIR}/" 2>/dev/null || true
+          cp "${GITHUB_WORKSPACE}/LICENSE"   "${STAGING_DIR}/" 2>/dev/null || true
+          tar -czf "/tmp/${ARCHIVE_NAME}" -C "${STAGING_DIR}" .
+          echo "ARCHIVE_PATH=/tmp/${ARCHIVE_NAME}" >> "${GITHUB_ENV}"
+          echo "ARCHIVE_NAME=${ARCHIVE_NAME}"       >> "${GITHUB_ENV}"
+
+      - name: Package (Windows — zip)
+        if: matrix.archive_ext == 'zip'
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^v', ''
+          $archiveName = "${{ env.BIN_NAME }}-${version}-${{ matrix.target }}.zip"
+          $stagingDir  = "$env:TEMP\pkg-${{ matrix.target }}"
+          New-Item -ItemType Directory -Force -Path $stagingDir | Out-Null
+          Copy-Item "target\${{ matrix.target }}\release\${{ env.BIN_NAME }}.exe" $stagingDir
+          $readme = "$env:GITHUB_WORKSPACE\README.md"
+          $license = "$env:GITHUB_WORKSPACE\LICENSE"
+          if (Test-Path $readme)  { Copy-Item $readme  $stagingDir }
+          if (Test-Path $license) { Copy-Item $license $stagingDir }
+          Compress-Archive -Path "$stagingDir\*" -DestinationPath "$env:TEMP\$archiveName"
+          echo "ARCHIVE_PATH=$env:TEMP\$archiveName" >> $env:GITHUB_ENV
+          echo "ARCHIVE_NAME=$archiveName"            >> $env:GITHUB_ENV
+
+      # ── 7. Generate SHA-256 checksum sidecar ─────────────────────────────
+      - name: Generate SHA-256 (Linux / macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          cd /tmp
+          sha256sum "${ARCHIVE_NAME}" > "${ARCHIVE_NAME}.sha256"
+          echo "SHA256_PATH=/tmp/${ARCHIVE_NAME}.sha256" >> "${GITHUB_ENV}"
+
+      - name: Generate SHA-256 (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash -Algorithm SHA256 "$env:ARCHIVE_PATH").Hash.ToLower()
+          $content = "$hash  $env:ARCHIVE_NAME"
+          $sha256Path = "$env:ARCHIVE_PATH.sha256"
+          $content | Set-Content -Encoding ascii $sha256Path
+          echo "SHA256_PATH=$sha256Path" >> $env:GITHUB_ENV
+
+      # ── 8. Upload as a workflow artifact (used by the aggregator job) ─────
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.target }}
+          path: |
+            ${{ env.ARCHIVE_PATH }}
+            ${{ env.SHA256_PATH }}
+          retention-days: 1
+
+      # ── Attach to the GitHub Release ──────────────────────────────────────
+      #
+      # softprops/action-gh-release@v2 creates the release if it does not yet
+      # exist (using the tag name as the title) and uploads the specified files.
+      - name: Attach to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.ARCHIVE_PATH }}
+            ${{ env.SHA256_PATH }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # aggregate-checksums
+  #   Depends on all matrix entries completing.  Downloads every per-target
+  #   artifact, concatenates the individual .sha256 files into a single
+  #   SHA256SUMS file, and attaches it to the release.
+  # ─────────────────────────────────────────────────────────────────────────
+  aggregate-checksums:
+    name: aggregate-checksums
+    needs: build-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: /tmp/all-artifacts
+          merge-multiple: true
+
+      - name: Concatenate .sha256 files into SHA256SUMS
+        run: |
+          cd /tmp/all-artifacts
+          # Each .sha256 file contains one line: "<hash>  <filename>"
+          cat *.sha256 | sort > SHA256SUMS
+          echo "=== SHA256SUMS ==="
+          cat SHA256SUMS
+
+      - name: Attach SHA256SUMS to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: /tmp/all-artifacts/SHA256SUMS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

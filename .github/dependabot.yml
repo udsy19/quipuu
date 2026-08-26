@@ -1,0 +1,51 @@
+# .github/dependabot.yml
+#
+# Dependabot configuration for cryptoscope.
+#
+# Two ecosystems are tracked:
+#   1. cargo — Rust workspace under cryptoscope/
+#   2. github-actions — Actions used in .github/workflows/
+#
+# Dependabot opens a PR once a week for each ecosystem.  PRs are grouped by
+# ecosystem to reduce noise (one "cargo updates" PR rather than one per crate).
+
+version: 2
+
+updates:
+  # ── Rust / Cargo ──────────────────────────────────────────────────────────
+  - package-ecosystem: "cargo"
+    # Path to the directory containing Cargo.toml (workspace root).
+    directory: "/cryptoscope"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    # Group all Cargo updates into a single PR to reduce review overhead.
+    groups:
+      cargo-dependencies:
+        patterns:
+          - "*"
+    # Limit open PRs for this ecosystem.
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "cargo"
+
+  # ── GitHub Actions ────────────────────────────────────────────────────────
+  - package-ecosystem: "github-actions"
+    # Actions live in the repo root (workflows reference actions by tag).
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    groups:
+      actions-dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"

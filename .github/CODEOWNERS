@@ -1,0 +1,17 @@
+# .github/CODEOWNERS
+#
+# GitHub uses this file to automatically request reviews from the listed
+# owners when a PR touches matching paths.
+#
+# Syntax: <pattern>  <owner> [<owner> ...]
+# Owners can be GitHub usernames (@user), teams (@org/team), or email addresses.
+#
+# Replace @cryptoscope with the real team or user once the repository is live.
+
+# Default owner for everything not matched by a more specific rule.
+*  @cryptoscope
+
+# CI / release plumbing — anyone touching this should tag the infra team.
+.github/  @cryptoscope
+install.sh  @cryptoscope
+Formula/  @cryptoscope

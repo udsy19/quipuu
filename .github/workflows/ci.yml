@@ -1,0 +1,115 @@
+# CI workflow for cryptoscope
+#
+# Runs on every push and pull request.  The matrix covers the three platforms
+# the project ships on; format / clippy checks run on ubuntu only to avoid
+# paying for the same lint work three times.
+#
+# All cargo commands use `working-directory: cryptoscope/` because that is the
+# root of the Rust workspace (the directory that contains Cargo.toml with
+# [workspace]).
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+env:
+  # Pin the toolchain channel explicitly so Dependabot can bump it as a
+  # standalone dependency.  Workspace rust-version is 1.96; use "stable" here
+  # so this file keeps working as newer stable releases ship.
+  RUST_TOOLCHAIN: stable
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # build-and-test
+  #   Compiles + tests on every platform in the matrix.
+  # ─────────────────────────────────────────────────────────────────────────
+  build-and-test:
+    name: build-and-test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false   # keep running the other OSes if one fails
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    defaults:
+      run:
+        # All cargo commands are rooted in the Rust workspace directory.
+        working-directory: cryptoscope
+
+    steps:
+      # ── 1. Check out the full repository ──────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Install Rust toolchain + components ────────────────────────────
+      #
+      # rustup-toolchain-install-master is NOT used here; we use the
+      # dtolnay/rust-toolchain action which handles rustup internally and
+      # gives us a clean, cacheable installation with the components we need.
+      - name: Install Rust (${{ env.RUST_TOOLCHAIN }})
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: clippy, rustfmt
+
+      # ── 3. Restore / populate the cargo registry + compiled artifacts ─────
+      #
+      # Swatinem/rust-cache@v2 caches ~/.cargo/registry, ~/.cargo/git, and
+      # target/ keyed on Cargo.lock + toolchain.  It automatically saves on a
+      # cache miss and is workspace-aware.
+      - name: Cargo cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "cryptoscope -> target"
+
+      # ── 4. Format check (ubuntu only — no need to pay for it 3×) ──────────
+      - name: cargo fmt --check
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo fmt --all --check
+
+      # ── 5. Clippy — deny all warnings workspace-wide ──────────────────────
+      #
+      # --no-deps suppresses warnings that originate in third-party crates
+      # (those are not our responsibility to fix).
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets --no-deps -- -D warnings
+
+      # ── 6. Build (all crates, locked to Cargo.lock) ───────────────────────
+      - name: cargo build
+        run: cargo build --workspace --locked
+
+      # ── 7. Test (offline only — live-network tests require outbound TCP and
+      #         are tagged #[ignore]; run them separately with --ignored) ─────
+      - name: cargo test
+        run: cargo test --workspace --locked
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # python-checks
+  #   Runs the analysis-phase Python test suite (tests/check.py) that
+  #   validates the knowledge-base data files (algorithm-table.toml,
+  #   oid-table.toml, default-policy.toml, rule packs, etc.).
+  #
+  #   Kept as a separate job so it can be required independently in branch
+  #   protection rules.
+  # ─────────────────────────────────────────────────────────────────────────
+  python-checks:
+    name: python-checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Install the two Python packages the test suite needs.
+      # `--user` avoids needing sudo; the user's local bin is on PATH in GHA.
+      - name: Install Python deps
+        run: pip3 install --user toml jsonschema
+
+      - name: Run tests/check.py
+        run: python3 tests/check.py
