@@ -41,6 +41,11 @@ struct RegisterRow {
     file_line: String,
     message: String,
     replacement: String,
+    /// Plain-English explanation of why this finding matters. Built from
+    /// algorithm table fields (`quantum_status`, `notes`, `replacement`,
+    /// `fips`) by mechanical concatenation — no LLM, no synthesis. Every
+    /// fragment traces to a fixed enum match or a literal in the table.
+    why_this_matters: String,
 }
 
 // ── Askama template ─────────────────────────────────────────────────────────
@@ -189,14 +194,21 @@ pub fn emit_html(
     // ── Risk register rows ────────────────────────────────────────────────────
     let register_rows: Vec<RegisterRow> = scored
         .iter()
-        .map(|s| RegisterRow {
-            severity_class: severity_class(s.severity),
-            severity_label: severity_label(s.severity),
-            rule_id: s.finding.rule_id.clone(),
-            algorithm: s.display_name.clone(),
-            file_line: file_line_str(s.finding),
-            message: s.finding.message.clone(),
-            replacement: s.replacement.clone(),
+        .map(|s| {
+            let algo = algorithms.get(&s.finding.algorithm_id);
+            let replacement_algo = algo
+                .and_then(|a| a.replacement.as_deref())
+                .and_then(|repl_id| algorithms.get(repl_id));
+            RegisterRow {
+                severity_class: severity_class(s.severity),
+                severity_label: severity_label(s.severity),
+                rule_id: s.finding.rule_id.clone(),
+                algorithm: s.display_name.clone(),
+                file_line: file_line_str(s.finding),
+                message: s.finding.message.clone(),
+                replacement: s.replacement.clone(),
+                why_this_matters: why_this_matters(algo, replacement_algo),
+            }
         })
         .collect();
 
@@ -259,4 +271,71 @@ fn severity_label(s: Severity) -> String {
         Severity::Safe => "Safe",
     }
     .to_string()
+}
+
+/// Build the plain-English "why this matters" sentence for a finding.
+///
+/// P1 (no LLM at runtime): every fragment of the output is either a fixed
+/// string matched on `quantum_status` or a literal copied from the algorithm
+/// table (notes, display_name, fips). No external content, no model calls.
+fn why_this_matters(
+    algo: Option<&cryptoscope_core::AlgorithmRecord>,
+    replacement: Option<&cryptoscope_core::AlgorithmRecord>,
+) -> String {
+    use cryptoscope_core::QuantumStatus;
+    let Some(a) = algo else {
+        return "Algorithm not in the cryptoscope catalogue; classification unavailable. \
+                Investigate manually."
+            .to_string();
+    };
+
+    // Preamble — one sentence per quantum_status. Wording mirrors what the
+    // policy / NIST guidance documents say; not editorial.
+    let preamble = match a.quantum_status {
+        QuantumStatus::BrokenClassically => {
+            "Classically broken — practical attacks exist today, independent of any quantum threat."
+        }
+        QuantumStatus::BrokenByShor => {
+            "Vulnerable to Shor's algorithm; a cryptographically relevant quantum computer breaks \
+             this in polynomial time."
+        }
+        QuantumStatus::WeakenedByGrover => {
+            "Weakened under Grover's algorithm; effective security halves against quantum search. \
+             Keep using only at sufficiently large parameters."
+        }
+        QuantumStatus::QuantumSafe => {
+            "Quantum-safe at the chosen parameters — Grover's algorithm does not reduce security \
+             below acceptable levels."
+        }
+        QuantumStatus::PqcFinal => {
+            "NIST-final post-quantum algorithm; designed to resist both classical and quantum \
+             attacks."
+        }
+        QuantumStatus::PqcDraft => {
+            "Draft post-quantum algorithm; expected to be standardized but the specification may \
+             still change."
+        }
+    };
+
+    // Algorithm-specific note from the catalogue, verbatim.
+    let mut parts = vec![preamble.to_string()];
+    if !a.notes.trim().is_empty() {
+        parts.push(a.notes.trim().to_string());
+    }
+
+    // Replacement recommendation when one exists. Naming + FIPS reference both
+    // come from the replacement record, verbatim.
+    if let Some(r) = replacement {
+        let fips = r
+            .fips
+            .as_deref()
+            .map(|f| format!(" per {f}"))
+            .unwrap_or_default();
+        parts.push(format!(
+            "Recommended replacement: {}{}.",
+            r.display_name, fips
+        ));
+    }
+
+    parts.join(" ")
 }

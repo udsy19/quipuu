@@ -444,3 +444,94 @@ fn phase2_sarif_includes_everything_when_full_set_passed() {
         "with --include-safe, SARIF must contain every finding"
     );
 }
+
+// ── Phase 5: "Why this matters" plain-English explanations ──────────────────
+//
+// Every finding in the HTML report should carry a plain-English explanation
+// of why the algorithm is in trouble and what to do. Built mechanically from
+// algorithm-table fields (quantum_status, notes, replacement, fips) — no LLM
+// involved (P1). These tests guard the rendered output.
+
+#[test]
+fn phase5_html_contains_why_matters_disclosure_per_finding() {
+    let (findings, algorithms, policy) = make_findings();
+    let html = emit_html(&findings, &algorithms, &policy, &default_opts())
+        .expect("emit_html should succeed");
+
+    assert!(!findings.is_empty(), "test prerequisite: findings exist");
+
+    // Every register row gets a <details class="why-matters"> block.
+    let detail_count = html.matches("class=\"why-matters\"").count();
+    assert_eq!(
+        detail_count,
+        findings.len(),
+        "expected one why-matters disclosure per finding (got {} for {} findings)",
+        detail_count,
+        findings.len()
+    );
+
+    // The disclosure label must appear at least once.
+    assert!(
+        html.contains("Why this matters"),
+        "HTML must contain the disclosure label"
+    );
+}
+
+#[test]
+fn phase5_why_matters_includes_shor_preamble_for_rsa() {
+    let (findings, algorithms, policy) = make_findings();
+    // The Go fixture has RSA findings; RSA is BrokenByShor, so the report
+    // must surface the Shor preamble somewhere.
+    assert!(
+        findings.iter().any(|f| f.algorithm_id.starts_with("rsa-")),
+        "test prerequisite: fixture has RSA findings"
+    );
+    let html = emit_html(&findings, &algorithms, &policy, &default_opts())
+        .expect("emit_html should succeed");
+
+    assert!(
+        html.contains("Shor"),
+        "HTML must contain a Shor's algorithm reference in the why-matters \
+         body for RSA findings"
+    );
+}
+
+#[test]
+fn phase5_why_matters_recommends_replacement_when_known() {
+    let (findings, algorithms, policy) = make_findings();
+    // RSA-2048 → replacement = ML-KEM-768 per the algorithm table.
+    let html = emit_html(&findings, &algorithms, &policy, &default_opts())
+        .expect("emit_html should succeed");
+
+    assert!(
+        html.contains("Recommended replacement"),
+        "HTML why-matters body must surface the 'Recommended replacement' phrase"
+    );
+    assert!(
+        html.contains("ML-KEM-768") || html.contains("ML-DSA"),
+        "HTML must recommend a specific NIST-final replacement"
+    );
+}
+
+#[test]
+fn phase5_why_matters_uses_verbatim_notes_from_table() {
+    let (findings, algorithms, policy) = make_findings();
+    let html = emit_html(&findings, &algorithms, &policy, &default_opts())
+        .expect("emit_html should succeed");
+
+    // The Go fixture contains RSA-1024. The algorithm-table `notes` field
+    // for rsa-1024 is "Classical security below NIST SP 800-131A minimum
+    // (112-bit); already disallowed for new use." — must appear verbatim
+    // in the report, demonstrating that the why-matters layer is reading
+    // straight from the table (P1 — no LLM rewording).
+    assert!(
+        findings.iter().any(|f| f.algorithm_id == "rsa-1024"),
+        "test prerequisite: fixture has RSA-1024"
+    );
+    assert!(
+        html.contains("Classical security below NIST SP 800-131A minimum"),
+        "HTML must reproduce the rsa-1024 `notes` field verbatim, got HTML \
+         length {}",
+        html.len()
+    );
+}

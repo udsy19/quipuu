@@ -126,6 +126,29 @@ tbody td { padding: 0.55rem 0.75rem; vertical-align: top; color: #cbd5e1; }
 .badge-sev.low      { background: #2563eb; color: #fff; }
 .badge-sev.safe     { background: #16a34a; color: #fff; }
 
+/* ── "Why this matters" disclosure ───────────────────────────────── */
+.why-matters {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+.why-matters summary {
+  cursor: pointer;
+  color: #60a5fa;
+  font-weight: 500;
+  user-select: none;
+}
+.why-matters summary:hover {
+  color: #93c5fd;
+}
+.why-matters p {
+  margin: 0.4rem 0 0;
+  padding: 0.5rem 0.75rem;
+  background: #0f172a;
+  border-left: 3px solid #3b82f6;
+  border-radius: 4px;
+  color: #cbd5e1;
+}
+
 /* ── Compliance ──────────────────────────────────────────────────── */
 .compliance-note {
   background: #172554;
@@ -289,7 +312,13 @@ tbody td { padding: 0.55rem 0.75rem; vertical-align: top; color: #cbd5e1; }
             <td class="mono">{{ row.rule_id|e }}</td>
             <td>{{ row.algorithm|e }}</td>
             <td class="mono" style="white-space:nowrap;">{{ row.file_line|e }}</td>
-            <td>{{ row.message|e }}</td>
+            <td>
+              {{ row.message|e }}
+              <details class="why-matters">
+                <summary>Why this matters</summary>
+                <p>{{ row.why_this_matters|e }}</p>
+              </details>
+            </td>
             <td>{{ row.replacement|e }}</td>
           </tr>
           {% endfor %}
