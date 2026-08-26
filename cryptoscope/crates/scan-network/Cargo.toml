@@ -4,9 +4,18 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
-description = "cryptoscope scan-network crate (scaffold)."
+description = "TLS network probe — enumerates supported groups, cipher suites, signature algorithms."
 
 [dependencies]
 cryptoscope-core = { path = "../core" }
+cryptoscope-scan-certs = { path = "../scan-certs" }
 serde.workspace = true
 thiserror.workspace = true
+rustls.workspace = true
+tokio.workspace = true
+tokio-rustls.workspace = true
+rustls-pki-types.workspace = true
+webpki-roots.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "time"] }

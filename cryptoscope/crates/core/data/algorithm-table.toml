@@ -768,3 +768,16 @@ primitive = "combiner"
 quantum_status = "PqcDraft"
 replacement = "x25519-mlkem768"
 notes = "IANA codepoint 25497 (0x6399) marked Deprecated. Was Chrome 116-130 default."
+
+# ============================================================================
+# SENTINELS — generic ids used by the network scanner when we know a TLS
+# handshake happened but cannot attribute it to a specific group.
+# ============================================================================
+
+[[algorithm]]
+id = "tls-handshake"
+display_name = "TLS handshake (generic)"
+family = "TLS"
+primitive = "other"
+quantum_status = "QuantumSafe"
+notes = "Generic sentinel for scan-network's default-handshake findings; the per-group probes provide algorithm-specific attribution. Not scored as vulnerable."

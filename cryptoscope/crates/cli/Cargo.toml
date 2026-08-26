@@ -21,3 +21,4 @@ cryptoscope-report = { path = "../report" }
 cryptoscope-tui = { path = "../tui" }
 serde.workspace = true
 serde_json.workspace = true
+tokio.workspace = true

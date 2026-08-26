@@ -14,6 +14,7 @@ use cryptoscope_core::{Finding, QuantumRiskScore, load_builtins};
 use cryptoscope_report::{ReportOptions, emit_html, emit_sarif, emit_summary_json};
 use cryptoscope_scan_certs::CertScanner;
 use cryptoscope_scan_deps::DepScanner;
+use cryptoscope_scan_network::NetScanner;
 use cryptoscope_scan_source::Scanner;
 use cryptoscope_tui::Tui;
 
@@ -53,11 +54,12 @@ fn print_help() {
 USAGE:
     cryptoscope scan <path> [FLAGS]
 
-SCAN MODES (default: --source --deps; --certs is opt-in):
+SCAN MODES (default: --source --deps; --certs and --net are opt-in):
     --source                  Scan source code (tree-sitter, Go + Python today)
     --certs                   Scan X.509 certificates (PEM/DER)
     --deps                    Scan dependency manifests
-    --all                     Enable every scan mode
+    --net <host:port>         Probe a TLS endpoint (opens TCP connection)
+    --all                     Enable every scan mode (--net still requires --net <host>)
 
 OUTPUT:
     --cbom <file>             Emit a CycloneDX CBOM
@@ -81,6 +83,7 @@ struct ScanFlags {
     scan_source: bool,
     scan_certs: bool,
     scan_deps: bool,
+    net_targets: Vec<String>,
     explicit_modes: bool,
     cbom_out: Option<PathBuf>,
     schema_version: Option<SchemaVersion>,
@@ -112,6 +115,14 @@ fn parse_scan_flags(tail: &[String]) -> ScanFlags {
                 flags.scan_certs = true;
                 flags.scan_deps = true;
                 flags.explicit_modes = true;
+            }
+            "--net" => {
+                if let Some(t) = it.next() {
+                    flags.net_targets.push(t.clone());
+                    flags.explicit_modes = true;
+                } else {
+                    eprintln!("cryptoscope: --net requires a host:port argument");
+                }
             }
             "--cbom" => {
                 if let Some(p) = it.next() {
@@ -208,6 +219,34 @@ fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
         }
     }
 
+    // Network probes — spin up a small tokio runtime only if needed.
+    if !flags.net_targets.is_empty() {
+        eprintln!(
+            "cryptoscope: opening TCP connections to {} target(s) — inventory only, no exploit attempts",
+            flags.net_targets.len()
+        );
+        let runtime = match tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+        {
+            Ok(rt) => rt,
+            Err(e) => {
+                eprintln!("cryptoscope: failed to start tokio runtime: {e}");
+                return ExitCode::FAILURE;
+            }
+        };
+        let scanner = NetScanner::new();
+        for target in &flags.net_targets {
+            match runtime.block_on(scanner.scan_target(target)) {
+                Ok(mut f) => findings.append(&mut f),
+                Err(e) => {
+                    eprintln!("cryptoscope: net scan of {target} failed: {e}");
+                    return ExitCode::FAILURE;
+                }
+            }
+        }
+    }
+
     println!(
         "cryptoscope: scanned {} → {} finding(s) (policy: {})",
         path.display(),
@@ -216,27 +255,27 @@ fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
     );
 
     for f in &findings {
+        let where_ = match f.location.line {
+            Some(l) => format!("{}:{}", f.location.location, l),
+            None => f.location.location.clone(),
+        };
         let Some(algo) = builtins.algorithms.get(&f.algorithm_id) else {
-            // Unknown algorithm-ids (e.g. CERT-001 for a cert with an OID we
-            // don't yet catalogue) are still informative — print them flat.
+            // Unknown algorithm-ids (e.g. cert with an OID we don't yet
+            // catalogue, or `unknown` from scan-deps) are still informative.
             println!(
-                "  ?\t{rule}\t{algo}\t{file}:{line}\t{msg}",
+                "  ?\t{rule}\t{algo}\t{where_}\t{msg}",
                 rule = f.rule_id,
                 algo = f.algorithm_id,
-                file = f.location.location,
-                line = f.location.line.unwrap_or(0),
                 msg = f.message,
             );
             continue;
         };
         let score = QuantumRiskScore::compute(f, algo, &builtins.policy);
         println!(
-            "  {sev:?}\t{rule}\t{algo}\t{file}:{line}\t{msg}",
+            "  {sev:?}\t{rule}\t{algo}\t{where_}\t{msg}",
             sev = score.severity,
             rule = f.rule_id,
             algo = f.algorithm_id,
-            file = f.location.location,
-            line = f.location.line.unwrap_or(0),
             msg = f.message,
         );
     }
