@@ -6,6 +6,17 @@
 
 ---
 
+## Trust invariants
+
+These four invariants are contractual. They are not feature flags. Any change requires a major version bump.
+
+- **P1.** Never calls an LLM at runtime.
+- **P2.** Never opens a listening socket, and makes no outbound connection by default. Outbound TLS connections are made *only* by `scan_network` and host-mode `scan_certs`, *only* when `--allow-network` is passed at process launch (never enabled over the wire). The stdio MCP transport uses no socket of any kind.
+- **P3.** Every finding traces to a literal in the source data.
+- **P4.** Never executes customer code.
+
+---
+
 ## Positioning
 
 Browsers solved the easy half of the PQC migration. As of mid-2026, [~65% of human web traffic to Cloudflare is post-quantum-encrypted](knowledge/10-design-partners/README.md), Chrome / Firefox / iOS ship X25519MLKEM768 by default, and OpenSSL 3.5 has native ML-KEM. The other half — internal services, dependency trees, X.509 certificates, forgotten cron jobs — is the **long tail**.
@@ -69,6 +80,8 @@ cargo build --release
 ```
 
 Every scanner emits a `Finding` carrying `algorithm_id`, file/line provenance, and contextual signals (usage, exposure, shelf-life bucket). The risk engine looks each up in the algorithm table, computes the 5-axis score per the active policy, and feeds the result to whichever emitter you asked for.
+
+The **MCP wire contract** (`cryptoscope/MCP.md`) defines the `cryptoscope mcp` stdio subcommand used by agent and IDE integrations. JSON schemas for the `Finding`, `CryptoAsset`, and `RiskScore` types live in `crates/core/schema/`.
 
 The five score axes (full breakdown is visible in every output):
 

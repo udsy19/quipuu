@@ -2,6 +2,8 @@
 
 > **Read first:** `knowledge/README.md` → `knowledge/11-decisions/README.md`. Every decision below has a `D-NN` reference. If you have to change one, update the decisions register in the same change.
 
+> **Invariants:** This codebase is governed by four trust invariants (P1–P4) defined in `cryptoscope/MCP.md §0` and repeated in `README.md`. Any change to P1–P4 is a breaking contract change requiring a major version bump of `contractVersion` in the MCP wire contract.
+
 ## 0. Mission
 
 Build the best open-source cryptographic discovery tool in existence. A single, fast, dependency-free binary that scans source code, running TLS services, X.509 certificates, and dependency manifests; identifies every cryptographic asset; scores each for quantum vulnerability against the NIST IR 8547 timeline; and produces (a) a standards-compliant CycloneDX 1.7 CBOM (with `--schema-version 1.6` opt-in), (b) a self-contained HTML report, and (c) machine outputs (JSON / SARIF 2.1.0). Ships with a sophisticated, lightweight TUI.
@@ -57,6 +59,8 @@ formula defined in our own data (`default-policy.toml`), tightly coupled to
 types in `core` (`AlgorithmRecord`, `Policy`, `Finding`, `QuantumStatus`). A
 separate crate would force every dependent type to become `pub` at the `core`
 boundary for the sole purpose of being re-imported. Keep it inline.
+
+The **MCP wire contract** (`cryptoscope/MCP.md`) is the architectural spine between this deterministic Rust workspace and any agent layer. It specifies the stdio JSON-RPC 2.0 transport, the full 11-tool surface, streaming semantics, failure modes, and versioning rules for the `cryptoscope mcp` subcommand. JSON schemas for the core domain types (`Finding`, `CryptoAsset`, `RiskScore`) live in `crates/core/schema/` and are referenced by `$ref` from the wire contract. No schema definitions are duplicated between the workspace and the contract document.
 
 ## 3. The crypto knowledge base (D-04)
 
