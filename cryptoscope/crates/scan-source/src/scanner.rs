@@ -14,7 +14,10 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use cryptoscope_core::{AlgorithmTable, Confidence, Exposure, Finding, Location, UsageContext};
+use cryptoscope_core::{
+    AlgorithmTable, Confidence, Exposure, Finding, Location, ScanWarning, ScanWarningKind,
+    UsageContext,
+};
 use thiserror::Error;
 use tree_sitter::{Node, Parser};
 
@@ -113,18 +116,47 @@ impl Scanner {
 
     /// Scan a single file or recurse over a directory. Honors `.gitignore`.
     pub fn scan_path(&self, root: &Path) -> Result<Vec<Finding>, ScanError> {
+        let mut warnings = Vec::new();
+        self.scan_path_collecting(root, &mut warnings)
+    }
+
+    /// Like [`scan_path`] but converts per-file errors into [`ScanWarning`]s
+    /// pushed onto `warnings` instead of aborting. The whole-scan return value
+    /// only fails for truly catastrophic errors (root path doesn't exist, etc.).
+    ///
+    /// Phase 6: a single unreadable file or grammar parse failure shouldn't
+    /// kill the scan over a 150-project corpus.
+    pub fn scan_path_collecting(
+        &self,
+        root: &Path,
+        warnings: &mut Vec<ScanWarning>,
+    ) -> Result<Vec<Finding>, ScanError> {
         let mut findings = Vec::new();
         if root.is_file() {
-            self.scan_file_into(root, &mut findings)?;
+            if let Err(e) = self.scan_file_into(root, &mut findings) {
+                warnings.push(scan_warning_for(root, &e));
+            }
             return Ok(findings);
         }
         for entry in ignore::WalkBuilder::new(root)
             .standard_filters(true)
             .build()
         {
-            let entry = entry?;
-            if entry.file_type().map(|t| t.is_file()).unwrap_or(false) {
-                self.scan_file_into(entry.path(), &mut findings)?;
+            let entry = match entry {
+                Ok(e) => e,
+                Err(e) => {
+                    warnings.push(ScanWarning::new(
+                        ScanWarningKind::WalkError,
+                        None,
+                        format!("walk: {e}"),
+                    ));
+                    continue;
+                }
+            };
+            if entry.file_type().map(|t| t.is_file()).unwrap_or(false)
+                && let Err(e) = self.scan_file_into(entry.path(), &mut findings)
+            {
+                warnings.push(scan_warning_for(entry.path(), &e));
             }
         }
         Ok(findings)
@@ -152,6 +184,18 @@ impl Scanner {
 }
 
 /// Decide a language from a file path.
+/// Map a [`ScanError`] surfaced for a specific file into a structured warning.
+fn scan_warning_for(path: &Path, err: &ScanError) -> ScanWarning {
+    let kind = match err {
+        ScanError::Io(_) => ScanWarningKind::UnreadableFile,
+        ScanError::GrammarLoad(_) => ScanWarningKind::ParseError,
+        ScanError::RegexCompile(_) => ScanWarningKind::Other,
+        ScanError::Walk(_) => ScanWarningKind::WalkError,
+        ScanError::UnknownAlgorithm(_) => ScanWarningKind::Other,
+    };
+    ScanWarning::new(kind, Some(path.to_path_buf()), err.to_string())
+}
+
 fn detect_language(path: &Path) -> Option<Language> {
     let ext = path.extension()?.to_str()?;
     match ext {

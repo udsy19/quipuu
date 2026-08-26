@@ -19,12 +19,14 @@ pub mod finding;
 pub mod oid;
 pub mod policy;
 pub mod risk;
+pub mod warnings;
 
 pub use algorithm::{AlgorithmRecord, AlgorithmTable, Primitive, QuantumStatus};
 pub use finding::{Confidence, Exposure, Finding, Location, Severity, UsageContext};
 pub use oid::{OidMapping, OidTable};
 pub use policy::Policy;
 pub use risk::QuantumRiskScore;
+pub use warnings::{ScanWarning, ScanWarningKind};
 
 use thiserror::Error;
 

@@ -29,6 +29,17 @@ pub enum ScanError {
     UnknownAlgorithm(String),
 }
 
+/// Map a [`ScanError`] from a specific cert file into a structured warning.
+fn cert_warning(path: &Path, err: &ScanError) -> cryptoscope_core::ScanWarning {
+    use cryptoscope_core::{ScanWarning, ScanWarningKind};
+    let kind = match err {
+        ScanError::Io(_) => ScanWarningKind::UnreadableFile,
+        ScanError::Parse(_) => ScanWarningKind::CertDecodeError,
+        ScanError::UnknownAlgorithm(_) => ScanWarningKind::Other,
+    };
+    ScanWarning::new(kind, Some(path.to_path_buf()), err.to_string())
+}
+
 /// OID for RSA public key type.
 const OID_RSA_ENCRYPTION: &str = "1.2.840.113549.1.1.1";
 /// OID for EC public key type.
@@ -82,6 +93,19 @@ impl CertScanner {
     /// Scan a single PEM or DER file, or a directory of certificate files.
     /// Directories are walked recursively; `.gitignore` is honoured.
     pub fn scan_path(&self, root: &Path) -> Result<Vec<Finding>, ScanError> {
+        let mut warnings = Vec::new();
+        self.scan_path_collecting(root, &mut warnings)
+    }
+
+    /// Like [`scan_path`] but converts per-file PEM/DER decode errors into
+    /// [`ScanWarning`]s pushed onto `warnings` instead of aborting. Phase 6.
+    pub fn scan_path_collecting(
+        &self,
+        root: &Path,
+        warnings: &mut Vec<cryptoscope_core::ScanWarning>,
+    ) -> Result<Vec<Finding>, ScanError> {
+        use cryptoscope_core::{ScanWarning, ScanWarningKind};
+
         if !root.exists() {
             return Err(ScanError::Io(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
@@ -92,17 +116,29 @@ impl CertScanner {
         let mut findings = Vec::new();
 
         if root.is_file() {
-            self.scan_file_into(root, &mut findings)?;
+            if let Err(e) = self.scan_file_into(root, &mut findings) {
+                warnings.push(cert_warning(root, &e));
+            }
         } else {
-            // Walk directory, honouring .gitignore.
             for entry in ignore::WalkBuilder::new(root)
                 .standard_filters(true)
                 .build()
             {
-                let entry =
-                    entry.map_err(|e| ScanError::Io(std::io::Error::other(e.to_string())))?;
-                if entry.file_type().map(|t| t.is_file()).unwrap_or(false) {
-                    self.scan_file_into(entry.path(), &mut findings)?;
+                let entry = match entry {
+                    Ok(e) => e,
+                    Err(e) => {
+                        warnings.push(ScanWarning::new(
+                            ScanWarningKind::WalkError,
+                            None,
+                            format!("scan-certs walk: {e}"),
+                        ));
+                        continue;
+                    }
+                };
+                if entry.file_type().map(|t| t.is_file()).unwrap_or(false)
+                    && let Err(e) = self.scan_file_into(entry.path(), &mut findings)
+                {
+                    warnings.push(cert_warning(entry.path(), &e));
                 }
             }
         }

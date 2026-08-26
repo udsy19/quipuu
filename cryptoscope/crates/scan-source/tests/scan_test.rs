@@ -822,3 +822,69 @@ fn phase1_main_java_unchanged() {
         );
     }
 }
+
+// ── Phase 6: non-fatal warnings ─────────────────────────────────────────────
+
+#[test]
+fn phase6_unreadable_file_becomes_warning_not_error() {
+    use cryptoscope_core::ScanWarningKind;
+    use std::fs;
+    use std::os::unix::fs::PermissionsExt;
+
+    // Build a fresh per-test temp dir (no external tempfile crate dep).
+    let tmp = std::env::temp_dir().join(format!(
+        "cryptoscope-phase6-{}-{}",
+        std::process::id(),
+        line!()
+    ));
+    let _ = fs::remove_dir_all(&tmp);
+    fs::create_dir_all(&tmp).unwrap();
+
+    let good = tmp.join("good.go");
+    fs::write(
+        &good,
+        b"package main\nimport \"crypto/rsa\"\nfunc main() {\n  rsa.GenerateKey(nil, 1024)\n}\n",
+    )
+    .unwrap();
+    let bad = tmp.join("bad.go");
+    fs::write(&bad, b"package main\n").unwrap();
+    fs::set_permissions(&bad, fs::Permissions::from_mode(0o000)).unwrap();
+
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let mut warnings = Vec::new();
+    let findings = scanner
+        .scan_path_collecting(&tmp, &mut warnings)
+        .expect("scan should NOT fail on per-file errors after Phase 6");
+
+    // Restore perms before cleanup.
+    let _ = fs::set_permissions(&bad, fs::Permissions::from_mode(0o644));
+    let _ = fs::remove_dir_all(&tmp);
+
+    assert!(
+        !findings.is_empty(),
+        "good.go must produce an RSA-1024 finding even when bad.go is unreadable"
+    );
+    assert!(
+        warnings
+            .iter()
+            .any(|w| w.kind == ScanWarningKind::UnreadableFile),
+        "expected an UnreadableFile warning, got: {warnings:?}"
+    );
+}
+
+#[test]
+fn phase6_clean_scan_produces_no_warnings() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let mut warnings = Vec::new();
+    let findings = scanner
+        .scan_path_collecting(&fixtures_root().join("go/main.go"), &mut warnings)
+        .expect("scan should succeed");
+
+    assert!(!findings.is_empty(), "fixture must produce findings");
+    assert!(
+        warnings.is_empty(),
+        "clean scan should produce no warnings, got: {warnings:?}"
+    );
+}

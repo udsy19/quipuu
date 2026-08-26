@@ -93,6 +93,12 @@ FILTERS:
                               are always present in the CBOM. Default: hidden
                               because they drown out actionable findings.
 
+DIAGNOSTICS:
+    --show-errors             Print the per-file scan warnings (parse failures,
+                              unreadable files, malformed manifests). By default
+                              cryptoscope prints a one-line count and continues —
+                              a single bad file should not kill the run.
+
 MISC:
     --version                 Print version
     --help                    Print this help
@@ -116,6 +122,7 @@ struct ScanFlags {
     summary_out: Option<PathBuf>,
     open_tui: bool,
     include_safe: bool,
+    show_errors: bool,
 }
 
 fn parse_scan_flags(tail: &[String]) -> ScanFlags {
@@ -175,6 +182,9 @@ fn parse_scan_flags(tail: &[String]) -> ScanFlags {
             "--include-safe" => {
                 flags.include_safe = true;
             }
+            "--show-errors" => {
+                flags.show_errors = true;
+            }
             "--schema-version" => {
                 if let Some(v) = it.next() {
                     flags.schema_version = match v.as_str() {
@@ -215,9 +225,12 @@ fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
     };
 
     let mut findings: Vec<Finding> = Vec::new();
+    let mut warnings: Vec<cryptoscope_core::ScanWarning> = Vec::new();
 
     if flags.scan_source {
-        match Scanner::with_builtins(builtins.algorithms.clone()).and_then(|s| s.scan_path(&path)) {
+        match Scanner::with_builtins(builtins.algorithms.clone())
+            .and_then(|s| s.scan_path_collecting(&path, &mut warnings))
+        {
             Ok(mut f) => findings.append(&mut f),
             Err(e) => {
                 eprintln!("cryptoscope: source scan failed: {e}");
@@ -227,7 +240,9 @@ fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
     }
 
     if flags.scan_certs {
-        match CertScanner::with_builtins().and_then(|s| s.scan_path(&path)) {
+        match CertScanner::with_builtins()
+            .and_then(|s| s.scan_path_collecting(&path, &mut warnings))
+        {
             Ok(mut f) => findings.append(&mut f),
             Err(e) => {
                 eprintln!("cryptoscope: cert scan failed: {e}");
@@ -238,7 +253,7 @@ fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
 
     if flags.scan_deps {
         let scanner = DepScanner::with_builtins();
-        match scanner.scan_path(&path) {
+        match scanner.scan_path_collecting(&path, &mut warnings) {
             Ok(mut f) => findings.append(&mut f),
             Err(e) => {
                 eprintln!("cryptoscope: deps scan failed: {e}");
@@ -436,6 +451,27 @@ fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
         if let Err(e) = tui.run() {
             eprintln!("cryptoscope: TUI failed: {e}");
             return ExitCode::FAILURE;
+        }
+    }
+
+    // ── Phase 6: surface non-fatal scan warnings ───────────────────────────
+    // Default: one-line count so the user knows something was skipped.
+    // --show-errors: dump the structured list (kind, path, message).
+    if !warnings.is_empty() {
+        eprintln!(
+            "cryptoscope: {} non-fatal scan warning(s)\
+             ; pass --show-errors to list them",
+            warnings.len()
+        );
+        if flags.show_errors {
+            for w in &warnings {
+                let path = w
+                    .path
+                    .as_ref()
+                    .map(|p| p.display().to_string())
+                    .unwrap_or_else(|| "<no path>".into());
+                eprintln!("  {:?}\t{}\t{}", w.kind, path, w.message);
+            }
         }
     }
 

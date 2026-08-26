@@ -81,15 +81,38 @@ impl DepScanner {
     ///
     /// The walk respects `.gitignore` rules (via the `ignore` crate).
     /// Parse errors for individual manifests are **not** fatal — they are
-    /// returned as separate [`ScanError::Parse`] entries logged via `tracing`.
-    /// Only I/O errors on the walk itself propagate.
+    /// logged via `tracing::warn!`. Only I/O errors on the walk itself
+    /// propagate. To capture per-manifest errors in a structured form use
+    /// [`scan_path_collecting`](Self::scan_path_collecting).
     pub fn scan_path(&self, root: &Path) -> Result<Vec<Finding>, ScanError> {
-        let mut findings = Vec::new();
+        let mut warnings = Vec::new();
+        self.scan_path_collecting(root, &mut warnings)
+    }
 
+    /// Like [`scan_path`] but pushes per-manifest parse failures onto
+    /// `warnings` as structured [`ScanWarning`]s. Phase 6.
+    pub fn scan_path_collecting(
+        &self,
+        root: &Path,
+        warnings: &mut Vec<cryptoscope_core::ScanWarning>,
+    ) -> Result<Vec<Finding>, ScanError> {
+        use cryptoscope_core::{ScanWarning, ScanWarningKind};
+
+        let mut findings = Vec::new();
         let walker = WalkBuilder::new(root).follow_links(false).build();
 
         for result in walker {
-            let entry = result?;
+            let entry = match result {
+                Ok(e) => e,
+                Err(e) => {
+                    warnings.push(ScanWarning::new(
+                        ScanWarningKind::WalkError,
+                        None,
+                        format!("scan-deps walk: {e}"),
+                    ));
+                    continue;
+                }
+            };
             let path = entry.path();
 
             if !path.is_file() {
@@ -119,8 +142,12 @@ impl DepScanner {
             match manifest_findings {
                 Ok(mut fs) => findings.append(&mut fs),
                 Err(e) => {
-                    // Non-fatal: log and continue
                     tracing::warn!("scan-deps: skipping {}: {}", path.display(), e);
+                    warnings.push(ScanWarning::new(
+                        ScanWarningKind::DepManifestError,
+                        Some(path.to_path_buf()),
+                        e.to_string(),
+                    ));
                 }
             }
         }
