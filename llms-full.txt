@@ -1,0 +1,151 @@
+# cryptoscope
+
+> A single static binary that finds every piece of cryptography in your
+> codebase, dependencies, X.509 certs, and TLS endpoints — then classifies
+> against NIST's post-quantum migration timeline and emits standards-compliant
+> CycloneDX 1.7 CBOM, SARIF 2.1.0, and an auditor-grade HTML report.
+> Deterministic. Offline. Trust invariants P1-P4 (see README.md).
+
+## Documentation
+
+- [README.md](README.md): project overview, positioning, quickstart, trust invariants
+- [SPEC.md](SPEC.md): build spec; every section traces to a D-NN decision in knowledge/11-decisions/
+- [cryptoscope/MCP.md](cryptoscope/MCP.md): MCP wire contract — the spine between the deterministic scanner and any agent layer
+- [knowledge/README.md](knowledge/README.md): research and decisions index
+
+## Wire contract
+
+- [cryptoscope/crates/core/schema/](cryptoscope/crates/core/schema/): JSON Schemas (Draft 2020-12)
+- 11 MCP verbs documented in cryptoscope/MCP.md §3
+- P3 enforced: provenance enum = ["deterministic"] only in OSS
+
+## Knowledge base
+
+- [knowledge/02-nist-pqc-timeline/](knowledge/02-nist-pqc-timeline/): NIST IR 8547 IPD, FIPS 203/204/205
+- [knowledge/04-tls-pqc/](knowledge/04-tls-pqc/): IANA TLS supported-groups + signature schemes
+- [knowledge/05-x509-pqc/](knowledge/05-x509-pqc/): PQC X.509 OIDs (RFC 9881/9909/9935)
+- [knowledge/11-decisions/](knowledge/11-decisions/): 13 Why → Evidence → Decision entries
+
+## Optional
+
+- [knowledge/09-regulatory/](knowledge/09-regulatory/): OMB M-23-02, EU CRA, UK NCSC, CNSA 2.0
+- [knowledge/10-design-partners/](knowledge/10-design-partners/): Cloudflare, Apple, AWS PQC programs
+
+---
+
+## README.md — Key sections
+
+### Project overview
+
+cryptoscope is a single static binary that scans source code (tree-sitter, Go + Python at v0.1), dependency manifests (go.mod, Cargo.toml, requirements.txt, package.json, pom.xml), X.509 certificates (PEM/DER), and TLS endpoints — then classifies every finding against the NIST IR 8547 IPD deprecation timeline. Output formats: CycloneDX 1.7 CBOM (primary), CycloneDX 1.6 (--schema-version 1.6), SARIF 2.1.0 (GitHub/GitLab), auditor-grade self-contained HTML, and summary JSON.
+
+Status: v0.1 — walking skeleton. All four scanners, the risk engine, and every output format work end-to-end against real fixtures and live hosts.
+
+### Trust invariants (P1-P4)
+
+These four invariants are contractual. Any change requires a major version bump.
+
+- P1. Never calls an LLM at runtime.
+- P2. Never opens a listening socket, and makes no outbound connection by default. Outbound TLS connections are made only by scan_network and host-mode scan_certs, only when --allow-network is passed at process launch (never enabled over the wire). The stdio MCP transport uses no socket of any kind.
+- P3. Every finding traces to a literal in the source data. Each Finding carries a non-null evidence.occurrences[].location with file + line + snippet.
+- P4. Never executes customer code.
+
+### Positioning
+
+Browsers solved the easy half of the PQC migration. As of mid-2026, ~65% of human web traffic to Cloudflare is post-quantum-encrypted. Chrome/Firefox/iOS ship X25519MLKEM768 by default. OpenSSL 3.5 has native ML-KEM. The other half — internal services, dependency trees, X.509 certificates, forgotten cron jobs — is the long tail. The NIST NCCoE SP 1800-38B states: "no single product finds all vulnerable crypto." That is the gap cryptoscope fills.
+
+### Risk scoring (5-axis QuantumRiskScore, 0-100)
+
+Severity bands: >=75 Critical, 50-74 High, 25-49 Medium, 10-24 Low, <10 Safe.
+
+| Axis                 | Max | Inputs                                              |
+|----------------------|-----|-----------------------------------------------------|
+| AlgorithmVulnerability | 40 | Quantum status x broken-classically flag           |
+| UsageContext          | 25 | KEM/signature/auth, ephemeral vs. long-lived       |
+| DataShelfLife         | 15 | Policy file: scope-glob -> years bucket            |
+| Exposure              | 10 | Public-internet / internal / local                 |
+| DetectionConfidence   | 10 | Literal arg / type name / variable / string table  |
+
+### Quickstart
+
+```
+cd cryptoscope
+cargo build --release
+./target/release/cryptoscope scan ./my-project --certs --deps \
+  --cbom out.cbom.json --html out.html --sarif out.sarif
+```
+
+---
+
+## SPEC.md §1-2 — Tech stack and architecture
+
+Tech stack (decided; do not deviate without flagging):
+
+- Language: Rust (single static binary, performance, cross-compilation)
+- TUI: ratatui + crossterm
+- Source parsing: tree-sitter with per-language grammars. Start: Go, Python. Architecture makes adding a language a matter of dropping in a grammar + rule pack.
+- TLS scanning: two-tier — rustls 0.23 + aws-lc-rs + tokio-rustls for production codepoints; raw tokio::net::TcpStream + tls-parser for legacy/draft codepoints.
+- X.509 parsing: x509-parser 0.18+ + project-owned PQC OID table (D-09).
+- CLI: clap (derive API). Serialization: serde / serde_json. Concurrency: rayon (CPU-bound), tokio (network I/O).
+
+Workspace crates: core, scan-source, scan-certs, scan-deps, scan-network, cbom, report, tui, cli.
+
+The MCP wire contract (cryptoscope/MCP.md) is the architectural spine between the deterministic Rust workspace and any agent layer. JSON schemas for core domain types (Finding, CryptoAsset, RiskScore) live in crates/core/schema/.
+
+---
+
+## MCP.md §0 — Design invariants
+
+(Same as Trust invariants P1-P4 above. Enforcement details:)
+
+- P1 enforcement: no LLM SDK or HTTP client in crates/cli/src/mcp/. CI lint: cargo deny forbids reqwest/openai/anthropic/langchain dependencies in the MCP crate.
+- P2 enforcement: scan_network and host-mode scan_certs gate on a process-level flag set exclusively via CLI argument. MCP server code path has no TcpListener::bind.
+- P3 enforcement: each Finding carries non-null evidence.occurrences[].location with file + line + snippet. emit_cbom and emit_sarif tools reject findings without provenance.
+- P4 enforcement: no std::process::Command or eval-equivalent inside any tool handler. Dependency scanning reads manifest files only; does not invoke package managers.
+
+## MCP.md §3 — Tool surface (11 tools)
+
+The MCP server exposes 11 tools over stdio JSON-RPC 2.0. All tool names use snake_case. All inputs/outputs conform to schemas in crates/core/schema/.
+
+1. scan_source — walk a directory, parse source files with tree-sitter, emit crypto findings. Returns session_id + finding_count. p95 <=30s for 1M-LOC on 4-core laptop.
+2. scan_certs — parse X.509 PEM/DER files or live TLS host, classify against algorithm table. p95 <=2s per chain.
+3. scan_deps — parse dependency manifests, flag known crypto libraries. p95 <=5s for 200 manifests.
+4. scan_network — probe TLS endpoints for cipher suites, key-exchange groups, sigalgs. Requires --allow-network (P2). p95 <=15s per host.
+5. emit_cbom — serialize session findings as CycloneDX CBOM JSON. p95 <=3s for 10k findings.
+6. emit_sarif — serialize findings as SARIF 2.1.0 file. p95 <=3s for 10k findings.
+7. validate_cbom — validate existing CBOM JSON against CycloneDX schema. p95 <=500ms.
+8. run_acvp_kats — run embedded ACVP known-answer tests for algorithm table. p95 <=10s.
+9. query_findings — query session findings with filtering/sorting/pagination. p95 <=200ms for 10k findings.
+10. get_scan_results — retrieve full findings list via cursor pagination. p95 <=100ms per page.
+11. get_capabilities — return server capability set (contractVersion, rulesetVersion, supportedLanguages, etc.).
+
+Transport: stdio JSON-RPC 2.0 only. No HTTP, no WebSocket, no TCP listener. Stateless between requests except an in-memory scan result cache (up to 4 sessions, LRU eviction).
+
+---
+
+## Standards anchors
+
+- CycloneDX 1.7 (ECMA-424 2nd Edition, December 2025) — primary CBOM output format
+- NIST IR 8547 IPD (November 2024) — deprecation/disallow timeline for classical asymmetric crypto
+- NIST FIPS 203/204/205 (August 2024, final) — ML-KEM, ML-DSA, SLH-DSA
+- SARIF 2.1.0 (OASIS) — code-scanning interchange
+- NSA CNSA 2.0 — alternative aggressive timeline (--policy nsa-cnsa2)
+- RFC 9881/9909/9935 — IETF LAMPS PQC certificate OIDs
+
+---
+
+## Regulatory deadlines (pre-deadline market)
+
+- Canada: April 2026 — annual-report PQC inventory mandate
+- EU CRA: December 2027 — Cyber Resilience Act, cryptographic agility requirements
+- UK NCSC: 2028 — migration deadline for critical national infrastructure
+- Australia ASD ISM: 2030 — post-quantum transition target
+
+---
+
+## Lite/Pro split
+
+- OSS (AGPL): the scanner binary, all four scan modes, all output formats, MCP server. No LLM calls. No phone-home. Fully offline.
+- Pro (commercial): orchestration layer (Python + Pydantic AI + LangGraph) wraps the OSS binary over stdio MCP. Adds: automated remediation PR generation, sandbox execution, drift monitoring, hosted service. LLM calls live exclusively in the Pro layer; all P1-P4 invariants are preserved end-to-end.
+
+The Pro engine never modifies the OSS binary's behavior; it only calls its MCP tools over stdio.

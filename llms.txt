@@ -1,0 +1,32 @@
+# cryptoscope
+
+> A single static binary that finds every piece of cryptography in your
+> codebase, dependencies, X.509 certs, and TLS endpoints — then classifies
+> against NIST's post-quantum migration timeline and emits standards-compliant
+> CycloneDX 1.7 CBOM, SARIF 2.1.0, and an auditor-grade HTML report.
+> Deterministic. Offline. Trust invariants P1-P4 (see README.md).
+
+## Documentation
+
+- [README.md](README.md): project overview, positioning, quickstart, trust invariants
+- [SPEC.md](SPEC.md): build spec; every section traces to a D-NN decision in knowledge/11-decisions/
+- [cryptoscope/MCP.md](cryptoscope/MCP.md): MCP wire contract — the spine between the deterministic scanner and any agent layer
+- [knowledge/README.md](knowledge/README.md): research and decisions index
+
+## Wire contract
+
+- [cryptoscope/crates/core/schema/](cryptoscope/crates/core/schema/): JSON Schemas (Draft 2020-12)
+- 11 MCP verbs documented in cryptoscope/MCP.md §3
+- P3 enforced: provenance enum = ["deterministic"] only in OSS
+
+## Knowledge base
+
+- [knowledge/02-nist-pqc-timeline/](knowledge/02-nist-pqc-timeline/): NIST IR 8547 IPD, FIPS 203/204/205
+- [knowledge/04-tls-pqc/](knowledge/04-tls-pqc/): IANA TLS supported-groups + signature schemes
+- [knowledge/05-x509-pqc/](knowledge/05-x509-pqc/): PQC X.509 OIDs (RFC 9881/9909/9935)
+- [knowledge/11-decisions/](knowledge/11-decisions/): 13 Why → Evidence → Decision entries
+
+## Optional
+
+- [knowledge/09-regulatory/](knowledge/09-regulatory/): OMB M-23-02, EU CRA, UK NCSC, CNSA 2.0
+- [knowledge/10-design-partners/](knowledge/10-design-partners/): Cloudflare, Apple, AWS PQC programs
