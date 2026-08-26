@@ -1,0 +1,29 @@
+[project]
+name = "setuptools"
+ecosystem = "pypi"
+canonical_id = "pypi:setuptools"
+description = "Python packaging and distribution utilities"
+why_included = "Top-5 PyPI by downloads; present in virtually every Python environment; limited direct crypto surface but processes package metadata and signatures via wheel verification"
+
+[repo]
+url = "https://github.com/pypa/setuptools"
+commit_sha = "84ed5913724df5a12dc804e1d5efe12508e706d2"
+license = "MIT"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 500000000
+captured_at = "2026-06-15"
+stars = 2400
+last_commit_date = "2026-06-11"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 7
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

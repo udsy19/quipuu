@@ -1,0 +1,29 @@
+[project]
+name = "aws-java-sdk-kms"
+ecosystem = "maven"
+canonical_id = "maven:com.amazonaws:aws-java-sdk-kms"
+description = "AWS SDK for Java — KMS (Key Management Service) module"
+why_included = "Top-40 Maven; wraps AWS KMS APIs for key generation, encryption, signing; RSA/ECDSA/AES-GCM key operations; direct PQC migration surface for AWS-hosted key management"
+
+[repo]
+url = "https://github.com/aws/aws-sdk-java"
+commit_sha = "d866126817fcc10595a3e7cd4b40efe626f05a7c"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 6000000
+captured_at = "2026-06-15"
+stars = 4200
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 14
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["aws-java-sdk-kms/src/main/java/"]
+exclude_paths = ["aws-java-sdk-kms/src/test/"]
+expected_languages = ["java"]

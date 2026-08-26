@@ -1,0 +1,29 @@
+[project]
+name = "aws-encryption-sdk-c"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/aws/aws-encryption-sdk-c"
+description = "AWS Encryption SDK for C — envelope encryption with AWS KMS and CMK support"
+why_included = "AWS production C encryption SDK; AES-GCM envelope encryption; AWS KMS key wrapping; multi-master-key support; C implementation ensures C/C++ crypto surface coverage"
+
+[repo]
+url = "https://github.com/aws/aws-encryption-sdk-c"
+commit_sha = "b29a222841794772d513794bb1bca9f3a929b7cf"
+license = "Apache-2.0"
+language_primary = "c"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 100000
+captured_at = "2026-06-15"
+stars = 340
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 23
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["source/", "include/aws/cryptosdk/"]
+exclude_paths = ["tests/"]
+expected_languages = ["c"]

@@ -1,0 +1,29 @@
+[project]
+name = "sha-1"
+ecosystem = "crates-io"
+canonical_id = "crates-io:sha-1"
+description = "SHA-1 hash function in pure Rust"
+why_included = "Top-20 crates.io; RustCrypto SHA-1; deprecated but still widely used; scanner must flag SHA-1 usage as quantum-adjacent weak hash; same repo as sha2"
+
+[repo]
+url = "https://github.com/RustCrypto/hashes"
+commit_sha = "a71566a89f78720dbdaf4aed9883760870e8ef90"
+license = "MIT OR Apache-2.0"
+language_primary = "rust"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 8000000
+captured_at = "2026-06-15"
+stars = 1700
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 11
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["sha1/src/"]
+exclude_paths = []
+expected_languages = ["rust"]

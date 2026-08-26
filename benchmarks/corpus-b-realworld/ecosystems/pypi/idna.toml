@@ -1,0 +1,29 @@
+[project]
+name = "idna"
+ecosystem = "pypi"
+canonical_id = "pypi:idna"
+description = "Internationalized Domain Names in Applications (IDNA) support"
+why_included = "Top-10 PyPI by downloads; pulled by requests/urllib3; hostname validation is relevant to TLS certificate verification surface"
+
+[repo]
+url = "https://github.com/kjd/idna"
+commit_sha = "862150e12779792900343b48a1223beb5e2b62f7"
+license = "BSD-3-Clause"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 320000000
+captured_at = "2026-06-15"
+stars = 250
+last_commit_date = "2026-04-10"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 6
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

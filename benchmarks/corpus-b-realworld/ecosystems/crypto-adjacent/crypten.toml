@@ -1,0 +1,29 @@
+[project]
+name = "crypten"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/facebookresearch/CrypTen"
+description = "CrypTen — Privacy-preserving machine learning framework using secure multi-party computation"
+why_included = "MPC/SMPC crypto library for ML; garbled circuits; secret sharing; homomorphic operations; emerging ML+crypto intersection critical for future-safe AI deployments"
+
+[repo]
+url = "https://github.com/facebookresearch/CrypTen"
+commit_sha = "775868a02d6dac50774ce376a55b01fbd8bd85b6"
+license = "MIT"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 50000
+captured_at = "2026-06-15"
+stars = 1800
+last_commit_date = "2026-03-01"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 22
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["crypten/mpc/", "crypten/primitives/"]
+exclude_paths = ["test/", "tutorials/"]
+expected_languages = ["python"]

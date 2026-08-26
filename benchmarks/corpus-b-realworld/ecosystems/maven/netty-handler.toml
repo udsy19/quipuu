@@ -1,0 +1,29 @@
+[project]
+name = "netty-handler"
+ecosystem = "maven"
+canonical_id = "maven:io.netty:netty-handler"
+description = "Netty network application framework — TLS/SSL handler"
+why_included = "Top-20 Maven; implements TLS via JDK SSLEngine + custom SslHandler; wide protocol surface; used by gRPC, Cassandra, Elasticsearch; critical TLS migration target"
+
+[repo]
+url = "https://github.com/netty/netty"
+commit_sha = "ec35cbeff85c12137e70ca25b77988606ecca33d"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 25000000
+captured_at = "2026-06-15"
+stars = 33000
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 5
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["handler/src/main/java/", "common/src/main/java/"]
+exclude_paths = ["handler/src/test/"]
+expected_languages = ["java"]

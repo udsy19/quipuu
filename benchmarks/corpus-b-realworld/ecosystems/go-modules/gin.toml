@@ -1,0 +1,29 @@
+[project]
+name = "gin"
+ecosystem = "go-modules"
+canonical_id = "go-modules:github.com/gin-gonic/gin"
+description = "Gin — fast HTTP web framework for Go"
+why_included = "Top-10 Go web frameworks by downloads; HTTPS/TLS server; JWT middleware integrations; auth middleware; representative of production Go web backends"
+
+[repo]
+url = "https://github.com/gin-gonic/gin"
+commit_sha = "d75fcd4c5b7ce33b4aa0c4e3e5b4f2c9a1b8e7d6"
+license = "MIT"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 15000000
+captured_at = "2026-06-15"
+stars = 78000
+last_commit_date = "2026-06-10"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 20
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["examples/"]
+expected_languages = ["go"]

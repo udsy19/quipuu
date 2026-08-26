@@ -1,0 +1,29 @@
+[project]
+name = "pgx"
+ecosystem = "go-modules"
+canonical_id = "go-modules:github.com/jackc/pgx"
+description = "pgx — PostgreSQL driver and toolkit for Go"
+why_included = "Top-25 Go modules; TLS for PostgreSQL connections; SCRAM-SHA-256 authentication; GSSAPI; certificate verification; database crypto surface"
+
+[repo]
+url = "https://github.com/jackc/pgx"
+commit_sha = "7293fb112e4e5aabbb1f41d95e9f1e7c4f8b2a3d"
+license = "MIT"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 9000000
+captured_at = "2026-06-15"
+stars = 10000
+last_commit_date = "2026-06-10"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 23
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["pgconn/"]
+exclude_paths = []
+expected_languages = ["go"]

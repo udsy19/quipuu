@@ -1,0 +1,29 @@
+[project]
+name = "age"
+ecosystem = "crates-io"
+canonical_id = "crates-io:age"
+description = "age file encryption library in Rust"
+why_included = "Top-30 crates.io; X25519/Ed25519/scrypt encryption format; ChaCha20-Poly1305/AES-GCM; modern file encryption with quantum-vulnerable key agreement"
+
+[repo]
+url = "https://github.com/str4d/age"
+commit_sha = "9fdb1256415935a4425b6b607ea843ff85b854ae"
+license = "MIT OR Apache-2.0"
+language_primary = "rust"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 1500000
+captured_at = "2026-06-15"
+stars = 2300
+last_commit_date = "2026-04-01"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 23
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["age/src/"]
+exclude_paths = ["tests/"]
+expected_languages = ["rust"]

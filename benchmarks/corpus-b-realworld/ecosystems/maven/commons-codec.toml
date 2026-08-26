@@ -1,0 +1,29 @@
+[project]
+name = "commons-codec"
+ecosystem = "maven"
+canonical_id = "maven:commons-codec:commons-codec"
+description = "Apache Commons Codec — encoders/decoders (Base64, Hex, MD5, SHA)"
+why_included = "Top-10 Maven by downloads; MD5/SHA-1/SHA-256 digest utilities; Base64 encoding used by every crypto workflow; high-visibility target for scanner false-positive validation on digest helpers"
+
+[repo]
+url = "https://github.com/apache/commons-codec"
+commit_sha = "931c2fa4672688a58eeec1a98599202759a160b7"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 40000000
+captured_at = "2026-06-15"
+stars = 460
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 9
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/main/java/"]
+exclude_paths = ["src/test/"]
+expected_languages = ["java"]

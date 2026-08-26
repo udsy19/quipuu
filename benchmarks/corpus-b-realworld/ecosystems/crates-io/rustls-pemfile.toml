@@ -1,0 +1,29 @@
+[project]
+name = "rustls-pemfile"
+ecosystem = "crates-io"
+canonical_id = "crates-io:rustls-pemfile"
+description = "Basic PEM file parser for rustls"
+why_included = "Top-30 crates.io; PEM parsing for rustls; included in same repo as rustls; X.509 certificate and private key parsing surface"
+
+[repo]
+url = "https://github.com/rustls/rustls"
+commit_sha = "b6c235b1ed2e64ba8d44257bb9037c935bc9f4ba"
+license = "Apache-2.0 OR ISC OR MIT"
+language_primary = "rust"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 6000000
+captured_at = "2026-06-15"
+stars = 6000
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 3
+substituted_for = "rustls/rustls-pemfile (was separate repo, now part of rustls monorepo)"
+
+[scan_hints]
+scan_paths = ["rustls-pemfile/src/"]
+exclude_paths = []
+expected_languages = ["rust"]

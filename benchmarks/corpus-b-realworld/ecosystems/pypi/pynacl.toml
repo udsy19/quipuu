@@ -1,0 +1,29 @@
+[project]
+name = "pynacl"
+ecosystem = "pypi"
+canonical_id = "pypi:pynacl"
+description = "Python bindings to libsodium (NaCl) cryptographic library"
+why_included = "Top-30 PyPI; exposes Curve25519/Ed25519/XSalsa20/Poly1305 via libsodium; used by paramiko for modern key types; modern-crypto surface"
+
+[repo]
+url = "https://github.com/pyca/pynacl"
+commit_sha = "676db55a7cd96ace2b0f3b97a4ad0ebd55f523aa"
+license = "Apache-2.0"
+language_primary = "python"
+languages_secondary = ["c"]
+
+[metadata]
+downloads_monthly = 45000000
+captured_at = "2026-06-15"
+stars = 1100
+last_commit_date = "2025-12-01"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 18
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

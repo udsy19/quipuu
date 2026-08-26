@@ -1,0 +1,29 @@
+[project]
+name = "mbedtls"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/Mbed-TLS/mbedtls"
+description = "Mbed TLS — portable TLS/SSL library for embedded systems (ARM)"
+why_included = "ARM embedded TLS library; PSA Crypto API (PAKE, FFDH, ECDH); PQC experiments in 3.x; widely deployed in IoT/RTOS; PSA Crypto is target standard for hardware-backed PQC"
+
+[repo]
+url = "https://github.com/Mbed-TLS/mbedtls"
+commit_sha = "cc6887ffe80f7b1cd8e58c84281e834b06ed7f77"
+license = "Apache-2.0"
+language_primary = "c"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 3000000
+captured_at = "2026-06-15"
+stars = 5600
+last_commit_date = "2026-06-14"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 9
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["library/", "include/mbedtls/", "include/psa/"]
+exclude_paths = ["tests/", "programs/"]
+expected_languages = ["c"]

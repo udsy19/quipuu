@@ -1,0 +1,29 @@
+[project]
+name = "pqcrypto"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/rustpq/pqcrypto"
+description = "pqcrypto — Rust bindings to PQClean post-quantum algorithm implementations"
+why_included = "Comprehensive PQC Rust bindings (Kyber/ML-KEM, Dilithium/ML-DSA, Falcon, SPHINCS+, FrodoKEM, HQC, McEliece); PQClean-verified implementations; important for Rust PQC adoption path"
+
+[repo]
+url = "https://github.com/rustpq/pqcrypto"
+commit_sha = "cc7902403ec3e53df9cd0f25f5775c762ca7ccb5"
+license = "MIT"
+language_primary = "rust"
+languages_secondary = ["c"]
+
+[metadata]
+downloads_monthly = 200000
+captured_at = "2026-06-15"
+stars = 450
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 24
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["pqcrypto-kyber/src/", "pqcrypto-dilithium/src/", "pqcrypto-sphincsplus/src/"]
+exclude_paths = []
+expected_languages = ["rust"]

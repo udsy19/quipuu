@@ -1,0 +1,29 @@
+[project]
+name = "cryptacular"
+ecosystem = "maven"
+canonical_id = "maven:org.cryptacular:cryptacular"
+description = "Cryptacular — simplified API over Bouncy Castle"
+why_included = "Top-50 Maven; simplifies Bouncy Castle API; used by Shibboleth IdP; AES/RSA/ECDSA/PBKDF2 with BC backend; enterprise crypto surface"
+
+[repo]
+url = "https://github.com/vt-middleware/cryptacular"
+commit_sha = "6dd03096c0f6b2afc7de3451b3074609f4323fee"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 1000000
+captured_at = "2026-06-15"
+stars = 80
+last_commit_date = "2026-04-01"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 21
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/main/java/"]
+exclude_paths = ["src/test/"]
+expected_languages = ["java"]

@@ -1,0 +1,29 @@
+[project]
+name = "ssh2"
+ecosystem = "npm"
+canonical_id = "npm:ssh2"
+description = "SSH2 client and server implementation for Node.js"
+why_included = "Top-50 npm; implements SSH2 key exchange (ECDH/DH), host key algorithms (RSA/ECDSA/Ed25519), and symmetric ciphers (AES-CTR/GCM, ChaCha20-Poly1305); rich PQC migration surface"
+
+[repo]
+url = "https://github.com/mscdex/ssh2"
+commit_sha = "318d447ce3aca26e1ac73b63767b82a29b02467b"
+license = "MIT"
+language_primary = "javascript"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 20000000
+captured_at = "2026-06-15"
+stars = 5500
+last_commit_date = "2026-02-01"
+
+[selection]
+selection_method = "top-25-npm-downloads"
+selection_rank = 19
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["test/"]
+expected_languages = ["javascript"]

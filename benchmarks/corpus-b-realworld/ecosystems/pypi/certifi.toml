@@ -1,0 +1,29 @@
+[project]
+name = "certifi"
+ecosystem = "pypi"
+canonical_id = "pypi:certifi"
+description = "Mozilla CA certificate bundle for Python"
+why_included = "Top-10 PyPI by downloads; ships the root CA trust store used by requests/urllib3; certificate chain validation is core PQC migration surface"
+
+[repo]
+url = "https://github.com/certifi/python-certifi"
+commit_sha = "d46de621787c609158579929f44b91ce731d01b8"
+license = "MPL-2.0"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 350000000
+captured_at = "2026-06-15"
+stars = 800
+last_commit_date = "2026-05-15"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 5
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

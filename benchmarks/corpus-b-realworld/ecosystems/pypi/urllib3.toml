@@ -1,0 +1,29 @@
+[project]
+name = "urllib3"
+ecosystem = "pypi"
+canonical_id = "pypi:urllib3"
+description = "HTTP library with thread-safe connection pooling and TLS support"
+why_included = "Top-5 PyPI by downloads; implements TLS/HTTPS connection handling; critical TLS surface for PQC migration"
+
+[repo]
+url = "https://github.com/urllib3/urllib3"
+commit_sha = "b6447295fff7b38fdffc67e0df9712d60cef3cc3"
+license = "MIT"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 500000000
+captured_at = "2026-06-15"
+stars = 3800
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 2
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

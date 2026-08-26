@@ -1,0 +1,29 @@
+[project]
+name = "requests"
+ecosystem = "pypi"
+canonical_id = "pypi:requests"
+description = "Simple, elegant HTTP library for Python"
+why_included = "Top-5 PyPI by downloads; wraps urllib3 with TLS certificate verification; canonical HTTP client with crypto surface via SSL session management"
+
+[repo]
+url = "https://github.com/psf/requests"
+commit_sha = "d64b9ad4bf1c14e21e0df3f0f4320fec81180e91"
+license = "Apache-2.0"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 450000000
+captured_at = "2026-06-15"
+stars = 32000
+last_commit_date = "2026-06-08"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 3
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

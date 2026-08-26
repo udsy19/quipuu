@@ -1,0 +1,29 @@
+[project]
+name = "tweetnacl"
+ecosystem = "npm"
+canonical_id = "npm:tweetnacl"
+description = "Port of TweetNaCl cryptography library to JavaScript"
+why_included = "Top-40 npm; Curve25519/Ed25519/XSalsa20/Poly1305/SHA-512; modern algorithms but still quantum-vulnerable for key exchange; used by libsodium alternatives"
+
+[repo]
+url = "https://github.com/dchest/tweetnacl-js"
+commit_sha = "e6141a20553498697e9e7d92fbc4517994caff52"
+license = "Unlicense"
+language_primary = "javascript"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 30000000
+captured_at = "2026-06-15"
+stars = 4100
+last_commit_date = "2025-08-01"
+
+[selection]
+selection_method = "top-25-npm-downloads"
+selection_rank = 15
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["test/"]
+expected_languages = ["javascript"]

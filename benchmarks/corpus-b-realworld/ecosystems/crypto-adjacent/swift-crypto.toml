@@ -1,0 +1,29 @@
+[project]
+name = "swift-crypto"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/apple/swift-crypto"
+description = "Swift Crypto — Apple's open-source Swift implementation of CryptoKit"
+why_included = "Apple's Swift cryptographic library; P256/P384/P521 ECDH/ECDSA; Curve25519; AES-GCM/ChaCha20Poly1305; HKDF; SHA-2; important PQC migration surface for Apple ecosystem services"
+
+[repo]
+url = "https://github.com/apple/swift-crypto"
+commit_sha = "74c0c332df25c122b79e1d0a5299af0509663f11"
+license = "Apache-2.0"
+language_primary = "swift"
+languages_secondary = ["c"]
+
+[metadata]
+downloads_monthly = 2000000
+captured_at = "2026-06-15"
+stars = 1600
+last_commit_date = "2026-06-10"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 21
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["Sources/Crypto/", "Sources/_CryptoExtras/"]
+exclude_paths = ["Tests/"]
+expected_languages = ["swift"]

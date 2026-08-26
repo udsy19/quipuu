@@ -1,0 +1,29 @@
+[project]
+name = "openssl"
+ecosystem = "crates-io"
+canonical_id = "crates-io:openssl"
+description = "OpenSSL bindings for Rust"
+why_included = "Top-15 crates.io; Rust FFI bindings to libssl/libcrypto; exposes full OpenSSL surface through Rust API; RSA/ECDSA/AES/X.509; scanner must handle FFI-based crypto calls"
+
+[repo]
+url = "https://github.com/sfackler/rust-openssl"
+commit_sha = "db9c9e2f5db2ad7b45fd894e8d297ee15bfd0c7c"
+license = "Apache-2.0"
+language_primary = "rust"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 7000000
+captured_at = "2026-06-15"
+stars = 1500
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 25
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["openssl/src/"]
+exclude_paths = ["openssl/test/"]
+expected_languages = ["rust"]

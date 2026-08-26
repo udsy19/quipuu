@@ -1,0 +1,29 @@
+[project]
+name = "s3transfer"
+ecosystem = "pypi"
+canonical_id = "pypi:s3transfer"
+description = "Amazon S3 transfer manager for Python"
+why_included = "Top-20 PyPI by downloads; handles multipart S3 uploads with SigV4 HMAC signing; direct crypto surface via AWS signature computation"
+
+[repo]
+url = "https://github.com/boto/s3transfer"
+commit_sha = "5d3babcd09eae9b500f21f925fc5f5d0dd79daa7"
+license = "Apache-2.0"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 200000000
+captured_at = "2026-06-15"
+stars = 230
+last_commit_date = "2026-05-20"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 10
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

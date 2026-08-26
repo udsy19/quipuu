@@ -1,0 +1,29 @@
+[project]
+name = "rustls-pki-types"
+ecosystem = "crates-io"
+canonical_id = "crates-io:rustls-pki-types"
+description = "Shared PKI types for rustls ecosystem"
+why_included = "Top-20 crates.io; type definitions for certificates, private keys, CRLs used by rustls/webpki; foundational types for PQC-aware certificate handling"
+
+[repo]
+url = "https://github.com/rustls/pki-types"
+commit_sha = "23bc39f3ab01698d32651aac990a9dc4412a588a"
+license = "MIT OR Apache-2.0"
+language_primary = "rust"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 9000000
+captured_at = "2026-06-15"
+stars = 120
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 6
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/"]
+exclude_paths = ["tests/"]
+expected_languages = ["rust"]

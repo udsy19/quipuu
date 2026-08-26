@@ -1,0 +1,29 @@
+[project]
+name = "authlib"
+ecosystem = "pypi"
+canonical_id = "pypi:authlib"
+description = "Python library for OAuth 1.0, OAuth 2.0, OpenID Connect, and JWK/JWS/JWE/JWT"
+why_included = "Top-40 PyPI; full JOSE stack (JWK/JWS/JWE/JWT) plus OAuth2; implements RSA/ECDSA/EdDSA signing; crypto-dense modern auth library"
+
+[repo]
+url = "https://github.com/lepture/authlib"
+commit_sha = "2e7224cf79ac8557495dbf2a2e9dc47e4332e6ec"
+license = "BSD-3-Clause"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 20000000
+captured_at = "2026-06-15"
+stars = 4500
+last_commit_date = "2026-06-01"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 24
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

@@ -1,0 +1,29 @@
+[project]
+name = "jose"
+ecosystem = "pypi"
+canonical_id = "pypi:jose"
+description = "Python implementation of the JOSE standard (python-jose)"
+why_included = "Top-40 PyPI; implements JWS/JWE with RSA/ECDSA/HMAC; widely used in auth pipelines; RSA-OAEP and ECDH-ES key agreement surfaces"
+
+[repo]
+url = "https://github.com/mpdavis/python-jose"
+commit_sha = "018b310ddb8b50dcfd09a0c152117835a21dd656"
+license = "MIT"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 15000000
+captured_at = "2026-06-15"
+stars = 1500
+last_commit_date = "2025-07-01"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 25
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/"]
+expected_languages = ["python"]

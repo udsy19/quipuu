@@ -1,0 +1,29 @@
+[project]
+name = "rustls-native-certs"
+ecosystem = "crates-io"
+canonical_id = "crates-io:rustls-native-certs"
+description = "Platform CA certificate loading for rustls"
+why_included = "Top-20 crates.io; loads OS trust store into rustls; X.509 certificate chain integration; platform-specific PEM/DER parsing"
+
+[repo]
+url = "https://github.com/rustls/rustls-native-certs"
+commit_sha = "9d1f11e5da42f061c9a5aebbcde48a1b843afff2"
+license = "Apache-2.0 OR ISC OR MIT"
+language_primary = "rust"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 5000000
+captured_at = "2026-06-15"
+stars = 150
+last_commit_date = "2026-04-01"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 7
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/"]
+exclude_paths = []
+expected_languages = ["rust"]

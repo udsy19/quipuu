@@ -1,0 +1,29 @@
+[project]
+name = "rsa"
+ecosystem = "crates-io"
+canonical_id = "crates-io:rsa"
+description = "Pure Rust RSA implementation"
+why_included = "Top-20 crates.io; RustCrypto RSA-PKCS1/OAEP/PSS; PKCS#8 key serialization; the primary Rust RSA library; highest quantum-vulnerable priority in Rust ecosystem"
+
+[repo]
+url = "https://github.com/RustCrypto/RSA"
+commit_sha = "4a6006f6e78daedf28e160ee3f3745c3f14505d4"
+license = "MIT OR Apache-2.0"
+language_primary = "rust"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 4000000
+captured_at = "2026-06-15"
+stars = 580
+last_commit_date = "2026-04-01"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 13
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/"]
+exclude_paths = ["tests/"]
+expected_languages = ["rust"]

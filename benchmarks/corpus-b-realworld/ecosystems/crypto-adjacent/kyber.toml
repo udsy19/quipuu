@@ -1,0 +1,29 @@
+[project]
+name = "kyber"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/pq-crystals/kyber"
+description = "CRYSTALS-Kyber reference implementation (now standardized as ML-KEM in FIPS 203)"
+why_included = "NIST PQC standard (ML-KEM/FIPS 203) reference C implementation; canonical KEM for PQC migration; scanner ground-truth for Kyber/ML-KEM algorithm detection; test vector source"
+
+[repo]
+url = "https://github.com/pq-crystals/kyber"
+commit_sha = "4768bd37c02f9c40a46cb49d4d1f4d5e612bb882"
+license = "Apache-2.0"
+language_primary = "c"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 200000
+captured_at = "2026-06-15"
+stars = 1700
+last_commit_date = "2026-04-01"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 17
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["ref/", "avx2/"]
+exclude_paths = []
+expected_languages = ["c"]

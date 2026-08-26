@@ -1,0 +1,29 @@
+[project]
+name = "jjwt-api"
+ecosystem = "maven"
+canonical_id = "maven:io.jsonwebtoken:jjwt-api"
+description = "Java JWT (JSON Web Token) API — jjwt library"
+why_included = "Top-30 Maven; jjwt is the most widely used Java JWT library; RSA/ECDSA/HMAC algorithm enum surface; noted in V2 scan findings for jjwt enum resolution challenge"
+
+[repo]
+url = "https://github.com/jwtk/jjwt"
+commit_sha = "83fc82e232c7b12582a2bb4aa181b818d8282631"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 15000000
+captured_at = "2026-06-15"
+stars = 10000
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 4
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["api/src/main/java/"]
+exclude_paths = ["impl/src/test/"]
+expected_languages = ["java"]

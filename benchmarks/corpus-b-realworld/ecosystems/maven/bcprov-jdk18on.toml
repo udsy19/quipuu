@@ -1,0 +1,29 @@
+[project]
+name = "bcprov-jdk18on"
+ecosystem = "maven"
+canonical_id = "maven:org.bouncycastle:bcprov-jdk18on"
+description = "Bouncy Castle Crypto APIs for Java (provider, JDK 1.8 and later)"
+why_included = "The canonical Java crypto provider; RSA/ECDSA/AES/3DES/SHA/X.509/PKCS; highest-value Maven target for PQC scanner; referenced in NIST migration guidance"
+
+[repo]
+url = "https://github.com/bcgit/bc-java"
+commit_sha = "695fd2bea64b8466b872a9d0c2e7019fee7ac86f"
+license = "MIT"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 30000000
+captured_at = "2026-06-15"
+stars = 2300
+last_commit_date = "2026-06-10"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 1
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["core/src/main/java/", "prov/src/main/java/"]
+exclude_paths = ["core/src/test/", "prov/src/test/"]
+expected_languages = ["java"]

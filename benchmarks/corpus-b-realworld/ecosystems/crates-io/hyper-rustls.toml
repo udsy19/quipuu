@@ -1,0 +1,29 @@
+[project]
+name = "hyper-rustls"
+ecosystem = "crates-io"
+canonical_id = "crates-io:hyper-rustls"
+description = "HTTPS connector for hyper using rustls"
+why_included = "Top-15 crates.io; HTTPS for Rust HTTP clients via rustls; used by reqwest; TLS configuration surface"
+
+[repo]
+url = "https://github.com/rustls/hyper-rustls"
+commit_sha = "69787a759da8b9c07553e0c999a6a0fa73f9ac6a"
+license = "Apache-2.0 OR ISC OR MIT"
+language_primary = "rust"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 6500000
+captured_at = "2026-06-15"
+stars = 450
+last_commit_date = "2026-04-01"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 9
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/"]
+exclude_paths = ["tests/"]
+expected_languages = ["rust"]

@@ -1,0 +1,29 @@
+[project]
+name = "rsa"
+ecosystem = "pypi"
+canonical_id = "pypi:rsa"
+description = "Pure-Python RSA implementation"
+why_included = "Top-30 PyPI by downloads; pure-Python RSA-2048/4096 signing/encryption; dependency of google-auth, awscli; canonical RSA-vulnerable surface in Python"
+
+[repo]
+url = "https://github.com/sybrenstuvel/python-rsa"
+commit_sha = "42b0e14ffbeeb9d99d1037e6440a2cc61780e4ea"
+license = "Apache-2.0"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 100000000
+captured_at = "2026-06-15"
+stars = 500
+last_commit_date = "2025-09-01"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 17
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

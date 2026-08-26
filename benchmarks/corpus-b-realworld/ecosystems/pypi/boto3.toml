@@ -1,0 +1,29 @@
+[project]
+name = "boto3"
+ecosystem = "pypi"
+canonical_id = "pypi:boto3"
+description = "AWS SDK for Python"
+why_included = "Top-3 PyPI by downloads; ubiquitous in production Python services; pulls cryptography + urllib3 as dependencies; signs S3 requests via HMAC-SHA256 (SigV4)"
+
+[repo]
+url = "https://github.com/boto/boto3"
+commit_sha = "466b532a9e8ece22127c2f266cb622ef1deb640e"
+license = "Apache-2.0"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 400000000
+captured_at = "2026-06-15"
+stars = 9000
+last_commit_date = "2026-06-10"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 1
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

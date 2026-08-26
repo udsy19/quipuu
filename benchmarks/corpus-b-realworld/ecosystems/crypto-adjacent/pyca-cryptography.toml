@@ -1,0 +1,29 @@
+[project]
+name = "pyca-cryptography"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/pyca/cryptography"
+description = "pyca/cryptography — Python cryptographic recipes and primitives library (also in pypi tier)"
+why_included = "Cross-listed; canonical Python crypto for PQC migration reference; RSA/EC/X25519/Ed25519/ChaCha20/AES; Hazmat layer; FIPS-compliant builds; PQC via OQS provider integration"
+
+[repo]
+url = "https://github.com/pyca/cryptography"
+commit_sha = "a63b4bcc0ef768f03d145e0913103bc75dc69223"
+license = "Apache-2.0"
+language_primary = "python"
+languages_secondary = ["rust"]
+
+[metadata]
+downloads_monthly = 350000000
+captured_at = "2026-06-15"
+stars = 6600
+last_commit_date = "2026-06-14"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 14
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/cryptography/hazmat/primitives/", "src/rust/src/"]
+exclude_paths = ["tests/"]
+expected_languages = ["python", "rust"]

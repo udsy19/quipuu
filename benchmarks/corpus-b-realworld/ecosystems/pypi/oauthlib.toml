@@ -1,0 +1,29 @@
+[project]
+name = "oauthlib"
+ecosystem = "pypi"
+canonical_id = "pypi:oauthlib"
+description = "Framework-agnostic OAuth 1.0a and 2.0 implementation"
+why_included = "Top-30 PyPI by downloads; OAuth HMAC-SHA1/SHA256 signature generation; token management; crypto surface via PKCE (S256), JWT Bearer tokens"
+
+[repo]
+url = "https://github.com/oauthlib/oauthlib"
+commit_sha = "b3f9edffed6b370e3eb92721cea0da22ec7e18b9"
+license = "BSD-3-Clause"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 70000000
+captured_at = "2026-06-15"
+stars = 2800
+last_commit_date = "2026-01-10"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 23
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

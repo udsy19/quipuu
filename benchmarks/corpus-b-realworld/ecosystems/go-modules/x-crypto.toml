@@ -1,0 +1,29 @@
+[project]
+name = "x-crypto"
+ecosystem = "go-modules"
+canonical_id = "go-modules:golang.org/x/crypto"
+description = "Go extended cryptography package — SSH, bcrypt, PBKDF2, chacha20poly1305, argon2, blake2b"
+why_included = "Top-5 Go modules by import count; extended crypto algorithms used by virtually every Go service; SSH protocol; bcrypt; argon2; critical PQC migration surface"
+
+[repo]
+url = "https://github.com/golang/crypto"
+commit_sha = "a8cbf83f2be4a3b11c6e1d6e6e5c8d0a7b3f4e2c"
+license = "BSD-3-Clause"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 40000000
+captured_at = "2026-06-15"
+stars = 2800
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 25
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["ssh/", "argon2/", "bcrypt/", "pbkdf2/"]
+exclude_paths = []
+expected_languages = ["go"]

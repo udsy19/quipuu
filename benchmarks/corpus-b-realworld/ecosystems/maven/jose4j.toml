@@ -1,0 +1,29 @@
+[project]
+name = "jose4j"
+ecosystem = "maven"
+canonical_id = "maven:org.bitbucket.b_c:jose4j"
+description = "jose4j — Java implementation of JOSE (JWS/JWE/JWK/JWT)"
+why_included = "Top-40 Maven; full JOSE stack in Java; RSA-OAEP, ECDH-ES, AES-GCM JWE; RSA/ECDSA JWS; used by many enterprise identity systems"
+
+[repo]
+url = "https://bitbucket.org/b_c/jose4j"
+commit_sha = "c66ffa2859db44a86f064d2251e639204ceabbb7"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 3500000
+captured_at = "2026-06-15"
+stars = 0
+last_commit_date = "2026-02-01"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 19
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/main/java/"]
+exclude_paths = ["src/test/"]
+expected_languages = ["java"]

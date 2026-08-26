@@ -1,0 +1,29 @@
+[project]
+name = "golang-jwt-jwt"
+ecosystem = "go-modules"
+canonical_id = "go-modules:github.com/golang-jwt/jwt"
+description = "Go implementation of JSON Web Tokens (v5) — community fork of dgrijalva/jwt-go"
+why_included = "Top-15 Go modules by monthly downloads; HS256/HS384/HS512/RS256/ES256/EdDSA; canonical Go JWT library; quantum-vulnerable algorithm surface"
+
+[repo]
+url = "https://github.com/golang-jwt/jwt"
+commit_sha = "e8e5b83c6f3f9d1a7dec9a01b1ab09d70ff9e7b1"
+license = "MIT"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 12000000
+captured_at = "2026-06-15"
+stars = 7500
+last_commit_date = "2026-05-20"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 6
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["test/"]
+expected_languages = ["go"]

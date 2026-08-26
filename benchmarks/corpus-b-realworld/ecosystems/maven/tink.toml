@@ -1,0 +1,29 @@
+[project]
+name = "tink"
+ecosystem = "maven"
+canonical_id = "maven:com.google.crypto.tink:tink"
+description = "Google Tink — multi-language cryptographic library"
+why_included = "Top-40 Maven; Google's production crypto library; AEAD/MAC/digital signatures/hybrid encryption; includes experimental PQC primitives (ML-KEM, ML-DSA); high-value scan target"
+
+[repo]
+url = "https://github.com/google/tink"
+commit_sha = "1f4cd38874ec0be85f5aa55ba86d95d18c3fd965"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = ["python", "go", "cc"]
+
+[metadata]
+downloads_monthly = 5000000
+captured_at = "2026-06-15"
+stars = 13000
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 12
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["java/src/main/java/"]
+exclude_paths = ["java/src/test/", "testing/"]
+expected_languages = ["java"]

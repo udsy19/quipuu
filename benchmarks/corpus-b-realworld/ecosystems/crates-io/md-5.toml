@@ -1,0 +1,29 @@
+[project]
+name = "md-5"
+ecosystem = "crates-io"
+canonical_id = "crates-io:md-5"
+description = "MD5 hash function in pure Rust"
+why_included = "Top-20 crates.io; RustCrypto MD5; cryptographically broken but still deployed; scanner must flag MD5 usage; same repo as sha2"
+
+[repo]
+url = "https://github.com/RustCrypto/hashes"
+commit_sha = "a71566a89f78720dbdaf4aed9883760870e8ef90"
+license = "MIT OR Apache-2.0"
+language_primary = "rust"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 6000000
+captured_at = "2026-06-15"
+stars = 1700
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 12
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["md5/src/"]
+exclude_paths = []
+expected_languages = ["rust"]

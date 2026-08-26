@@ -1,0 +1,29 @@
+[project]
+name = "hydra"
+ecosystem = "go-modules"
+canonical_id = "go-modules:github.com/ory/hydra"
+description = "Ory Hydra — OAuth 2.0 and OpenID Connect server"
+why_included = "Top-20 Go modules; OIDC/OAuth2 token signing (RS256/ES256); PKCE; TLS for admin/public API; JWT key management; broad crypto surface in auth server"
+
+[repo]
+url = "https://github.com/ory/hydra"
+commit_sha = "1b1063b5f4a31d04bfba43a5c25bd47f14e3b7a1"
+license = "Apache-2.0"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 2000000
+captured_at = "2026-06-15"
+stars = 15000
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 11
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["jwk/", "flow/", "oauth2/"]
+exclude_paths = ["vendor/"]
+expected_languages = ["go"]

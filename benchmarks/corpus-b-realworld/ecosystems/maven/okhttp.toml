@@ -1,0 +1,29 @@
+[project]
+name = "okhttp"
+ecosystem = "maven"
+canonical_id = "maven:com.squareup.okhttp3:okhttp"
+description = "Square OkHttp — HTTP client for Android and Java"
+why_included = "Top-20 Maven; HTTPS client; TLS pinning, certificate transparency, HPKP; used by Android apps at scale; TLS migration surface"
+
+[repo]
+url = "https://github.com/square/okhttp"
+commit_sha = "6abc678ad07aefe055cb1afb6fd897c34a988eb9"
+license = "Apache-2.0"
+language_primary = "kotlin"
+languages_secondary = ["java"]
+
+[metadata]
+downloads_monthly = 20000000
+captured_at = "2026-06-15"
+stars = 46000
+last_commit_date = "2026-06-10"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 7
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["okhttp/src/main/kotlin/", "okhttp/src/main/java/"]
+exclude_paths = ["mockwebserver/", "okhttp/src/test/"]
+expected_languages = ["kotlin", "java"]

@@ -1,0 +1,29 @@
+[project]
+name = "openssl"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/openssl/openssl"
+description = "OpenSSL — full-strength TLS/SSL and general-purpose cryptographic library"
+why_included = "Canonical C crypto library; RSA/DSA/EC/DH/AES/SHA; TLS 1.2/1.3; FIPS module; OQS integration roadmap; most widely deployed crypto library globally; PQC migration benchmark reference"
+
+[repo]
+url = "https://github.com/openssl/openssl"
+commit_sha = "5034664e30a1264a8f5ce835fd1e1c582177a167"
+license = "Apache-2.0"
+language_primary = "c"
+languages_secondary = ["asm"]
+
+[metadata]
+downloads_monthly = 100000000
+captured_at = "2026-06-15"
+stars = 26000
+last_commit_date = "2026-06-14"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 1
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["crypto/", "ssl/", "providers/"]
+exclude_paths = ["fuzz/", "test/", "doc/"]
+expected_languages = ["c", "asm"]

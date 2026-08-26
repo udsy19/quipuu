@@ -1,0 +1,29 @@
+[project]
+name = "pycryptodome"
+ecosystem = "pypi"
+canonical_id = "pypi:pycryptodome"
+description = "Self-contained cryptographic library for Python (drop-in replacement for PyCrypto)"
+why_included = "Top-30 PyPI; implements AES, RSA, DES, 3DES, SHA, PKCS#1, PKCS#8; extremely wide PQC-vulnerable algorithm surface; canonical legacy-crypto replacement target"
+
+[repo]
+url = "https://github.com/Legrandin/pycryptodome"
+commit_sha = "d12264940c40417915fb85acb8c787ad9da58969"
+license = "BSD-2-Clause AND Apache-2.0 AND Public-Domain"
+language_primary = "python"
+languages_secondary = ["c"]
+
+[metadata]
+downloads_monthly = 55000000
+captured_at = "2026-06-15"
+stars = 2900
+last_commit_date = "2026-05-10"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 19
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["Doc/", "lib/Crypto/SelfTest/"]
+expected_languages = ["python", "c"]

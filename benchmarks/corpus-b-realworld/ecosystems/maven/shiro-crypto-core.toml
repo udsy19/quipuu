@@ -1,0 +1,29 @@
+[project]
+name = "shiro-crypto-core"
+ecosystem = "maven"
+canonical_id = "maven:org.apache.shiro:shiro-crypto-core"
+description = "Apache Shiro cryptography module"
+why_included = "Top-40 Maven; AES/Blowfish cipher services, PBKDF2/bcrypt password hashing; used in enterprise Java applications; PQC migration surface"
+
+[repo]
+url = "https://github.com/apache/shiro"
+commit_sha = "744128df61c5f6342b891d4ef53f79858f1d6398"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 5000000
+captured_at = "2026-06-15"
+stars = 2400
+last_commit_date = "2026-04-01"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 16
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["crypto/core/src/main/java/"]
+exclude_paths = ["crypto/core/src/test/"]
+expected_languages = ["java"]

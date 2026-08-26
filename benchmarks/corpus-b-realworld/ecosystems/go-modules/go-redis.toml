@@ -1,0 +1,29 @@
+[project]
+name = "go-redis"
+ecosystem = "go-modules"
+canonical_id = "go-modules:github.com/redis/go-redis"
+description = "go-redis — Redis client for Go with TLS support"
+why_included = "Top-25 Go modules; TLS for Redis connections; AUTH command; ACL support; widely used in Go backends requiring secure cache connections"
+
+[repo]
+url = "https://github.com/redis/go-redis"
+commit_sha = "bf57a51fd879fbd9b4b4f79f26ae55ccc9fef3d1"
+license = "BSD-2-Clause"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 7000000
+captured_at = "2026-06-15"
+stars = 20000
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 22
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = []
+expected_languages = ["go"]

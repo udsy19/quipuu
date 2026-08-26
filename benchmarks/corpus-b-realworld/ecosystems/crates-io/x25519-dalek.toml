@@ -1,0 +1,29 @@
+[project]
+name = "x25519-dalek"
+ecosystem = "crates-io"
+canonical_id = "crates-io:x25519-dalek"
+description = "X25519 Diffie-Hellman function in Rust"
+why_included = "Top-20 crates.io; canonical X25519 ECDH for Rust; quantum-vulnerable key exchange; used by rustls, wireguard-rs, and others"
+
+[repo]
+url = "https://github.com/dalek-cryptography/x25519-dalek"
+commit_sha = "2ddda07333e5028698d8618428c783264ae38b40"
+license = "BSD-3-Clause"
+language_primary = "rust"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 4000000
+captured_at = "2026-06-15"
+stars = 340
+last_commit_date = "2026-03-01"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 15
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/"]
+exclude_paths = ["tests/"]
+expected_languages = ["rust"]

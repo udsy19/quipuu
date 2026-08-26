@@ -1,0 +1,29 @@
+[project]
+name = "pyjwt"
+ecosystem = "pypi"
+canonical_id = "pypi:pyjwt"
+description = "Python library to encode and decode JSON Web Tokens (JWT)"
+why_included = "Top-30 PyPI; implements HS256/RS256/ES256/PS256 JWT signing; direct RSA/ECDSA algorithm surface; canonical JWT library for Python auth"
+
+[repo]
+url = "https://github.com/jpadilla/pyjwt"
+commit_sha = "7144e4534c34810f4525dc4578a32addd8212cff"
+license = "MIT"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 60000000
+captured_at = "2026-06-15"
+stars = 5000
+last_commit_date = "2026-04-20"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 15
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

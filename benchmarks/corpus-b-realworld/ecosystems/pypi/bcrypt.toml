@@ -1,0 +1,29 @@
+[project]
+name = "bcrypt"
+ecosystem = "pypi"
+canonical_id = "pypi:bcrypt"
+description = "Modern password hashing for Python"
+why_included = "Top-30 PyPI; bcrypt password hashing with native C extension via cffi; canonical password-hashing surface; bcrypt uses Blowfish — relevant to NIST migration guidance"
+
+[repo]
+url = "https://github.com/pyca/bcrypt"
+commit_sha = "252a22e4ce2dac0deee9ed13df16c7aa8c3df857"
+license = "Apache-2.0"
+language_primary = "python"
+languages_secondary = ["c", "rust"]
+
+[metadata]
+downloads_monthly = 35000000
+captured_at = "2026-06-15"
+stars = 1200
+last_commit_date = "2026-03-01"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 20
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/"]
+expected_languages = ["python", "rust"]

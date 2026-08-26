@@ -1,0 +1,29 @@
+[project]
+name = "oqs-rs"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/open-quantum-safe/liboqs-rust"
+description = "liboqs-rust — Rust bindings to liboqs post-quantum algorithms"
+why_included = "PQC Rust bindings for liboqs; ML-KEM/ML-DSA/SLH-DSA; entry point for PQC adoption in Rust ecosystem; benchmark must handle FFI-wrapped PQC calls"
+
+[repo]
+url = "https://github.com/open-quantum-safe/liboqs-rust"
+commit_sha = "a40e1d3ae9cb5eeafb9541b53fbd1a844d86c4ad"
+license = "MIT"
+language_primary = "rust"
+languages_secondary = ["c"]
+
+[metadata]
+downloads_monthly = 50000
+captured_at = "2026-06-15"
+stars = 350
+last_commit_date = "2026-05-15"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 12
+substituted_for = "liboqs-rust/oqs-rs (moved to open-quantum-safe/liboqs-rust)"
+
+[scan_hints]
+scan_paths = ["oqs/src/"]
+exclude_paths = []
+expected_languages = ["rust"]

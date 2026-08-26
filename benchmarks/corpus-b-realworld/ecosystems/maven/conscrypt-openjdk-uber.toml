@@ -1,0 +1,29 @@
+[project]
+name = "conscrypt-openjdk-uber"
+ecosystem = "maven"
+canonical_id = "maven:org.conscrypt:conscrypt-openjdk-uber"
+description = "Google Conscrypt — BoringSSL-based Java Security Provider"
+why_included = "Top-40 Maven; JCE/JSSE provider backed by BoringSSL; used by gRPC-Java; TLS 1.3, QUIC, AEAD cipher suites; critical path for enterprise TLS migration"
+
+[repo]
+url = "https://github.com/google/conscrypt"
+commit_sha = "9eb3e108de8f576fad6e45fbc6026bbc8f0d4f38"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = ["c", "c++"]
+
+[metadata]
+downloads_monthly = 4000000
+captured_at = "2026-06-15"
+stars = 1400
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 13
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["openjdk/src/main/java/", "common/src/main/java/"]
+exclude_paths = ["openjdk/src/test/"]
+expected_languages = ["java", "c"]

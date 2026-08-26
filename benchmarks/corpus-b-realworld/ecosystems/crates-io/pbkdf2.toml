@@ -1,0 +1,29 @@
+[project]
+name = "pbkdf2"
+ecosystem = "crates-io"
+canonical_id = "crates-io:pbkdf2"
+description = "PBKDF2 password-based key derivation function in Rust"
+why_included = "Top-20 crates.io; RustCrypto PBKDF2; password hashing KDF surface; scanner must detect KDF algorithm and iteration count"
+
+[repo]
+url = "https://github.com/RustCrypto/password-hashes"
+commit_sha = "b2cef1796b73cd4a288a93877d1be7a28218535a"
+license = "MIT OR Apache-2.0"
+language_primary = "rust"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 4500000
+captured_at = "2026-06-15"
+stars = 600
+last_commit_date = "2026-04-01"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 20
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["pbkdf2/src/"]
+exclude_paths = []
+expected_languages = ["rust"]

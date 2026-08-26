@@ -1,0 +1,29 @@
+[project]
+name = "ring"
+ecosystem = "crates-io"
+canonical_id = "crates-io:ring"
+description = "Safe, fast, small crypto using BoringSSL algorithms in Rust"
+why_included = "Top-10 crates.io crypto; the canonical Rust crypto primitive library; AES-GCM, ChaCha20-Poly1305, RSA, ECDSA, Ed25519, X25519; used by rustls; highest-value Rust target"
+
+[repo]
+url = "https://github.com/briansmith/ring"
+commit_sha = "7d3dbbb41f19f130ce15a84d69ee28748836b1bb"
+license = "BoringSSL (OpenSSL + ISC + custom)"
+language_primary = "rust"
+languages_secondary = ["c", "assembly"]
+
+[metadata]
+downloads_monthly = 12000000
+captured_at = "2026-06-15"
+stars = 3800
+last_commit_date = "2026-06-01"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 1
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/"]
+exclude_paths = ["tests/", "bench/"]
+expected_languages = ["rust", "c"]

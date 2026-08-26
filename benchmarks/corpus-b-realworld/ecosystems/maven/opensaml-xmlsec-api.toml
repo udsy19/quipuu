@@ -1,0 +1,29 @@
+[project]
+name = "opensaml-xmlsec-api"
+ecosystem = "maven"
+canonical_id = "maven:org.opensaml:opensaml-xmlsec-api"
+description = "OpenSAML XML Security API — XML digital signatures and encryption"
+why_included = "Top-50 Maven; XML-DSIG/XML-ENC over RSA/ECDSA/AES; used in SAML federations, enterprise SSO; extremely broad classical crypto surface; critical PQC migration surface for government/enterprise"
+
+[repo]
+url = "https://git.shibboleth.net/git/java-opensaml"
+commit_sha = "4dafd1bfad2d99a1793218c26507548218849af1"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 1500000
+captured_at = "2026-06-15"
+stars = 0
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 25
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["opensaml-xmlsec-api/src/main/java/"]
+exclude_paths = ["opensaml-xmlsec-api/src/test/"]
+expected_languages = ["java"]

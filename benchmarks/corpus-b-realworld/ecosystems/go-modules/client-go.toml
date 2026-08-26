@@ -1,0 +1,29 @@
+[project]
+name = "client-go"
+ecosystem = "go-modules"
+canonical_id = "go-modules:k8s.io/client-go"
+description = "Official Go client library for Kubernetes"
+why_included = "Top-10 Go modules; mTLS for API server communication; RBAC token handling; X.509 certificate management; TLS migration surface in Kubernetes ecosystem"
+
+[repo]
+url = "https://github.com/kubernetes/client-go"
+commit_sha = "394ed525a635cb5f2850b9cbf9f056b3ac87a4ff"
+license = "Apache-2.0"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 20000000
+captured_at = "2026-06-15"
+stars = 9000
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 3
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["vendor/", "examples/", "_test.go"]
+expected_languages = ["go"]

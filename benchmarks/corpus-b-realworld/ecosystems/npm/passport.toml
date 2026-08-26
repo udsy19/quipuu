@@ -1,0 +1,29 @@
+[project]
+name = "passport"
+ecosystem = "npm"
+canonical_id = "npm:passport"
+description = "Simple, unobtrusive authentication middleware for Node.js"
+why_included = "Top-40 npm; orchestrates JWT/OAuth/session-based auth flows; indirect crypto surface via strategy plugins (passport-jwt, passport-local); scanner stress test for import chains"
+
+[repo]
+url = "https://github.com/jaredhanson/passport"
+commit_sha = "217018dbc46dcd4118dd6f2c60c8d97010c587f8"
+license = "MIT"
+language_primary = "javascript"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 25000000
+captured_at = "2026-06-15"
+stars = 22000
+last_commit_date = "2025-09-01"
+
+[selection]
+selection_method = "top-25-npm-downloads"
+selection_rank = 23
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["test/"]
+expected_languages = ["javascript"]

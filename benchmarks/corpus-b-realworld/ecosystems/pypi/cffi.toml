@@ -1,0 +1,29 @@
+[project]
+name = "cffi"
+ecosystem = "pypi"
+canonical_id = "pypi:cffi"
+description = "C Foreign Function Interface for Python"
+why_included = "Top-10 PyPI by downloads; foundation of pyca/cryptography and pynacl; how Python binds to OpenSSL/libsodium; understanding cffi call patterns is critical for indirect crypto detection"
+
+[repo]
+url = "https://github.com/python-cffi/cffi"
+commit_sha = "7a3b39e2fbbaa0511789a3231964f61f77fb28a9"
+license = "MIT"
+language_primary = "python"
+languages_secondary = ["c"]
+
+[metadata]
+downloads_monthly = 200000000
+captured_at = "2026-06-15"
+stars = 720
+last_commit_date = "2026-05-15"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 22
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["testing/", "doc/"]
+expected_languages = ["python", "c"]

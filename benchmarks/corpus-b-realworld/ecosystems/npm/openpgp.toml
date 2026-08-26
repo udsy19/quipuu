@@ -1,0 +1,29 @@
+[project]
+name = "openpgp"
+ecosystem = "npm"
+canonical_id = "npm:openpgp"
+description = "OpenPGP implementation in JavaScript"
+why_included = "Top-50 npm; implements RSA/ECDSA/EdDSA signing, ECDH/ElGamal encryption, AES/3DES symmetric ciphers; extremely broad quantum-vulnerable surface; supports OpenPGP.js for email/file encryption"
+
+[repo]
+url = "https://github.com/openpgpjs/openpgpjs"
+commit_sha = "2ac0048404b74a3595d503125b53f3b3d0486bec"
+license = "LGPL-3.0"
+language_primary = "javascript"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 5000000
+captured_at = "2026-06-15"
+stars = 6800
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-npm-downloads"
+selection_rank = 21
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/"]
+exclude_paths = ["test/"]
+expected_languages = ["javascript"]

@@ -1,0 +1,29 @@
+[project]
+name = "oqs-provider"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/open-quantum-safe/oqs-provider"
+description = "OQS-Provider — OpenSSL 3.x provider integrating liboqs PQC algorithms"
+why_included = "OpenSSL 3.x PQC provider; ML-KEM/ML-DSA/SLH-DSA via OpenSSL EVP API; production path for PQC in existing OpenSSL deployments; benchmark must detect provider-based PQC usage"
+
+[repo]
+url = "https://github.com/open-quantum-safe/oqs-provider"
+commit_sha = "35eceb69d2b363cb0421085cf1ae1c682dee1acc"
+license = "MIT"
+language_primary = "c"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 100000
+captured_at = "2026-06-15"
+stars = 600
+last_commit_date = "2026-06-10"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 11
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["oqsprov/"]
+exclude_paths = ["test/"]
+expected_languages = ["c"]

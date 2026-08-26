@@ -1,0 +1,29 @@
+[project]
+name = "cryptography"
+ecosystem = "pypi"
+canonical_id = "pypi:cryptography"
+description = "Cryptographic primitives and recipes for Python (wraps OpenSSL via CFFI)"
+why_included = "The canonical Python crypto library; exposes RSA, ECDSA, AES, X.509, TLS primitives; highest-value target for PQC scanner in the Python ecosystem"
+
+[repo]
+url = "https://github.com/pyca/cryptography"
+commit_sha = "61b250ac42af6742edc16ca9e0a7cfe7e3a9672a"
+license = "Apache-2.0 OR BSD-3-Clause"
+language_primary = "python"
+languages_secondary = ["rust", "c"]
+
+[metadata]
+downloads_monthly = 180000000
+captured_at = "2026-06-15"
+stars = 6600
+last_commit_date = "2026-06-13"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 12
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/cryptography/"]
+exclude_paths = ["tests/", "docs/", "vectors/"]
+expected_languages = ["python", "rust"]

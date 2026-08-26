@@ -1,0 +1,29 @@
+[project]
+name = "etcd"
+ecosystem = "go-modules"
+canonical_id = "go-modules:go.etcd.io/etcd"
+description = "etcd — distributed key-value store, Kubernetes datastore"
+why_included = "Top-25 Go modules; TLS client-server and peer encryption; mutual TLS cluster auth; JWT auth for client API; critical Kubernetes infrastructure"
+
+[repo]
+url = "https://github.com/etcd-io/etcd"
+commit_sha = "22d55b52cd413dda892abad4c0c3e63a1a4b4e3b"
+license = "Apache-2.0"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 5000000
+captured_at = "2026-06-15"
+stars = 47000
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 16
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["client/v3/", "server/auth/", "server/etcdserver/"]
+exclude_paths = ["vendor/"]
+expected_languages = ["go"]

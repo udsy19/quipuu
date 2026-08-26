@@ -1,0 +1,29 @@
+[project]
+name = "vault"
+ecosystem = "go-modules"
+canonical_id = "go-modules:github.com/hashicorp/vault"
+description = "HashiCorp Vault — secrets management and data encryption platform"
+why_included = "Top-25 Go modules; comprehensive crypto API (Transit, PKI, JWT); TLS for cluster comms; HSM integration; primary target for PQC migration audit"
+
+[repo]
+url = "https://github.com/hashicorp/vault"
+commit_sha = "ea4c16fa6f3b90fb7db3dacf02213d271e0d4813"
+license = "BUSL-1.1"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 8000000
+captured_at = "2026-06-15"
+stars = 31000
+last_commit_date = "2026-06-14"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 4
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["builtin/logical/pki/", "vault/seal/", "sdk/helper/certutil/"]
+exclude_paths = ["vendor/", "ui/"]
+expected_languages = ["go"]

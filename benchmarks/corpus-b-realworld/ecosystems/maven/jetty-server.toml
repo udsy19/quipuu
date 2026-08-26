@@ -1,0 +1,29 @@
+[project]
+name = "jetty-server"
+ecosystem = "maven"
+canonical_id = "maven:org.eclipse.jetty:jetty-server"
+description = "Eclipse Jetty HTTP server and Servlet container"
+why_included = "Top-20 Maven; HTTPS/TLS server-side termination; SslContextFactory; ALPN/HTTP2; certificate management; TLS migration surface"
+
+[repo]
+url = "https://github.com/eclipse/jetty.project"
+commit_sha = "b4fba9219e5a53043b648f64ac85900029474765"
+license = "Apache-2.0 OR EPL-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 15000000
+captured_at = "2026-06-15"
+stars = 3800
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 10
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["jetty-server/src/main/java/", "jetty-util/src/main/java/"]
+exclude_paths = ["jetty-server/src/test/"]
+expected_languages = ["java"]

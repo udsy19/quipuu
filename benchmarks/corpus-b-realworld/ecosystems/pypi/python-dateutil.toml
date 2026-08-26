@@ -1,0 +1,29 @@
+[project]
+name = "python-dateutil"
+ecosystem = "pypi"
+canonical_id = "pypi:python-dateutil"
+description = "Extensions to the standard datetime module"
+why_included = "Top-20 PyPI by downloads; pulled by botocore/boto3; JWT expiry timestamps handled via dateutil; indirect crypto surface via token expiry validation"
+
+[repo]
+url = "https://github.com/dateutil/dateutil"
+commit_sha = "48bd1af97e71baf8e96fce5b663d589caac8f147"
+license = "Apache-2.0"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 220000000
+captured_at = "2026-06-15"
+stars = 2300
+last_commit_date = "2025-10-01"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 9
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

@@ -1,0 +1,29 @@
+[project]
+name = "java-jwt"
+ecosystem = "maven"
+canonical_id = "maven:com.auth0:java-jwt"
+description = "Auth0 Java JWT library"
+why_included = "Top-30 Maven; implements HS256/HS384/HS512/RS256/RS384/RS512/ES256/ES384/ES512 JWT signing; canonical Java JWT library with quantum-vulnerable RSA/ECDSA surface"
+
+[repo]
+url = "https://github.com/auth0/java-jwt"
+commit_sha = "6dd03096c0f6b2afc7de3451b3074609f4323fee"
+license = "MIT"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 8000000
+captured_at = "2026-06-15"
+stars = 5000
+last_commit_date = "2026-04-01"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 3
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["src/test/"]
+expected_languages = ["java"]

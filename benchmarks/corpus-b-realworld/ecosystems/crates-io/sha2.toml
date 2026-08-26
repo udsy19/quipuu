@@ -1,0 +1,29 @@
+[project]
+name = "sha2"
+ecosystem = "crates-io"
+canonical_id = "crates-io:sha2"
+description = "SHA-2 hash functions (SHA-224, SHA-256, SHA-384, SHA-512) in pure Rust"
+why_included = "Top-10 crates.io crypto; RustCrypto SHA-2 implementation; canonical Rust hash surface; scanner must correctly identify SHA-256/SHA-512 usage patterns"
+
+[repo]
+url = "https://github.com/RustCrypto/hashes"
+commit_sha = "a71566a89f78720dbdaf4aed9883760870e8ef90"
+license = "MIT OR Apache-2.0"
+language_primary = "rust"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 15000000
+captured_at = "2026-06-15"
+stars = 1700
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 10
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["sha2/src/"]
+exclude_paths = []
+expected_languages = ["rust"]

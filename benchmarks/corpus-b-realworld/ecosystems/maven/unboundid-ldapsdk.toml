@@ -1,0 +1,29 @@
+[project]
+name = "unboundid-ldapsdk"
+ecosystem = "maven"
+canonical_id = "maven:com.unboundid:unboundid-ldapsdk"
+description = "UnboundID LDAP SDK for Java"
+why_included = "Top-40 Maven; LDAPS/StartTLS; SASL GSSAPI/PLAIN; X.509 certificate handling; enterprise directory crypto surface"
+
+[repo]
+url = "https://github.com/pingidentity/ldapsdk"
+commit_sha = "cab6672f8ac284805956006bb1496f73c5e3e746"
+license = "Apache-2.0 OR LGPL-2.1 OR GPL-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 3000000
+captured_at = "2026-06-15"
+stars = 330
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 17
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/main/java/"]
+exclude_paths = ["src/test/"]
+expected_languages = ["java"]

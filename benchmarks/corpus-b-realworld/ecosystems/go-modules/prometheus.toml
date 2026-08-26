@@ -1,0 +1,29 @@
+[project]
+name = "prometheus"
+ecosystem = "go-modules"
+canonical_id = "go-modules:github.com/prometheus/prometheus"
+description = "Prometheus — open-source monitoring and alerting system"
+why_included = "Top-25 Go modules; TLS for scraping targets; remote_write encryption; bearer token auth; representative of cloud-native monitoring stack"
+
+[repo]
+url = "https://github.com/prometheus/prometheus"
+commit_sha = "121eaa177c0f6d7a13b53c77a5ab51f14a4baa3a"
+license = "Apache-2.0"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 4000000
+captured_at = "2026-06-15"
+stars = 55000
+last_commit_date = "2026-06-14"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 15
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["config/", "web/"]
+exclude_paths = ["vendor/"]
+expected_languages = ["go"]

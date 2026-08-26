@@ -1,0 +1,29 @@
+[project]
+name = "dilithium"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/pq-crystals/dilithium"
+description = "CRYSTALS-Dilithium reference implementation (now standardized as ML-DSA in FIPS 204)"
+why_included = "NIST PQC standard (ML-DSA/FIPS 204) reference C implementation; canonical digital signature algorithm replacing ECDSA/RSA; scanner ground-truth for Dilithium/ML-DSA detection"
+
+[repo]
+url = "https://github.com/pq-crystals/dilithium"
+commit_sha = "1f4cd38874ec0be85f5aa55ba86d95d18c3fd965"
+license = "Apache-2.0"
+language_primary = "c"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 150000
+captured_at = "2026-06-15"
+stars = 900
+last_commit_date = "2026-04-01"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 18
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["ref/", "avx2/"]
+exclude_paths = []
+expected_languages = ["c"]

@@ -1,0 +1,29 @@
+[project]
+name = "aws-sdk-go-v2"
+ecosystem = "go-modules"
+canonical_id = "go-modules:github.com/aws/aws-sdk-go-v2"
+description = "AWS SDK for Go v2 — modular AWS Go client library"
+why_included = "Top-10 Go by downloads; SigV4/SigV4a signing with crypto/hmac; modular design; active development; replaces v1 in new Go services"
+
+[repo]
+url = "https://github.com/aws/aws-sdk-go-v2"
+commit_sha = "750e42a6493c92739684c3b99b99dba175bf6260"
+license = "Apache-2.0"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 25000000
+captured_at = "2026-06-15"
+stars = 2900
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 2
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["internal/testing/", "service/internal/"]
+expected_languages = ["go"]

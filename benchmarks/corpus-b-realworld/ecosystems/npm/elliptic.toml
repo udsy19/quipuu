@@ -1,0 +1,29 @@
+[project]
+name = "elliptic"
+ecosystem = "npm"
+canonical_id = "npm:elliptic"
+description = "Fast elliptic curve cryptography in pure JavaScript"
+why_included = "Top-40 npm; ECDSA/ECDH over P-256/P-384/P-521/secp256k1/curve25519; extremely broad quantum-vulnerable EC surface; used by OpenPGP.js, ethereumjs, many others"
+
+[repo]
+url = "https://github.com/indutny/elliptic"
+commit_sha = "9b77436a59cc35eccf4ffb848259c8762a492ee7"
+license = "MIT"
+language_primary = "javascript"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 60000000
+captured_at = "2026-06-15"
+stars = 2200
+last_commit_date = "2025-12-01"
+
+[selection]
+selection_method = "top-25-npm-downloads"
+selection_rank = 16
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["test/"]
+expected_languages = ["javascript"]

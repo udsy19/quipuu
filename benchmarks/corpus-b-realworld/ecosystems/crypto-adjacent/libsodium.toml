@@ -1,0 +1,29 @@
+[project]
+name = "libsodium"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/jedisct1/libsodium"
+description = "libsodium — modern, portable, easy-to-use crypto library"
+why_included = "Widely used portable crypto library; X25519/Ed25519/ChaCha20Poly1305/XSalsa20; Argon2; all quantum-vulnerable or PQC-compatible; used in thousands of applications"
+
+[repo]
+url = "https://github.com/jedisct1/libsodium"
+commit_sha = "5687d211c48b38facb9e77c59b233dc25dadb330"
+license = "ISC"
+language_primary = "c"
+languages_secondary = ["asm"]
+
+[metadata]
+downloads_monthly = 15000000
+captured_at = "2026-06-15"
+stars = 12500
+last_commit_date = "2026-06-10"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 4
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/libsodium/crypto_sign/", "src/libsodium/crypto_box/", "src/libsodium/crypto_kx/"]
+exclude_paths = ["test/"]
+expected_languages = ["c", "asm"]

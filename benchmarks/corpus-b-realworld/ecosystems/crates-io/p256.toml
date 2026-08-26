@@ -1,0 +1,29 @@
+[project]
+name = "p256"
+ecosystem = "crates-io"
+canonical_id = "crates-io:p256"
+description = "NIST P-256 elliptic curve in Rust (secp256r1)"
+why_included = "Top-20 crates.io; RustCrypto NIST P-256 ECDH/ECDSA; quantum-vulnerable; same elliptic-curves workspace as p384/k256"
+
+[repo]
+url = "https://github.com/RustCrypto/elliptic-curves"
+commit_sha = "4e994842d812097cc51926cf183be3ffb435e677"
+license = "Apache-2.0 OR MIT"
+language_primary = "rust"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 5500000
+captured_at = "2026-06-15"
+stars = 650
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 16
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["p256/src/"]
+exclude_paths = []
+expected_languages = ["rust"]

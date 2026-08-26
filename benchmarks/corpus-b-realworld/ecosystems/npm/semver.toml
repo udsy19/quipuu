@@ -1,0 +1,29 @@
+[project]
+name = "semver"
+ecosystem = "npm"
+canonical_id = "npm:semver"
+description = "Semantic version parsing and comparison"
+why_included = "Top-10 npm by downloads; no direct crypto surface; negative control for scanner false-positive validation"
+
+[repo]
+url = "https://github.com/isaacs/node-semver"
+commit_sha = "cb1ca1d5480a6c07c12ac31ba5f2071ed530c4ed"
+license = "ISC"
+language_primary = "javascript"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 1600000000
+captured_at = "2026-06-15"
+stars = 5000
+last_commit_date = "2026-04-01"
+
+[selection]
+selection_method = "top-25-npm-downloads"
+selection_rank = 7
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["test/"]
+expected_languages = ["javascript"]

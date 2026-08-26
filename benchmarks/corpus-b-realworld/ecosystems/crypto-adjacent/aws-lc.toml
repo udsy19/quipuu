@@ -1,0 +1,29 @@
+[project]
+name = "aws-lc"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/aws/aws-lc"
+description = "AWS-LC — AWS fork of BoringSSL with FIPS validation and post-quantum additions"
+why_included = "AWS production crypto library; integrates ML-KEM/ML-DSA (NIST PQC standards); FIPS 140-3 validation; used by AWS SDK and AWS services; primary PQC-forward C library in cloud"
+
+[repo]
+url = "https://github.com/aws/aws-lc"
+commit_sha = "8e3be8615ba6adcd7babaecf5e76f516890ba5fb"
+license = "Apache-2.0"
+language_primary = "c"
+languages_secondary = ["asm", "go"]
+
+[metadata]
+downloads_monthly = 5000000
+captured_at = "2026-06-15"
+stars = 1600
+last_commit_date = "2026-06-14"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 2
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["crypto/", "ssl/", "include/openssl/"]
+exclude_paths = ["fuzz/", "tests/"]
+expected_languages = ["c", "asm"]

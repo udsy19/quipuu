@@ -1,0 +1,29 @@
+[project]
+name = "wolfssl"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/wolfSSL/wolfssl"
+description = "wolfSSL — lightweight SSL/TLS library for embedded and IoT devices, with PQC support"
+why_included = "Embedded/IoT TLS library; FIPS 140-3 validated; Kyber/Dilithium integration; widely used in automotive, aerospace, IoT; important PQC migration surface for constrained devices"
+
+[repo]
+url = "https://github.com/wolfSSL/wolfssl"
+commit_sha = "5cd633798c684693d06e6cd8dc5a53adbef888e4"
+license = "GPL-2.0"
+language_primary = "c"
+languages_secondary = ["asm"]
+
+[metadata]
+downloads_monthly = 2000000
+captured_at = "2026-06-15"
+stars = 2400
+last_commit_date = "2026-06-14"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 8
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["wolfcrypt/src/", "src/tls.c", "src/tls13.c"]
+exclude_paths = ["tests/", "examples/"]
+expected_languages = ["c", "asm"]

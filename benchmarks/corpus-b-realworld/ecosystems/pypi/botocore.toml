@@ -1,0 +1,29 @@
+[project]
+name = "botocore"
+ecosystem = "pypi"
+canonical_id = "pypi:botocore"
+description = "Low-level AWS service interface library (foundation of boto3)"
+why_included = "Top-10 PyPI by downloads; implements AWS SigV4 HMAC-SHA256 request signing; heavy use of HTTPS; crypto-dense codebase"
+
+[repo]
+url = "https://github.com/boto/botocore"
+commit_sha = "87fdaf576b2ca2067bccfc02a4aa028849828c69"
+license = "Apache-2.0"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 380000000
+captured_at = "2026-06-15"
+stars = 1600
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 11
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

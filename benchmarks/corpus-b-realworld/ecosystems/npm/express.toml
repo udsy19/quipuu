@@ -1,0 +1,29 @@
+[project]
+name = "express"
+ecosystem = "npm"
+canonical_id = "npm:express"
+description = "Fast, unopinionated, minimalist web framework for Node.js"
+why_included = "Top-5 npm by downloads; canonical Node.js web server; TLS termination, session management, HTTPS options; scanner must handle Express middleware crypto patterns"
+
+[repo]
+url = "https://github.com/expressjs/express"
+commit_sha = "a08da78e64a7fdc610d453fb7771754091d8ed3b"
+license = "MIT"
+language_primary = "javascript"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 900000000
+captured_at = "2026-06-15"
+stars = 65000
+last_commit_date = "2026-06-05"
+
+[selection]
+selection_method = "top-25-npm-downloads"
+selection_rank = 4
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["test/"]
+expected_languages = ["javascript"]

@@ -1,0 +1,29 @@
+[project]
+name = "echo"
+ecosystem = "go-modules"
+canonical_id = "go-modules:github.com/labstack/echo"
+description = "Echo — high-performance Go web framework with TLS and middleware support"
+why_included = "Top-15 Go web frameworks; HTTPS/TLS; JWT middleware; CSRF protection; OAuth2 middleware; broad deployment in Go microservices"
+
+[repo]
+url = "https://github.com/labstack/echo"
+commit_sha = "78c3d954e1a6b9f2c3d5e8a7b4c1f0d9e6b3a5f2"
+license = "MIT"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 8000000
+captured_at = "2026-06-15"
+stars = 29000
+last_commit_date = "2026-06-05"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 21
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["cookbook/"]
+expected_languages = ["go"]

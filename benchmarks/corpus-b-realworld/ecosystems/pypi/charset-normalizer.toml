@@ -1,0 +1,29 @@
+[project]
+name = "charset-normalizer"
+ecosystem = "pypi"
+canonical_id = "pypi:charset-normalizer"
+description = "Encoding detection library; chardet alternative"
+why_included = "Top-10 PyPI by downloads as charset-normalizer; pulled as transitive dep by requests; included for corpus completeness; limited direct crypto surface but processes encoded data pipelines"
+
+[repo]
+url = "https://github.com/Ousret/charset_normalizer"
+commit_sha = "4f454b08304f02d00662ef561754c1ca730aa125"
+license = "MIT"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 300000000
+captured_at = "2026-06-15"
+stars = 610
+last_commit_date = "2026-05-20"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 4
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

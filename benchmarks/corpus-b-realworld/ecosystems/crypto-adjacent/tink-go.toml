@@ -1,0 +1,29 @@
+[project]
+name = "tink-go"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/tink-crypto/tink-go"
+description = "Google Tink (Go) — secure, easy-to-use cryptography API for Go"
+why_included = "Google's high-level crypto API for Go; AEAD, hybrid encryption (DHKEM+HKDF+AES), digital signatures, MAC, JWT; PQC hybrid modes in development; widely used in Google products"
+
+[repo]
+url = "https://github.com/tink-crypto/tink-go"
+commit_sha = "1b6b2e274e85105bfa155183145a1dcfd63331f1"
+license = "Apache-2.0"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 1000000
+captured_at = "2026-06-15"
+stars = 800
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 20
+substituted_for = "google/tink-cc (google/tink monorepo archived; tink-crypto/tink-go is the current Go release)"
+
+[scan_hints]
+scan_paths = ["aead/", "hybrid/", "signature/", "jwt/"]
+exclude_paths = ["testutil/"]
+expected_languages = ["go"]

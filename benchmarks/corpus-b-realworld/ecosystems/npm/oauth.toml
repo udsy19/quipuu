@@ -1,0 +1,29 @@
+[project]
+name = "oauth"
+ecosystem = "npm"
+canonical_id = "npm:oauth"
+description = "OAuth 1.0a/2.0 support for Node.js"
+why_included = "Top-50 npm; OAuth HMAC-SHA1 signature generation; canonical legacy OAuth library with HMAC-SHA1 surface"
+
+[repo]
+url = "https://github.com/ciaranj/node-oauth"
+commit_sha = "939fd2540b197f3c4afe17a37918bc0225988888"
+license = "MIT"
+language_primary = "javascript"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 8000000
+captured_at = "2026-06-15"
+stars = 870
+last_commit_date = "2023-01-01"
+
+[selection]
+selection_method = "top-25-npm-downloads"
+selection_rank = 22
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/"]
+expected_languages = ["javascript"]

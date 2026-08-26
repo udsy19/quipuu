@@ -1,0 +1,635 @@
+# Corpus B — Real-World OSS Projects Manifest
+# 150 projects across 6 ecosystems (25 per ecosystem)
+# Generated: 2026-06-15
+# DO NOT EDIT MANUALLY — update individual project files and regenerate
+
+[corpus]
+name = "corpus-b-realworld"
+version = "1.0.0"
+total_projects = 150
+ecosystems = ["pypi", "npm", "maven", "crates-io", "go-modules", "crypto-adjacent"]
+captured_at = "2026-06-15"
+
+# ---------------------------------------------------------------------------
+# PyPI ecosystem (25 projects)
+# ---------------------------------------------------------------------------
+
+[[projects]]
+canonical_id = "pypi:boto3"
+file_path = "ecosystems/pypi/boto3.toml"
+
+[[projects]]
+canonical_id = "pypi:urllib3"
+file_path = "ecosystems/pypi/urllib3.toml"
+
+[[projects]]
+canonical_id = "pypi:requests"
+file_path = "ecosystems/pypi/requests.toml"
+
+[[projects]]
+canonical_id = "pypi:charset-normalizer"
+file_path = "ecosystems/pypi/charset-normalizer.toml"
+
+[[projects]]
+canonical_id = "pypi:certifi"
+file_path = "ecosystems/pypi/certifi.toml"
+
+[[projects]]
+canonical_id = "pypi:idna"
+file_path = "ecosystems/pypi/idna.toml"
+
+[[projects]]
+canonical_id = "pypi:setuptools"
+file_path = "ecosystems/pypi/setuptools.toml"
+
+[[projects]]
+canonical_id = "pypi:six"
+file_path = "ecosystems/pypi/six.toml"
+
+[[projects]]
+canonical_id = "pypi:python-dateutil"
+file_path = "ecosystems/pypi/python-dateutil.toml"
+
+[[projects]]
+canonical_id = "pypi:s3transfer"
+file_path = "ecosystems/pypi/s3transfer.toml"
+
+[[projects]]
+canonical_id = "pypi:botocore"
+file_path = "ecosystems/pypi/botocore.toml"
+
+[[projects]]
+canonical_id = "pypi:cryptography"
+file_path = "ecosystems/pypi/cryptography.toml"
+
+[[projects]]
+canonical_id = "pypi:pyOpenSSL"
+file_path = "ecosystems/pypi/pyOpenSSL.toml"
+
+[[projects]]
+canonical_id = "pypi:paramiko"
+file_path = "ecosystems/pypi/paramiko.toml"
+
+[[projects]]
+canonical_id = "pypi:pyjwt"
+file_path = "ecosystems/pypi/pyjwt.toml"
+
+[[projects]]
+canonical_id = "pypi:pyasn1"
+file_path = "ecosystems/pypi/pyasn1.toml"
+
+[[projects]]
+canonical_id = "pypi:rsa"
+file_path = "ecosystems/pypi/rsa.toml"
+
+[[projects]]
+canonical_id = "pypi:pynacl"
+file_path = "ecosystems/pypi/pynacl.toml"
+
+[[projects]]
+canonical_id = "pypi:pycryptodome"
+file_path = "ecosystems/pypi/pycryptodome.toml"
+
+[[projects]]
+canonical_id = "pypi:bcrypt"
+file_path = "ecosystems/pypi/bcrypt.toml"
+
+[[projects]]
+canonical_id = "pypi:ecdsa"
+file_path = "ecosystems/pypi/ecdsa.toml"
+
+[[projects]]
+canonical_id = "pypi:cffi"
+file_path = "ecosystems/pypi/cffi.toml"
+
+[[projects]]
+canonical_id = "pypi:oauthlib"
+file_path = "ecosystems/pypi/oauthlib.toml"
+
+[[projects]]
+canonical_id = "pypi:authlib"
+file_path = "ecosystems/pypi/authlib.toml"
+
+[[projects]]
+canonical_id = "pypi:jose"
+file_path = "ecosystems/pypi/jose.toml"
+
+# ---------------------------------------------------------------------------
+# npm ecosystem (25 projects)
+# ---------------------------------------------------------------------------
+
+[[projects]]
+canonical_id = "npm:lodash"
+file_path = "ecosystems/npm/lodash.toml"
+
+[[projects]]
+canonical_id = "npm:react"
+file_path = "ecosystems/npm/react.toml"
+
+[[projects]]
+canonical_id = "npm:axios"
+file_path = "ecosystems/npm/axios.toml"
+
+[[projects]]
+canonical_id = "npm:express"
+file_path = "ecosystems/npm/express.toml"
+
+[[projects]]
+canonical_id = "npm:debug"
+file_path = "ecosystems/npm/debug.toml"
+
+[[projects]]
+canonical_id = "npm:ms"
+file_path = "ecosystems/npm/ms.toml"
+
+[[projects]]
+canonical_id = "npm:semver"
+file_path = "ecosystems/npm/semver.toml"
+
+[[projects]]
+canonical_id = "npm:chalk"
+file_path = "ecosystems/npm/chalk.toml"
+
+[[projects]]
+canonical_id = "npm:commander"
+file_path = "ecosystems/npm/commander.toml"
+
+[[projects]]
+canonical_id = "npm:glob"
+file_path = "ecosystems/npm/glob.toml"
+
+[[projects]]
+canonical_id = "npm:jsonwebtoken"
+file_path = "ecosystems/npm/jsonwebtoken.toml"
+
+[[projects]]
+canonical_id = "npm:node-forge"
+file_path = "ecosystems/npm/node-forge.toml"
+
+[[projects]]
+canonical_id = "npm:crypto-js"
+file_path = "ecosystems/npm/crypto-js.toml"
+
+[[projects]]
+canonical_id = "npm:bcryptjs"
+file_path = "ecosystems/npm/bcryptjs.toml"
+
+[[projects]]
+canonical_id = "npm:tweetnacl"
+file_path = "ecosystems/npm/tweetnacl.toml"
+
+[[projects]]
+canonical_id = "npm:elliptic"
+file_path = "ecosystems/npm/elliptic.toml"
+
+[[projects]]
+canonical_id = "npm:jsrsasign"
+file_path = "ecosystems/npm/jsrsasign.toml"
+
+[[projects]]
+canonical_id = "npm:node-rsa"
+file_path = "ecosystems/npm/node-rsa.toml"
+
+[[projects]]
+canonical_id = "npm:ssh2"
+file_path = "ecosystems/npm/ssh2.toml"
+
+[[projects]]
+canonical_id = "npm:jose"
+file_path = "ecosystems/npm/jose.toml"
+
+[[projects]]
+canonical_id = "npm:openpgp"
+file_path = "ecosystems/npm/openpgp.toml"
+
+[[projects]]
+canonical_id = "npm:oauth"
+file_path = "ecosystems/npm/oauth.toml"
+
+[[projects]]
+canonical_id = "npm:passport"
+file_path = "ecosystems/npm/passport.toml"
+
+[[projects]]
+canonical_id = "npm:helmet"
+file_path = "ecosystems/npm/helmet.toml"
+
+[[projects]]
+canonical_id = "npm:cookie"
+file_path = "ecosystems/npm/cookie.toml"
+
+# ---------------------------------------------------------------------------
+# Maven ecosystem (25 projects)
+# ---------------------------------------------------------------------------
+
+[[projects]]
+canonical_id = "maven:org.bouncycastle:bcprov-jdk18on"
+file_path = "ecosystems/maven/bcprov-jdk18on.toml"
+
+[[projects]]
+canonical_id = "maven:org.bouncycastle:bcpkix-jdk18on"
+file_path = "ecosystems/maven/bcpkix-jdk18on.toml"
+
+[[projects]]
+canonical_id = "maven:com.auth0:java-jwt"
+file_path = "ecosystems/maven/java-jwt.toml"
+
+[[projects]]
+canonical_id = "maven:io.jsonwebtoken:jjwt-api"
+file_path = "ecosystems/maven/jjwt-api.toml"
+
+[[projects]]
+canonical_id = "maven:io.netty:netty-handler"
+file_path = "ecosystems/maven/netty-handler.toml"
+
+[[projects]]
+canonical_id = "maven:org.apache.httpcomponents.client5:httpclient5"
+file_path = "ecosystems/maven/httpclient5.toml"
+
+[[projects]]
+canonical_id = "maven:com.squareup.okhttp3:okhttp"
+file_path = "ecosystems/maven/okhttp.toml"
+
+[[projects]]
+canonical_id = "maven:org.springframework.security:spring-security-crypto"
+file_path = "ecosystems/maven/spring-security-crypto.toml"
+
+[[projects]]
+canonical_id = "maven:commons-codec:commons-codec"
+file_path = "ecosystems/maven/commons-codec.toml"
+
+[[projects]]
+canonical_id = "maven:org.eclipse.jetty:jetty-server"
+file_path = "ecosystems/maven/jetty-server.toml"
+
+[[projects]]
+canonical_id = "maven:org.apache.tomcat.embed:tomcat-embed-core"
+file_path = "ecosystems/maven/tomcat-embed-core.toml"
+
+[[projects]]
+canonical_id = "maven:com.google.crypto.tink:tink"
+file_path = "ecosystems/maven/tink.toml"
+
+[[projects]]
+canonical_id = "maven:org.conscrypt:conscrypt-openjdk-uber"
+file_path = "ecosystems/maven/conscrypt-openjdk-uber.toml"
+
+[[projects]]
+canonical_id = "maven:com.amazonaws:aws-java-sdk-kms"
+file_path = "ecosystems/maven/aws-java-sdk-kms.toml"
+
+[[projects]]
+canonical_id = "maven:com.nimbusds:nimbus-jose-jwt"
+file_path = "ecosystems/maven/nimbus-jose-jwt.toml"
+
+[[projects]]
+canonical_id = "maven:org.apache.shiro:shiro-crypto-core"
+file_path = "ecosystems/maven/shiro-crypto-core.toml"
+
+[[projects]]
+canonical_id = "maven:com.unboundid:unboundid-ldapsdk"
+file_path = "ecosystems/maven/unboundid-ldapsdk.toml"
+
+[[projects]]
+canonical_id = "maven:org.apache.directory.api:api-ldap-codec-standalone"
+file_path = "ecosystems/maven/api-ldap-codec-standalone.toml"
+
+[[projects]]
+canonical_id = "maven:org.bitbucket.b_c:jose4j"
+file_path = "ecosystems/maven/jose4j.toml"
+
+[[projects]]
+canonical_id = "maven:org.eclipse.parsson:parsson"
+file_path = "ecosystems/maven/parsson.toml"
+
+[[projects]]
+canonical_id = "maven:org.cryptacular:cryptacular"
+file_path = "ecosystems/maven/cryptacular.toml"
+
+[[projects]]
+canonical_id = "maven:com.amazonaws:aws-encryption-sdk-java"
+file_path = "ecosystems/maven/aws-encryption-sdk-java.toml"
+
+[[projects]]
+canonical_id = "maven:com.azure:azure-security-keyvault-keys"
+file_path = "ecosystems/maven/azure-security-keyvault-keys.toml"
+
+[[projects]]
+canonical_id = "maven:software.amazon.awssdk:s3"
+file_path = "ecosystems/maven/aws-sdk-java-v2-s3.toml"
+
+[[projects]]
+canonical_id = "maven:org.opensaml:opensaml-xmlsec-api"
+file_path = "ecosystems/maven/opensaml-xmlsec-api.toml"
+
+# ---------------------------------------------------------------------------
+# Crates.io ecosystem (25 projects)
+# ---------------------------------------------------------------------------
+
+[[projects]]
+canonical_id = "crates-io:ring"
+file_path = "ecosystems/crates-io/ring.toml"
+
+[[projects]]
+canonical_id = "crates-io:rustls"
+file_path = "ecosystems/crates-io/rustls.toml"
+
+[[projects]]
+canonical_id = "crates-io:rustls-pemfile"
+file_path = "ecosystems/crates-io/rustls-pemfile.toml"
+
+[[projects]]
+canonical_id = "crates-io:webpki"
+file_path = "ecosystems/crates-io/webpki.toml"
+
+[[projects]]
+canonical_id = "crates-io:rustls-webpki"
+file_path = "ecosystems/crates-io/rustls-webpki.toml"
+
+[[projects]]
+canonical_id = "crates-io:rustls-pki-types"
+file_path = "ecosystems/crates-io/rustls-pki-types.toml"
+
+[[projects]]
+canonical_id = "crates-io:rustls-native-certs"
+file_path = "ecosystems/crates-io/rustls-native-certs.toml"
+
+[[projects]]
+canonical_id = "crates-io:tokio-rustls"
+file_path = "ecosystems/crates-io/tokio-rustls.toml"
+
+[[projects]]
+canonical_id = "crates-io:hyper-rustls"
+file_path = "ecosystems/crates-io/hyper-rustls.toml"
+
+[[projects]]
+canonical_id = "crates-io:sha2"
+file_path = "ecosystems/crates-io/sha2.toml"
+
+[[projects]]
+canonical_id = "crates-io:sha-1"
+file_path = "ecosystems/crates-io/sha-1.toml"
+
+[[projects]]
+canonical_id = "crates-io:md-5"
+file_path = "ecosystems/crates-io/md-5.toml"
+
+[[projects]]
+canonical_id = "crates-io:rsa"
+file_path = "ecosystems/crates-io/rsa.toml"
+
+[[projects]]
+canonical_id = "crates-io:ed25519-dalek"
+file_path = "ecosystems/crates-io/ed25519-dalek.toml"
+
+[[projects]]
+canonical_id = "crates-io:x25519-dalek"
+file_path = "ecosystems/crates-io/x25519-dalek.toml"
+
+[[projects]]
+canonical_id = "crates-io:p256"
+file_path = "ecosystems/crates-io/p256.toml"
+
+[[projects]]
+canonical_id = "crates-io:p384"
+file_path = "ecosystems/crates-io/p384.toml"
+
+[[projects]]
+canonical_id = "crates-io:k256"
+file_path = "ecosystems/crates-io/k256.toml"
+
+[[projects]]
+canonical_id = "crates-io:hmac"
+file_path = "ecosystems/crates-io/hmac.toml"
+
+[[projects]]
+canonical_id = "crates-io:pbkdf2"
+file_path = "ecosystems/crates-io/pbkdf2.toml"
+
+[[projects]]
+canonical_id = "crates-io:scrypt"
+file_path = "ecosystems/crates-io/scrypt.toml"
+
+[[projects]]
+canonical_id = "crates-io:argon2"
+file_path = "ecosystems/crates-io/argon2.toml"
+
+[[projects]]
+canonical_id = "crates-io:age"
+file_path = "ecosystems/crates-io/age.toml"
+
+[[projects]]
+canonical_id = "crates-io:jsonwebtoken"
+file_path = "ecosystems/crates-io/jsonwebtoken.toml"
+
+[[projects]]
+canonical_id = "crates-io:openssl"
+file_path = "ecosystems/crates-io/openssl.toml"
+
+# ---------------------------------------------------------------------------
+# Go modules ecosystem (25 projects)
+# ---------------------------------------------------------------------------
+
+[[projects]]
+canonical_id = "go-modules:github.com/aws/aws-sdk-go"
+file_path = "ecosystems/go-modules/aws-sdk-go.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/aws/aws-sdk-go-v2"
+file_path = "ecosystems/go-modules/aws-sdk-go-v2.toml"
+
+[[projects]]
+canonical_id = "go-modules:k8s.io/client-go"
+file_path = "ecosystems/go-modules/client-go.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/hashicorp/vault"
+file_path = "ecosystems/go-modules/vault.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/hashicorp/consul"
+file_path = "ecosystems/go-modules/consul.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/golang-jwt/jwt"
+file_path = "ecosystems/go-modules/golang-jwt.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/dgrijalva/jwt-go"
+file_path = "ecosystems/go-modules/jwt-go.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/go-jose/go-jose"
+file_path = "ecosystems/go-modules/go-jose.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/cloudflare/circl"
+file_path = "ecosystems/go-modules/circl.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/lestrrat-go/jwx"
+file_path = "ecosystems/go-modules/jwx.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/ory/hydra"
+file_path = "ecosystems/go-modules/hydra.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/coredns/coredns"
+file_path = "ecosystems/go-modules/coredns.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/minio/minio"
+file_path = "ecosystems/go-modules/minio.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/grafana/grafana"
+file_path = "ecosystems/go-modules/grafana.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/prometheus/prometheus"
+file_path = "ecosystems/go-modules/prometheus.toml"
+
+[[projects]]
+canonical_id = "go-modules:go.etcd.io/etcd"
+file_path = "ecosystems/go-modules/etcd.toml"
+
+[[projects]]
+canonical_id = "go-modules:k8s.io/kubernetes"
+file_path = "ecosystems/go-modules/kubernetes.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/moby/moby"
+file_path = "ecosystems/go-modules/moby.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/containerd/containerd"
+file_path = "ecosystems/go-modules/containerd.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/gin-gonic/gin"
+file_path = "ecosystems/go-modules/gin.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/labstack/echo"
+file_path = "ecosystems/go-modules/echo.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/redis/go-redis"
+file_path = "ecosystems/go-modules/go-redis.toml"
+
+[[projects]]
+canonical_id = "go-modules:github.com/jackc/pgx"
+file_path = "ecosystems/go-modules/pgx.toml"
+
+[[projects]]
+canonical_id = "go-modules:go.mongodb.org/mongo-driver"
+file_path = "ecosystems/go-modules/mongo-go-driver.toml"
+
+[[projects]]
+canonical_id = "go-modules:golang.org/x/crypto"
+file_path = "ecosystems/go-modules/x-crypto.toml"
+
+# ---------------------------------------------------------------------------
+# Crypto-adjacent tier (25 projects — hand-curated)
+# ---------------------------------------------------------------------------
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/openssl/openssl"
+file_path = "ecosystems/crypto-adjacent/openssl.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/aws/aws-lc"
+file_path = "ecosystems/crypto-adjacent/aws-lc.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/google/boringssl"
+file_path = "ecosystems/crypto-adjacent/boringssl.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/jedisct1/libsodium"
+file_path = "ecosystems/crypto-adjacent/libsodium.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/curl/curl"
+file_path = "ecosystems/crypto-adjacent/curl.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/nodejs/node"
+file_path = "ecosystems/crypto-adjacent/nodejs.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/open-quantum-safe/liboqs"
+file_path = "ecosystems/crypto-adjacent/liboqs.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/wolfSSL/wolfssl"
+file_path = "ecosystems/crypto-adjacent/wolfssl.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/Mbed-TLS/mbedtls"
+file_path = "ecosystems/crypto-adjacent/mbedtls.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/nabla-c0d3/sslyze"
+file_path = "ecosystems/crypto-adjacent/sslyze.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/open-quantum-safe/oqs-provider"
+file_path = "ecosystems/crypto-adjacent/oqs-provider.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/open-quantum-safe/liboqs-rust"
+file_path = "ecosystems/crypto-adjacent/oqs-rs.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/open-quantum-safe/liboqs-python"
+file_path = "ecosystems/crypto-adjacent/liboqs-python.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/pyca/cryptography"
+file_path = "ecosystems/crypto-adjacent/pyca-cryptography.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/microsoft/SymCrypt"
+file_path = "ecosystems/crypto-adjacent/symcrypt.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/microsoft/SymCrypt-OpenSSL"
+file_path = "ecosystems/crypto-adjacent/symcrypt-openssl.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/pq-crystals/kyber"
+file_path = "ecosystems/crypto-adjacent/kyber.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/pq-crystals/dilithium"
+file_path = "ecosystems/crypto-adjacent/dilithium.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/sphincsplus/sphincsplus"
+file_path = "ecosystems/crypto-adjacent/sphincsplus.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/tink-crypto/tink-go"
+file_path = "ecosystems/crypto-adjacent/tink-go.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/apple/swift-crypto"
+file_path = "ecosystems/crypto-adjacent/swift-crypto.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/facebookresearch/CrypTen"
+file_path = "ecosystems/crypto-adjacent/crypten.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/aws/aws-encryption-sdk-c"
+file_path = "ecosystems/crypto-adjacent/aws-encryption-sdk-c.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/rustpq/pqcrypto"
+file_path = "ecosystems/crypto-adjacent/pqcrypto.toml"
+
+[[projects]]
+canonical_id = "crypto-adjacent:github.com/tink-crypto/tink-java"
+file_path = "ecosystems/crypto-adjacent/tink-java.toml"

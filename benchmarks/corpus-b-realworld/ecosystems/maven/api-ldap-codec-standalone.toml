@@ -1,0 +1,29 @@
+[project]
+name = "api-ldap-codec-standalone"
+ecosystem = "maven"
+canonical_id = "maven:org.apache.directory.api:api-ldap-codec-standalone"
+description = "Apache Directory LDAP API codec"
+why_included = "Top-40 Maven; ASN.1/BER LDAP encoding/decoding; X.509 certificate integration; SASL mechanism support; enterprise LDAP crypto surface"
+
+[repo]
+url = "https://github.com/apache/directory-ldap-api"
+commit_sha = "2d01f006047e05cef49d13abe5ab25d66108f71a"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 2000000
+captured_at = "2026-06-15"
+stars = 60
+last_commit_date = "2026-03-01"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 18
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["**/src/test/"]
+expected_languages = ["java"]

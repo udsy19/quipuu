@@ -1,0 +1,29 @@
+[project]
+name = "aws-sdk-java-v2-s3"
+ecosystem = "maven"
+canonical_id = "maven:software.amazon.awssdk:s3"
+description = "AWS SDK for Java v2 — S3 module"
+why_included = "Top-20 Maven; SigV4/SigV4a HMAC-SHA256 signing; S3 SSE/SSE-C/SSE-KMS encryption; modern replacement for aws-java-sdk; active crypto surface"
+
+[repo]
+url = "https://github.com/aws/aws-sdk-java-v2"
+commit_sha = "0fe664eed0349eb2698cfa9a066abbce67ae766d"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 12000000
+captured_at = "2026-06-15"
+stars = 2000
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 24
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["services/s3/src/main/java/", "core/auth/src/main/java/"]
+exclude_paths = ["services/s3/src/test/"]
+expected_languages = ["java"]

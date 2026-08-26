@@ -1,0 +1,29 @@
+[project]
+name = "aws-encryption-sdk-java"
+ecosystem = "maven"
+canonical_id = "maven:com.amazonaws:aws-encryption-sdk-java"
+description = "AWS Encryption SDK for Java"
+why_included = "Top-50 Maven; envelope encryption with AES-GCM, RSA/ECDSA wrapping keys, KMS integration; canonical AWS crypto workflow library; PQC migration surface"
+
+[repo]
+url = "https://github.com/aws/aws-encryption-sdk-java"
+commit_sha = "4963baba980d0081da06b673b28452889ff6c41b"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 800000
+captured_at = "2026-06-15"
+stars = 300
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 22
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/main/java/"]
+exclude_paths = ["src/test/"]
+expected_languages = ["java"]

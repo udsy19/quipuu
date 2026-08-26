@@ -1,0 +1,29 @@
+[project]
+name = "six"
+ecosystem = "pypi"
+canonical_id = "pypi:six"
+description = "Python 2 and 3 compatibility library"
+why_included = "Top-20 PyPI by downloads; ubiquitous compatibility shim; minimal direct crypto surface but present in large legacy codebases alongside crypto libs"
+
+[repo]
+url = "https://github.com/benjaminp/six"
+commit_sha = "c8e394065cd541a16c040515dc0afb85cf22a7c3"
+license = "MIT"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 250000000
+captured_at = "2026-06-15"
+stars = 980
+last_commit_date = "2022-06-01"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 8
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

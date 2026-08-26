@@ -1,0 +1,29 @@
+[project]
+name = "helmet"
+ecosystem = "npm"
+canonical_id = "npm:helmet"
+description = "Security HTTP headers middleware for Express.js"
+why_included = "Top-40 npm; sets HSTS, CSP, COEP headers; security policy surface; scanner must handle security-policy-setting code patterns without false positives"
+
+[repo]
+url = "https://github.com/helmetjs/helmet"
+commit_sha = "1b861b407e5d6535a605a38ad2acd0c590b24d80"
+license = "MIT"
+language_primary = "javascript"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 20000000
+captured_at = "2026-06-15"
+stars = 10000
+last_commit_date = "2026-04-01"
+
+[selection]
+selection_method = "top-25-npm-downloads"
+selection_rank = 24
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["test/"]
+expected_languages = ["javascript"]

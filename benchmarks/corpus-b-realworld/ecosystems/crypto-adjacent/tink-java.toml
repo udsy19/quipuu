@@ -1,0 +1,29 @@
+[project]
+name = "tink-java"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/tink-crypto/tink-java"
+description = "Google Tink (Java/Android) — secure, easy-to-use cryptography API for Java/Android"
+why_included = "Google's high-level crypto API for Java; AEAD, hybrid encryption (DHKEM+HKDF+AES), digital signatures, MAC, JWT; Android crypto surface; PQC hybrid modes in development"
+
+[repo]
+url = "https://github.com/tink-crypto/tink-java"
+commit_sha = "1b3d38a0e6577da5d52eac64a4b3c50b4b0ce1f5"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 500000
+captured_at = "2026-06-15"
+stars = 600
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 25
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/main/java/com/google/crypto/tink/"]
+exclude_paths = ["src/test/"]
+expected_languages = ["java"]

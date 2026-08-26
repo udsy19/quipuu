@@ -1,0 +1,29 @@
+[project]
+name = "kubernetes"
+ecosystem = "go-modules"
+canonical_id = "go-modules:k8s.io/kubernetes"
+description = "Kubernetes — production-grade container orchestration"
+why_included = "Top-25 Go modules; extensive TLS stack; X.509 certificate bootstrapping; RBAC; kube-apiserver auth; single most impactful Go codebase for PQC migration"
+
+[repo]
+url = "https://github.com/kubernetes/kubernetes"
+commit_sha = "82c23b41d67b5daadad6d3a09dc74a13a72cba47"
+license = "Apache-2.0"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 8000000
+captured_at = "2026-06-15"
+stars = 111000
+last_commit_date = "2026-06-14"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 17
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["pkg/apis/certificates/", "plugin/pkg/auth/", "staging/src/k8s.io/apiserver/pkg/authentication/"]
+exclude_paths = ["vendor/", "test/", "third_party/"]
+expected_languages = ["go"]

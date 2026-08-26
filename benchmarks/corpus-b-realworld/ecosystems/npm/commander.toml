@@ -1,0 +1,29 @@
+[project]
+name = "commander"
+ecosystem = "npm"
+canonical_id = "npm:commander"
+description = "Node.js command-line interface (CLI) framework"
+why_included = "Top-15 npm by downloads; no crypto surface; negative control; many crypto tools use commander — scanner must not report commander's code as crypto"
+
+[repo]
+url = "https://github.com/tj/commander.js"
+commit_sha = "ba6d13ddb4243e5913367734f8c159089ffe7834"
+license = "MIT"
+language_primary = "javascript"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 800000000
+captured_at = "2026-06-15"
+stars = 26000
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-npm-downloads"
+selection_rank = 9
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/"]
+expected_languages = ["javascript"]

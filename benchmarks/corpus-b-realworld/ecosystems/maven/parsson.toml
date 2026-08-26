@@ -1,0 +1,29 @@
+[project]
+name = "parsson"
+ecosystem = "maven"
+canonical_id = "maven:org.eclipse.parsson:parsson"
+description = "Eclipse Parsson — Jakarta JSON Processing implementation"
+why_included = "Top-30 Maven; JSON parsing used in JOSE/JWT pipelines; scanner must handle JSON utility code adjacent to crypto without false positives"
+
+[repo]
+url = "https://github.com/eclipse-ee4j/parsson"
+commit_sha = "dcdf704bda37d4200804583cd5ec7d7dede553ea"
+license = "EPL-2.0 OR GPL-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 8000000
+captured_at = "2026-06-15"
+stars = 60
+last_commit_date = "2026-03-01"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 20
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["impl/src/main/java/"]
+exclude_paths = ["impl/src/test/"]
+expected_languages = ["java"]

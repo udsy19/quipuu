@@ -1,0 +1,29 @@
+[project]
+name = "sslyze"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/nabla-c0d3/sslyze"
+description = "SSLyze — fast and powerful SSL/TLS scanning tool"
+why_included = "TLS scanning tool with cipher suite enumeration, certificate inspection, vulnerability detection; useful benchmark reference for scanner detection accuracy; Python-based TLS analysis"
+
+[repo]
+url = "https://github.com/nabla-c0d3/sslyze"
+commit_sha = "723dd38882584f95b80f53a0baf1b9562bcee28c"
+license = "LGPL-2.1"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 200000
+captured_at = "2026-06-15"
+stars = 3300
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 10
+substituted_for = "philipl/sslyze (invalid; correct repo is nabla-c0d3/sslyze)"
+
+[scan_hints]
+scan_paths = ["sslyze/"]
+exclude_paths = ["tests/"]
+expected_languages = ["python"]

@@ -1,0 +1,29 @@
+[project]
+name = "webpki"
+ecosystem = "crates-io"
+canonical_id = "crates-io:webpki"
+description = "Web PKI X.509 certificate validation in Rust"
+why_included = "Top-20 crates.io; X.509 path validation used by rustls; RSA/ECDSA certificate signature verification; critical PQC migration surface for certificate chains"
+
+[repo]
+url = "https://github.com/rustls/webpki"
+commit_sha = "734a03bec1a79649991effff1ef724288eff2b6e"
+license = "ISC"
+language_primary = "rust"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 8000000
+captured_at = "2026-06-15"
+stars = 530
+last_commit_date = "2025-12-01"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 4
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/"]
+exclude_paths = ["tests/"]
+expected_languages = ["rust"]

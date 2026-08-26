@@ -1,0 +1,29 @@
+[project]
+name = "symcrypt"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/microsoft/SymCrypt"
+description = "SymCrypt — Microsoft's core cryptographic library (Windows, Azure, Linux)"
+why_included = "Microsoft production crypto library; FIPS 140-3 validated; ML-KEM/ML-DSA (NIST PQC standards) support; used in Windows, Azure, and Microsoft 365; important for enterprise PQC migration"
+
+[repo]
+url = "https://github.com/microsoft/SymCrypt"
+commit_sha = "61b250ac42af6742edc16ca9e0a7cfe7e3a9672a"
+license = "MIT"
+language_primary = "c"
+languages_secondary = ["asm"]
+
+[metadata]
+downloads_monthly = 500000
+captured_at = "2026-06-15"
+stars = 1100
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 15
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["lib/", "inc/"]
+exclude_paths = ["unittest/", "scripts/"]
+expected_languages = ["c", "asm"]

@@ -1,0 +1,29 @@
+[project]
+name = "azure-security-keyvault-keys"
+ecosystem = "maven"
+canonical_id = "maven:com.azure:azure-security-keyvault-keys"
+description = "Azure Key Vault Keys SDK for Java"
+why_included = "Top-40 Maven; RSA/ECDSA/AES key management via Azure Key Vault; sign/verify/encrypt/decrypt wrappers; enterprise cloud crypto migration surface"
+
+[repo]
+url = "https://github.com/Azure/azure-sdk-for-java"
+commit_sha = "af8c11bdcf1271504feeb50fd10292407754c67e"
+license = "MIT"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 2000000
+captured_at = "2026-06-15"
+stars = 2500
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 23
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["sdk/keyvault/azure-security-keyvault-keys/src/main/java/"]
+exclude_paths = ["sdk/keyvault/azure-security-keyvault-keys/src/test/"]
+expected_languages = ["java"]

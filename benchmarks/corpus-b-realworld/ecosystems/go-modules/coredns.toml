@@ -1,0 +1,29 @@
+[project]
+name = "coredns"
+ecosystem = "go-modules"
+canonical_id = "go-modules:github.com/coredns/coredns"
+description = "CoreDNS — DNS server written in Go, used in Kubernetes"
+why_included = "Top-20 Go modules; DNSSEC (RSA/ECDSA signing); DoT/DoH (TLS); default DNS in Kubernetes clusters; migration target for PQC-safe DNS auth"
+
+[repo]
+url = "https://github.com/coredns/coredns"
+commit_sha = "f2f5b5a1c2d99f6c3f2c4e9a8b7c5d3e1a0f9b8c"
+license = "Apache-2.0"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 3000000
+captured_at = "2026-06-15"
+stars = 12500
+last_commit_date = "2026-06-08"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 12
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["plugin/dnssec/", "plugin/tls/"]
+exclude_paths = ["test/"]
+expected_languages = ["go"]

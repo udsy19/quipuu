@@ -1,0 +1,29 @@
+[project]
+name = "axios"
+ecosystem = "npm"
+canonical_id = "npm:axios"
+description = "Promise-based HTTP client for browser and Node.js"
+why_included = "Top-10 npm by downloads; canonical HTTP client; handles HTTPS; surface for TLS-related scanning and token header injection patterns"
+
+[repo]
+url = "https://github.com/axios/axios"
+commit_sha = "227c788eb702ee88791451eb53e76ef3dca67f8a"
+license = "MIT"
+language_primary = "javascript"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 800000000
+captured_at = "2026-06-15"
+stars = 106000
+last_commit_date = "2026-06-10"
+
+[selection]
+selection_method = "top-25-npm-downloads"
+selection_rank = 3
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["test/", "sandbox/"]
+expected_languages = ["javascript"]

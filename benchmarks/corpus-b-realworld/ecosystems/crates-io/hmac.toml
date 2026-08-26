@@ -1,0 +1,29 @@
+[project]
+name = "hmac"
+ecosystem = "crates-io"
+canonical_id = "crates-io:hmac"
+description = "HMAC (Hash-based Message Authentication Code) in Rust"
+why_included = "Top-15 crates.io; RustCrypto HMAC generic over hash functions; HMAC-SHA256 surface; used by JWT libraries, AWS signature"
+
+[repo]
+url = "https://github.com/RustCrypto/MACs"
+commit_sha = "8f03db9cca5711ac1497ec14eee91f799875e663"
+license = "MIT OR Apache-2.0"
+language_primary = "rust"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 10000000
+captured_at = "2026-06-15"
+stars = 580
+last_commit_date = "2026-04-01"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 19
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["hmac/src/"]
+exclude_paths = []
+expected_languages = ["rust"]

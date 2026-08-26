@@ -1,0 +1,29 @@
+[project]
+name = "liboqs"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/open-quantum-safe/liboqs"
+description = "liboqs — Open Quantum Safe C library of post-quantum cryptographic algorithms"
+why_included = "Reference PQC implementation library; ML-KEM/Kyber, ML-DSA/Dilithium, SLH-DSA/SPHINCS+, FrodoKEM, HQC; used by OQS-OpenSSL, OQS-BoringSSL, OQS-Provider; ground-truth for PQC detection"
+
+[repo]
+url = "https://github.com/open-quantum-safe/liboqs"
+commit_sha = "3bd5094dec1dfbaac1a03957c35ba5e487f5b890"
+license = "MIT"
+language_primary = "c"
+languages_secondary = ["asm"]
+
+[metadata]
+downloads_monthly = 500000
+captured_at = "2026-06-15"
+stars = 1900
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 7
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/kem/", "src/sig/", "src/common/"]
+exclude_paths = ["tests/"]
+expected_languages = ["c", "asm"]

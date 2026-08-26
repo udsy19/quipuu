@@ -1,0 +1,29 @@
+[project]
+name = "lodash"
+ecosystem = "npm"
+canonical_id = "npm:lodash"
+description = "JavaScript utility library"
+why_included = "Top-1 npm by downloads; minimal direct crypto surface but ubiquitous in the dependency graph of crypto-using packages; included for scanner false-positive stress test"
+
+[repo]
+url = "https://github.com/lodash/lodash"
+commit_sha = "a02353279093cca0fea1c8cc468ffbf03bb3485b"
+license = "MIT"
+language_primary = "javascript"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 2000000000
+captured_at = "2026-06-15"
+stars = 59000
+last_commit_date = "2025-08-01"
+
+[selection]
+selection_method = "top-25-npm-downloads"
+selection_rank = 1
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["test/", "docs/"]
+expected_languages = ["javascript"]

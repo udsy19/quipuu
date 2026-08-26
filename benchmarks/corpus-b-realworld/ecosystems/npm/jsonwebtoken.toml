@@ -1,0 +1,29 @@
+[project]
+name = "jsonwebtoken"
+ecosystem = "npm"
+canonical_id = "npm:jsonwebtoken"
+description = "JSON Web Token implementation for Node.js"
+why_included = "Top-30 npm; canonical JWT library; implements HS256/HS512/RS256/RS512/ES256/PS256; all quantum-vulnerable signing algorithms; Auth0-maintained"
+
+[repo]
+url = "https://github.com/auth0/node-jsonwebtoken"
+commit_sha = "02688b9821325b32abc33c4250c646fe6c1477bd"
+license = "MIT"
+language_primary = "javascript"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 100000000
+captured_at = "2026-06-15"
+stars = 17000
+last_commit_date = "2026-03-01"
+
+[selection]
+selection_method = "top-25-npm-downloads"
+selection_rank = 11
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["test/"]
+expected_languages = ["javascript"]

@@ -1,0 +1,29 @@
+[project]
+name = "pyOpenSSL"
+ecosystem = "pypi"
+canonical_id = "pypi:pyOpenSSL"
+description = "Python wrapper around OpenSSL using CFFI"
+why_included = "High-download Python TLS/crypto binding; direct OpenSSL surface exposure including RSA, X.509, TLS session management; critical PQC migration surface"
+
+[repo]
+url = "https://github.com/pyca/pyopenssl"
+commit_sha = "a34aa1de7e2050d3a83cef74d8265662237f8ba1"
+license = "Apache-2.0"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 90000000
+captured_at = "2026-06-15"
+stars = 900
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 13
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "doc/"]
+expected_languages = ["python"]

@@ -1,0 +1,29 @@
+[project]
+name = "paramiko"
+ecosystem = "pypi"
+canonical_id = "pypi:paramiko"
+description = "Pure-Python SSHv2 implementation"
+why_included = "Top-30 PyPI; canonical Python SSH library; implements RSA/ECDSA/Ed25519 key exchange, AES-CTR/AES-GCM, ChaCha20-Poly1305; rich PQC-vulnerable algorithm surface"
+
+[repo]
+url = "https://github.com/paramiko/paramiko"
+commit_sha = "d60d5c17d78f344b51ed651e796d2931133a9b22"
+license = "LGPL-2.1"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 50000000
+captured_at = "2026-06-15"
+stars = 8900
+last_commit_date = "2026-05-30"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 14
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "sites/"]
+expected_languages = ["python"]

@@ -1,0 +1,29 @@
+[project]
+name = "liboqs-python"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/open-quantum-safe/liboqs-python"
+description = "liboqs-python — Python bindings to liboqs post-quantum algorithms"
+why_included = "PQC Python bindings; ML-KEM/ML-DSA/SLH-DSA accessible from Python; important for ML/AI workloads adopting PQC; benchmark must handle ctypes-wrapped PQC detection"
+
+[repo]
+url = "https://github.com/open-quantum-safe/liboqs-python"
+commit_sha = "168eba89c1663893c1c593f7a6c4da4d49541d36"
+license = "MIT"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 30000
+captured_at = "2026-06-15"
+stars = 270
+last_commit_date = "2026-06-01"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 13
+substituted_for = "open-quantum-safe/oqs-python (renamed to liboqs-python)"
+
+[scan_hints]
+scan_paths = ["oqs/"]
+exclude_paths = []
+expected_languages = ["python"]

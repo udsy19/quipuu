@@ -1,0 +1,29 @@
+[project]
+name = "ecdsa"
+ecosystem = "pypi"
+canonical_id = "pypi:ecdsa"
+description = "Pure-Python ECDSA implementation"
+why_included = "Top-30 PyPI; pure-Python ECDSA over NIST P-192/P-224/P-256/P-384/P-521/SECP256k1; directly exposes quantum-vulnerable elliptic-curve primitives"
+
+[repo]
+url = "https://github.com/tlsfuzzer/python-ecdsa"
+commit_sha = "bff40c6cf2340148d410d5b3def0e949c547caf1"
+license = "MIT"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 25000000
+captured_at = "2026-06-15"
+stars = 500
+last_commit_date = "2025-11-01"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 21
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/"]
+expected_languages = ["python"]

@@ -1,0 +1,29 @@
+[project]
+name = "pyasn1"
+ecosystem = "pypi"
+canonical_id = "pypi:pyasn1"
+description = "ASN.1 library for Python"
+why_included = "Top-30 PyPI by downloads; ASN.1 codec underpins X.509 certificate parsing, PKCS structures, and OID encoding — foundational layer for crypto surface detection"
+
+[repo]
+url = "https://github.com/pyasn1/pyasn1"
+commit_sha = "907afbf7098352c56e98382660a6c7976e98fe50"
+license = "BSD-2-Clause"
+language_primary = "python"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 120000000
+captured_at = "2026-06-15"
+stars = 270
+last_commit_date = "2026-02-10"
+
+[selection]
+selection_method = "top-25-pypi-downloads"
+selection_rank = 16
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/", "docs/"]
+expected_languages = ["python"]

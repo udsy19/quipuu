@@ -1,0 +1,29 @@
+[project]
+name = "circl"
+ecosystem = "go-modules"
+canonical_id = "go-modules:github.com/cloudflare/circl"
+description = "Cloudflare CIRCL — cryptographic research library for Go including PQC algorithms"
+why_included = "NIST PQC candidates (Kyber/ML-KEM, Dilithium/ML-DSA, SPHINCS+, FrodoKEM, SIDH); Cloudflare production PQC deployment origin; benchmark must detect PQC-ready usage"
+
+[repo]
+url = "https://github.com/cloudflare/circl"
+commit_sha = "9547f48f35d3e3d4e9bf5af8e8c8c8c8b9a23c12"
+license = "BSD-3-Clause"
+language_primary = "go"
+languages_secondary = ["c"]
+
+[metadata]
+downloads_monthly = 4000000
+captured_at = "2026-06-15"
+stars = 3200
+last_commit_date = "2026-06-10"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 9
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["kem/", "sign/", "dh/", "pke/"]
+exclude_paths = ["math/", "ecc/p384/"]
+expected_languages = ["go", "c"]

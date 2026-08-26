@@ -1,0 +1,29 @@
+[project]
+name = "node-forge"
+ecosystem = "npm"
+canonical_id = "npm:node-forge"
+description = "Pure JavaScript implementation of TLS, RSA, X.509, and other crypto primitives"
+why_included = "Top-40 npm; pure-JS TLS/RSA/AES/X.509/PKCS#7/PKCS#8; extremely wide quantum-vulnerable surface; used by certbot, webpack DevServer, and many others"
+
+[repo]
+url = "https://github.com/digitalbazaar/forge"
+commit_sha = "7a43db987bd0ecdc5b41f6d73f58ba6ca5bf9ae1"
+license = "BSD-3-Clause OR GPL-2.0"
+language_primary = "javascript"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 80000000
+captured_at = "2026-06-15"
+stars = 5000
+last_commit_date = "2025-06-01"
+
+[selection]
+selection_method = "top-25-npm-downloads"
+selection_rank = 12
+substituted_for = "digitalbazaar/node-forge (repo renamed to digitalbazaar/forge)"
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["tests/"]
+expected_languages = ["javascript"]

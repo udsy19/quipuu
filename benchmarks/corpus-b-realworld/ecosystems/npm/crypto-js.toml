@@ -1,0 +1,29 @@
+[project]
+name = "crypto-js"
+ecosystem = "npm"
+canonical_id = "npm:crypto-js"
+description = "JavaScript implementations of standard and secure cryptographic algorithms"
+why_included = "Top-40 npm; pure-JS AES/DES/3DES/RC4/MD5/SHA1/SHA256/HMAC/PBKDF2; extremely broad quantum-vulnerable surface; wide use in browser-side crypto"
+
+[repo]
+url = "https://github.com/brix/crypto-js"
+commit_sha = "ac34a5a584337b33a2e567f50d96819a96ac44bf"
+license = "MIT"
+language_primary = "javascript"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 50000000
+captured_at = "2026-06-15"
+stars = 15000
+last_commit_date = "2025-01-01"
+
+[selection]
+selection_method = "top-25-npm-downloads"
+selection_rank = 13
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["test/"]
+expected_languages = ["javascript"]

@@ -1,0 +1,29 @@
+[project]
+name = "sphincsplus"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/sphincsplus/sphincsplus"
+description = "SPHINCS+ reference implementation (now standardized as SLH-DSA in FIPS 205)"
+why_included = "NIST PQC standard (SLH-DSA/FIPS 205) hash-based signature reference implementation; stateless hash-based signature; conservative PQC choice; scanner ground-truth for SPHINCS+/SLH-DSA detection"
+
+[repo]
+url = "https://github.com/sphincsplus/sphincsplus"
+commit_sha = "eea7cc4a79dcb17b43b20e12bc7ecebfc86f3515"
+license = "CC0-1.0"
+language_primary = "c"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 50000
+captured_at = "2026-06-15"
+stars = 450
+last_commit_date = "2026-03-15"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 19
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["ref/", "avx2/"]
+exclude_paths = []
+expected_languages = ["c"]

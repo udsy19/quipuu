@@ -1,0 +1,29 @@
+[project]
+name = "nodejs"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/nodejs/node"
+description = "Node.js — JavaScript runtime with built-in crypto module backed by OpenSSL/BoringSSL"
+why_included = "Built-in crypto module (node:crypto); TLS via libuv/OpenSSL; JWT/hash/cipher APIs used directly by billions of npm packages; migration surface for all npm crypto usage"
+
+[repo]
+url = "https://github.com/nodejs/node"
+commit_sha = "11681baa709bffc2cc23e37c0d3dff26a32dccad"
+license = "MIT"
+language_primary = "c++"
+languages_secondary = ["javascript", "c"]
+
+[metadata]
+downloads_monthly = 100000000
+captured_at = "2026-06-15"
+stars = 107000
+last_commit_date = "2026-06-14"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 6
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/crypto/", "lib/internal/crypto/"]
+exclude_paths = ["deps/", "test/"]
+expected_languages = ["c++", "javascript"]

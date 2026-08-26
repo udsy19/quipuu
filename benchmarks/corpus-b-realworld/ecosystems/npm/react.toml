@@ -1,0 +1,29 @@
+[project]
+name = "react"
+ecosystem = "npm"
+canonical_id = "npm:react"
+description = "JavaScript library for building user interfaces"
+why_included = "Top-3 npm by downloads; minimal direct crypto but widely co-deployed with JWT auth and HTTPS APIs; scanner must handle modern JS/JSX without false positives"
+
+[repo]
+url = "https://github.com/facebook/react"
+commit_sha = "d9158919c598836c47fc61c1ba5f4d79d8fea69a"
+license = "MIT"
+language_primary = "javascript"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 1500000000
+captured_at = "2026-06-15"
+stars = 230000
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "top-25-npm-downloads"
+selection_rank = 2
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["packages/react/"]
+exclude_paths = ["fixtures/", "__tests__/"]
+expected_languages = ["javascript"]

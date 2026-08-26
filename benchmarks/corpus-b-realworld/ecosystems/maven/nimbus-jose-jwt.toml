@@ -1,0 +1,29 @@
+[project]
+name = "nimbus-jose-jwt"
+ecosystem = "maven"
+canonical_id = "maven:com.nimbusds:nimbus-jose-jwt"
+description = "Nimbus JOSE+JWT — Java implementation of JWS/JWE/JWA/JWK/JWT"
+why_included = "Top-30 Maven; full JOSE stack; RSA-OAEP/ECDH-ES/AES-GCM JWE, RSA/ECDSA/EdDSA JWS; used by Keycloak, Spring Authorization Server; crypto-dense"
+
+[repo]
+url = "https://bitbucket.org/connect2id/nimbus-jose-jwt"
+commit_sha = "47d66f2775c392964788aa6389a46fac84f976cd"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 12000000
+captured_at = "2026-06-15"
+stars = 0
+last_commit_date = "2026-05-01"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 15
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/main/java/"]
+exclude_paths = ["src/test/"]
+expected_languages = ["java"]

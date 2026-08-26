@@ -1,0 +1,29 @@
+[project]
+name = "minio"
+ecosystem = "go-modules"
+canonical_id = "go-modules:github.com/minio/minio"
+description = "MinIO — high-performance S3-compatible object storage"
+why_included = "Top-20 Go modules; SSE-C/SSE-S3/SSE-KMS (AES-256-GCM); TLS; STS; IAM; crypto at rest and in transit; widely deployed in cloud-native environments"
+
+[repo]
+url = "https://github.com/minio/minio"
+commit_sha = "7aac2a2c3b94f4e9d7a1c5f2e8b3c6d0a9f1e7b4"
+license = "AGPL-3.0"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 2500000
+captured_at = "2026-06-15"
+stars = 48000
+last_commit_date = "2026-06-14"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 13
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["cmd/crypto/", "internal/crypto/"]
+exclude_paths = ["vendor/"]
+expected_languages = ["go"]

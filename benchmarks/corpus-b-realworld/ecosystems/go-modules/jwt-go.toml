@@ -1,0 +1,29 @@
+[project]
+name = "jwt-go"
+ecosystem = "go-modules"
+canonical_id = "go-modules:github.com/dgrijalva/jwt-go"
+description = "Original Go JWT library (archived) — predecessor to golang-jwt/jwt"
+why_included = "Still heavily downloaded; large legacy install base; HS/RS/ES algorithm usage; needed for benchmark coverage of unmaintained-but-prevalent code"
+
+[repo]
+url = "https://github.com/dgrijalva/jwt-go"
+commit_sha = "9742bd7f95cf26d5e6a28e45b26e99ffdfe2b3f1"
+license = "MIT"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 9000000
+captured_at = "2026-06-15"
+stars = 10500
+last_commit_date = "2021-11-09"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 7
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = ["test/"]
+expected_languages = ["go"]

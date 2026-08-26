@@ -1,0 +1,29 @@
+[project]
+name = "spring-security-crypto"
+ecosystem = "maven"
+canonical_id = "maven:org.springframework.security:spring-security-crypto"
+description = "Spring Security cryptography module"
+why_included = "Top-20 Maven; BCrypt/SCrypt/Argon2 password encoding, AES encryption, PBKDF2; used in virtually every Spring application; high crypto density"
+
+[repo]
+url = "https://github.com/spring-projects/spring-security"
+commit_sha = "43f958e0587e07bcb322194ce2acf9ad921a5b88"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 18000000
+captured_at = "2026-06-15"
+stars = 9000
+last_commit_date = "2026-06-12"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 8
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["crypto/src/main/java/"]
+exclude_paths = ["crypto/src/test/"]
+expected_languages = ["java"]

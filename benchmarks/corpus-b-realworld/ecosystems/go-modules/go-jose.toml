@@ -1,0 +1,29 @@
+[project]
+name = "go-jose"
+ecosystem = "go-modules"
+canonical_id = "go-modules:github.com/go-jose/go-jose"
+description = "JOSE (JWE/JWS/JWT) implementation for Go"
+why_included = "Top-20 Go modules; RSA-OAEP, RSA-PKCS1v1.5, ECDH-ES, AES-KeyWrap, HMAC; quantum-vulnerable KEMs and signatures; widely used in identity/auth stacks"
+
+[repo]
+url = "https://github.com/go-jose/go-jose"
+commit_sha = "b53008138df0f877a2d2cb70e06e21c68a8fc16a"
+license = "Apache-2.0"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 8000000
+captured_at = "2026-06-15"
+stars = 600
+last_commit_date = "2026-04-15"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 8
+substituted_for = ""
+
+[scan_hints]
+scan_paths = []
+exclude_paths = []
+expected_languages = ["go"]

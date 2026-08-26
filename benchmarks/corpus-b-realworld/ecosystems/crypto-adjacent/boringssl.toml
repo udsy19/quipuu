@@ -1,0 +1,29 @@
+[project]
+name = "boringssl"
+ecosystem = "crypto-adjacent"
+canonical_id = "crypto-adjacent:github.com/google/boringssl"
+description = "BoringSSL — Google fork of OpenSSL used in Chrome, Android, and Google services"
+why_included = "Google's production TLS library; HPKE; Hybrid PQC experiments; Kyber/Dilithium prototypes; basis for aws-lc; scanner must distinguish quantum-safe from hybrid modes"
+
+[repo]
+url = "https://github.com/google/boringssl"
+commit_sha = "340c501fd10a6a8ddf3ea8ac8e535b0e7d9e309b"
+license = "OpenSSL"
+language_primary = "c"
+languages_secondary = ["asm", "go", "rust"]
+
+[metadata]
+downloads_monthly = 10000000
+captured_at = "2026-06-15"
+stars = 5500
+last_commit_date = "2026-06-14"
+
+[selection]
+selection_method = "curated-crypto-adjacent"
+selection_rank = 3
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["crypto/", "ssl/", "pki/"]
+exclude_paths = ["fuzz/", "src/fuzz/", "src/test/"]
+expected_languages = ["c", "asm"]

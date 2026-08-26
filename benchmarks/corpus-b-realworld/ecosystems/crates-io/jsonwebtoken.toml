@@ -1,0 +1,29 @@
+[project]
+name = "jsonwebtoken"
+ecosystem = "crates-io"
+canonical_id = "crates-io:jsonwebtoken"
+description = "JWT encoding and decoding in Rust"
+why_included = "Top-20 crates.io; HS256/HS384/HS512/RS256/RS384/RS512/ES256/ES384/EdDSA JWT; canonical Rust JWT library with quantum-vulnerable algorithm surface"
+
+[repo]
+url = "https://github.com/Keats/jsonwebtoken"
+commit_sha = "e681247d61f5dc3a0f6e5138094f1b15a5aebdb0"
+license = "MIT"
+language_primary = "rust"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 3000000
+captured_at = "2026-06-15"
+stars = 1700
+last_commit_date = "2026-04-01"
+
+[selection]
+selection_method = "top-25-crates-io-downloads"
+selection_rank = 24
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["src/"]
+exclude_paths = ["tests/"]
+expected_languages = ["rust"]

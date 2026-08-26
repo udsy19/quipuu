@@ -1,0 +1,29 @@
+[project]
+name = "jwx"
+ecosystem = "go-modules"
+canonical_id = "go-modules:github.com/lestrrat-go/jwx"
+description = "lestrrat-go/jwx — comprehensive Go JOSE/JWT library supporting JWK/JWS/JWE/JWT"
+why_included = "Top-20 Go modules; RSA/ECDSA/Ed25519 signing; ECDH-ES encryption; broad algorithm coverage; quantum-vulnerable primitive surface"
+
+[repo]
+url = "https://github.com/lestrrat-go/jwx"
+commit_sha = "a746d3fd2b72bc4ccd2f9fca45adb4ad8b26e748"
+license = "MIT"
+language_primary = "go"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 3500000
+captured_at = "2026-06-15"
+stars = 1900
+last_commit_date = "2026-05-30"
+
+[selection]
+selection_method = "top-25-go-module-downloads"
+selection_rank = 10
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["jwa/", "jwe/", "jwk/", "jws/", "jwt/"]
+exclude_paths = ["examples/"]
+expected_languages = ["go"]

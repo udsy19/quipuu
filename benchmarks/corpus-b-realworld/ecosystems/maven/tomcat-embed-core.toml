@@ -1,0 +1,29 @@
+[project]
+name = "tomcat-embed-core"
+ecosystem = "maven"
+canonical_id = "maven:org.apache.tomcat.embed:tomcat-embed-core"
+description = "Apache Tomcat embedded core"
+why_included = "Top-20 Maven; HTTPS/TLS termination, JSSE configuration, SSL connectors; used by Spring Boot by default; TLS migration surface"
+
+[repo]
+url = "https://github.com/apache/tomcat"
+commit_sha = "adf68bd617912052c8936583c65fa58d0dbf89dc"
+license = "Apache-2.0"
+language_primary = "java"
+languages_secondary = []
+
+[metadata]
+downloads_monthly = 25000000
+captured_at = "2026-06-15"
+stars = 7300
+last_commit_date = "2026-06-10"
+
+[selection]
+selection_method = "top-25-maven-downloads"
+selection_rank = 11
+substituted_for = ""
+
+[scan_hints]
+scan_paths = ["java/org/apache/tomcat/util/net/", "java/org/apache/catalina/"]
+exclude_paths = ["test/"]
+expected_languages = ["java"]
