@@ -383,7 +383,6 @@ dependencies = [
  "cryptoscope-cbom",
  "cryptoscope-core",
  "cryptoscope-report",
- "cryptoscope-risk",
  "cryptoscope-scan-certs",
  "cryptoscope-scan-deps",
  "cryptoscope-scan-network",
@@ -427,15 +426,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "thiserror 2.0.18",
-]
-
-[[package]]
-name = "cryptoscope-risk"
-version = "0.1.0"
-dependencies = [
- "cryptoscope-core",
- "serde",
  "thiserror 2.0.18",
 ]
 

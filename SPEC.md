@@ -41,7 +41,6 @@ cryptoscope/
 │  ├─ scan-certs/   # X.509 + key material analysis (PEM/DER, dirs, hosts)
 │  ├─ scan-deps/    # manifest parsers: go.mod, requirements.txt, package.json,
 │  │                #   pom.xml, Cargo.toml, *.csproj, Gemfile, etc.
-│  ├─ risk/         # 5-axis QuantumRiskScore engine (D-10) + policy loader (D-05)
 │  ├─ cbom/         # CycloneDX 1.7 builder + 1.6 downgrade emitter + validator (D-01)
 │  ├─ report/       # HTML, SARIF 2.1.0 (D-11), JSON
 │  ├─ tui/          # ratatui application
@@ -49,6 +48,15 @@ cryptoscope/
 ├─ rules/           # declarative TOML detection rules (D-07), embedded via include_dir!
 └─ policy/          # default policy.toml presets: nist-default, nsa-cnsa2, uk-ncsc, ...
 ```
+
+**No separate `risk` crate.** The 5-axis QuantumRiskScore engine (D-10) lives at
+`core::risk`. The "separate scoring crate" pattern (Grype+Syft, Sentry) is the
+right call when scoring normalizes heterogeneous inputs from multiple scanner
+backends — CVSS, EPSS, KEV, RustSec metadata. cryptoscope has one scoring
+formula defined in our own data (`default-policy.toml`), tightly coupled to
+types in `core` (`AlgorithmRecord`, `Policy`, `Finding`, `QuantumStatus`). A
+separate crate would force every dependent type to become `pub` at the `core`
+boundary for the sole purpose of being re-imported. Keep it inline.
 
 ## 3. The crypto knowledge base (D-04)
 
@@ -228,7 +236,7 @@ Exit non-zero when `--fail-on` threshold is met.
 1. Workspace + `core` domain types + the algorithm table + OID table + policy loader + unit tests.
 2. `scan-source` for **Go and Python** first (matches/beats CBOMkit), ~15 high-value rules each. Headless JSON output.
 3. `cbom` builder + dual-schema validator (1.6 + 1.7).
-4. `risk` engine + prioritized register.
+4. `core::risk` engine + prioritized register.
 5. `report` HTML generator.
 6. `tui` — live scan + explorer.
 7. `scan-certs`, then `scan-network` (two-tier prober), then `scan-deps`.

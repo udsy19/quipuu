@@ -6,7 +6,6 @@ members = [
     "crates/scan-network",
     "crates/scan-certs",
     "crates/scan-deps",
-    "crates/risk",
     "crates/cbom",
     "crates/report",
     "crates/tui",
