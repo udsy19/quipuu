@@ -17,6 +17,36 @@ pub use html::emit_html;
 pub use sarif::emit_sarif;
 pub use summary::emit_summary_json;
 
+use cryptoscope_core::{AlgorithmTable, Finding};
+
+/// Partition findings into (audible, suppressed) sets.
+///
+/// "Suppressed" = findings whose algorithm has `quantum_status.is_inventory_only()`
+/// (QuantumSafe / PqcFinal / PqcDraft). They are inventory data, not alerts,
+/// and would otherwise drown out real findings (e.g. a single rustls scan emits
+/// ~85 AES-256-GCM Medium findings — all of which are quantum-safe noise).
+///
+/// Findings whose `algorithm_id` is not in the table are always audible (they
+/// represent something the scanner saw but couldn't classify — surfacing them
+/// helps users catch coverage gaps).
+///
+/// The CBOM is built from the full finding set, not the audible subset, so the
+/// inventory remains complete. Only HTML / SARIF / summary / stdout filter.
+pub fn partition_audible<'a>(
+    findings: &'a [Finding],
+    algorithms: &AlgorithmTable,
+) -> (Vec<&'a Finding>, Vec<&'a Finding>) {
+    let mut audible = Vec::with_capacity(findings.len());
+    let mut suppressed = Vec::new();
+    for f in findings {
+        match algorithms.get(&f.algorithm_id) {
+            Some(a) if a.quantum_status.is_inventory_only() => suppressed.push(f),
+            _ => audible.push(f),
+        }
+    }
+    (audible, suppressed)
+}
+
 use thiserror::Error;
 
 /// Caller-supplied options shared by all emitters.

@@ -299,3 +299,148 @@ fn summary_json_by_algorithm_sorted_by_count_desc_then_alpha() {
         }
     }
 }
+
+// ── Phase 2: audible-vs-suppressed partition tests ──────────────────────────
+//
+// The V2 corpus run produced ~85 AES-256-GCM "Medium" findings on a single
+// rustls scan — all quantum-safe, all inventory, all noise on the alert
+// channel. Phase 2 hides QuantumSafe / PqcFinal / PqcDraft from HTML / SARIF /
+// summary / stdout by default. The CBOM keeps everything because it's an
+// inventory. These tests guard the partition behaviour.
+
+fn finding_for(algo_id: &str) -> cryptoscope_core::Finding {
+    use cryptoscope_core::{Confidence, Exposure, Finding, Location, UsageContext};
+    Finding {
+        rule_id: format!("TEST-{algo_id}"),
+        algorithm_id: algo_id.to_string(),
+        location: Location {
+            location: "test.rs".to_string(),
+            line: Some(1),
+            offset: None,
+            symbol: None,
+            snippet: Some(format!("call({algo_id})")),
+        },
+        message: format!("{algo_id} usage detected"),
+        confidence: Confidence::LiteralArg,
+        usage_context: UsageContext::DataAtRestEncryption,
+        exposure: Exposure::InternalService,
+        shelf_life_bucket: "medium".to_string(),
+        hndl_critical: false,
+    }
+}
+
+#[test]
+fn phase2_partition_audible_separates_inventory_from_real_findings() {
+    use cryptoscope_report::partition_audible;
+
+    let b = cryptoscope_core::load_builtins().expect("builtins load");
+    let findings = vec![
+        finding_for("rsa-2048"),    // BrokenByShor — audible
+        finding_for("aes-256-gcm"), // QuantumSafe — suppressed
+        finding_for("md5"),         // BrokenClassically — audible
+        finding_for("ml-kem-768"),  // PqcFinal — suppressed
+        finding_for("sha-256"),     // QuantumSafe-ish (hash) — suppressed
+        finding_for("ecdsa-p256"),  // BrokenByShor — audible
+    ];
+
+    let (audible, suppressed) = partition_audible(&findings, &b.algorithms);
+
+    let audible_ids: Vec<&str> = audible.iter().map(|f| f.algorithm_id.as_str()).collect();
+    let suppressed_ids: Vec<&str> = suppressed.iter().map(|f| f.algorithm_id.as_str()).collect();
+
+    assert!(
+        audible_ids.contains(&"rsa-2048"),
+        "RSA-2048 must be audible"
+    );
+    assert!(audible_ids.contains(&"md5"), "MD5 must be audible");
+    assert!(
+        audible_ids.contains(&"ecdsa-p256"),
+        "ECDSA-P256 must be audible"
+    );
+
+    assert!(
+        suppressed_ids.contains(&"aes-256-gcm"),
+        "AES-256-GCM (QuantumSafe) must be suppressed"
+    );
+    assert!(
+        suppressed_ids.contains(&"ml-kem-768"),
+        "ML-KEM-768 (PqcFinal) must be suppressed — it's inventory, not an alert"
+    );
+
+    assert_eq!(audible.len() + suppressed.len(), findings.len());
+}
+
+#[test]
+fn phase2_unknown_algorithm_id_stays_audible() {
+    // If the scanner produced a finding whose algorithm_id we can't classify
+    // (table miss, dep scanner unknown), we surface it — better to overcount
+    // than to silently drop something we don't understand.
+    use cryptoscope_report::partition_audible;
+
+    let b = cryptoscope_core::load_builtins().expect("builtins load");
+    let findings = vec![finding_for("not-an-algorithm-in-the-table")];
+    let (audible, suppressed) = partition_audible(&findings, &b.algorithms);
+    assert_eq!(audible.len(), 1, "unknown algo-ids must stay audible");
+    assert_eq!(suppressed.len(), 0);
+}
+
+#[test]
+fn phase2_sarif_excludes_suppressed_when_audible_subset_passed() {
+    // Mirrors how the CLI calls emit_sarif with the partitioned subset:
+    // SARIF must contain only the audible findings.
+    use cryptoscope_report::partition_audible;
+
+    let b = cryptoscope_core::load_builtins().expect("builtins load");
+    let findings = vec![
+        finding_for("rsa-2048"),
+        finding_for("aes-256-gcm"),
+        finding_for("ml-kem-768"),
+    ];
+    let (audible, _) = partition_audible(&findings, &b.algorithms);
+    let displayed: Vec<cryptoscope_core::Finding> = audible.iter().map(|f| (*f).clone()).collect();
+
+    let sarif =
+        emit_sarif(&displayed, &b.algorithms, &b.policy, &default_opts()).expect("emit_sarif");
+    let val: serde_json::Value = serde_json::from_str(&sarif).unwrap();
+    let results = val["runs"][0]["results"].as_array().unwrap();
+
+    let rule_ids: Vec<&str> = results
+        .iter()
+        .map(|r| r["ruleId"].as_str().unwrap_or(""))
+        .collect();
+
+    assert!(
+        rule_ids.contains(&"TEST-rsa-2048"),
+        "SARIF must include RSA-2048 finding (audible)"
+    );
+    assert!(
+        !rule_ids.contains(&"TEST-aes-256-gcm"),
+        "SARIF must NOT include AES-256-GCM finding (suppressed)"
+    );
+    assert!(
+        !rule_ids.contains(&"TEST-ml-kem-768"),
+        "SARIF must NOT include ML-KEM-768 finding (suppressed)"
+    );
+}
+
+#[test]
+fn phase2_sarif_includes_everything_when_full_set_passed() {
+    // Mirrors `--include-safe`: when the CLI passes the full findings set,
+    // every finding appears in SARIF (inventory + alerts together).
+    let b = cryptoscope_core::load_builtins().expect("builtins load");
+    let findings = vec![
+        finding_for("rsa-2048"),
+        finding_for("aes-256-gcm"),
+        finding_for("ml-kem-768"),
+    ];
+
+    let sarif =
+        emit_sarif(&findings, &b.algorithms, &b.policy, &default_opts()).expect("emit_sarif");
+    let val: serde_json::Value = serde_json::from_str(&sarif).unwrap();
+    let results = val["runs"][0]["results"].as_array().unwrap();
+    assert_eq!(
+        results.len(),
+        3,
+        "with --include-safe, SARIF must contain every finding"
+    );
+}

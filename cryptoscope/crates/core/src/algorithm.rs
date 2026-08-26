@@ -54,6 +54,22 @@ pub enum QuantumStatus {
     PqcDraft,
 }
 
+impl QuantumStatus {
+    /// True if this status describes an algorithm that's safe to keep using
+    /// indefinitely under the cryptoscope policy: symmetric/hash that survives
+    /// Grover at its chosen parameters, or NIST-final / draft PQC.
+    ///
+    /// Used by the report layer to suppress inventory-only findings (e.g.
+    /// every AES-256-GCM call) from the alert-level output by default. They
+    /// remain in the CBOM because the CBOM is an inventory.
+    pub fn is_inventory_only(self) -> bool {
+        matches!(
+            self,
+            QuantumStatus::QuantumSafe | QuantumStatus::PqcFinal | QuantumStatus::PqcDraft
+        )
+    }
+}
+
 /// One row of the algorithm table.
 ///
 /// Field semantics documented in `knowledge/11-decisions/data/algorithm-table.toml`.
@@ -175,5 +191,23 @@ impl AlgorithmTable {
             }
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn quantum_status_inventory_only_partitions_correctly() {
+        // Phase 2: drives the report-layer filter that hides inventory noise
+        // (AES, SHA-256, ML-KEM) from HTML/SARIF by default.
+        assert!(QuantumStatus::QuantumSafe.is_inventory_only());
+        assert!(QuantumStatus::PqcFinal.is_inventory_only());
+        assert!(QuantumStatus::PqcDraft.is_inventory_only());
+
+        assert!(!QuantumStatus::BrokenClassically.is_inventory_only());
+        assert!(!QuantumStatus::BrokenByShor.is_inventory_only());
+        assert!(!QuantumStatus::WeakenedByGrover.is_inventory_only());
     }
 }

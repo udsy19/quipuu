@@ -17,7 +17,9 @@ use cryptoscope_cbom::SchemaVersion;
 use cryptoscope_cbom::emit::{EmitOptions, ScanTarget};
 use cryptoscope_cbom::emit_cbom_json;
 use cryptoscope_core::{Finding, QuantumRiskScore, load_builtins};
-use cryptoscope_report::{ReportOptions, emit_html, emit_sarif, emit_summary_json};
+use cryptoscope_report::{
+    ReportOptions, emit_html, emit_sarif, emit_summary_json, partition_audible,
+};
 use cryptoscope_scan_certs::CertScanner;
 use cryptoscope_scan_deps::DepScanner;
 use cryptoscope_scan_network::NetScanner;
@@ -85,6 +87,12 @@ OUTPUT:
     --summary-json <file>     Emit a compact CI dashboard JSON
     --tui                     Open the interactive TUI explorer
 
+FILTERS:
+    --include-safe            Show inventory-only findings (QuantumSafe, PqcFinal,
+                              PqcDraft) in HTML / SARIF / summary / stdout. They
+                              are always present in the CBOM. Default: hidden
+                              because they drown out actionable findings.
+
 MISC:
     --version                 Print version
     --help                    Print this help
@@ -107,6 +115,7 @@ struct ScanFlags {
     sarif_out: Option<PathBuf>,
     summary_out: Option<PathBuf>,
     open_tui: bool,
+    include_safe: bool,
 }
 
 fn parse_scan_flags(tail: &[String]) -> ScanFlags {
@@ -162,6 +171,9 @@ fn parse_scan_flags(tail: &[String]) -> ScanFlags {
             }
             "--tui" => {
                 flags.open_tui = true;
+            }
+            "--include-safe" => {
+                flags.include_safe = true;
             }
             "--schema-version" => {
                 if let Some(v) = it.next() {
@@ -263,14 +275,33 @@ fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
         }
     }
 
+    // Partition into "audible" (alert-worthy) and "suppressed" (inventory-only:
+    // QuantumSafe / PqcFinal / PqcDraft). The CBOM consumes the full set —
+    // it's an inventory. Everything else defaults to the audible subset so
+    // ~85 AES-256-GCM findings from a single rustls scan don't drown out the
+    // real signals. `--include-safe` collapses the two back together.
+    let (audible_refs, suppressed_refs) = partition_audible(&findings, &builtins.algorithms);
+    let displayed_findings: Vec<Finding> = if flags.include_safe {
+        findings.clone()
+    } else {
+        audible_refs.iter().map(|f| (*f).clone()).collect()
+    };
+
     println!(
         "cryptoscope: scanned {} → {} finding(s) (policy: {})",
         path.display(),
         findings.len(),
         builtins.policy.meta.name,
     );
+    if !flags.include_safe && !suppressed_refs.is_empty() {
+        println!(
+            "  ({} shown, {} hidden as quantum-safe inventory; pass --include-safe to see all)",
+            displayed_findings.len(),
+            suppressed_refs.len(),
+        );
+    }
 
-    for f in &findings {
+    for f in &displayed_findings {
         let where_ = match f.location.line {
             Some(l) => format!("{}:{}", f.location.location, l),
             None => f.location.location.clone(),
@@ -339,7 +370,7 @@ fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
 
     if let Some(out_path) = &flags.html_out {
         match emit_html(
-            &findings,
+            &displayed_findings,
             &builtins.algorithms,
             &builtins.policy,
             &report_opts,
@@ -360,7 +391,7 @@ fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
 
     if let Some(out_path) = &flags.sarif_out {
         match emit_sarif(
-            &findings,
+            &displayed_findings,
             &builtins.algorithms,
             &builtins.policy,
             &report_opts,
@@ -381,7 +412,7 @@ fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
 
     if let Some(out_path) = &flags.summary_out {
         match emit_summary_json(
-            &findings,
+            &displayed_findings,
             &builtins.algorithms,
             &builtins.policy,
             &report_opts,
@@ -401,7 +432,7 @@ fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
     }
 
     if flags.open_tui {
-        let tui = Tui::new(findings, builtins.algorithms, builtins.policy);
+        let tui = Tui::new(displayed_findings, builtins.algorithms, builtins.policy);
         if let Err(e) = tui.run() {
             eprintln!("cryptoscope: TUI failed: {e}");
             return ExitCode::FAILURE;
