@@ -1,0 +1,186 @@
+# Java detection rules — two-layer (extract → classify), per D-07
+#
+# Covers: javax.crypto.Cipher.getInstance, java.security.KeyPairGenerator,
+#         java.security.MessageDigest, org.bouncycastle.* (BC).
+#
+# Extract IDs: JAV-NNN
+# Classify IDs: CRYPTO-200..299
+
+# ============================================================================
+# javax.crypto.Cipher.getInstance — string-driven cipher selection
+# ============================================================================
+
+[[extract]]
+id = "JAV-001"
+language = "java"
+query = """
+(method_invocation
+  object: (identifier) @cls (#eq? @cls "Cipher")
+  name: (identifier) @fn (#eq? @fn "getInstance")
+  arguments: (argument_list (string_literal) @spec))
+"""
+captures = { cls = "ident", fn = "ident", spec = "literal_string" }
+api = "javax.crypto.Cipher.getInstance"
+description = "Java Cipher.getInstance(spec) — cipher/mode/padding string literal."
+
+[[classify]]
+id = "CRYPTO-200"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)DES" }
+algorithm_id = "des"
+severity_hint = "critical"
+message = "DES/3DES detected in Cipher.getInstance('{spec}'). Disallowed for new encryption (NIST SP 800-131A)."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-201"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)AES.*/ECB" }
+algorithm_id = "aes-128-ecb"
+severity_hint = "high"
+message = "AES-ECB mode in Cipher.getInstance('{spec}'). ECB is deterministic and leaks patterns."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-202"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)RSA.*PKCS1Padding" }
+algorithm_id = "rsa-pkcs1-sha256-2048"
+severity_hint = "high"
+message = "RSA PKCS1v1.5 padding in Cipher.getInstance('{spec}'). Vulnerable to Bleichenbacher attacks; use OAEP."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-203"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)AES.*/GCM" }
+algorithm_id = "aes-256-gcm"
+severity_hint = "auto"
+message = "AES-GCM in Cipher.getInstance('{spec}'). Good AEAD choice; confirm 256-bit key."
+
+# ============================================================================
+# java.security.KeyPairGenerator.getInstance
+# ============================================================================
+
+[[extract]]
+id = "JAV-010"
+language = "java"
+query = """
+(method_invocation
+  object: (identifier) @cls (#eq? @cls "KeyPairGenerator")
+  name: (identifier) @fn (#eq? @fn "getInstance")
+  arguments: (argument_list (string_literal) @algo))
+"""
+captures = { cls = "ident", fn = "ident", algo = "literal_string" }
+api = "java.security.KeyPairGenerator.getInstance"
+description = "Java KeyPairGenerator.getInstance(algo) — asymmetric keypair generation."
+
+[[classify]]
+id = "CRYPTO-210"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?RSA\"?$" }
+algorithm_id = "rsa-2048"
+severity_hint = "auto"
+message = "RSA keypair generator. Quantum-vulnerable: NIST IR 8547 deprecates after 2030."
+
+[[classify]]
+id = "CRYPTO-211"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?EC\"?$" }
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-212"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?DSA\"?$" }
+algorithm_id = "dsa-2048"
+severity_hint = "high"
+message = "DSA keypair generator. Deprecated for new use (FIPS 186-5)."
+
+# ============================================================================
+# java.security.MessageDigest.getInstance
+# ============================================================================
+
+[[extract]]
+id = "JAV-020"
+language = "java"
+query = """
+(method_invocation
+  object: (identifier) @cls (#eq? @cls "MessageDigest")
+  name: (identifier) @fn (#eq? @fn "getInstance")
+  arguments: (argument_list (string_literal) @algo))
+"""
+captures = { cls = "ident", fn = "ident", algo = "literal_string" }
+api = "java.security.MessageDigest.getInstance"
+description = "Java MessageDigest.getInstance(algo) — hash algorithm selection."
+
+[[classify]]
+id = "CRYPTO-220"
+when.api = "^java\\.security\\.MessageDigest\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MD5\"?$" }
+algorithm_id = "md5"
+severity_hint = "critical"
+message = "MD5 hash in MessageDigest.getInstance('{algo}'). Classically broken (collisions since 2004)."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-221"
+when.api = "^java\\.security\\.MessageDigest\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SHA-?1\"?$" }
+algorithm_id = "sha-1"
+severity_hint = "critical"
+message = "SHA-1 hash in MessageDigest.getInstance('{algo}'). Classically broken (SHAttered, 2017)."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-222"
+when.api = "^java\\.security\\.MessageDigest\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SHA-?256\"?$" }
+algorithm_id = "sha-256"
+severity_hint = "auto"
+message = "SHA-256 hash in MessageDigest.getInstance('{algo}'). Quantum-safe for hashing."
+
+# ============================================================================
+# org.bouncycastle — BC provider detection
+# ============================================================================
+
+[[extract]]
+id = "JAV-030"
+language = "java"
+query = """
+(object_creation_expression
+  type: (type_identifier) @cls (#match? @cls "^(RSAKeyPairGenerator|AESEngine|GCMBlockCipher|BouncyCastleProvider)$"))
+"""
+captures = { cls = "ident" }
+api = "org.bouncycastle.{cls}"
+description = "BouncyCastle crypto class instantiation."
+
+[[classify]]
+id = "CRYPTO-230"
+when.api = "^org\\.bouncycastle\\.RSAKeyPairGenerator$"
+algorithm_id = "rsa-2048"
+severity_hint = "auto"
+message = "BouncyCastle RSAKeyPairGenerator instantiated. Quantum-vulnerable RSA."
+
+[[classify]]
+id = "CRYPTO-231"
+when.api = "^org\\.bouncycastle\\.AESEngine$"
+algorithm_id = "aes-256-gcm"
+severity_hint = "auto"
+message = "BouncyCastle AESEngine instantiated. Confirm key size and authenticated mode (GCM)."
+
+[[classify]]
+id = "CRYPTO-232"
+when.api = "^org\\.bouncycastle\\.GCMBlockCipher$"
+algorithm_id = "aes-256-gcm"
+severity_hint = "auto"
+message = "BouncyCastle GCMBlockCipher instantiated. Good AEAD mode."
+
+[[classify]]
+id = "CRYPTO-233"
+when.api = "^org\\.bouncycastle\\.BouncyCastleProvider$"
+algorithm_id = "aes-256-gcm"
+severity_hint = "low"
+message = "BouncyCastle provider registered. Inventory all BC API usages."

@@ -1,0 +1,223 @@
+# C# detection rules — two-layer (extract → classify), per D-07
+#
+# Covers: System.Security.Cryptography factory methods:
+#   RSA.Create(), ECDsa.Create(), Aes.Create(), TripleDES.Create(),
+#   SHA256.Create(), SHA512.Create(), MD5.Create(), SHA1.Create(),
+#   RandomNumberGenerator (Create / GetBytes),
+#   RijndaelManaged (deprecated).
+#
+# C# note: tree-sitter-c-sharp parses invocation_expression nodes.
+#   The scanner's walk() matches "invocation_expression" nodes and the
+#   match_csharp_callee() helper extracts the callee text.
+#   Factory methods like RSA.Create() become callee text "RSA.Create".
+#
+# Extract IDs: CSH-NNN
+# Classify IDs: CRYPTO-600..699
+
+# ============================================================================
+# RSA.Create()
+# ============================================================================
+
+[[extract]]
+id = "CSH-001"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "RSA")
+    name: (identifier) @fn (#eq? @fn "Create")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.RSA.Create"
+description = "RSA.Create() — factory method for RSA key operations."
+
+[[classify]]
+id = "CRYPTO-600"
+when.api = "^System\\.Security\\.Cryptography\\.RSA\\.Create$"
+algorithm_id = "rsa-2048"
+severity_hint = "auto"
+message = "RSA.Create() — RSA asymmetric key. Quantum-vulnerable: replace with ML-KEM-768 or ML-DSA-65."
+
+# ============================================================================
+# ECDsa.Create() / ECDiffieHellman.Create()
+# ============================================================================
+
+[[extract]]
+id = "CSH-002"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#match? @cls "^(ECDsa|ECDiffieHellman)$")
+    name: (identifier) @fn (#eq? @fn "Create")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.ECDsa.Create"
+description = "ECDsa.Create() — factory for EC key operations."
+
+[[classify]]
+id = "CRYPTO-610"
+when.api = "^System\\.Security\\.Cryptography\\.ECDsa\\.Create$"
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "ECDsa.Create() — ECDSA asymmetric key. Quantum-vulnerable. Replace with ML-DSA-65."
+
+# ============================================================================
+# Aes.Create()
+# ============================================================================
+
+[[extract]]
+id = "CSH-010"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "Aes")
+    name: (identifier) @fn (#eq? @fn "Create")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.Aes.Create"
+description = "Aes.Create() — factory for AES symmetric cipher."
+
+[[classify]]
+id = "CRYPTO-620"
+when.api = "^System\\.Security\\.Cryptography\\.Aes\\.Create$"
+algorithm_id = "aes-256-gcm"
+severity_hint = "auto"
+message = "Aes.Create() — ensure key size = 256 bits and GCM mode (AesCcm/AesGcm). Default CBC mode is not authenticated."
+
+# ============================================================================
+# TripleDES.Create() / DES.Create()
+# ============================================================================
+
+[[extract]]
+id = "CSH-011"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#match? @cls "^(TripleDES|DES)$")
+    name: (identifier) @fn (#eq? @fn "Create")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.TripleDES.Create"
+description = "TripleDES.Create() / DES.Create() — legacy symmetric ciphers."
+
+[[classify]]
+id = "CRYPTO-621"
+when.api = "^System\\.Security\\.Cryptography\\.TripleDES\\.Create$"
+algorithm_id = "3des"
+severity_hint = "high"
+message = "TripleDES.Create() — 3DES is deprecated for new use (NIST SP 800-131A r2). Migrate to AES-256-GCM."
+cwe = "CWE-327"
+
+# ============================================================================
+# SHA256.Create() / SHA512.Create()
+# ============================================================================
+
+[[extract]]
+id = "CSH-020"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#match? @cls "^SHA(1|256|384|512)$")
+    name: (identifier) @fn (#eq? @fn "Create")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.{cls}.Create"
+description = "SHA*.Create() — hash algorithm factory."
+
+[[classify]]
+id = "CRYPTO-630"
+when.api = "^System\\.Security\\.Cryptography\\.SHA1\\.Create$"
+algorithm_id = "sha-1"
+severity_hint = "critical"
+message = "SHA1.Create() — SHA-1 is classically broken (SHAttered, 2017). Use SHA-256 or higher."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-631"
+when.api = "^System\\.Security\\.Cryptography\\.SHA256\\.Create$"
+algorithm_id = "sha-256"
+severity_hint = "auto"
+message = "SHA256.Create() — SHA-256 hash. Quantum-safe."
+
+[[classify]]
+id = "CRYPTO-632"
+when.api = "^System\\.Security\\.Cryptography\\.SHA512\\.Create$"
+algorithm_id = "sha-512"
+severity_hint = "auto"
+message = "SHA512.Create() — SHA-512 hash. Quantum-safe."
+
+# ============================================================================
+# MD5.Create()
+# ============================================================================
+
+[[extract]]
+id = "CSH-021"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "MD5")
+    name: (identifier) @fn (#eq? @fn "Create")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.MD5.Create"
+description = "MD5.Create() — MD5 hash factory."
+
+[[classify]]
+id = "CRYPTO-640"
+when.api = "^System\\.Security\\.Cryptography\\.MD5\\.Create$"
+algorithm_id = "md5"
+severity_hint = "critical"
+message = "MD5.Create() — MD5 is classically broken (collisions since 2004). Use SHA-256."
+cwe = "CWE-327"
+
+# ============================================================================
+# RandomNumberGenerator.Create() / .GetBytes()
+# ============================================================================
+
+[[extract]]
+id = "CSH-030"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "RandomNumberGenerator")
+    name: (identifier) @fn (#match? @fn "^(Create|GetBytes|Fill)$")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.RandomNumberGenerator.Create"
+description = "RandomNumberGenerator.Create/GetBytes/Fill — CSPRNG usage."
+
+[[classify]]
+id = "CRYPTO-650"
+when.api = "^System\\.Security\\.Cryptography\\.RandomNumberGenerator\\.Create$"
+algorithm_id = "aes-256-gcm"
+severity_hint = "low"
+message = "RandomNumberGenerator.Create() called. CSPRNG usage is fine; verify key/IV lengths meet policy."
+
+# ============================================================================
+# RijndaelManaged (deprecated in .NET 6+, disallowed in FIPS mode)
+# ============================================================================
+
+[[extract]]
+id = "CSH-040"
+language = "csharp"
+query = """
+(object_creation_expression
+  type: (identifier) @cls (#eq? @cls "RijndaelManaged"))
+"""
+captures = { cls = "ident" }
+api = "System.Security.Cryptography.RijndaelManaged.new"
+description = "new RijndaelManaged() — deprecated managed AES/Rijndael class."
+
+[[classify]]
+id = "CRYPTO-660"
+when.api = "^System\\.Security\\.Cryptography\\.RijndaelManaged\\.new$"
+algorithm_id = "aes-128-ecb"
+severity_hint = "high"
+message = "new RijndaelManaged() — deprecated in .NET 6+; disallowed in FIPS mode. Use AesGcm instead."
+cwe = "CWE-327"

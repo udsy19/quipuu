@@ -21,6 +21,13 @@ use thiserror::Error;
 pub enum Language {
     Go,
     Python,
+    Java,
+    JavaScript,
+    TypeScript,
+    C,
+    Cpp,
+    Rust,
+    CSharp,
 }
 
 impl Language {
@@ -29,6 +36,13 @@ impl Language {
         match s {
             "go" => Some(Self::Go),
             "python" => Some(Self::Python),
+            "java" => Some(Self::Java),
+            "javascript" => Some(Self::JavaScript),
+            "typescript" => Some(Self::TypeScript),
+            "c" => Some(Self::C),
+            "cpp" | "c++" => Some(Self::Cpp),
+            "rust" => Some(Self::Rust),
+            "csharp" | "c#" => Some(Self::CSharp),
             _ => None,
         }
     }
@@ -38,6 +52,13 @@ impl Language {
         match self {
             Self::Go => &["go"],
             Self::Python => &["py"],
+            Self::Java => &["java"],
+            Self::JavaScript => &["js", "mjs", "cjs"],
+            Self::TypeScript => &["ts", "tsx", "mts"],
+            Self::C => &["c", "h"],
+            Self::Cpp => &["cpp", "cc", "cxx", "hpp", "hxx"],
+            Self::Rust => &["rs"],
+            Self::CSharp => &["cs"],
         }
     }
 }
@@ -143,6 +164,31 @@ impl RulePack {
     pub fn builtin_python() -> Result<Self, LoadError> {
         Self::from_toml(include_str!("../../core/data/rules/python.toml"))
     }
+
+    /// Load the built-in Java rule pack.
+    pub fn builtin_java() -> Result<Self, LoadError> {
+        Self::from_toml(include_str!("../../core/data/rules/java.toml"))
+    }
+
+    /// Load the built-in JavaScript/TypeScript rule pack.
+    pub fn builtin_javascript() -> Result<Self, LoadError> {
+        Self::from_toml(include_str!("../../core/data/rules/javascript.toml"))
+    }
+
+    /// Load the built-in C/C++ rule pack.
+    pub fn builtin_cpp() -> Result<Self, LoadError> {
+        Self::from_toml(include_str!("../../core/data/rules/cpp.toml"))
+    }
+
+    /// Load the built-in Rust rule pack.
+    pub fn builtin_rust() -> Result<Self, LoadError> {
+        Self::from_toml(include_str!("../../core/data/rules/rust.toml"))
+    }
+
+    /// Load the built-in C# rule pack.
+    pub fn builtin_csharp() -> Result<Self, LoadError> {
+        Self::from_toml(include_str!("../../core/data/rules/csharp.toml"))
+    }
 }
 
 #[cfg(test)]
@@ -192,8 +238,18 @@ when = { api = "^foo$", args = { bits = { lt = 2048 } } }
     fn builtin_rules_load() {
         let go = RulePack::builtin_go().expect("Go rule pack must parse");
         let py = RulePack::builtin_python().expect("Python rule pack must parse");
+        let java = RulePack::builtin_java().expect("Java rule pack must parse");
+        let js = RulePack::builtin_javascript().expect("JS rule pack must parse");
+        let cpp = RulePack::builtin_cpp().expect("C/C++ rule pack must parse");
+        let rust = RulePack::builtin_rust().expect("Rust rule pack must parse");
+        let cs = RulePack::builtin_csharp().expect("C# rule pack must parse");
         assert!(!go.classify.is_empty());
         assert!(!py.classify.is_empty());
+        assert!(!java.classify.is_empty());
+        assert!(!js.classify.is_empty());
+        assert!(!cpp.classify.is_empty());
+        assert!(!rust.classify.is_empty());
+        assert!(!cs.classify.is_empty());
     }
 }
 

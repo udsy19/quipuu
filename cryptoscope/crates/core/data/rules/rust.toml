@@ -1,0 +1,263 @@
+# Rust detection rules — two-layer (extract → classify), per D-07
+#
+# Covers: ring crate APIs, RustCrypto type-path matches (Aes256Gcm, Sha256,
+#         ChaCha20Poly1305, rsa::RsaPrivateKey, ed25519_dalek::SigningKey),
+#         rustls::ClientConfig.
+#
+# Rust note: RustCrypto encodes algorithm + key-size in type names (Aes256Gcm,
+#   Sha256). The callee text captures the full path (e.g. "Aes256Gcm::new")
+#   which lets us derive the algorithm without arg parsing.
+#
+# Extract IDs: RST-NNN
+# Classify IDs: CRYPTO-500..599
+
+# ============================================================================
+# ring — EcdsaKeyPair::generate_pkcs8
+# ============================================================================
+
+[[extract]]
+id = "RST-001"
+language = "rust"
+query = """
+(call_expression
+  function: (scoped_identifier
+    path: (identifier) @cls (#eq? @cls "EcdsaKeyPair")
+    name: (identifier) @fn (#eq? @fn "generate_pkcs8")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "ring.EcdsaKeyPair.generate_pkcs8"
+description = "ring::signature::EcdsaKeyPair::generate_pkcs8 — ECDSA keypair."
+
+[[classify]]
+id = "CRYPTO-500"
+when.api = "^ring\\.EcdsaKeyPair\\.generate_pkcs8$"
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "ring EcdsaKeyPair::generate_pkcs8 — ECDSA key, quantum-vulnerable. Replace with ML-DSA-65."
+
+# ============================================================================
+# ring — Ed25519KeyPair::generate_pkcs8
+# ============================================================================
+
+[[extract]]
+id = "RST-002"
+language = "rust"
+query = """
+(call_expression
+  function: (scoped_identifier
+    path: (identifier) @cls (#eq? @cls "Ed25519KeyPair")
+    name: (identifier) @fn (#eq? @fn "generate_pkcs8")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "ring.Ed25519KeyPair.generate_pkcs8"
+description = "ring::signature::Ed25519KeyPair::generate_pkcs8 — Ed25519 keypair."
+
+[[classify]]
+id = "CRYPTO-501"
+when.api = "^ring\\.Ed25519KeyPair\\.generate_pkcs8$"
+algorithm_id = "ed25519"
+severity_hint = "auto"
+message = "ring Ed25519KeyPair::generate_pkcs8 — Ed25519, quantum-vulnerable. Replace with ML-DSA-65."
+
+# ============================================================================
+# RustCrypto — Aes256Gcm::new
+# ============================================================================
+
+[[extract]]
+id = "RST-010"
+language = "rust"
+query = """
+(call_expression
+  function: (scoped_identifier
+    path: (identifier) @cls (#eq? @cls "Aes256Gcm")
+    name: (identifier) @fn (#eq? @fn "new")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "rustcrypto.Aes256Gcm.new"
+description = "aes-gcm crate Aes256Gcm::new(key) — AES-256-GCM."
+
+[[classify]]
+id = "CRYPTO-510"
+when.api = "^rustcrypto\\.Aes256Gcm\\.new$"
+algorithm_id = "aes-256-gcm"
+severity_hint = "auto"
+message = "RustCrypto Aes256Gcm::new — AES-256-GCM AEAD. Quantum-safe for symmetric encryption."
+
+# ============================================================================
+# RustCrypto — Aes128Gcm::new
+# ============================================================================
+
+[[extract]]
+id = "RST-011"
+language = "rust"
+query = """
+(call_expression
+  function: (scoped_identifier
+    path: (identifier) @cls (#eq? @cls "Aes128Gcm")
+    name: (identifier) @fn (#eq? @fn "new")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "rustcrypto.Aes128Gcm.new"
+description = "aes-gcm crate Aes128Gcm::new(key) — AES-128-GCM."
+
+[[classify]]
+id = "CRYPTO-511"
+when.api = "^rustcrypto\\.Aes128Gcm\\.new$"
+algorithm_id = "aes-128-gcm"
+severity_hint = "auto"
+message = "RustCrypto Aes128Gcm::new — AES-128-GCM. CNSA 2.0 requires 256-bit AES."
+
+# ============================================================================
+# RustCrypto — Sha256 (sha2 crate)
+# ============================================================================
+
+[[extract]]
+id = "RST-020"
+language = "rust"
+query = """
+(call_expression
+  function: (scoped_identifier
+    path: (identifier) @cls (#match? @cls "^Sha(256|384|512)$")
+    name: (identifier) @fn (#match? @fn "^(new|digest)$")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "rustcrypto.{cls}.digest"
+description = "sha2 crate Sha256/Sha384/Sha512 hash."
+
+[[classify]]
+id = "CRYPTO-520"
+when.api = "^rustcrypto\\.Sha256\\.digest$"
+algorithm_id = "sha-256"
+severity_hint = "auto"
+message = "RustCrypto Sha256 — SHA-256 hash. Quantum-safe."
+
+[[classify]]
+id = "CRYPTO-521"
+when.api = "^rustcrypto\\.Sha384\\.digest$"
+algorithm_id = "sha-384"
+severity_hint = "auto"
+message = "RustCrypto Sha384 — SHA-384 hash. Quantum-safe."
+
+[[classify]]
+id = "CRYPTO-522"
+when.api = "^rustcrypto\\.Sha512\\.digest$"
+algorithm_id = "sha-512"
+severity_hint = "auto"
+message = "RustCrypto Sha512 — SHA-512 hash. Quantum-safe."
+
+# ============================================================================
+# RustCrypto — ChaCha20Poly1305::new
+# ============================================================================
+
+[[extract]]
+id = "RST-030"
+language = "rust"
+query = """
+(call_expression
+  function: (scoped_identifier
+    path: (identifier) @cls (#eq? @cls "ChaCha20Poly1305")
+    name: (identifier) @fn (#eq? @fn "new")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "rustcrypto.ChaCha20Poly1305.new"
+description = "chacha20poly1305 crate ChaCha20Poly1305::new(key) — ChaCha20-Poly1305."
+
+[[classify]]
+id = "CRYPTO-530"
+when.api = "^rustcrypto\\.ChaCha20Poly1305\\.new$"
+algorithm_id = "chacha20-poly1305"
+severity_hint = "auto"
+message = "RustCrypto ChaCha20Poly1305::new — ChaCha20-Poly1305 AEAD. Quantum-safe."
+
+# ============================================================================
+# rsa crate — RsaPrivateKey::new
+# ============================================================================
+
+[[extract]]
+id = "RST-040"
+language = "rust"
+query = """
+(call_expression
+  function: (scoped_identifier
+    path: (identifier) @cls (#eq? @cls "RsaPrivateKey")
+    name: (identifier) @fn (#eq? @fn "new"))
+  arguments: (arguments
+    (_)
+    (integer_literal) @bits))
+"""
+captures = { cls = "ident", fn = "ident", bits = "literal_int" }
+api = "rsa.RsaPrivateKey.new"
+description = "rsa crate RsaPrivateKey::new(rng, bits) — RSA key generation."
+
+[[classify]]
+id = "CRYPTO-540"
+when.api = "^rsa\\.RsaPrivateKey\\.new$"
+when.args.bits = { lt = 2048 }
+algorithm_id = "rsa-1024"
+severity_hint = "critical"
+message = "rsa::RsaPrivateKey::new({bits} bits) — below 2048-bit floor."
+cwe = "CWE-326"
+
+[[classify]]
+id = "CRYPTO-541"
+when.api = "^rsa\\.RsaPrivateKey\\.new$"
+when.args.bits = 2048
+algorithm_id = "rsa-2048"
+severity_hint = "auto"
+message = "rsa::RsaPrivateKey::new(2048 bits) — quantum-vulnerable: NIST IR 8547 deprecates 2030."
+
+[[classify]]
+id = "CRYPTO-542"
+when.api = "^rsa\\.RsaPrivateKey\\.new$"
+when.args.bits = { ge = 4096 }
+algorithm_id = "rsa-4096"
+severity_hint = "auto"
+message = "rsa::RsaPrivateKey::new({bits} bits) — larger key does NOT protect against Shor."
+
+# ============================================================================
+# ed25519_dalek — SigningKey::generate
+# ============================================================================
+
+[[extract]]
+id = "RST-050"
+language = "rust"
+query = """
+(call_expression
+  function: (scoped_identifier
+    path: (identifier) @cls (#eq? @cls "SigningKey")
+    name: (identifier) @fn (#eq? @fn "generate")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "ed25519_dalek.SigningKey.generate"
+description = "ed25519_dalek::SigningKey::generate(rng) — Ed25519 key generation."
+
+[[classify]]
+id = "CRYPTO-550"
+when.api = "^ed25519_dalek\\.SigningKey\\.generate$"
+algorithm_id = "ed25519"
+severity_hint = "auto"
+message = "ed25519_dalek::SigningKey::generate — Ed25519, quantum-vulnerable. Replace with ML-DSA-65."
+
+# ============================================================================
+# rustls — ClientConfig::builder
+# ============================================================================
+
+[[extract]]
+id = "RST-060"
+language = "rust"
+query = """
+(call_expression
+  function: (scoped_identifier
+    path: (identifier) @cls (#eq? @cls "ClientConfig")
+    name: (identifier) @fn (#eq? @fn "builder")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "rustls.ClientConfig.builder"
+description = "rustls::ClientConfig::builder() — TLS client config."
+
+[[classify]]
+id = "CRYPTO-560"
+when.api = "^rustls\\.ClientConfig\\.builder$"
+algorithm_id = "aes-256-gcm"
+severity_hint = "auto"
+message = "rustls::ClientConfig::builder() — TLS client configured. Confirm PQC hybrid group support."

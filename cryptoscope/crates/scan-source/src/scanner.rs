@@ -69,7 +69,7 @@ pub struct Scanner {
 }
 
 impl Scanner {
-    /// Build a scanner using the built-in rule packs (Go + Python) and the
+    /// Build a scanner using the built-in rule packs (all languages) and the
     /// built-in algorithm table.
     pub fn with_builtins(algorithms: AlgorithmTable) -> Result<Self, ScanError> {
         let mut rules_by_lang = HashMap::new();
@@ -80,6 +80,30 @@ impl Scanner {
         rules_by_lang.insert(
             Language::Python,
             RulePack::builtin_python().expect("built-in Python rules must parse"),
+        );
+        rules_by_lang.insert(
+            Language::Java,
+            RulePack::builtin_java().expect("built-in Java rules must parse"),
+        );
+        // Both JS and TS share the same rule pack (grammar node shapes are identical).
+        let js_pack = RulePack::builtin_javascript().expect("built-in JS rules must parse");
+        rules_by_lang.insert(Language::JavaScript, js_pack.clone());
+        rules_by_lang.insert(Language::TypeScript, js_pack);
+        rules_by_lang.insert(
+            Language::C,
+            RulePack::builtin_cpp().expect("built-in C/C++ rules must parse"),
+        );
+        rules_by_lang.insert(
+            Language::Cpp,
+            RulePack::builtin_cpp().expect("built-in C/C++ rules must parse"),
+        );
+        rules_by_lang.insert(
+            Language::Rust,
+            RulePack::builtin_rust().expect("built-in Rust rules must parse"),
+        );
+        rules_by_lang.insert(
+            Language::CSharp,
+            RulePack::builtin_csharp().expect("built-in C# rules must parse"),
         );
         Ok(Self {
             rules_by_lang,
@@ -133,6 +157,13 @@ fn detect_language(path: &Path) -> Option<Language> {
     match ext {
         "go" => Some(Language::Go),
         "py" => Some(Language::Python),
+        "java" => Some(Language::Java),
+        "js" | "mjs" | "cjs" => Some(Language::JavaScript),
+        "ts" | "tsx" | "mts" => Some(Language::TypeScript),
+        "c" | "h" => Some(Language::C),
+        "cpp" | "cc" | "cxx" | "hpp" | "hxx" => Some(Language::Cpp),
+        "rs" => Some(Language::Rust),
+        "cs" => Some(Language::CSharp),
         _ => None,
     }
 }
@@ -149,6 +180,14 @@ fn run_extract(source: &[u8], language: Language) -> Result<Vec<RawMatch>, ScanE
     let ts_lang = match language {
         Language::Go => tree_sitter_go::LANGUAGE,
         Language::Python => tree_sitter_python::LANGUAGE,
+        Language::Java => tree_sitter_java::LANGUAGE,
+        Language::JavaScript => tree_sitter_javascript::LANGUAGE,
+        // TypeScript: use the `typescript` sub-grammar (not `tsx`)
+        Language::TypeScript => tree_sitter_typescript::LANGUAGE_TYPESCRIPT,
+        Language::C => tree_sitter_c::LANGUAGE,
+        Language::Cpp => tree_sitter_cpp::LANGUAGE,
+        Language::Rust => tree_sitter_rust::LANGUAGE,
+        Language::CSharp => tree_sitter_c_sharp::LANGUAGE,
     };
     parser
         .set_language(&ts_lang.into())
@@ -165,9 +204,21 @@ fn run_extract(source: &[u8], language: Language) -> Result<Vec<RawMatch>, ScanE
 }
 
 fn walk(node: Node<'_>, source: &[u8], language: Language, out: &mut Vec<RawMatch>) {
-    if (node.kind() == "call_expression" || node.kind() == "call")
-        && let Some(m) = match_call(node, source, language)
-    {
+    let kind = node.kind();
+    // call_expression     — Go, JS/TS, C, C++, Rust
+    // call                — Python
+    // method_invocation   — Java (non-static: obj.method(…))
+    // invocation_expression — C#
+    // object_creation_expression — Java (new ClassName()) / C# (new ClassName())
+    let is_call_like = matches!(
+        kind,
+        "call_expression"
+            | "call"
+            | "method_invocation"
+            | "invocation_expression"
+            | "object_creation_expression"
+    );
+    if is_call_like && let Some(m) = match_call(node, source, language) {
         out.push(m);
     }
     let mut cursor = node.walk();
@@ -178,38 +229,113 @@ fn walk(node: Node<'_>, source: &[u8], language: Language, out: &mut Vec<RawMatc
 
 /// Inspect one call node and decide if it's a known crypto API site.
 fn match_call(call: Node<'_>, source: &[u8], language: Language) -> Option<RawMatch> {
-    let (callee, args_node) = match language {
-        Language::Go => {
-            // (call_expression function: <expr> arguments: (argument_list ...))
-            let function = call.child_by_field_name("function")?;
-            let args = call.child_by_field_name("arguments")?;
-            (function, args)
-        }
-        Language::Python => {
-            // (call function: <expr> arguments: (argument_list ...))
-            let function = call.child_by_field_name("function")?;
-            let args = call.child_by_field_name("arguments")?;
-            (function, args)
-        }
-    };
+    let kind = call.kind();
 
-    let callee_text = node_text(callee, source);
+    // For object_creation_expression (Java `new Foo()` / C# `new Foo()`)
+    // the relevant "callee" is the type name.
+    if kind == "object_creation_expression" {
+        return match_object_creation(call, source, language);
+    }
 
-    let (api, mut args) = match language {
+    // For method_invocation (Java): object.method(args)
+    // Node fields: object, name, arguments
+    if kind == "method_invocation" {
+        return match_java_method_invocation(call, source);
+    }
+
+    // For invocation_expression (C#): function(arguments)
+    if kind == "invocation_expression" {
+        let function = call.child_by_field_name("function")?;
+        let args = call.child_by_field_name("arguments")?;
+        let callee_text = node_text(function, source);
+        let (api, mut args_map) = match_csharp_callee(&callee_text)?;
+        populate_args(language, &api, args, source, &mut args_map);
+        let start = call.start_position();
+        return Some(RawMatch {
+            api,
+            args: args_map,
+            line: (start.row + 1) as u32,
+            offset: call.start_byte() as u32,
+            symbol: callee_text,
+            snippet: node_text(call, source),
+        });
+    }
+
+    // Standard call_expression / call (Go, Python, JS, TS, C, C++, Rust)
+    let function = call.child_by_field_name("function")?;
+    let args = call.child_by_field_name("arguments")?;
+    let callee_text = node_text(function, source);
+
+    let (api, mut args_map) = match language {
         Language::Go => match_go_callee(&callee_text)?,
         Language::Python => match_python_callee(&callee_text)?,
+        Language::JavaScript | Language::TypeScript => match_js_callee(&callee_text)?,
+        Language::C | Language::Cpp => match_c_callee(&callee_text)?,
+        Language::Rust => match_rust_callee(&callee_text)?,
+        Language::Java | Language::CSharp => return None, // handled above
     };
 
-    // Extract argument values per API.
-    populate_args(language, &api, args_node, source, &mut args);
+    populate_args(language, &api, args, source, &mut args_map);
 
     let start = call.start_position();
     Some(RawMatch {
         api,
-        args,
+        args: args_map,
         line: (start.row + 1) as u32,
         offset: call.start_byte() as u32,
-        symbol: callee_text.clone(),
+        symbol: callee_text,
+        snippet: node_text(call, source),
+    })
+}
+
+/// Handle Java `SomeClass.method(args)` invocations.
+fn match_java_method_invocation(call: Node<'_>, source: &[u8]) -> Option<RawMatch> {
+    // tree-sitter-java method_invocation fields:
+    //   object: the receiver expression
+    //   name:   the method identifier
+    //   arguments: argument_list
+    let object = call.child_by_field_name("object")?;
+    let name = call.child_by_field_name("name")?;
+    let args = call.child_by_field_name("arguments")?;
+
+    let obj_text = node_text(object, source);
+    let method_text = node_text(name, source);
+    let callee_text = format!("{}.{}", obj_text, method_text);
+
+    let (api, mut args_map) = match_java_callee(&callee_text)?;
+    populate_java_args(&api, args, source, &mut args_map);
+
+    let start = call.start_position();
+    Some(RawMatch {
+        api,
+        args: args_map,
+        line: (start.row + 1) as u32,
+        offset: call.start_byte() as u32,
+        symbol: callee_text,
+        snippet: node_text(call, source),
+    })
+}
+
+/// Handle `new ClassName()` — Java and C#.
+fn match_object_creation(call: Node<'_>, source: &[u8], language: Language) -> Option<RawMatch> {
+    // Java: object_creation_expression has a `type` field (type_identifier)
+    // C#:  object_creation_expression has a `type` field (identifier)
+    let type_node = call.child_by_field_name("type")?;
+    let type_text = node_text(type_node, source);
+
+    let (api, args_map) = match language {
+        Language::Java => match_java_ctor(&type_text)?,
+        Language::CSharp => match_csharp_ctor(&type_text)?,
+        _ => return None,
+    };
+
+    let start = call.start_position();
+    Some(RawMatch {
+        api,
+        args: args_map,
+        line: (start.row + 1) as u32,
+        offset: call.start_byte() as u32,
+        symbol: type_text,
         snippet: node_text(call, source),
     })
 }
@@ -239,6 +365,110 @@ fn match_python_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue
         "ec.generate_private_key" => "cryptography.hazmat.ec.generate_private_key",
         "hashlib.md5" => "hashlib.md5",
         "hashlib.sha1" => "hashlib.sha1",
+        _ => return None,
+    };
+    Some((api.into(), HashMap::new()))
+}
+
+fn match_java_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
+    // Java method invocations: "ClassName.methodName"
+    let api = match callee {
+        "Cipher.getInstance" => "javax.crypto.Cipher.getInstance",
+        "KeyPairGenerator.getInstance" => "java.security.KeyPairGenerator.getInstance",
+        "MessageDigest.getInstance" => "java.security.MessageDigest.getInstance",
+        _ => return None,
+    };
+    Some((api.into(), HashMap::new()))
+}
+
+fn match_java_ctor(class_name: &str) -> Option<(String, HashMap<String, ArgValue>)> {
+    // BouncyCastle constructor detection
+    let api = match class_name {
+        "RSAKeyPairGenerator" => "org.bouncycastle.RSAKeyPairGenerator",
+        "AESEngine" => "org.bouncycastle.AESEngine",
+        "GCMBlockCipher" => "org.bouncycastle.GCMBlockCipher",
+        "BouncyCastleProvider" => "org.bouncycastle.BouncyCastleProvider",
+        _ => return None,
+    };
+    Some((api.into(), HashMap::new()))
+}
+
+fn match_js_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
+    // JS/TS member expression callees: "object.method"
+    let api = match callee {
+        "crypto.createCipheriv" => "node:crypto.createCipheriv",
+        "crypto.createHash" => "node:crypto.createHash",
+        "crypto.generateKeyPair" | "crypto.generateKeyPairSync" => "node:crypto.generateKeyPair",
+        "crypto.createSign" => "node:crypto.createSign",
+        "subtle.generateKey" => "webcrypto.subtle.generateKey",
+        "subtle.sign" => "webcrypto.subtle.sign",
+        "jwt.sign" => "jsonwebtoken.jwt.sign",
+        _ => return None,
+    };
+    Some((api.into(), HashMap::new()))
+}
+
+fn match_c_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
+    // C/C++ simple function identifiers
+    let api = match callee {
+        "RSA_generate_key_ex" => "openssl.RSA_generate_key_ex",
+        "EVP_EncryptInit_ex" => "openssl.EVP_EncryptInit_ex",
+        "EVP_DigestInit_ex" => "openssl.EVP_DigestInit_ex",
+        "SSL_CTX_set_cipher_list" => "openssl.SSL_CTX_set_cipher_list",
+        "crypto_box_keypair" => "libsodium.crypto_box_keypair",
+        "crypto_sign_keypair" => "libsodium.crypto_sign_keypair",
+        "mbedtls_rsa_init" => "mbedtls.mbedtls_rsa_init",
+        "mbedtls_pk_setup" => "mbedtls.mbedtls_pk_setup",
+        _ => return None,
+    };
+    Some((api.into(), HashMap::new()))
+}
+
+fn match_rust_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
+    // Rust scoped paths — tree-sitter renders them as "Type::method"
+    // when the path has a single segment (local import) or the full
+    // scoped_identifier text for deeper paths.
+    let api = match callee {
+        "EcdsaKeyPair::generate_pkcs8" => "ring.EcdsaKeyPair.generate_pkcs8",
+        "Ed25519KeyPair::generate_pkcs8" => "ring.Ed25519KeyPair.generate_pkcs8",
+        "Aes256Gcm::new" => "rustcrypto.Aes256Gcm.new",
+        "Aes128Gcm::new" => "rustcrypto.Aes128Gcm.new",
+        "Sha256::new" | "Sha256::digest" => "rustcrypto.Sha256.digest",
+        "Sha384::new" | "Sha384::digest" => "rustcrypto.Sha384.digest",
+        "Sha512::new" | "Sha512::digest" => "rustcrypto.Sha512.digest",
+        "ChaCha20Poly1305::new" => "rustcrypto.ChaCha20Poly1305.new",
+        "RsaPrivateKey::new" => "rsa.RsaPrivateKey.new",
+        "SigningKey::generate" => "ed25519_dalek.SigningKey.generate",
+        "ClientConfig::builder" => "rustls.ClientConfig.builder",
+        _ => return None,
+    };
+    Some((api.into(), HashMap::new()))
+}
+
+fn match_csharp_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
+    // C# member_access_expression text: "TypeName.MethodName"
+    let api = match callee {
+        "RSA.Create" => "System.Security.Cryptography.RSA.Create",
+        "ECDsa.Create" | "ECDiffieHellman.Create" => "System.Security.Cryptography.ECDsa.Create",
+        "Aes.Create" => "System.Security.Cryptography.Aes.Create",
+        "TripleDES.Create" | "DES.Create" => "System.Security.Cryptography.TripleDES.Create",
+        "SHA1.Create" => "System.Security.Cryptography.SHA1.Create",
+        "SHA256.Create" => "System.Security.Cryptography.SHA256.Create",
+        "SHA512.Create" => "System.Security.Cryptography.SHA512.Create",
+        "MD5.Create" => "System.Security.Cryptography.MD5.Create",
+        "RandomNumberGenerator.Create"
+        | "RandomNumberGenerator.GetBytes"
+        | "RandomNumberGenerator.Fill" => {
+            "System.Security.Cryptography.RandomNumberGenerator.Create"
+        }
+        _ => return None,
+    };
+    Some((api.into(), HashMap::new()))
+}
+
+fn match_csharp_ctor(class_name: &str) -> Option<(String, HashMap<String, ArgValue>)> {
+    let api = match class_name {
+        "RijndaelManaged" => "System.Security.Cryptography.RijndaelManaged.new",
         _ => return None,
     };
     Some((api.into(), HashMap::new()))
@@ -276,8 +506,121 @@ fn populate_args(
                 out.insert("curve_name".into(), ArgValue::Str(curve));
             }
         }
+        (Language::C | Language::Cpp, "openssl.RSA_generate_key_ex") => {
+            // RSA_generate_key_ex(rsa, bits, e, cb) — bits is arg 1 (0-indexed)
+            if let Some(bits) = nth_arg_int(args_node, 1, source) {
+                out.insert("bits".into(), ArgValue::Int(bits));
+            }
+        }
+        (Language::C | Language::Cpp, "openssl.EVP_EncryptInit_ex") => {
+            // EVP_EncryptInit_ex(ctx, cipher_fn(), impl, key, iv) — arg 1 is a call
+            if let Some(cipher) = nth_arg_call_ident(args_node, 1, source) {
+                out.insert("cipher_fn".into(), ArgValue::Str(cipher));
+            }
+        }
+        (Language::C | Language::Cpp, "openssl.EVP_DigestInit_ex") => {
+            // EVP_DigestInit_ex(ctx, digest_fn(), impl) — arg 1 is a call
+            if let Some(digest) = nth_arg_call_ident(args_node, 1, source) {
+                out.insert("digest_fn".into(), ArgValue::Str(digest));
+            }
+        }
+        (Language::C | Language::Cpp, "openssl.SSL_CTX_set_cipher_list") => {
+            // SSL_CTX_set_cipher_list(ctx, cipher_str) — arg 1 is a string
+            if let Some(s) = nth_arg_string(args_node, 1, source) {
+                out.insert("cipher_str".into(), ArgValue::Str(s));
+            }
+        }
+        (Language::Rust, "rsa.RsaPrivateKey.new") => {
+            // RsaPrivateKey::new(rng, bits) — bits is arg 1
+            if let Some(bits) = nth_arg_int(args_node, 1, source) {
+                out.insert("bits".into(), ArgValue::Int(bits));
+            }
+        }
+        (
+            Language::JavaScript | Language::TypeScript,
+            "node:crypto.createCipheriv"
+            | "node:crypto.createHash"
+            | "node:crypto.generateKeyPair"
+            | "node:crypto.createSign",
+        ) => {
+            // First positional arg is the algorithm/type string, e.g. "des-cbc", "md5", "rsa"
+            if let Some(s) = nth_arg_string(args_node, 0, source) {
+                out.insert("algo".into(), ArgValue::Str(s));
+            }
+        }
         _ => {}
     }
+}
+
+/// Java-specific argument extraction for method invocations.
+/// Called separately because java uses a different arg-list field structure.
+fn populate_java_args(
+    api: &str,
+    args_node: Node<'_>,
+    source: &[u8],
+    out: &mut HashMap<String, ArgValue>,
+) {
+    match api {
+        "javax.crypto.Cipher.getInstance"
+        | "java.security.KeyPairGenerator.getInstance"
+        | "java.security.MessageDigest.getInstance" => {
+            // First arg is a string literal like "AES/GCM/NoPadding"
+            let key = match api {
+                "javax.crypto.Cipher.getInstance" => "spec",
+                _ => "algo",
+            };
+            if let Some(s) = nth_arg_string(args_node, 0, source) {
+                out.insert(key.into(), ArgValue::Str(s));
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Extract the identifier name of a no-arg call at position n.
+/// Handles C patterns like `EVP_aes_256_gcm()` where the argument is a
+/// call_expression whose function is a plain identifier.
+fn nth_arg_call_ident(args: Node<'_>, n: usize, source: &[u8]) -> Option<String> {
+    let mut cursor = args.walk();
+    let mut idx = 0;
+    for child in args.children(&mut cursor) {
+        if !is_real_arg(child) {
+            continue;
+        }
+        if idx == n {
+            // The arg should be a call_expression or call with a simple identifier function.
+            if child.kind() == "call_expression" {
+                let function = child.child_by_field_name("function")?;
+                return Some(node_text(function, source));
+            }
+            // Might just be an identifier (function pointer variable, etc.)
+            if child.kind() == "identifier" {
+                return Some(node_text(child, source));
+            }
+            return None;
+        }
+        idx += 1;
+    }
+    None
+}
+
+/// Extract a string literal value (without surrounding quotes) at position n.
+fn nth_arg_string(args: Node<'_>, n: usize, source: &[u8]) -> Option<String> {
+    let mut cursor = args.walk();
+    let mut idx = 0;
+    for child in args.children(&mut cursor) {
+        if !is_real_arg(child) {
+            continue;
+        }
+        if idx == n {
+            let raw = node_text(child, source);
+            // Strip surrounding quotes (single, double, or Java-style)
+            let trimmed = raw.trim_matches(|c| c == '"' || c == '\'' || c == '`');
+            return Some(trimmed.to_string());
+        }
+        idx += 1;
+    }
+    None
 }
 
 fn nth_arg_int(args: Node<'_>, n: usize, source: &[u8]) -> Option<i64> {

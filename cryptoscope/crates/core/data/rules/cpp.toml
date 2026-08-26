@@ -1,0 +1,264 @@
+# C / C++ detection rules — two-layer (extract → classify), per D-07
+#
+# Covers: OpenSSL (RSA_generate_key_ex, EVP_PKEY_keygen, EVP_EncryptInit_ex,
+#         EVP_DigestInit, SSL_CTX_set_cipher_list), libsodium (crypto_box_*,
+#         crypto_sign_*), mbedTLS (mbedtls_rsa_*, mbedtls_pk_*).
+#
+# Extract IDs: CPP-NNN
+# Classify IDs: CRYPTO-400..499
+
+# ============================================================================
+# OpenSSL — RSA_generate_key_ex
+# ============================================================================
+
+[[extract]]
+id = "CPP-001"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "RSA_generate_key_ex")
+  arguments: (argument_list
+    (_)
+    (number_literal) @bits))
+"""
+captures = { fn = "ident", bits = "literal_int" }
+api = "openssl.RSA_generate_key_ex"
+description = "OpenSSL RSA_generate_key_ex(rsa, bits, e, cb) — RSA key generation."
+
+[[classify]]
+id = "CRYPTO-400"
+when.api = "^openssl\\.RSA_generate_key_ex$"
+when.args.bits = { lt = 2048 }
+algorithm_id = "rsa-1024"
+severity_hint = "critical"
+message = "RSA_generate_key_ex with {bits} bits — below 2048-bit floor."
+cwe = "CWE-326"
+
+[[classify]]
+id = "CRYPTO-401"
+when.api = "^openssl\\.RSA_generate_key_ex$"
+when.args.bits = 2048
+algorithm_id = "rsa-2048"
+severity_hint = "auto"
+message = "RSA_generate_key_ex(bits=2048). Quantum-vulnerable: NIST IR 8547 deprecates after 2030."
+
+[[classify]]
+id = "CRYPTO-402"
+when.api = "^openssl\\.RSA_generate_key_ex$"
+when.args.bits = { ge = 4096 }
+algorithm_id = "rsa-4096"
+severity_hint = "auto"
+message = "RSA_generate_key_ex(bits={bits}). Larger key does NOT protect against Shor's algorithm."
+
+# ============================================================================
+# OpenSSL EVP — EVP_EncryptInit_ex
+# ============================================================================
+
+[[extract]]
+id = "CPP-010"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "EVP_EncryptInit_ex")
+  arguments: (argument_list
+    (_)
+    (call_expression (identifier) @cipher_fn)
+    (_)
+    (_)))
+"""
+captures = { fn = "ident", cipher_fn = "ident" }
+api = "openssl.EVP_EncryptInit_ex"
+description = "OpenSSL EVP_EncryptInit_ex(ctx, cipher_fn(), ...) — cipher type selection."
+
+[[classify]]
+id = "CRYPTO-410"
+when.api = "^openssl\\.EVP_EncryptInit_ex$"
+when.args.cipher_fn = { regex = "EVP_des" }
+algorithm_id = "des"
+severity_hint = "critical"
+message = "DES cipher in EVP_EncryptInit_ex (cipher={cipher_fn}). Disallowed for new use."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-411"
+when.api = "^openssl\\.EVP_EncryptInit_ex$"
+when.args.cipher_fn = { regex = "EVP_aes_.*_gcm" }
+algorithm_id = "aes-256-gcm"
+severity_hint = "auto"
+message = "AES-GCM cipher in EVP_EncryptInit_ex (cipher={cipher_fn}). Good AEAD mode."
+
+[[classify]]
+id = "CRYPTO-412"
+when.api = "^openssl\\.EVP_EncryptInit_ex$"
+when.args.cipher_fn = { regex = "EVP_aes_.*_ecb" }
+algorithm_id = "aes-128-ecb"
+severity_hint = "high"
+message = "AES-ECB in EVP_EncryptInit_ex (cipher={cipher_fn}). Deterministic mode."
+cwe = "CWE-327"
+
+# ============================================================================
+# OpenSSL EVP — EVP_DigestInit_ex
+# ============================================================================
+
+[[extract]]
+id = "CPP-020"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "EVP_DigestInit_ex")
+  arguments: (argument_list
+    (_)
+    (call_expression (identifier) @digest_fn)
+    (_)))
+"""
+captures = { fn = "ident", digest_fn = "ident" }
+api = "openssl.EVP_DigestInit_ex"
+description = "OpenSSL EVP_DigestInit_ex(ctx, digest_fn(), ...) — digest type selection."
+
+[[classify]]
+id = "CRYPTO-420"
+when.api = "^openssl\\.EVP_DigestInit_ex$"
+when.args.digest_fn = { regex = "^EVP_md5$" }
+algorithm_id = "md5"
+severity_hint = "critical"
+message = "MD5 digest in EVP_DigestInit_ex. Classically broken."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-421"
+when.api = "^openssl\\.EVP_DigestInit_ex$"
+when.args.digest_fn = { regex = "^EVP_sha1$" }
+algorithm_id = "sha-1"
+severity_hint = "critical"
+message = "SHA-1 digest in EVP_DigestInit_ex. Classically broken (SHAttered, 2017)."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-422"
+when.api = "^openssl\\.EVP_DigestInit_ex$"
+when.args.digest_fn = { regex = "^EVP_sha256$" }
+algorithm_id = "sha-256"
+severity_hint = "auto"
+message = "SHA-256 digest in EVP_DigestInit_ex. Quantum-safe hash."
+
+# ============================================================================
+# OpenSSL SSL — SSL_CTX_set_cipher_list
+# ============================================================================
+
+[[extract]]
+id = "CPP-030"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "SSL_CTX_set_cipher_list")
+  arguments: (argument_list
+    (_)
+    (string_literal) @cipher_str))
+"""
+captures = { fn = "ident", cipher_str = "literal_string" }
+api = "openssl.SSL_CTX_set_cipher_list"
+description = "OpenSSL SSL_CTX_set_cipher_list(ctx, str) — TLS cipher suite string."
+
+[[classify]]
+id = "CRYPTO-430"
+when.api = "^openssl\\.SSL_CTX_set_cipher_list$"
+when.args.cipher_str = { regex = "(?i)(RC4|DES|MD5|NULL|EXPORT|aNULL|eNULL)" }
+algorithm_id = "rc4"
+severity_hint = "high"
+message = "Weak cipher in SSL_CTX_set_cipher_list('{cipher_str}'). Remove RC4/DES/NULL/EXPORT ciphers."
+cwe = "CWE-326"
+
+[[classify]]
+id = "CRYPTO-431"
+when.api = "^openssl\\.SSL_CTX_set_cipher_list$"
+algorithm_id = "aes-256-gcm"
+severity_hint = "low"
+message = "SSL_CTX_set_cipher_list('{cipher_str}'). Verify cipher string excludes broken ciphers."
+
+# ============================================================================
+# libsodium — crypto_box_keypair
+# ============================================================================
+
+[[extract]]
+id = "CPP-040"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "crypto_box_keypair"))
+"""
+captures = { fn = "ident" }
+api = "libsodium.crypto_box_keypair"
+description = "libsodium crypto_box_keypair(pk, sk) — X25519+XSalsa20-Poly1305."
+
+[[classify]]
+id = "CRYPTO-440"
+when.api = "^libsodium\\.crypto_box_keypair$"
+algorithm_id = "x25519"
+severity_hint = "auto"
+message = "libsodium crypto_box_keypair — X25519 key exchange, quantum-vulnerable."
+
+# ============================================================================
+# libsodium — crypto_sign_keypair
+# ============================================================================
+
+[[extract]]
+id = "CPP-041"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "crypto_sign_keypair"))
+"""
+captures = { fn = "ident" }
+api = "libsodium.crypto_sign_keypair"
+description = "libsodium crypto_sign_keypair(pk, sk) — Ed25519 signing."
+
+[[classify]]
+id = "CRYPTO-441"
+when.api = "^libsodium\\.crypto_sign_keypair$"
+algorithm_id = "ed25519"
+severity_hint = "auto"
+message = "libsodium crypto_sign_keypair — Ed25519, quantum-vulnerable. Replace with ML-DSA-65."
+
+# ============================================================================
+# mbedTLS — mbedtls_rsa_init
+# ============================================================================
+
+[[extract]]
+id = "CPP-050"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "mbedtls_rsa_init"))
+"""
+captures = { fn = "ident" }
+api = "mbedtls.mbedtls_rsa_init"
+description = "mbedTLS mbedtls_rsa_init(ctx, padding, hash) — RSA context init."
+
+[[classify]]
+id = "CRYPTO-450"
+when.api = "^mbedtls\\.mbedtls_rsa_init$"
+algorithm_id = "rsa-2048"
+severity_hint = "auto"
+message = "mbedTLS mbedtls_rsa_init — RSA context initialized. Confirm key size ≥2048."
+
+# ============================================================================
+# mbedTLS — mbedtls_pk_setup
+# ============================================================================
+
+[[extract]]
+id = "CPP-051"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "mbedtls_pk_setup"))
+"""
+captures = { fn = "ident" }
+api = "mbedtls.mbedtls_pk_setup"
+description = "mbedTLS mbedtls_pk_setup(ctx, info) — PK context setup."
+
+[[classify]]
+id = "CRYPTO-451"
+when.api = "^mbedtls\\.mbedtls_pk_setup$"
+algorithm_id = "rsa-2048"
+severity_hint = "auto"
+message = "mbedTLS mbedtls_pk_setup called. Quantum-vulnerable if RSA or EC key type."

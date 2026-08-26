@@ -107,13 +107,17 @@ ALLOWED_SEVERITY_HINTS = {"critical", "high", "medium", "low", "auto"}
 # 1. TOML parses
 # ---------------------------------------------------------------------------
 
+RULES_DIR = DATA / "rules"
+
+# Discover all rule TOML files dynamically — covers go.toml, python.toml, and
+# all new language packs (java, javascript, cpp, rust, csharp, …).
+RULE_TOML_FILES = sorted(RULES_DIR.glob("*.toml")) if RULES_DIR.is_dir() else []
+
 TOML_FILES = [
     DATA / "algorithm-table.toml",
     DATA / "oid-table.toml",
     DATA / "default-policy.toml",
-    DATA / "rules" / "go.toml",
-    DATA / "rules" / "python.toml",
-]
+] + RULE_TOML_FILES
 
 parsed: dict[Path, dict] = {}
 for f in TOML_FILES:
@@ -199,8 +203,10 @@ expect(
     f"{len(missing_oid_refs)} dangling: " + ", ".join(o["algorithm_id"] for o in missing_oid_refs[:5]),
 )
 
-# Rule files → algorithm-table
-for rname, rdoc in [("go.toml", rules_go), ("python.toml", rules_py)]:
+# Rule files → algorithm-table (all discovered rule files)
+for rfile in RULE_TOML_FILES:
+    rname = rfile.name
+    rdoc = parsed.get(rfile, {})
     dangling = [
         c for c in rdoc.get("classify", [])
         if c.get("algorithm_id") and c["algorithm_id"] not in algos_by_id
@@ -443,8 +449,8 @@ def _walk(obj, prefix=""):
             yield from _walk(v, new)
 
 
-check_rules("go.toml", rules_go)
-check_rules("python.toml", rules_py)
+for rfile in RULE_TOML_FILES:
+    check_rules(rfile.name, parsed.get(rfile, {}))
 
 
 # ---------------------------------------------------------------------------

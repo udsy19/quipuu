@@ -1,0 +1,256 @@
+# JavaScript / TypeScript detection rules — two-layer (extract → classify), per D-07
+#
+# One file covers both .js and .ts files.  For .js we use tree-sitter-javascript;
+# for .ts we use tree-sitter-typescript (TypeScript grammar extends the JS grammar
+# so node shapes are identical for runtime crypto calls).
+#
+# Covers: node:crypto (createCipheriv, createHash, generateKeyPair, createSign),
+#         WebCrypto (subtle.generateKey, subtle.sign), jsonwebtoken.
+#
+# Extract IDs: JST-NNN
+# Classify IDs: CRYPTO-300..399
+
+# ============================================================================
+# node:crypto — createCipheriv
+# ============================================================================
+
+[[extract]]
+id = "JST-001"
+language = "javascript"
+query = """
+(call_expression
+  function: (member_expression
+    object: (identifier) @mod
+    property: (property_identifier) @fn (#eq? @fn "createCipheriv"))
+  arguments: (arguments (string) @algo))
+"""
+captures = { mod = "ident", fn = "ident", algo = "literal_string" }
+api = "node:crypto.createCipheriv"
+description = "node:crypto createCipheriv(algorithm, key, iv) — cipher algorithm string."
+
+[[classify]]
+id = "CRYPTO-300"
+when.api = "^node:crypto\\.createCipheriv$"
+when.args.algo = { regex = "(?i)des" }
+algorithm_id = "des"
+severity_hint = "critical"
+message = "DES/3DES in createCipheriv('{algo}'). Disallowed for new use."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-301"
+when.api = "^node:crypto\\.createCipheriv$"
+when.args.algo = { regex = "(?i)rc4" }
+algorithm_id = "rc4"
+severity_hint = "critical"
+message = "RC4 in createCipheriv('{algo}'). Classically broken."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-302"
+when.api = "^node:crypto\\.createCipheriv$"
+when.args.algo = { regex = "(?i)aes-.*-gcm" }
+algorithm_id = "aes-256-gcm"
+severity_hint = "auto"
+message = "AES-GCM in createCipheriv('{algo}'). Good AEAD mode."
+
+[[classify]]
+id = "CRYPTO-303"
+when.api = "^node:crypto\\.createCipheriv$"
+when.args.algo = { regex = "(?i)aes-.*-ecb" }
+algorithm_id = "aes-128-ecb"
+severity_hint = "high"
+message = "AES-ECB in createCipheriv('{algo}'). Deterministic mode leaks patterns."
+cwe = "CWE-327"
+
+# ============================================================================
+# node:crypto — createHash
+# ============================================================================
+
+[[extract]]
+id = "JST-010"
+language = "javascript"
+query = """
+(call_expression
+  function: (member_expression
+    object: (identifier) @mod
+    property: (property_identifier) @fn (#eq? @fn "createHash"))
+  arguments: (arguments (string) @algo))
+"""
+captures = { mod = "ident", fn = "ident", algo = "literal_string" }
+api = "node:crypto.createHash"
+description = "node:crypto createHash(algorithm) — hash algorithm string."
+
+[[classify]]
+id = "CRYPTO-310"
+when.api = "^node:crypto\\.createHash$"
+when.args.algo = { regex = "(?i)^['\"]?md5['\"]?$" }
+algorithm_id = "md5"
+severity_hint = "critical"
+message = "MD5 in createHash('{algo}'). Classically broken."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-311"
+when.api = "^node:crypto\\.createHash$"
+when.args.algo = { regex = "(?i)^['\"]?sha1['\"]?$" }
+algorithm_id = "sha-1"
+severity_hint = "critical"
+message = "SHA-1 in createHash('{algo}'). Classically broken (SHAttered, 2017)."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-312"
+when.api = "^node:crypto\\.createHash$"
+when.args.algo = { regex = "(?i)^['\"]?sha256['\"]?$" }
+algorithm_id = "sha-256"
+severity_hint = "auto"
+message = "SHA-256 in createHash('{algo}'). Quantum-safe hash."
+
+# ============================================================================
+# node:crypto — generateKeyPair
+# ============================================================================
+
+[[extract]]
+id = "JST-020"
+language = "javascript"
+query = """
+(call_expression
+  function: (member_expression
+    object: (identifier) @mod
+    property: (property_identifier) @fn (#match? @fn "^generateKeyPair(Sync)?$"))
+  arguments: (arguments (string) @algo))
+"""
+captures = { mod = "ident", fn = "ident", algo = "literal_string" }
+api = "node:crypto.generateKeyPair"
+description = "node:crypto generateKeyPair(type, options) — asymmetric key generation."
+
+[[classify]]
+id = "CRYPTO-320"
+when.api = "^node:crypto\\.generateKeyPair$"
+when.args.algo = { regex = "(?i)^['\"]?rsa['\"]?$" }
+algorithm_id = "rsa-2048"
+severity_hint = "auto"
+message = "RSA keypair generated via generateKeyPair('{algo}'). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-321"
+when.api = "^node:crypto\\.generateKeyPair$"
+when.args.algo = { regex = "(?i)^['\"]?ec['\"]?$" }
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "EC keypair generated via generateKeyPair('{algo}'). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-322"
+when.api = "^node:crypto\\.generateKeyPair$"
+when.args.algo = { regex = "(?i)^['\"]?ed25519['\"]?$" }
+algorithm_id = "ed25519"
+severity_hint = "auto"
+message = "Ed25519 keypair generated via generateKeyPair('{algo}'). Quantum-vulnerable."
+
+# ============================================================================
+# node:crypto — createSign
+# ============================================================================
+
+[[extract]]
+id = "JST-030"
+language = "javascript"
+query = """
+(call_expression
+  function: (member_expression
+    object: (identifier) @mod
+    property: (property_identifier) @fn (#eq? @fn "createSign"))
+  arguments: (arguments (string) @algo))
+"""
+captures = { mod = "ident", fn = "ident", algo = "literal_string" }
+api = "node:crypto.createSign"
+description = "node:crypto createSign(algorithm) — signing algorithm string."
+
+[[classify]]
+id = "CRYPTO-330"
+when.api = "^node:crypto\\.createSign$"
+when.args.algo = { regex = "(?i)RSA-SHA256" }
+algorithm_id = "rsa-pkcs1-sha256-2048"
+severity_hint = "auto"
+message = "RSA-SHA256 signature via createSign('{algo}'). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-331"
+when.api = "^node:crypto\\.createSign$"
+when.args.algo = { regex = "(?i)SHA256" }
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "SHA-256 signature via createSign('{algo}'). Check key type for quantum exposure."
+
+# ============================================================================
+# WebCrypto — subtle.generateKey
+# ============================================================================
+
+[[extract]]
+id = "JST-040"
+language = "javascript"
+query = """
+(call_expression
+  function: (member_expression
+    object: (identifier) @subtle (#eq? @subtle "subtle")
+    property: (property_identifier) @fn (#eq? @fn "generateKey")))
+"""
+captures = { subtle = "ident", fn = "ident" }
+api = "webcrypto.subtle.generateKey"
+description = "WebCrypto subtle.generateKey({name, ...}, extractable, usages)."
+
+[[classify]]
+id = "CRYPTO-340"
+when.api = "^webcrypto\\.subtle\\.generateKey$"
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "WebCrypto subtle.generateKey() called. Verify algorithm object name and key parameters."
+
+# ============================================================================
+# WebCrypto — subtle.sign
+# ============================================================================
+
+[[extract]]
+id = "JST-050"
+language = "javascript"
+query = """
+(call_expression
+  function: (member_expression
+    object: (identifier) @subtle (#eq? @subtle "subtle")
+    property: (property_identifier) @fn (#eq? @fn "sign")))
+"""
+captures = { subtle = "ident", fn = "ident" }
+api = "webcrypto.subtle.sign"
+description = "WebCrypto subtle.sign(algorithm, key, data)."
+
+[[classify]]
+id = "CRYPTO-350"
+when.api = "^webcrypto\\.subtle\\.sign$"
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "WebCrypto subtle.sign() called. Verify algorithm and key quantum exposure."
+
+# ============================================================================
+# jsonwebtoken — jwt.sign
+# ============================================================================
+
+[[extract]]
+id = "JST-060"
+language = "javascript"
+query = """
+(call_expression
+  function: (member_expression
+    object: (identifier) @jwt (#eq? @jwt "jwt")
+    property: (property_identifier) @fn (#eq? @fn "sign")))
+"""
+captures = { jwt = "ident", fn = "ident" }
+api = "jsonwebtoken.jwt.sign"
+description = "jsonwebtoken jwt.sign(payload, secret, {algorithm: ...})."
+
+[[classify]]
+id = "CRYPTO-360"
+when.api = "^jsonwebtoken\\.jwt\\.sign$"
+algorithm_id = "rsa-pkcs1-sha256-2048"
+severity_hint = "auto"
+message = "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."

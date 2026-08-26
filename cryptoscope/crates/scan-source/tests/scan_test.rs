@@ -144,11 +144,470 @@ fn scans_directory_recursively() {
     let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
     let findings = scanner.scan_path(&fixtures_root()).expect("scan succeeds");
 
-    // Combined Go + Python: at least 14 findings.
+    // Combined all languages: at least 14 findings from Go + Python alone.
     assert!(
         findings.len() >= 14,
         "expected ≥14 combined findings, got {}",
         findings.len()
+    );
+}
+
+// ============================================================================
+// Java fixtures
+// ============================================================================
+
+#[test]
+fn scans_java_cipher_des() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Main.java"))
+        .expect("scan succeeds");
+
+    assert!(
+        !findings.is_empty(),
+        "expected findings in Java fixture, got none: {:#?}",
+        findings
+    );
+
+    // DES in Cipher.getInstance → CRYPTO-200
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-200" && f.algorithm_id == "des"),
+        "expected CRYPTO-200 (DES) in Java fixture"
+    );
+}
+
+#[test]
+fn scans_java_cipher_aes_ecb() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Main.java"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-201" && f.algorithm_id == "aes-128-ecb"),
+        "expected CRYPTO-201 (AES-ECB) in Java fixture"
+    );
+}
+
+#[test]
+fn scans_java_messagedigest_md5() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Main.java"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-220" && f.algorithm_id == "md5"),
+        "expected CRYPTO-220 (MD5) in Java fixture"
+    );
+}
+
+#[test]
+fn scans_java_messagedigest_sha1() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Main.java"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-221" && f.algorithm_id == "sha-1"),
+        "expected CRYPTO-221 (SHA-1) in Java fixture"
+    );
+}
+
+#[test]
+fn scans_java_keypairgenerator_rsa() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Main.java"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-210" && f.algorithm_id == "rsa-2048"),
+        "expected CRYPTO-210 (RSA keygen) in Java fixture"
+    );
+}
+
+// ============================================================================
+// JavaScript fixtures
+// ============================================================================
+
+#[test]
+fn scans_js_createcipheriv_des() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/crypto.js"))
+        .expect("scan succeeds");
+
+    assert!(
+        !findings.is_empty(),
+        "expected findings in JS fixture, got none"
+    );
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-300" && f.algorithm_id == "des"),
+        "expected CRYPTO-300 (DES) in JS fixture; findings: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn scans_js_createhash_md5() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/crypto.js"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-310" && f.algorithm_id == "md5"),
+        "expected CRYPTO-310 (MD5) in JS fixture"
+    );
+}
+
+#[test]
+fn scans_js_createhash_sha1() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/crypto.js"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-311" && f.algorithm_id == "sha-1"),
+        "expected CRYPTO-311 (SHA-1) in JS fixture"
+    );
+}
+
+#[test]
+fn scans_js_generatekeypair_rsa() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/crypto.js"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-320" && f.algorithm_id == "rsa-2048"),
+        "expected CRYPTO-320 (RSA keygen) in JS fixture"
+    );
+}
+
+#[test]
+fn scans_js_generatekeypair_ec() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/crypto.js"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-321" && f.algorithm_id == "ecdsa-p256"),
+        "expected CRYPTO-321 (EC keygen) in JS fixture"
+    );
+}
+
+// ============================================================================
+// C / C++ fixtures
+// ============================================================================
+
+#[test]
+fn scans_c_rsa_generate_key_ex_weak() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    assert!(
+        !findings.is_empty(),
+        "expected findings in C fixture, got none"
+    );
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-400" && f.algorithm_id == "rsa-1024"),
+        "expected CRYPTO-400 (RSA-1024) in C fixture; got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn scans_c_evp_digest_md5() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-420" && f.algorithm_id == "md5"),
+        "expected CRYPTO-420 (MD5 digest) in C fixture"
+    );
+}
+
+#[test]
+fn scans_c_evp_digest_sha1() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-421" && f.algorithm_id == "sha-1"),
+        "expected CRYPTO-421 (SHA-1 digest) in C fixture"
+    );
+}
+
+#[test]
+fn scans_c_libsodium_box_keypair() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-440" && f.algorithm_id == "x25519"),
+        "expected CRYPTO-440 (X25519 box_keypair) in C fixture"
+    );
+}
+
+#[test]
+fn scans_c_libsodium_sign_keypair() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-441" && f.algorithm_id == "ed25519"),
+        "expected CRYPTO-441 (Ed25519 sign_keypair) in C fixture"
+    );
+}
+
+// ============================================================================
+// Rust fixtures
+// ============================================================================
+
+#[test]
+fn scans_rust_rsa_weak() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/main.rs"))
+        .expect("scan succeeds");
+
+    assert!(
+        !findings.is_empty(),
+        "expected findings in Rust fixture, got none"
+    );
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-540" && f.algorithm_id == "rsa-1024"),
+        "expected CRYPTO-540 (RSA-1024) in Rust fixture; got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn scans_rust_aes256gcm() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/main.rs"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-510" && f.algorithm_id == "aes-256-gcm"),
+        "expected CRYPTO-510 (AES-256-GCM) in Rust fixture"
+    );
+}
+
+#[test]
+fn scans_rust_ed25519_dalek() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/main.rs"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-550" && f.algorithm_id == "ed25519"),
+        "expected CRYPTO-550 (Ed25519 dalek) in Rust fixture"
+    );
+}
+
+#[test]
+fn scans_rust_ring_ecdsa() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/main.rs"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-500" && f.algorithm_id == "ecdsa-p256"),
+        "expected CRYPTO-500 (ring ECDSA) in Rust fixture"
+    );
+}
+
+#[test]
+fn scans_rust_chacha20poly1305() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/main.rs"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-530" && f.algorithm_id == "chacha20-poly1305"),
+        "expected CRYPTO-530 (ChaCha20-Poly1305) in Rust fixture"
+    );
+}
+
+// ============================================================================
+// C# fixtures
+// ============================================================================
+
+#[test]
+fn scans_csharp_rsa_create() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("csharp/Crypto.cs"))
+        .expect("scan succeeds");
+
+    assert!(
+        !findings.is_empty(),
+        "expected findings in C# fixture, got none"
+    );
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-600" && f.algorithm_id == "rsa-2048"),
+        "expected CRYPTO-600 (RSA.Create) in C# fixture; got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn scans_csharp_md5_create() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("csharp/Crypto.cs"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-640" && f.algorithm_id == "md5"),
+        "expected CRYPTO-640 (MD5.Create) in C# fixture"
+    );
+}
+
+#[test]
+fn scans_csharp_sha1_create() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("csharp/Crypto.cs"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-630" && f.algorithm_id == "sha-1"),
+        "expected CRYPTO-630 (SHA1.Create) in C# fixture"
+    );
+}
+
+#[test]
+fn scans_csharp_tripledes_create() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("csharp/Crypto.cs"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-621" && f.algorithm_id == "3des"),
+        "expected CRYPTO-621 (TripleDES) in C# fixture"
+    );
+}
+
+#[test]
+fn scans_csharp_sha256_create() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("csharp/Crypto.cs"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-631" && f.algorithm_id == "sha-256"),
+        "expected CRYPTO-631 (SHA256.Create) in C# fixture"
     );
 }
 
