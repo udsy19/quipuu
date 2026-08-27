@@ -332,3 +332,80 @@ when.api = "^rcgen\\.KeyPair\\.generate_for$"
 algorithm_id = "ecdsa-p256"
 severity_hint = "auto"
 message = "rcgen::KeyPair::generate_for(SIG_ALG) — keypair generated. Default ECDSA P-256 is quantum-vulnerable."
+
+# ============================================================================
+# pbkdf2 crate — PBKDF2 with HMAC-SHA*
+# ============================================================================
+# Two API shapes (Phase 11):
+#   pbkdf2::<Hmac<sha2::Sha256>>(...)   — older generic-fn API
+#   pbkdf2_hmac::<sha2::Sha256>(...)    — newer free-function API
+# The hash algorithm is encoded in the turbofish — captured separately by
+# match_rust_callee via extract_turbofish_inner and exposed as `turbofish`.
+# Output algo-ids map to the hash (sha-256/384/512); PBKDF2-HMAC at
+# RFC 8018 / NIST SP 800-132 iteration counts is quantum-safe (inventory).
+#
+# The dispatch uses regex on the turbofish string, which contains the
+# full inner content (e.g. `Hmac<sha2::Sha256>` for shape 1). A simple
+# substring match on the hash name routes to the right rule.
+
+[[classify]]
+id = "CRYPTO-580"
+when.api = "^pbkdf2\\.pbkdf2$"
+when.args.turbofish = { regex = "Sha256" }
+algorithm_id = "sha-256"
+severity_hint = "low"
+message = "pbkdf2::<Hmac<Sha256>> — PBKDF2-HMAC-SHA256 KDF. Quantum-safe at adequate iteration counts (RFC 8018); confirm iteration count meets NIST SP 800-132 minimum 600,000."
+
+[[classify]]
+id = "CRYPTO-581"
+when.api = "^pbkdf2\\.pbkdf2$"
+when.args.turbofish = { regex = "Sha384" }
+algorithm_id = "sha-384"
+severity_hint = "low"
+message = "pbkdf2::<Hmac<Sha384>> — PBKDF2-HMAC-SHA384 KDF. Quantum-safe at adequate iteration counts."
+
+[[classify]]
+id = "CRYPTO-582"
+when.api = "^pbkdf2\\.pbkdf2$"
+when.args.turbofish = { regex = "Sha512" }
+algorithm_id = "sha-512"
+severity_hint = "low"
+message = "pbkdf2::<Hmac<Sha512>> — PBKDF2-HMAC-SHA512 KDF. Quantum-safe at adequate iteration counts."
+
+[[classify]]
+id = "CRYPTO-583"
+when.api = "^pbkdf2\\.pbkdf2$"
+algorithm_id = "sha-256"
+severity_hint = "low"
+message = "pbkdf2::<...>(...) — PBKDF2 with unrecognized hash. Confirm hash + iteration count meet NIST SP 800-132."
+
+[[classify]]
+id = "CRYPTO-584"
+when.api = "^pbkdf2\\.pbkdf2_hmac$"
+when.args.turbofish = { regex = "Sha256" }
+algorithm_id = "sha-256"
+severity_hint = "low"
+message = "pbkdf2_hmac::<Sha256> — PBKDF2-HMAC-SHA256 KDF. Quantum-safe at adequate iteration counts."
+
+[[classify]]
+id = "CRYPTO-585"
+when.api = "^pbkdf2\\.pbkdf2_hmac$"
+when.args.turbofish = { regex = "Sha384" }
+algorithm_id = "sha-384"
+severity_hint = "low"
+message = "pbkdf2_hmac::<Sha384> — PBKDF2-HMAC-SHA384 KDF. Quantum-safe at adequate iteration counts."
+
+[[classify]]
+id = "CRYPTO-586"
+when.api = "^pbkdf2\\.pbkdf2_hmac$"
+when.args.turbofish = { regex = "Sha512" }
+algorithm_id = "sha-512"
+severity_hint = "low"
+message = "pbkdf2_hmac::<Sha512> — PBKDF2-HMAC-SHA512 KDF. Quantum-safe at adequate iteration counts."
+
+[[classify]]
+id = "CRYPTO-587"
+when.api = "^pbkdf2\\.pbkdf2_hmac$"
+algorithm_id = "sha-256"
+severity_hint = "low"
+message = "pbkdf2_hmac::<...> — PBKDF2 with unrecognized hash. Confirm hash + iteration count meet NIST SP 800-132."

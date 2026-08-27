@@ -1084,6 +1084,111 @@ fn phase8_cryptojs_des_marked_critical() {
     assert_eq!(des.algorithm_id, "des");
 }
 
+// ── Phase 11: pbkdf2 nested-turbofish hash extraction ──────────────────────
+//
+// pbkdf2 has two API shapes that both encode the hash in a turbofish:
+//   pbkdf2::<Hmac<sha2::Sha256>>(...)   — generic function
+//   pbkdf2_hmac::<sha2::Sha256>(...)    — newer free function
+// Phase 11 routes each shape to a hash-specific classify rule based on
+// the turbofish content. Builds on Phase 10's extract_turbofish_inner.
+
+#[test]
+fn phase11_pbkdf2_generic_fn_routes_by_hash() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/pbkdf2_usage.rs"))
+        .expect("scan succeeds");
+    for (rule, algo) in [
+        ("CRYPTO-580", "sha-256"),
+        ("CRYPTO-581", "sha-384"),
+        ("CRYPTO-582", "sha-512"),
+    ] {
+        let f = findings
+            .iter()
+            .find(|f| f.rule_id == rule)
+            .unwrap_or_else(|| {
+                panic!(
+                    "{} must fire for pbkdf2::<Hmac<...>>, got: {:?}",
+                    rule,
+                    findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
+                )
+            });
+        assert_eq!(f.algorithm_id, algo);
+    }
+}
+
+#[test]
+fn phase11_pbkdf2_hmac_freefn_routes_by_hash() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/pbkdf2_usage.rs"))
+        .expect("scan succeeds");
+    for (rule, algo) in [
+        ("CRYPTO-584", "sha-256"),
+        ("CRYPTO-585", "sha-384"),
+        ("CRYPTO-586", "sha-512"),
+    ] {
+        let f = findings
+            .iter()
+            .find(|f| f.rule_id == rule)
+            .unwrap_or_else(|| {
+                panic!(
+                    "{} must fire for pbkdf2_hmac::<...>, got: {:?}",
+                    rule,
+                    findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
+                )
+            });
+        assert_eq!(f.algorithm_id, algo);
+    }
+}
+
+#[test]
+fn phase11_pbkdf2_qualified_callee_falls_back_to_last_segment() {
+    // `pbkdf2::pbkdf2_hmac::<Sha256>(...)` — the bare normalize gives
+    // `pbkdf2::pbkdf2_hmac`. The fallback in match_rust_callee tries the
+    // last segment alone (`pbkdf2_hmac`), which IS in the table.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/pbkdf2_usage.rs"))
+        .expect("scan succeeds");
+    // Line 28 in the fixture is the qualified call; must produce CRYPTO-584.
+    let line28 = findings
+        .iter()
+        .find(|f| f.location.line == Some(28))
+        .expect("expected a finding on line 28 (qualified pbkdf2::pbkdf2_hmac)");
+    assert_eq!(line28.rule_id, "CRYPTO-584");
+    assert_eq!(line28.algorithm_id, "sha-256");
+}
+
+#[test]
+fn phase11_real_pbkdf2_benches_produces_findings() {
+    // This is the canonical pre-Phase-11 zero-finding case. We hard-code
+    // the expected count from the real bench file.
+    use std::path::Path;
+    let bench = Path::new(env!("CARGO_MANIFEST_DIR")).join(
+        "../../../benchmarks/corpus-b-realworld/clones/crates-io/pbkdf2/pbkdf2/benches/lib.rs",
+    );
+    if !bench.exists() {
+        // Corpus not cloned in CI; skip silently.
+        eprintln!("skipping: {bench:?} not present");
+        return;
+    }
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner.scan_path(&bench).expect("scan succeeds");
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-580"),
+        "expected CRYPTO-580 on the real pbkdf2 bench file"
+    );
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-582"),
+        "expected CRYPTO-582 on the real pbkdf2 bench file"
+    );
+}
+
 // ── Phase 10: Rust qualified paths, variable args, turbofish, new APIs ─────
 //
 // RUST_COVERAGE_GAPS.md flagged five concrete bugs in the Rust scanner:

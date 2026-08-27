@@ -742,28 +742,49 @@ fn match_rust_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)
     // against the exact-match table below. The bare table is the single
     // source of truth for which Type::method shapes we recognise.
     let normalized = normalize_rust_callee(callee);
-    let api = match normalized.as_str() {
-        "EcdsaKeyPair::generate_pkcs8" => "ring.EcdsaKeyPair.generate_pkcs8",
-        "Ed25519KeyPair::generate_pkcs8" => "ring.Ed25519KeyPair.generate_pkcs8",
-        "Aes256Gcm::new" => "rustcrypto.Aes256Gcm.new",
-        "Aes128Gcm::new" => "rustcrypto.Aes128Gcm.new",
-        "Sha256::new" | "Sha256::digest" => "rustcrypto.Sha256.digest",
-        "Sha384::new" | "Sha384::digest" => "rustcrypto.Sha384.digest",
-        "Sha512::new" | "Sha512::digest" => "rustcrypto.Sha512.digest",
-        "ChaCha20Poly1305::new" => "rustcrypto.ChaCha20Poly1305.new",
-        "RsaPrivateKey::new" => "rsa.RsaPrivateKey.new",
-        "SigningKey::generate" => "ed25519_dalek.SigningKey.generate",
-        // RSA pkcs1v15 / pss SigningKey — turbofish stripped by normalize_*.
-        // The hash algorithm is encoded in the turbofish (e.g. `<Sha256>`)
-        // and is captured separately by `populate_args` below.
-        "SigningKey::new" => "rsa.SigningKey.new",
-        "ClientConfig::builder" => "rustls.ClientConfig.builder",
-        "ServerConfig::builder" => "rustls.ServerConfig.builder",
-        // rcgen — used by rustls-webpki / webpki test utilities. Defaults
-        // to ECDSA P-256 SHA-256 when called with PKCS_ECDSA_P256_SHA256.
-        "KeyPair::generate_for" => "rcgen.KeyPair.generate_for",
-        _ => return None,
+
+    // Helper closure so we can try matching the 2-segment normalized form
+    // first, then fall back to just the last segment alone. This handles
+    // free functions like `pbkdf2_hmac` (often called as either
+    // `pbkdf2_hmac` or `pbkdf2::pbkdf2_hmac`).
+    let resolve = |s: &str| -> Option<&'static str> {
+        Some(match s {
+            "EcdsaKeyPair::generate_pkcs8" => "ring.EcdsaKeyPair.generate_pkcs8",
+            "Ed25519KeyPair::generate_pkcs8" => "ring.Ed25519KeyPair.generate_pkcs8",
+            "Aes256Gcm::new" => "rustcrypto.Aes256Gcm.new",
+            "Aes128Gcm::new" => "rustcrypto.Aes128Gcm.new",
+            "Sha256::new" | "Sha256::digest" => "rustcrypto.Sha256.digest",
+            "Sha384::new" | "Sha384::digest" => "rustcrypto.Sha384.digest",
+            "Sha512::new" | "Sha512::digest" => "rustcrypto.Sha512.digest",
+            "ChaCha20Poly1305::new" => "rustcrypto.ChaCha20Poly1305.new",
+            "RsaPrivateKey::new" => "rsa.RsaPrivateKey.new",
+            "SigningKey::generate" => "ed25519_dalek.SigningKey.generate",
+            // RSA pkcs1v15 / pss SigningKey — turbofish stripped by normalize_*.
+            // The hash algorithm is encoded in the turbofish (e.g. `<Sha256>`)
+            // and is captured separately as the `turbofish` arg below.
+            "SigningKey::new" => "rsa.SigningKey.new",
+            "ClientConfig::builder" => "rustls.ClientConfig.builder",
+            "ServerConfig::builder" => "rustls.ServerConfig.builder",
+            // rcgen — used by rustls-webpki / webpki test utilities. Defaults
+            // to ECDSA P-256 SHA-256 when called with PKCS_ECDSA_P256_SHA256.
+            "KeyPair::generate_for" => "rcgen.KeyPair.generate_for",
+            // pbkdf2 crate — Phase 11. Two API shapes:
+            //   pbkdf2::<Hmac<sha2::Sha256>>(...)   — older generic-fn API
+            //   pbkdf2_hmac::<sha2::Sha256>(...)    — newer free-function API
+            // The hash algorithm is in the turbofish either way; classify
+            // rules dispatch on the `turbofish` capture.
+            "pbkdf2" => "pbkdf2.pbkdf2",
+            "pbkdf2_hmac" | "pbkdf2_hmac_array" => "pbkdf2.pbkdf2_hmac",
+            _ => return None,
+        })
     };
+
+    let api = resolve(&normalized).or_else(|| {
+        // Fall back: try just the trailing segment alone. Catches free
+        // functions like `pbkdf2_hmac` when called as
+        // `pbkdf2::pbkdf2_hmac::<Sha256>`.
+        normalized.rsplit("::").next().and_then(resolve)
+    })?;
     let mut args = HashMap::new();
     // If the original callee text had a turbofish, expose the inside as a
     // capture so classify rules can dispatch on the hash algorithm.
