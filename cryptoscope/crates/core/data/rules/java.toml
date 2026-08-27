@@ -23,13 +23,35 @@ captures = { cls = "ident", fn = "ident", spec = "literal_string" }
 api = "javax.crypto.Cipher.getInstance"
 description = "Java Cipher.getInstance(spec) — cipher/mode/padding string literal."
 
+# `DESede` is 3DES, not DES — two different algorithm-ids, two different
+# CBOM components. CRYPTO-200's `(?i)DES` matches both, so the specific arm
+# has to come first: apply_classify takes the first `when` that matches.
+
+[[classify]]
+id = "CRYPTO-214"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)(DESede|TripleDES|3DES)" }
+algorithm_id = "3des"
+severity_hint = "critical"
+message = "3DES in Cipher.getInstance('{spec}'). Disallowed for new encryption use (NIST SP 800-131A, 2023); 64-bit block invites Sweet32."
+cwe = "CWE-327"
+
 [[classify]]
 id = "CRYPTO-200"
 when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
 when.args.spec = { regex = "(?i)DES" }
 algorithm_id = "des"
 severity_hint = "critical"
-message = "DES/3DES detected in Cipher.getInstance('{spec}'). Disallowed for new encryption (NIST SP 800-131A)."
+message = "Single DES in Cipher.getInstance('{spec}'). 56-bit key, brute-forced since 1998; disallowed for new encryption (NIST SP 800-131A)."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-213"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)(RC4|ARCFOUR)" }
+algorithm_id = "rc4"
+severity_hint = "critical"
+message = "RC4 in Cipher.getInstance('{spec}'). Biased keystream, practical plaintext recovery; banned in TLS by RFC 7465."
 cwe = "CWE-327"
 
 # The JCE transformation string states the key size only in the optional
@@ -533,3 +555,127 @@ algorithm_id = "jwt-alg-none"
 severity_hint = "critical"
 message = "jose4j AlgorithmIdentifiers.NONE — signature verification disabled."
 cwe = "CWE-347"
+
+# ============================================================================
+# java.security.Signature — the JCA signing surface.
+#
+# `Signature.getInstance("SHA1withRSA")` is the single most common way a Java
+# codebase names a signature algorithm, and it was invisible: no matcher
+# emitted the api, so none of these could fire. The transformation string
+# states the digest and the key family but never the modulus or the curve —
+# those come from the key passed to initSign(). The RSA ids inherit the
+# modulus convention already used by CRYPTO-202/CRYPTO-242; the ECDSA arm
+# names no curve at all, because a curve is the whole parameter for ECDSA
+# and `SHA256withECDSA` does not state one.
+# Rule order is load-bearing — the first matching `when` wins, so the
+# digest-specific arms precede the family catch-alls.
+# ============================================================================
+
+[[extract]]
+id = "JAV-090"
+language = "java"
+query = """
+(method_invocation
+  object: (identifier) @cls (#eq? @cls "Signature")
+  name: (identifier) @fn (#eq? @fn "getInstance")
+  arguments: (argument_list (string_literal) @algo))
+"""
+captures = { cls = "ident", fn = "ident", algo = "literal_string" }
+api = "java.security.Signature.getInstance"
+description = "Java Signature.getInstance(algorithm) — JCA signature transformation."
+
+[[classify]]
+id = "CRYPTO-290"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MD5with(RSA|RSAandMGF1)\"?$" }
+algorithm_id = "rsa-pkcs1-md5"
+severity_hint = "critical"
+message = "Signature.getInstance('{algo}') — MD5 is collision-broken (2004); an MD5 signature is forgeable today, before any quantum consideration."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-291"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SHA-?1with(RSA|RSAandMGF1)\"?$" }
+algorithm_id = "rsa-pkcs1-sha1"
+severity_hint = "critical"
+message = "Signature.getInstance('{algo}') — SHA-1 is collision-broken (SHAttered, 2017). Move to SHA-256 now and to ML-DSA-65 before 2030."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-292"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SHA-?1withECDSA\"?$" }
+algorithm_id = "ecdsa-sha1"
+severity_hint = "critical"
+message = "Signature.getInstance('{algo}') — SHA-1 digest under ECDSA is collision-broken. Move to SHA-256 now and to ML-DSA-65 before 2030."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-293"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SHA-?256with(RSA|RSAandMGF1)\"?$" }
+algorithm_id = "rsa-pkcs1-sha256-2048"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — RSA PKCS#1 v1.5 signature, broken by Shor. Replace with ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-294"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SHA-?384with(RSA|RSAandMGF1)\"?$" }
+algorithm_id = "rsa-pkcs1-sha384-3072"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — RSA PKCS#1 v1.5 signature, broken by Shor. Replace with ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-295"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SHA-?512with(RSA|RSAandMGF1)\"?$" }
+algorithm_id = "rsa-pkcs1-sha512-4096"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — RSA PKCS#1 v1.5 signature, broken by Shor. Replace with ML-DSA-87."
+
+[[classify]]
+id = "CRYPTO-296"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?(RSASSA-PSS|SHA-?256withRSA/PSS)\"?$" }
+algorithm_id = "rsa-pss-sha256-2048"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — RSA-PSS signature, broken by Shor. Replace with ML-DSA-65."
+
+# One arm for every non-SHA-1 ECDSA transformation, and it names no curve.
+# `SHA256withECDSA` does not mean P-256: jetty's Ethereum credentials call
+# `Signature.getInstance("NONEwithECDSA")` over secp256k1, so asserting a
+# curve here would ship a wrong component in the CBOM. Shor breaks ECDSA at
+# every curve, so the migration verdict is exact either way.
+[[classify]]
+id = "CRYPTO-298"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)withECDSA\"?$" }
+algorithm_id = "ecdsa-unattributed"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — ECDSA, broken by Shor. The curve is not at this call site; it comes from the key passed to initSign(). Replace with ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-299"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?(Ed25519|EdDSA)\"?$" }
+algorithm_id = "ed25519"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — Ed25519, broken by Shor. Replace with ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-286"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?Ed448\"?$" }
+algorithm_id = "ed448"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — Ed448, broken by Shor. Replace with ML-DSA-87."
+
+[[classify]]
+id = "CRYPTO-287"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)with(DSA|DSAinP1363Format)\"?$" }
+algorithm_id = "dsa-2048"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — DSA, broken by Shor and already discouraged classically. Replace with ML-DSA-65."

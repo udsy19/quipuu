@@ -185,7 +185,10 @@ description = "TLS minimum version setting."
 id = "CRYPTO-030"
 when.api = "^crypto/tls\\.Config\\.MinVersion$"
 when.args.version = { regex = "^(VersionSSL30|VersionTLS10|VersionTLS11)$" }
-algorithm_id = "rsa-2048"   # placeholder; rule emits a protocol-level finding via reporter
+# A protocol-version field names no cipher. `tls-legacy-protocol` says exactly
+# that, where the previous `rsa-2048` placeholder asserted an algorithm the
+# source never mentions.
+algorithm_id = "tls-legacy-protocol"
 severity_hint = "critical"
 message = "TLS minimum version is {version} — TLS < 1.2 is broken (POODLE, BEAST). Use tls.VersionTLS12 or tls.VersionTLS13."
 cwe = "CWE-326"
@@ -339,6 +342,73 @@ when.api = "^crypto/aes\\.NewCipher$"
 algorithm_id = "aes-unattributed"
 severity_hint = "low"
 message = "AES cipher in use. aes.NewCipher takes its key size from the slice passed in and names no mode — neither parameter is at this call site. Confirm a 32-byte key for AES-256 and an AEAD wrapper (cipher.NewGCM)."
+
+# crypto/des and crypto/rc4 — classically broken symmetric primitives.
+# Both packages exist in the Go stdlib only for legacy interop; every call is
+# a finding, and neither takes a parameter that could change that.
+
+[[extract]]
+id = "GO-041"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "des")
+    field: (field_identifier) @fn (#eq? @fn "NewCipher")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "crypto/des.NewCipher"
+description = "Single-DES cipher instantiation."
+
+[[classify]]
+id = "CRYPTO-041"
+when.api = "^crypto/des\\.NewCipher$"
+algorithm_id = "des"
+severity_hint = "critical"
+message = "Single DES — 56-bit key, brute-forced since 1998. Disallowed by NIST SP 800-131A. Replace with AES-256-GCM."
+cwe = "CWE-327"
+
+[[extract]]
+id = "GO-042"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "des")
+    field: (field_identifier) @fn (#eq? @fn "NewTripleDESCipher")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "crypto/des.NewTripleDESCipher"
+description = "Triple-DES cipher instantiation."
+
+[[classify]]
+id = "CRYPTO-042"
+when.api = "^crypto/des\\.NewTripleDESCipher$"
+algorithm_id = "3des"
+severity_hint = "critical"
+message = "3DES disallowed for new encryption use (NIST SP 800-131A, 2023) — 64-bit block invites Sweet32. Replace with AES-256-GCM."
+cwe = "CWE-327"
+
+[[extract]]
+id = "GO-043"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "rc4")
+    field: (field_identifier) @fn (#eq? @fn "NewCipher")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "crypto/rc4.NewCipher"
+description = "RC4 stream cipher instantiation."
+
+[[classify]]
+id = "CRYPTO-043"
+when.api = "^crypto/rc4\\.NewCipher$"
+algorithm_id = "rc4"
+severity_hint = "critical"
+message = "RC4 is broken — biased keystream, practical plaintext recovery (RFC 7465 bans it in TLS). Replace with ChaCha20-Poly1305 or AES-256-GCM."
+cwe = "CWE-327"
 
 # ============================================================================
 # crypto/md5 / crypto/sha1 — classically broken

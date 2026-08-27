@@ -853,6 +853,27 @@ quantum_status = "QuantumSafe"
 notes = "Generic sentinel for scan-network's default-handshake findings; the per-group probes provide algorithm-specific attribution. Not scored as vulnerable."
 
 [[algorithm]]
+id = "ecdsa-unattributed"
+display_name = "ECDSA (curve not stated at the call site)"
+family = "ECDSA"
+primitive = "signature"
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-65"
+oid = "1.2.840.10045.4.3.2"
+notes = "A JCA transformation such as `SHA256withECDSA` names the digest and the key family but never the curve — that comes from the key passed to initSign(). Shor breaks ECDSA at every curve, so the migration verdict is exact; only the classical strength is unknown, which is why no classical_security_bits is recorded. Sentinel, in the same role as aes-unattributed."
+
+[[algorithm]]
+id = "tls-legacy-protocol"
+display_name = "Legacy TLS/SSL protocol version"
+family = "TLS"
+primitive = "other"
+classical_security_bits = 0
+nist_quantum_security_level = 0
+quantum_status = "BrokenClassically"
+notes = "SSL 3.0 / TLS 1.0 / TLS 1.1 selected as the floor of a TLS configuration. A protocol-version setting names no algorithm, so findings on these call sites carry this id rather than asserting a cipher the source never states. Broken classically (POODLE, BEAST); deprecated by RFC 8996."
+
+[[algorithm]]
 id = "tls-client-config"
 display_name = "TLS client config (topology marker)"
 family = "TLS"

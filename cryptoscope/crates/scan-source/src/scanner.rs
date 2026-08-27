@@ -353,6 +353,14 @@ fn walk(node: Node<'_>, source: &[u8], language: Language, out: &mut Vec<RawMatc
     {
         out.extend(ms);
     }
+    // Go `MinVersion: tls.VersionTLS10` — a protocol-level setting on the same
+    // `keyed_element` node kind as CurvePreferences.
+    if language == Language::Go
+        && kind == "keyed_element"
+        && let Some(m) = match_go_tls_min_version(node, source)
+    {
+        out.push(m);
+    }
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
         walk(child, source, language, out, depth + 1);
@@ -476,6 +484,80 @@ fn match_object_creation(call: Node<'_>, source: &[u8], language: Language) -> O
     })
 }
 
+/// Go callee text → logical api name.
+///
+/// One row per recognised call shape. The right-hand column is the extract
+/// layer's Go api surface, and [`api_surface`] enumerates the same column, so
+/// a classify rule can never name an api this table does not produce.
+const GO_CALLEE_APIS: &[(&str, &str)] = &[
+    ("rsa.GenerateKey", "crypto/rsa.GenerateKey"),
+    ("ecdsa.GenerateKey", "crypto/ecdsa.GenerateKey"),
+    ("ed25519.GenerateKey", "crypto/ed25519.GenerateKey"),
+    ("md5.New", "crypto/md5_sha1.New"),
+    ("sha1.New", "crypto/md5_sha1.New"),
+    ("aes.NewCipher", "crypto/aes.NewCipher"),
+    ("des.NewCipher", "crypto/des.NewCipher"),
+    ("des.NewTripleDESCipher", "crypto/des.NewTripleDESCipher"),
+    ("rc4.NewCipher", "crypto/rc4.NewCipher"),
+    // golang-jwt is imported under three spellings in the wild.
+    ("jwt.NewWithClaims", "jwt.NewWithClaims"),
+    ("jwt_go.NewWithClaims", "jwt.NewWithClaims"),
+    ("jwtgo.NewWithClaims", "jwt.NewWithClaims"),
+];
+
+/// Exact-match lookup in one of the callee → api tables.
+fn lookup(table: &'static [(&'static str, &'static str)], key: &str) -> Option<&'static str> {
+    table
+        .iter()
+        .find_map(|(k, api)| (*k == key).then_some(*api))
+}
+
+/// APIs emitted by the structural matchers — the ones keyed on an AST shape
+/// rather than on a callee string, so they have no entry in a callee table.
+const STRUCTURAL_APIS: &[&str] = &[
+    // match_go_callee's ecdh.<Curve> prefix arm
+    "crypto/ecdh.Curve",
+    // match_go_curve_preferences
+    "crypto/tls.Config.CurvePreferences",
+    // match_go_tls_min_version
+    "crypto/tls.Config.MinVersion",
+];
+
+/// Every `api` string the extract layer can emit.
+///
+/// This is the reachability contract between the two rule layers: a
+/// `[[classify]]` rule whose `when.api` matches nothing in here can never
+/// fire, and `every_classify_rule_targets_an_api_the_extractor_can_emit`
+/// fails the build when one does. Derived from the same tables the matchers
+/// dispatch on, so it cannot drift from them.
+pub fn api_surface() -> Vec<String> {
+    let mut out: Vec<String> = STRUCTURAL_APIS.iter().map(|s| s.to_string()).collect();
+    for table in [
+        GO_CALLEE_APIS,
+        PYTHON_CALLEE_APIS,
+        JAVA_CALLEE_APIS,
+        JAVA_CTOR_APIS,
+        JAVA_ENUM_CLASS_APIS,
+        JS_CALLEE_APIS,
+        WEBCRYPTO_METHOD_APIS,
+        C_CALLEE_APIS,
+        RUST_CALLEE_APIS,
+        CSHARP_CALLEE_APIS,
+        CSHARP_CTOR_APIS,
+    ] {
+        out.extend(table.iter().map(|(_, api)| api.to_string()));
+    }
+    // The two Go JOSE families are built by formatting a whitelisted
+    // algorithm name into a prefix, so enumerate the product.
+    for alg in GO_ALG_SWITCH_WHITELIST {
+        out.push(format!("go.alg-switch.{alg}"));
+        out.push(format!("go.alg-register.{alg}"));
+    }
+    out.sort();
+    out.dedup();
+    out
+}
+
 fn match_go_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
     // crypto/ecdh.<Curve>() calls: ecdh.X25519, ecdh.P256, ecdh.P384, ecdh.P521.
     // The classify layer maps `args.curve_fn` to ecdh-pNNN / x25519 algorithm-ids.
@@ -487,14 +569,7 @@ fn match_go_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> 
         return Some(("crypto/ecdh.Curve".into(), args));
     }
 
-    let api = match callee {
-        "rsa.GenerateKey" => "crypto/rsa.GenerateKey",
-        "ecdsa.GenerateKey" => "crypto/ecdsa.GenerateKey",
-        "ed25519.GenerateKey" => "crypto/ed25519.GenerateKey",
-        "md5.New" => "crypto/md5_sha1.New",
-        "sha1.New" => "crypto/md5_sha1.New",
-        _ => return None,
-    };
+    let api = lookup(GO_CALLEE_APIS, callee)?;
     let mut args = HashMap::new();
     // For md5/sha1, the classifier reads `args.pkg` to disambiguate.
     if callee == "md5.New" {
@@ -505,25 +580,87 @@ fn match_go_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> 
     Some((api.into(), args))
 }
 
+/// Python callee text → logical api name.
+///
+/// pyca's key-generation classes are reached either through the module
+/// (`ed25519.Ed25519PrivateKey.generate`) or imported bare
+/// (`Ed25519PrivateKey.generate`); both spellings are in the table because
+/// both are idiomatic and the walker only sees the callee text.
+const PYTHON_CALLEE_APIS: &[(&str, &str)] = &[
+    (
+        "rsa.generate_private_key",
+        "cryptography.hazmat.rsa.generate_private_key",
+    ),
+    (
+        "ec.generate_private_key",
+        "cryptography.hazmat.ec.generate_private_key",
+    ),
+    ("hashlib.md5", "hashlib.md5"),
+    ("hashlib.sha1", "hashlib.sha1"),
+    ("hashlib.new", "hashlib.new"),
+    (
+        "ed25519.Ed25519PrivateKey.generate",
+        "cryptography.hazmat.ed25519.generate",
+    ),
+    (
+        "Ed25519PrivateKey.generate",
+        "cryptography.hazmat.ed25519.generate",
+    ),
+    (
+        "ed448.Ed448PrivateKey.generate",
+        "cryptography.hazmat.ed448.generate",
+    ),
+    (
+        "Ed448PrivateKey.generate",
+        "cryptography.hazmat.ed448.generate",
+    ),
+    (
+        "x25519.X25519PrivateKey.generate",
+        "cryptography.hazmat.x25519.generate",
+    ),
+    (
+        "X25519PrivateKey.generate",
+        "cryptography.hazmat.x25519.generate",
+    ),
+    (
+        "x448.X448PrivateKey.generate",
+        "cryptography.hazmat.x448.generate",
+    ),
+    (
+        "X448PrivateKey.generate",
+        "cryptography.hazmat.x448.generate",
+    ),
+    ("ciphers.Cipher", "cryptography.hazmat.ciphers.Cipher"),
+    ("Cipher", "cryptography.hazmat.ciphers.Cipher"),
+    ("ssl.SSLContext", "ssl.SSLContext"),
+    ("jwt.encode", "jwt.encode"),
+    ("RSA.generate", "Crypto.PublicKey.RSA.generate"),
+];
+
 fn match_python_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
-    let api = match callee {
-        "rsa.generate_private_key" => "cryptography.hazmat.rsa.generate_private_key",
-        "ec.generate_private_key" => "cryptography.hazmat.ec.generate_private_key",
-        "hashlib.md5" => "hashlib.md5",
-        "hashlib.sha1" => "hashlib.sha1",
-        _ => return None,
-    };
+    let api = lookup(PYTHON_CALLEE_APIS, callee)?;
     Some((api.into(), HashMap::new()))
 }
 
+/// Java method-invocation callee text ("ClassName.methodName") → api name.
+const JAVA_CALLEE_APIS: &[(&str, &str)] = &[
+    ("Cipher.getInstance", "javax.crypto.Cipher.getInstance"),
+    (
+        "KeyPairGenerator.getInstance",
+        "java.security.KeyPairGenerator.getInstance",
+    ),
+    (
+        "MessageDigest.getInstance",
+        "java.security.MessageDigest.getInstance",
+    ),
+    (
+        "Signature.getInstance",
+        "java.security.Signature.getInstance",
+    ),
+];
+
 fn match_java_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
-    // Java method invocations: "ClassName.methodName"
-    let api = match callee {
-        "Cipher.getInstance" => "javax.crypto.Cipher.getInstance",
-        "KeyPairGenerator.getInstance" => "java.security.KeyPairGenerator.getInstance",
-        "MessageDigest.getInstance" => "java.security.MessageDigest.getInstance",
-        _ => return None,
-    };
+    let api = lookup(JAVA_CALLEE_APIS, callee)?;
     Some((api.into(), HashMap::new()))
 }
 
@@ -556,21 +693,7 @@ fn match_java_field_access(node: Node<'_>, source: &[u8]) -> Option<RawMatch> {
         return None;
     }
 
-    let api = match class_name.as_str() {
-        // jjwt
-        "SignatureAlgorithm" => "io.jsonwebtoken.SignatureAlgorithm",
-        // auth0 java-jwt
-        "Algorithm" => "com.auth0.jwt.Algorithm",
-        // nimbus-jose-jwt
-        "JWSAlgorithm" => "com.nimbusds.jose.JWSAlgorithm",
-        "JWEAlgorithm" => "com.nimbusds.jose.JWEAlgorithm",
-        "EncryptionMethod" => "com.nimbusds.jose.EncryptionMethod",
-        // jose4j
-        "AlgorithmIdentifiers" => "org.jose4j.jws.AlgorithmIdentifiers",
-        // Apache Shiro
-        "DefaultPasswordService" => return None, // not an enum
-        _ => return None,
-    };
+    let api = lookup(JAVA_ENUM_CLASS_APIS, &class_name)?;
 
     let mut args = HashMap::new();
     args.insert("member".into(), ArgValue::Str(member_name));
@@ -644,6 +767,45 @@ fn match_go_alg_switch(switch: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch>>
     } else {
         Some(results)
     }
+}
+
+/// Match Go `MinVersion: tls.VersionTLS10` inside a `tls.Config` literal.
+///
+/// The AST is `keyed_element(literal_element (identifier "MinVersion"),
+/// literal_element (selector_expression tls.VersionTLS10))`. The `tls.`
+/// operand guard keeps unrelated `MinVersion` struct fields out.
+fn match_go_tls_min_version(keyed: Node<'_>, source: &[u8]) -> Option<RawMatch> {
+    let key_le = keyed.named_child(0)?;
+    let value_le = keyed.named_child(1)?;
+
+    let key_inner = key_le.named_child(0)?;
+    if key_inner.kind() != "identifier" || node_text(key_inner, source) != "MinVersion" {
+        return None;
+    }
+
+    let sel = value_le.named_child(0)?;
+    if sel.kind() != "selector_expression" {
+        return None;
+    }
+    let operand = sel.child_by_field_name("operand")?;
+    let field = sel.child_by_field_name("field")?;
+    if operand.kind() != "identifier" || node_text(operand, source) != "tls" {
+        return None;
+    }
+
+    let version = node_text(field, source);
+    let mut args = HashMap::new();
+    args.insert("version".into(), ArgValue::Str(version.clone()));
+    let start = keyed.start_position();
+    Some(RawMatch {
+        api: "crypto/tls.Config.MinVersion".into(),
+        args,
+        line: (start.row + 1) as u32,
+        offset: keyed.start_byte() as u32,
+        symbol: format!("tls.{version}"),
+        snippet: node_text(keyed, source),
+        site_context: cryptoscope_core::SiteContext::StructLiteral,
+    })
 }
 
 /// Match Go `CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256, ...}`.
@@ -841,15 +1003,42 @@ const GO_ALG_SWITCH_WHITELIST: &[&str] = &[
     "A128GCM",
 ];
 
+/// Java crypto-enum classes whose members name an algorithm. Narrow by
+/// design: a general "any field_access" rule would flood the output.
+/// Deliberately absent: Apache Shiro's `DefaultPasswordService`, which is a
+/// class with static members, not an algorithm enum.
+const JAVA_ENUM_CLASS_APIS: &[(&str, &str)] = &[
+    // jjwt
+    ("SignatureAlgorithm", "io.jsonwebtoken.SignatureAlgorithm"),
+    // auth0 java-jwt
+    ("Algorithm", "com.auth0.jwt.Algorithm"),
+    // nimbus-jose-jwt
+    ("JWSAlgorithm", "com.nimbusds.jose.JWSAlgorithm"),
+    ("JWEAlgorithm", "com.nimbusds.jose.JWEAlgorithm"),
+    ("EncryptionMethod", "com.nimbusds.jose.EncryptionMethod"),
+    // jose4j
+    (
+        "AlgorithmIdentifiers",
+        "org.jose4j.jws.AlgorithmIdentifiers",
+    ),
+];
+
+/// BouncyCastle `new Foo()` constructors.
+const JAVA_CTOR_APIS: &[(&str, &str)] = &[
+    (
+        "RSAKeyPairGenerator",
+        "org.bouncycastle.RSAKeyPairGenerator",
+    ),
+    ("AESEngine", "org.bouncycastle.AESEngine"),
+    ("GCMBlockCipher", "org.bouncycastle.GCMBlockCipher"),
+    (
+        "BouncyCastleProvider",
+        "org.bouncycastle.BouncyCastleProvider",
+    ),
+];
+
 fn match_java_ctor(class_name: &str) -> Option<(String, HashMap<String, ArgValue>)> {
-    // BouncyCastle constructor detection
-    let api = match class_name {
-        "RSAKeyPairGenerator" => "org.bouncycastle.RSAKeyPairGenerator",
-        "AESEngine" => "org.bouncycastle.AESEngine",
-        "GCMBlockCipher" => "org.bouncycastle.GCMBlockCipher",
-        "BouncyCastleProvider" => "org.bouncycastle.BouncyCastleProvider",
-        _ => return None,
-    };
+    let api = lookup(JAVA_CTOR_APIS, class_name)?;
     Some((api.into(), HashMap::new()))
 }
 
@@ -867,33 +1056,45 @@ fn match_js_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> 
     // JS/TS member expression callees. tree-sitter renders nested member
     // expressions as their full source text, so two-level chains like
     // `CryptoJS.AES.encrypt` come through as a single &str here.
-    let api = match callee {
-        "crypto.createCipheriv" => "node:crypto.createCipheriv",
-        "crypto.createHash" => "node:crypto.createHash",
-        "crypto.generateKeyPair" | "crypto.generateKeyPairSync" => "node:crypto.generateKeyPair",
-        "crypto.createSign" => "node:crypto.createSign",
-        "subtle.generateKey" => "webcrypto.subtle.generateKey",
-        "subtle.sign" => "webcrypto.subtle.sign",
-        "jwt.sign" => "jsonwebtoken.jwt.sign",
-        // crypto-js namespace. Two-level member expressions
-        // (CryptoJS.<Algo>.<method>) plus single-level helpers
-        // (CryptoJS.MD5(msg)). Every algorithm covered here is on the
-        // "broken classically" tier — DES, 3DES, RC4, MD5, SHA-1 — so
-        // they map to existing rules without needing new algorithm-ids.
-        "CryptoJS.AES.encrypt" | "CryptoJS.AES.decrypt" => "crypto-js.AES.encrypt",
-        "CryptoJS.DES.encrypt" | "CryptoJS.DES.decrypt" => "crypto-js.DES.encrypt",
-        "CryptoJS.TripleDES.encrypt" | "CryptoJS.TripleDES.decrypt" => {
-            "crypto-js.TripleDES.encrypt"
-        }
-        "CryptoJS.RC4.encrypt" | "CryptoJS.RC4.decrypt" => "crypto-js.RC4.encrypt",
-        "CryptoJS.MD5" => "crypto-js.MD5",
-        "CryptoJS.SHA1" => "crypto-js.SHA1",
-        "CryptoJS.HmacMD5" => "crypto-js.HmacMD5",
-        "CryptoJS.HmacSHA1" => "crypto-js.HmacSHA1",
-        _ => return None,
-    };
+    let api = lookup(JS_CALLEE_APIS, callee)?;
     Some((api.into(), HashMap::new()))
 }
+
+/// JS/TS member-expression callee text → api name. tree-sitter renders nested
+/// member expressions as their full source text, so two-level chains like
+/// `CryptoJS.AES.encrypt` arrive as a single key.
+///
+/// Every crypto-js algorithm here is on the "broken classically" tier — DES,
+/// 3DES, RC4, MD5, SHA-1 — so they map to existing algorithm-ids.
+const JS_CALLEE_APIS: &[(&str, &str)] = &[
+    ("crypto.createCipheriv", "node:crypto.createCipheriv"),
+    ("crypto.createHash", "node:crypto.createHash"),
+    ("crypto.generateKeyPair", "node:crypto.generateKeyPair"),
+    ("crypto.generateKeyPairSync", "node:crypto.generateKeyPair"),
+    ("crypto.createSign", "node:crypto.createSign"),
+    ("subtle.generateKey", "webcrypto.subtle.generateKey"),
+    ("subtle.sign", "webcrypto.subtle.sign"),
+    ("jwt.sign", "jsonwebtoken.jwt.sign"),
+    ("CryptoJS.AES.encrypt", "crypto-js.AES.encrypt"),
+    ("CryptoJS.AES.decrypt", "crypto-js.AES.encrypt"),
+    ("CryptoJS.DES.encrypt", "crypto-js.DES.encrypt"),
+    ("CryptoJS.DES.decrypt", "crypto-js.DES.encrypt"),
+    ("CryptoJS.TripleDES.encrypt", "crypto-js.TripleDES.encrypt"),
+    ("CryptoJS.TripleDES.decrypt", "crypto-js.TripleDES.encrypt"),
+    ("CryptoJS.RC4.encrypt", "crypto-js.RC4.encrypt"),
+    ("CryptoJS.RC4.decrypt", "crypto-js.RC4.encrypt"),
+    ("CryptoJS.MD5", "crypto-js.MD5"),
+    ("CryptoJS.SHA1", "crypto-js.SHA1"),
+    ("CryptoJS.HmacMD5", "crypto-js.HmacMD5"),
+    ("CryptoJS.HmacSHA1", "crypto-js.HmacSHA1"),
+];
+
+/// `SubtleCrypto` method name → api name, for calls reached through any
+/// receiver chain ending in `.subtle`.
+const WEBCRYPTO_METHOD_APIS: &[(&str, &str)] = &[
+    ("generateKey", "webcrypto.subtle.generateKey"),
+    ("sign", "webcrypto.subtle.sign"),
+];
 
 /// Resolve a `SubtleCrypto` method call reached through any receiver chain.
 ///
@@ -902,28 +1103,25 @@ fn match_js_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> 
 /// formatted vertically, hence the `trim_end`.
 fn match_webcrypto_callee(callee: &str) -> Option<&'static str> {
     let (receiver, method) = callee.rsplit_once('.')?;
-    let api = match method.trim() {
-        "generateKey" => "webcrypto.subtle.generateKey",
-        "sign" => "webcrypto.subtle.sign",
-        _ => return None,
-    };
+    let api = lookup(WEBCRYPTO_METHOD_APIS, method.trim())?;
     let receiver = receiver.trim_end();
     (receiver == "subtle" || receiver.ends_with(".subtle")).then_some(api)
 }
 
+/// C/C++ function identifier → api name.
+const C_CALLEE_APIS: &[(&str, &str)] = &[
+    ("RSA_generate_key_ex", "openssl.RSA_generate_key_ex"),
+    ("EVP_EncryptInit_ex", "openssl.EVP_EncryptInit_ex"),
+    ("EVP_DigestInit_ex", "openssl.EVP_DigestInit_ex"),
+    ("SSL_CTX_set_cipher_list", "openssl.SSL_CTX_set_cipher_list"),
+    ("crypto_box_keypair", "libsodium.crypto_box_keypair"),
+    ("crypto_sign_keypair", "libsodium.crypto_sign_keypair"),
+    ("mbedtls_rsa_init", "mbedtls.mbedtls_rsa_init"),
+    ("mbedtls_pk_setup", "mbedtls.mbedtls_pk_setup"),
+];
+
 fn match_c_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
-    // C/C++ simple function identifiers
-    let api = match callee {
-        "RSA_generate_key_ex" => "openssl.RSA_generate_key_ex",
-        "EVP_EncryptInit_ex" => "openssl.EVP_EncryptInit_ex",
-        "EVP_DigestInit_ex" => "openssl.EVP_DigestInit_ex",
-        "SSL_CTX_set_cipher_list" => "openssl.SSL_CTX_set_cipher_list",
-        "crypto_box_keypair" => "libsodium.crypto_box_keypair",
-        "crypto_sign_keypair" => "libsodium.crypto_sign_keypair",
-        "mbedtls_rsa_init" => "mbedtls.mbedtls_rsa_init",
-        "mbedtls_pk_setup" => "mbedtls.mbedtls_pk_setup",
-        _ => return None,
-    };
+    let api = lookup(C_CALLEE_APIS, callee)?;
     Some((api.into(), HashMap::new()))
 }
 
@@ -939,43 +1137,14 @@ fn match_rust_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)
     // first, then fall back to just the last segment alone. This handles
     // free functions like `pbkdf2_hmac` (often called as either
     // `pbkdf2_hmac` or `pbkdf2::pbkdf2_hmac`).
-    let resolve = |s: &str| -> Option<&'static str> {
-        Some(match s {
-            "EcdsaKeyPair::generate_pkcs8" => "ring.EcdsaKeyPair.generate_pkcs8",
-            "Ed25519KeyPair::generate_pkcs8" => "ring.Ed25519KeyPair.generate_pkcs8",
-            "Aes256Gcm::new" => "rustcrypto.Aes256Gcm.new",
-            "Aes128Gcm::new" => "rustcrypto.Aes128Gcm.new",
-            "Sha256::new" | "Sha256::digest" => "rustcrypto.Sha256.digest",
-            "Sha384::new" | "Sha384::digest" => "rustcrypto.Sha384.digest",
-            "Sha512::new" | "Sha512::digest" => "rustcrypto.Sha512.digest",
-            "ChaCha20Poly1305::new" => "rustcrypto.ChaCha20Poly1305.new",
-            "RsaPrivateKey::new" => "rsa.RsaPrivateKey.new",
-            "SigningKey::generate" => "ed25519_dalek.SigningKey.generate",
-            // RSA pkcs1v15 / pss SigningKey — turbofish stripped by normalize_*.
-            // The hash algorithm is encoded in the turbofish (e.g. `<Sha256>`)
-            // and is captured separately as the `turbofish` arg below.
-            "SigningKey::new" => "rsa.SigningKey.new",
-            "ClientConfig::builder" => "rustls.ClientConfig.builder",
-            "ServerConfig::builder" => "rustls.ServerConfig.builder",
-            // rcgen — used by rustls-webpki / webpki test utilities. Defaults
-            // to ECDSA P-256 SHA-256 when called with PKCS_ECDSA_P256_SHA256.
-            "KeyPair::generate_for" => "rcgen.KeyPair.generate_for",
-            // pbkdf2 crate — Phase 11. Two API shapes:
-            //   pbkdf2::<Hmac<sha2::Sha256>>(...)   — older generic-fn API
-            //   pbkdf2_hmac::<sha2::Sha256>(...)    — newer free-function API
-            // The hash algorithm is in the turbofish either way; classify
-            // rules dispatch on the `turbofish` capture.
-            "pbkdf2" => "pbkdf2.pbkdf2",
-            "pbkdf2_hmac" | "pbkdf2_hmac_array" => "pbkdf2.pbkdf2_hmac",
-            _ => return None,
-        })
-    };
-
-    let api = resolve(&normalized).or_else(|| {
+    let api = lookup(RUST_CALLEE_APIS, &normalized).or_else(|| {
         // Fall back: try just the trailing segment alone. Catches free
         // functions like `pbkdf2_hmac` when called as
         // `pbkdf2::pbkdf2_hmac::<Sha256>`.
-        normalized.rsplit("::").next().and_then(resolve)
+        normalized
+            .rsplit("::")
+            .next()
+            .and_then(|seg| lookup(RUST_CALLEE_APIS, seg))
     })?;
     let mut args = HashMap::new();
     // If the original callee text had a turbofish, expose the inside as a
@@ -999,6 +1168,42 @@ fn match_rust_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)
 /// stripping turbofish. That captures `Type::method` for every Rust shape
 /// we currently match and matches the form of the existing match-table
 /// entries.
+/// Normalised Rust `Type::method` (or bare free function) → api name.
+///
+/// `SigningKey::new` is the RSA pkcs1v15 / pss shape; the hash algorithm
+/// lives in the turbofish and is captured separately as `turbofish`. The
+/// pbkdf2 crate has two call shapes (`pbkdf2::<Hmac<Sha256>>` and
+/// `pbkdf2_hmac::<Sha256>`) and classify rules dispatch on the same capture.
+const RUST_CALLEE_APIS: &[(&str, &str)] = &[
+    (
+        "EcdsaKeyPair::generate_pkcs8",
+        "ring.EcdsaKeyPair.generate_pkcs8",
+    ),
+    (
+        "Ed25519KeyPair::generate_pkcs8",
+        "ring.Ed25519KeyPair.generate_pkcs8",
+    ),
+    ("Aes256Gcm::new", "rustcrypto.Aes256Gcm.new"),
+    ("Aes128Gcm::new", "rustcrypto.Aes128Gcm.new"),
+    ("Sha256::new", "rustcrypto.Sha256.digest"),
+    ("Sha256::digest", "rustcrypto.Sha256.digest"),
+    ("Sha384::new", "rustcrypto.Sha384.digest"),
+    ("Sha384::digest", "rustcrypto.Sha384.digest"),
+    ("Sha512::new", "rustcrypto.Sha512.digest"),
+    ("Sha512::digest", "rustcrypto.Sha512.digest"),
+    ("ChaCha20Poly1305::new", "rustcrypto.ChaCha20Poly1305.new"),
+    ("RsaPrivateKey::new", "rsa.RsaPrivateKey.new"),
+    ("SigningKey::generate", "ed25519_dalek.SigningKey.generate"),
+    ("SigningKey::new", "rsa.SigningKey.new"),
+    ("ClientConfig::builder", "rustls.ClientConfig.builder"),
+    ("ServerConfig::builder", "rustls.ServerConfig.builder"),
+    // rcgen — used by rustls-webpki / webpki test utilities.
+    ("KeyPair::generate_for", "rcgen.KeyPair.generate_for"),
+    ("pbkdf2", "pbkdf2.pbkdf2"),
+    ("pbkdf2_hmac", "pbkdf2.pbkdf2_hmac"),
+    ("pbkdf2_hmac_array", "pbkdf2.pbkdf2_hmac"),
+];
+
 fn normalize_rust_callee(callee: &str) -> String {
     // Drop everything inside <...> turbofish groups. Nesting depth matters
     // for cases like `<Hmac<Sha256>>`.
@@ -1061,32 +1266,57 @@ fn extract_turbofish_inner(callee: &str) -> Option<String> {
     }
 }
 
+/// C# member_access_expression text ("TypeName.MethodName") → api name.
+const CSHARP_CALLEE_APIS: &[(&str, &str)] = &[
+    ("RSA.Create", "System.Security.Cryptography.RSA.Create"),
+    ("ECDsa.Create", "System.Security.Cryptography.ECDsa.Create"),
+    (
+        "ECDiffieHellman.Create",
+        "System.Security.Cryptography.ECDsa.Create",
+    ),
+    ("Aes.Create", "System.Security.Cryptography.Aes.Create"),
+    (
+        "TripleDES.Create",
+        "System.Security.Cryptography.TripleDES.Create",
+    ),
+    ("DES.Create", "System.Security.Cryptography.DES.Create"),
+    ("SHA1.Create", "System.Security.Cryptography.SHA1.Create"),
+    (
+        "SHA256.Create",
+        "System.Security.Cryptography.SHA256.Create",
+    ),
+    (
+        "SHA512.Create",
+        "System.Security.Cryptography.SHA512.Create",
+    ),
+    ("MD5.Create", "System.Security.Cryptography.MD5.Create"),
+    (
+        "RandomNumberGenerator.Create",
+        "System.Security.Cryptography.RandomNumberGenerator.Create",
+    ),
+    (
+        "RandomNumberGenerator.GetBytes",
+        "System.Security.Cryptography.RandomNumberGenerator.Create",
+    ),
+    (
+        "RandomNumberGenerator.Fill",
+        "System.Security.Cryptography.RandomNumberGenerator.Create",
+    ),
+];
+
+/// C# `new Foo()` constructors.
+const CSHARP_CTOR_APIS: &[(&str, &str)] = &[(
+    "RijndaelManaged",
+    "System.Security.Cryptography.RijndaelManaged.new",
+)];
+
 fn match_csharp_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
-    // C# member_access_expression text: "TypeName.MethodName"
-    let api = match callee {
-        "RSA.Create" => "System.Security.Cryptography.RSA.Create",
-        "ECDsa.Create" | "ECDiffieHellman.Create" => "System.Security.Cryptography.ECDsa.Create",
-        "Aes.Create" => "System.Security.Cryptography.Aes.Create",
-        "TripleDES.Create" | "DES.Create" => "System.Security.Cryptography.TripleDES.Create",
-        "SHA1.Create" => "System.Security.Cryptography.SHA1.Create",
-        "SHA256.Create" => "System.Security.Cryptography.SHA256.Create",
-        "SHA512.Create" => "System.Security.Cryptography.SHA512.Create",
-        "MD5.Create" => "System.Security.Cryptography.MD5.Create",
-        "RandomNumberGenerator.Create"
-        | "RandomNumberGenerator.GetBytes"
-        | "RandomNumberGenerator.Fill" => {
-            "System.Security.Cryptography.RandomNumberGenerator.Create"
-        }
-        _ => return None,
-    };
+    let api = lookup(CSHARP_CALLEE_APIS, callee)?;
     Some((api.into(), HashMap::new()))
 }
 
 fn match_csharp_ctor(class_name: &str) -> Option<(String, HashMap<String, ArgValue>)> {
-    let api = match class_name {
-        "RijndaelManaged" => "System.Security.Cryptography.RijndaelManaged.new",
-        _ => return None,
-    };
+    let api = lookup(CSHARP_CTOR_APIS, class_name)?;
     Some((api.into(), HashMap::new()))
 }
 
@@ -1108,6 +1338,47 @@ fn populate_args(
             // arguments: (elliptic.P256(), rand.Reader)
             if let Some(curve) = nth_arg_call_method(args_node, 0, source) {
                 out.insert("curve_fn".into(), ArgValue::Str(curve));
+            }
+        }
+        (Language::Go, "jwt.NewWithClaims") => {
+            // NewWithClaims(jwt.SigningMethodRS256, claims) — arg 0 is a
+            // selector whose field names the signing method.
+            if let Some(alg) = nth_arg_selector_field(args_node, 0, source) {
+                out.insert("alg".into(), ArgValue::Str(alg));
+            }
+        }
+        (Language::Python, "hashlib.new") => {
+            // hashlib.new("md5") — the name is only knowable when it is a
+            // literal. A variable yields no capture, and the classify layer
+            // then has nothing to assert.
+            if let Some(name) = nth_arg_string(args_node, 0, source) {
+                out.insert("name".into(), ArgValue::Str(name));
+            }
+        }
+        (Language::Python, "cryptography.hazmat.ciphers.Cipher") => {
+            // Cipher(algorithms.TripleDES(key), modes.CBC(iv))
+            if let Some(algo) = nth_arg_call_attr(args_node, 0, source) {
+                out.insert("algo".into(), ArgValue::Str(algo));
+            }
+            if let Some(mode) = nth_arg_call_attr(args_node, 1, source) {
+                out.insert("mode".into(), ArgValue::Str(mode));
+            }
+        }
+        (Language::Python, "ssl.SSLContext") => {
+            // ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+            if let Some(proto) = nth_arg_attr_name(args_node, 0, source) {
+                out.insert("proto".into(), ArgValue::Str(proto));
+            }
+        }
+        (Language::Python, "jwt.encode") => {
+            // jwt.encode(payload, key, algorithm="RS256")
+            if let Some(alg) = python_keyword_string(args_node, "algorithm", source) {
+                out.insert("alg".into(), ArgValue::Str(alg));
+            }
+        }
+        (Language::Python, "Crypto.PublicKey.RSA.generate") => {
+            if let Some(bits) = nth_arg_int(args_node, 0, source) {
+                out.insert("bits".into(), ArgValue::Int(bits));
             }
         }
         (Language::Python, "cryptography.hazmat.rsa.generate_private_key") => {
@@ -1313,7 +1584,8 @@ fn populate_java_args(
     match api {
         "javax.crypto.Cipher.getInstance"
         | "java.security.KeyPairGenerator.getInstance"
-        | "java.security.MessageDigest.getInstance" => {
+        | "java.security.MessageDigest.getInstance"
+        | "java.security.Signature.getInstance" => {
             // First arg is a string literal like "AES/GCM/NoPadding"
             let key = match api {
                 "javax.crypto.Cipher.getInstance" => "spec",
@@ -1405,6 +1677,67 @@ fn nth_arg_call_method(args: Node<'_>, n: usize, source: &[u8]) -> Option<String
             return Some(node_text(field, source));
         }
         idx += 1;
+    }
+    None
+}
+
+/// Field name of a `pkg.Field` selector at argument position `n`.
+/// `jwt.NewWithClaims(jwt.SigningMethodRS256, …)` → `SigningMethodRS256`.
+fn nth_arg_selector_field(args: Node<'_>, n: usize, source: &[u8]) -> Option<String> {
+    let arg = nth_real_arg(args, n)?;
+    if arg.kind() != "selector_expression" {
+        return None;
+    }
+    Some(node_text(arg.child_by_field_name("field")?, source))
+}
+
+/// Attribute name of a `mod.Attr(...)` call at argument position `n`.
+/// `Cipher(algorithms.TripleDES(key), …)` → `TripleDES`.
+fn nth_arg_call_attr(args: Node<'_>, n: usize, source: &[u8]) -> Option<String> {
+    let arg = nth_real_arg(args, n)?;
+    if arg.kind() != "call" {
+        return None;
+    }
+    let function = arg.child_by_field_name("function")?;
+    if function.kind() != "attribute" {
+        return None;
+    }
+    Some(node_text(
+        function.child_by_field_name("attribute")?,
+        source,
+    ))
+}
+
+/// Attribute name of a bare `mod.NAME` attribute at argument position `n`.
+/// `ssl.SSLContext(ssl.PROTOCOL_TLSv1)` → `PROTOCOL_TLSv1`.
+fn nth_arg_attr_name(args: Node<'_>, n: usize, source: &[u8]) -> Option<String> {
+    let arg = nth_real_arg(args, n)?;
+    if arg.kind() != "attribute" {
+        return None;
+    }
+    Some(node_text(arg.child_by_field_name("attribute")?, source))
+}
+
+/// Value of a string-literal keyword argument, quotes stripped.
+fn python_keyword_string(args: Node<'_>, name: &str, source: &[u8]) -> Option<String> {
+    let mut cursor = args.walk();
+    for child in args.children(&mut cursor) {
+        if child.kind() != "keyword_argument" {
+            continue;
+        }
+        let kw_name = child.child_by_field_name("name")?;
+        if node_text(kw_name, source) != name {
+            continue;
+        }
+        let kw_val = child.child_by_field_name("value")?;
+        if kw_val.kind() != "string" {
+            return None;
+        }
+        return Some(
+            node_text(kw_val, source)
+                .trim_matches(|c| c == '"' || c == '\'')
+                .to_string(),
+        );
     }
     None
 }

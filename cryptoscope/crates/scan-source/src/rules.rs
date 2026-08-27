@@ -289,6 +289,51 @@ when = { api = "^foo$", args = { bits = { lt = 2048 } } }
         );
     }
 
+    /// A `[[classify]]` rule can only fire on a `RawMatch` some matcher
+    /// produced. There is no query engine — `[[extract]]` blocks are
+    /// documentation — so a rule naming an api that no matcher emits is
+    /// silently dead. Nothing in the output distinguishes "this codebase is
+    /// clean" from "this rule has never run", which is how `CRYPTO-130`
+    /// (3DES) and `CRYPTO-131` (RC4) shipped as Critical rules that had never
+    /// produced a finding.
+    ///
+    /// The api surface comes from the same tables `match_*_callee` dispatches
+    /// on, so it cannot drift from the matchers.
+    #[test]
+    fn every_classify_rule_targets_an_api_the_extractor_can_emit() {
+        let surface = crate::scanner::api_surface();
+        let packs = [
+            ("go", RulePack::builtin_go().unwrap()),
+            ("python", RulePack::builtin_python().unwrap()),
+            ("java", RulePack::builtin_java().unwrap()),
+            ("javascript", RulePack::builtin_javascript().unwrap()),
+            ("cpp", RulePack::builtin_cpp().unwrap()),
+            ("rust", RulePack::builtin_rust().unwrap()),
+            ("csharp", RulePack::builtin_csharp().unwrap()),
+        ];
+        let mut stranded = Vec::new();
+        for (lang, pack) in &packs {
+            for rule in &pack.classify {
+                let re = regex::Regex::new(&rule.when.api)
+                    .unwrap_or_else(|e| panic!("[{lang}] {}: bad api regex: {e}", rule.id));
+                if !surface.iter().any(|api| re.is_match(api)) {
+                    stranded.push(format!(
+                        "{}/{}: when.api = {:?} matches no api the extract layer emits",
+                        lang, rule.id, rule.when.api
+                    ));
+                }
+            }
+        }
+        assert!(
+            stranded.is_empty(),
+            "{} classify rules can never fire. Either add a matcher that emits \
+             the api — and its row to the callee table, so `api_surface()` sees \
+             it — or delete the rule:\n  {}",
+            stranded.len(),
+            stranded.join("\n  ")
+        );
+    }
+
     #[test]
     fn builtin_rules_load() {
         let go = RulePack::builtin_go().expect("Go rule pack must parse");

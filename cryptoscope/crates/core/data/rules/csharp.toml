@@ -101,7 +101,7 @@ query = """
 """
 captures = { cls = "ident", fn = "ident" }
 api = "System.Security.Cryptography.TripleDES.Create"
-description = "TripleDES.Create() / DES.Create() — legacy symmetric ciphers."
+description = "TripleDES.Create() — legacy symmetric cipher."
 
 [[classify]]
 id = "CRYPTO-621"
@@ -109,6 +109,30 @@ when.api = "^System\\.Security\\.Cryptography\\.TripleDES\\.Create$"
 algorithm_id = "3des"
 severity_hint = "high"
 message = "TripleDES.Create() — 3DES is deprecated for new use (NIST SP 800-131A r2). Migrate to AES-256-GCM."
+cwe = "CWE-327"
+
+# `DES.Create()` used to share TripleDES's api name, so a single-DES call site
+# was reported as 3DES — a different algorithm and a different CBOM component.
+
+[[extract]]
+id = "CS-022"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "DES")
+    name: (identifier) @fn (#eq? @fn "Create")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.DES.Create"
+description = "DES.Create() — single DES."
+
+[[classify]]
+id = "CRYPTO-622"
+when.api = "^System\\.Security\\.Cryptography\\.DES\\.Create$"
+algorithm_id = "des"
+severity_hint = "critical"
+message = "DES.Create() — 56-bit key, brute-forced since 1998; disallowed for new encryption (NIST SP 800-131A). Migrate to AES-256-GCM."
 cwe = "CWE-327"
 
 # ============================================================================

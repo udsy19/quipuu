@@ -71,6 +71,17 @@ api = "openssl.EVP_EncryptInit_ex"
 description = "OpenSSL EVP_EncryptInit_ex(ctx, cipher_fn(), ...) — cipher type selection."
 
 [[classify]]
+id = "CRYPTO-413"
+when.api = "^openssl\\.EVP_EncryptInit_ex$"
+when.args.cipher_fn = { regex = "EVP_des_ede" }
+algorithm_id = "3des"
+severity_hint = "critical"
+message = "3DES cipher in EVP_EncryptInit_ex (cipher={cipher_fn}). Disallowed for new encryption use (NIST SP 800-131A, 2023); 64-bit block invites Sweet32."
+cwe = "CWE-327"
+
+# `EVP_des_ede3_*` is 3DES and is matched by the arm above; everything else
+# named EVP_des_* is single DES. Rule order is load-bearing.
+[[classify]]
 id = "CRYPTO-410"
 when.api = "^openssl\\.EVP_EncryptInit_ex$"
 when.args.cipher_fn = { regex = "EVP_des" }

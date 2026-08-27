@@ -2079,3 +2079,55 @@ fn webcrypto_matches_every_receiver_chain() {
         );
     }
 }
+
+// ============================================================================
+// Broken-classical coverage — the nine planted call sites
+// ============================================================================
+
+/// Nine textbook broken-classical call sites across Java, Python and Go.
+/// One of the nine was detected before this fixture existed; the other eight
+/// were invisible, while `README.md` claimed the families were detected
+/// "across all supported languages".
+#[test]
+fn broken_classical_call_sites_are_all_detected() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("brokenclassical"))
+        .expect("scan succeeds");
+
+    // (rule id, algorithm id) — the algorithm matters as much as the hit:
+    // reporting DESede as single DES is a wrong component in the CBOM.
+    let expected = [
+        ("CRYPTO-214", "3des"),                 // Java Cipher.getInstance("DESede/…")
+        ("CRYPTO-213", "rc4"),                  // Java Cipher.getInstance("RC4")
+        ("CRYPTO-291", "rsa-pkcs1-sha1"),       // Java Signature.getInstance("SHA1withRSA")
+        ("CRYPTO-130", "3des"),                 // pyca Cipher(algorithms.TripleDES, …)
+        ("CRYPTO-131", "rc4"),                  // pyca Cipher(algorithms.ARC4, …)
+        ("CRYPTO-132", "aes-unattributed-ecb"), // pyca AES + modes.ECB
+        ("CRYPTO-042", "3des"),                 // Go des.NewTripleDESCipher
+        ("CRYPTO-043", "rc4"),                  // Go rc4.NewCipher
+        ("CRYPTO-040", "aes-unattributed"),     // Go aes.NewCipher
+    ];
+
+    let mut missing = Vec::new();
+    for (rule_id, algorithm_id) in expected {
+        if !findings
+            .iter()
+            .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id)
+        {
+            missing.push(format!("{rule_id} → {algorithm_id}"));
+        }
+    }
+    assert!(
+        missing.is_empty(),
+        "{}/9 broken-classical call sites undetected:\n  {}\ngot:\n  {}",
+        missing.len(),
+        missing.join("\n  "),
+        findings
+            .iter()
+            .map(|f| format!("{} {} {:?}", f.rule_id, f.algorithm_id, f.location.line))
+            .collect::<Vec<_>>()
+            .join("\n  ")
+    );
+}

@@ -260,13 +260,26 @@ algorithm_id = "sha-1"
 severity_hint = "critical"
 message = "SHA-1 classically broken (SHAttered, 2017)."
 
+# `hashlib.new(name)` names its hash in the first argument. Read it. When the
+# argument is a variable there is no capture and no rule fires — a dynamic
+# hash name is not evidence of MD5, which is what the previous placeholder
+# asserted for every hashlib.new() call site in existence.
+
 [[classify]]
 id = "CRYPTO-142"
 when.api = "^hashlib\\.new$"
-when.args.fn = { regex = "^new$" }   # placeholder; resolve string arg in v1.1
+when.args.name = { regex = "(?i)^md5$" }
 algorithm_id = "md5"
-severity_hint = "low"
-message = "hashlib.new(<dynamic>) — string-argument hash; confidence low until value-flow analysis lands."
+severity_hint = "critical"
+message = "hashlib.new('{name}') — MD5 is collision-broken (2004)."
+
+[[classify]]
+id = "CRYPTO-143"
+when.api = "^hashlib\\.new$"
+when.args.name = { regex = "(?i)^sha-?1$" }
+algorithm_id = "sha-1"
+severity_hint = "critical"
+message = "hashlib.new('{name}') — SHA-1 is collision-broken (SHAttered, 2017)."
 
 # ssl — TLS context configuration
 
@@ -290,7 +303,9 @@ description = "Python SSL context — protocol selection."
 id = "CRYPTO-150"
 when.api = "^ssl\\.SSLContext$"
 when.args.proto = { regex = "^(PROTOCOL_SSLv2|PROTOCOL_SSLv3|PROTOCOL_TLSv1|PROTOCOL_TLSv1_1)$" }
-algorithm_id = "rsa-2048"   # placeholder — protocol-level finding
+# A protocol constant names no cipher; `tls-legacy-protocol` says that, where
+# the previous `rsa-2048` placeholder asserted an algorithm not in the source.
+algorithm_id = "tls-legacy-protocol"
 severity_hint = "critical"
 message = "Insecure TLS protocol {proto}. Use PROTOCOL_TLS_CLIENT/PROTOCOL_TLS_SERVER with TLS 1.2+ only."
 
