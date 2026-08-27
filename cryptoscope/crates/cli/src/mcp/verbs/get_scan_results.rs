@@ -13,9 +13,7 @@ use cryptoscope_core::load_builtins;
 use serde_json::{Value, json};
 
 use crate::mcp::errors::{E_CURSOR_INVALID, E_RULESET_INVALID, E_SCAN_NOT_FOUND};
-use crate::mcp::session::{
-    SessionStore, decode_cursor, encode_cursor, finding_with_risk_to_json,
-};
+use crate::mcp::session::{SessionStore, decode_cursor, encode_cursor, finding_with_risk_to_json};
 
 const DEFAULT_PAGE_SIZE: usize = 50;
 const MAX_PAGE_SIZE: usize = 500;
