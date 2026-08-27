@@ -24,8 +24,12 @@ These four invariants are contractual. Any change is a breaking contract change 
 The MCP server is a subcommand of the single `cryptoscope` binary:
 
 ```
-cryptoscope mcp [--allow-network] [--policy <file-or-preset>] [--rules <dir>]
+cryptoscope mcp-serve [--allow-network]
 ```
+
+The policy profile is chosen per request, not per process — pass `policy` to any
+verb that scores findings (`scan_source`, `get_scan_results`, `query_findings`,
+`emit_sarif`).
 
 There is no separate binary, no daemon, and no install step beyond the binary itself.
 
@@ -94,7 +98,7 @@ The MCP server exposes 11 tools. All tool names use `snake_case`. All inputs and
 | `session_id` | string | no | Caller-supplied ID; server generates one if absent. |
 | `languages` | string[] | no | Restrict to these languages (e.g. `["go","python"]`). Default: all supported. |
 | `exclude` | string[] | no | Glob patterns to skip (relative to `path`). |
-| `policy` | string | no | Policy preset name or path. Defaults to `nist-default`. |
+| `policy` | string | no | Policy preset name (see `policyPresets`) or path to a policy TOML. Defaults to `nist-default`. An unknown name is an error (`-32003`), never a silent fall-back. |
 
 **Output.** `{ "session_id": string, "finding_count": int, "languages_scanned": string[], "warnings": ScanWarning[] }`. Findings are retrievable via `get_scan_results`. `warnings` is always present (empty array on a clean scan); each entry is `{ "kind": string, "path": string | null, "message": string }`.
 
@@ -117,9 +121,10 @@ The MCP server exposes 11 tools. All tool names use `snake_case`. All inputs and
 | `path` | string | no | Directory or file path containing PEM/DER material. |
 | `host` | string | no | `host:port` for live chain retrieval. Requires `--allow-network` (P2). |
 | `session_id` | string | no | |
-| `policy` | string | no | |
 
-Exactly one of `path` or `host` must be provided.
+Exactly one of `path` or `host` must be provided. Findings are scored when they
+are read back, so `policy` belongs on `get_scan_results` / `query_findings` /
+`emit_sarif`, not here.
 
 **Output.** `{ "session_id": string, "certificate_count": int, "finding_count": int, "warnings": ScanWarning[] }`. `warnings` follows the same shape as `scan_source`.
 
@@ -142,7 +147,6 @@ Exactly one of `path` or `host` must be provided.
 | `path` | string | yes | Root directory to search for manifests. |
 | `session_id` | string | no | |
 | `manifest_types` | string[] | no | Restrict to `["go.mod","Cargo.toml","requirements.txt","package.json","pom.xml"]`. Default: all. |
-| `policy` | string | no | |
 
 **Output.** `{ "session_id": string, "manifests_found": int, "finding_count": int, "warnings": ScanWarning[] }`. `warnings` follows the same shape as `scan_source`.
 
@@ -164,7 +168,6 @@ Exactly one of `path` or `host` must be provided.
 |---|---|---|---|
 | `targets` | string[] | yes | `host:port` entries to probe. |
 | `session_id` | string | no | |
-| `policy` | string | no | |
 
 Requires `--allow-network` at process launch (P2). Concurrency is capped at 5 connections per host. Connect timeout 5 s, handshake timeout 10 s.
 
@@ -212,6 +215,7 @@ Requires `--allow-network` at process launch (P2). Concurrency is capped at 5 co
 | `session_id` | string | yes | |
 | `output_path` | string | yes | |
 | `include_cbom_refs` | boolean | no | Embed `cryptoscope/cbom-ref` properties. Default: `true`. |
+| `policy` | string | no | Policy preset name (see `policyPresets`) or path to a policy TOML. Defaults to `nist-default`. An unknown name is an error (`-32003`), never a silent fall-back. |
 
 **Output.** `{ "output_path": string, "result_count": int }`.
 
@@ -275,6 +279,7 @@ Requires `--allow-network` at process launch (P2). Concurrency is capped at 5 co
 | `sort_by` | string | no | `risk_score` (default) or `location`. |
 | `limit` | integer | no | Maximum results to return. Default: 100. |
 | `cursor` | string | no | Pagination cursor from a prior response. |
+| `policy` | string | no | Policy preset name (see `policyPresets`) or path to a policy TOML. Defaults to `nist-default`. An unknown name is an error (`-32003`), never a silent fall-back. |
 
 **Output.** `{ "findings": Finding[], "next_cursor": string | null, "total_count": int }`.
 
@@ -297,6 +302,7 @@ Requires `--allow-network` at process launch (P2). Concurrency is capped at 5 co
 | `session_id` | string | yes | |
 | `cursor` | string | no | Opaque cursor from a prior response. Absent on first call. |
 | `page_size` | integer | no | Findings per page. Default: 50. Max: 500. |
+| `policy` | string | no | Policy preset name (see `policyPresets`) or path to a policy TOML. Defaults to `nist-default`. An unknown name is an error (`-32003`), never a silent fall-back. |
 
 **Output.** `{ "findings": Finding[], "next_cursor": string | null, "total_count": int, "session_complete": bool }`.
 
@@ -326,7 +332,7 @@ Requires `--allow-network` at process launch (P2). Concurrency is capped at 5 co
   "supportedLanguages": ["go", "python"],
   "supportedManifests": ["go.mod", "Cargo.toml", "requirements.txt", "package.json", "pom.xml"],
   "schemaVersions": ["1.7", "1.6"],
-  "policyPresets": ["nist-default", "nsa-cnsa2", "uk-ncsc", "au-asd-ism", "eu-cra"],
+  "policyPresets": ["nist-default", "nsa-cnsa2"],
   "mcpTasksSupported": false
 }
 ```

@@ -8,7 +8,6 @@ pub const E_PATH_NOT_FOUND: i32 = -32001;
 /// Ruleset parameter did not parse or referenced an unknown rule-id.
 pub const E_RULESET_INVALID: i32 = -32002;
 /// Policy parameter did not parse or violated an invariant.
-#[allow(dead_code)]
 pub const E_POLICY_INVALID: i32 = -32003;
 /// Network verb called without `--allow-network` at process launch.
 pub const E_NETWORK_DISABLED: i32 = -32004;

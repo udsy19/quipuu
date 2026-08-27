@@ -48,7 +48,7 @@ cryptoscope/
 │  ├─ tui/          # ratatui application
 │  └─ cli/          # clap entrypoint, wires everything, headless mode
 ├─ rules/           # declarative TOML detection rules (D-07), embedded via include_dir!
-└─ policy/          # default policy.toml presets: nist-default, nsa-cnsa2, uk-ncsc, ...
+└─ policies/        # policy presets, one TOML each (see `policy list`)
 ```
 
 **No separate `risk` crate.** The 5-axis QuantumRiskScore engine (D-10) lives at
@@ -134,7 +134,7 @@ internal_service = 4
 local_only = 1
 ```
 
-Built-in presets selectable via `--policy nsa-cnsa2 | nist-default | uk-ncsc | au-asd-ism | eu-cra`. Report header always names the policy in force.
+Built-in presets selectable via `--policy nist-default | nsa-cnsa2`; `--policy <file.toml>` takes a profile of your own. `cryptoscope policy list` is the authoritative list — `core::policy::PRESETS` is the single source of truth and `documented_preset_names_match_the_shipped_ones` fails the build if this line drifts from it. Report header always names the policy in force.
 
 ## 6. Scanners — required behavior
 
@@ -228,7 +228,7 @@ cryptoscope scan <path> --all                    # source + deps + (opt) net/cer
 cryptoscope report --in cbom.json --out report.html
 cryptoscope report --in cbom.json --format gitlab-sast
 cryptoscope validate cbom.json                   # CBOM schema validation
-cryptoscope policy preset list                   # nist-default | nsa-cnsa2 | uk-ncsc | ...
+cryptoscope policy list                          # nist-default | nsa-cnsa2
 ```
 
 Flags: `--rules <dir>`, `--exclude <glob>`, `--format {tui,json,sarif,html,cbom,gitlab-sast}`, `--schema-version {1.7,1.6}`, `--policy <file-or-preset>`, `--fail-on {critical,high,…}` (CI gate), `--config <file>`, `--no-color`, `-v`.

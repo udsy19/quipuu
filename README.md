@@ -68,7 +68,25 @@ cryptoscope scan . \
 
 # Probe a live TLS endpoint (network mode — see Responsible Use below)
 cryptoscope scan . --allow-network example.com:443
+
+# Score against a policy profile other than the NIST IR 8547 default
+cryptoscope policy list
+cryptoscope scan . --policy nsa-cnsa2
 ```
+
+**Policy profiles.** `--policy` takes a built-in preset name or a path to a
+policy TOML file; `cryptoscope policy list` prints what is built in. Two presets
+ship today:
+
+| Preset | Profile | What changes |
+|---|---|---|
+| `nist-default` | NIST IR 8547 IPD (Nov 2024) — the default | — |
+| `nsa-cnsa2` | NSA CNSA 2.0, for national security systems | CNSA 2.0 approves AES-256 and SHA-384+ only, so SHA-256 and ChaCha20-Poly1305 stop being quantum-safe inventory and become findings, AES-128 is scored as off-suite rather than Grover-weakened, and SLH-DSA / FN-DSA / the sub-1024 ML-KEM and ML-DSA parameter sets are reported as non-compliant |
+
+A policy reweights findings; it never creates, drops, or reclassifies a
+detection. Measured on the 150-project benchmark corpus: the two profiles
+produce the **same 898 findings**, of which **80 (8.9 %) land in a different
+severity band**. The precision figure below therefore holds under both.
 
 **Pre-built binaries** are available on the [Releases page](https://github.com/udsy19/cryptoscope/releases). The binary is fully static on Linux (musl), single-file on macOS and Windows. No JVM, no Node, no Python runtime, no Docker.
 
@@ -209,7 +227,8 @@ The Rust workspace (`cryptoscope/`) has nine crates, each with one responsibilit
 ```
 crates/
 ├── core/           Domain types, algorithm table (~67 entries), OID table,
-│                   QuantumRiskScore engine, NIST IR 8547 policy presets
+│                   QuantumRiskScore engine, policy presets (nist-default,
+│                   nsa-cnsa2)
 ├── scan-source/    tree-sitter scanning for 7 languages
 ├── scan-certs/     x509-parser PEM/DER scanning
 ├── scan-deps/      Manifest parsers: go.mod, Cargo.toml, requirements.txt,
@@ -253,7 +272,9 @@ Do not probe hosts you do not own or have explicit written authorization to asse
 
 **Add a new manifest type:** write a parser in `crates/scan-deps/src/parsers/` and register it in `catalogue.rs`.
 
-**Tune the risk score:** edit `crates/core/data/default-policy.toml`. Every decision lives in `knowledge/11-decisions/README.md` with the Why and the Evidence.
+**Tune the risk score:** edit `crates/core/data/default-policy.toml`, or add a
+profile under `crates/core/data/policies/` and register it in the `PRESETS`
+table in `crates/core/src/policy.rs`. Every decision lives in `knowledge/11-decisions/README.md` with the Why and the Evidence.
 
 A `CONTRIBUTING.md` with the full patch workflow, snapshot update instructions, and the benchmark reproduce steps will land before the 0.2 release.
 

@@ -6,11 +6,13 @@
 //!   rulesetVersion: string,
 //!   supportedLanguages: string[],
 //!   supportedSchemas: string[],
+//!   policyPresets: string[],
 //!   networkAllowed: bool,
 //!   bundledKatSets: [],       // v0.1 stub
 //!   methods: string[],        // runtime-available verb names
 //! }
 
+use cryptoscope_core::Policy;
 use serde_json::{Value, json};
 
 /// All 11 MCP verbs defined in MCP.md.
@@ -47,6 +49,9 @@ pub fn handle(params: Option<Value>, allow_network: bool) -> Result<Value, (i32,
             "c", "cpp", "rust", "csharp",
         ],
         "supportedSchemas": ["1.6", "1.7"],
+        // Quoted from core so MCP.md, `cryptoscope policy list` and the wire
+        // response cannot disagree about which presets exist.
+        "policyPresets": Policy::preset_names().collect::<Vec<_>>(),
         "networkAllowed": allow_network,
         "bundledKatSets": [],   // v0.1 stub — populate when ACVP vector files land
         "methods": methods,

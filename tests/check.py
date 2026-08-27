@@ -113,11 +113,16 @@ RULES_DIR = DATA / "rules"
 # all new language packs (java, javascript, cpp, rust, csharp, …).
 RULE_TOML_FILES = sorted(RULES_DIR.glob("*.toml")) if RULES_DIR.is_dir() else []
 
+POLICY_DIR = DATA / "policies"
+
+# Every non-default policy preset ships as its own TOML alongside the default.
+PRESET_TOML_FILES = sorted(POLICY_DIR.glob("*.toml")) if POLICY_DIR.is_dir() else []
+
 TOML_FILES = [
     DATA / "algorithm-table.toml",
     DATA / "oid-table.toml",
     DATA / "default-policy.toml",
-] + RULE_TOML_FILES
+] + PRESET_TOML_FILES + RULE_TOML_FILES
 
 parsed: dict[Path, dict] = {}
 for f in TOML_FILES:
@@ -408,6 +413,61 @@ expect(
     len(missing_av) == 0,
     f"missing: {missing_av}",
 )
+
+
+# ---------------------------------------------------------------------------
+# 7b. Policy presets — same invariants as the default, plus the extra field
+#     they exist to carry. Mirrors crates/core/tests/policy_presets_test.rs.
+# ---------------------------------------------------------------------------
+
+for preset_path in PRESET_TOML_FILES:
+    name = preset_path.stem
+    preset = parsed.get(preset_path, {})
+
+    expect(
+        f"{name}: meta.name matches the file name",
+        preset.get("meta", {}).get("name") == name,
+        f"meta.name = {preset.get('meta', {}).get('name')!r}",
+    )
+    expect(
+        f"{name}: meta.source_url cites a primary source",
+        bool(preset.get("meta", {}).get("source_url")),
+    )
+
+    pw = preset.get("risk_weights", {})
+    pw_sum = sum(pw.values()) if pw else 0
+    expect(f"{name}: risk_weights sum to 100", pw_sum == 100, f"sum = {pw_sum}")
+
+    psb = preset.get("severity_bands", {})
+    expect(
+        f"{name}: severity_bands monotonic decreasing",
+        all(k in psb for k in order)
+        and all(psb[order[i]] > psb[order[i + 1]] for i in range(len(order) - 1)),
+        f"got: {psb}",
+    )
+
+    p_av = preset.get("algorithm_vulnerability", {})
+    expect(
+        f"{name}: algorithm_vulnerability covers every quantum_status",
+        all(st in p_av for st in ALLOWED_QUANTUM_STATUS),
+        f"missing: {[st for st in ALLOWED_QUANTUM_STATUS if st not in p_av]}",
+    )
+
+    p_dep = preset.get("deprecation", {})
+    p_ids = p_dep.get("classically_broken", []) + p_dep.get("policy_disallowed", [])
+    unknown_ids = [i for i in p_ids if i not in algos_by_id]
+    expect(
+        f"{name}: every algorithm id it names resolves",
+        len(unknown_ids) == 0,
+        f"unknown: {unknown_ids[:5]}",
+    )
+    # A preset that disallows nothing and reweights nothing is decorative.
+    expect(
+        f"{name}: differs from the default in at least one verdict",
+        name == "nist-default"
+        or bool(p_dep.get("policy_disallowed"))
+        or p_av != av_table,
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -100,7 +100,9 @@ impl Default for OutputConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PolicyConfig {
-    /// Policy preset: `nist-default`, `cnsa-2`, or `strict`.
+    /// Policy preset name, or a path to a policy TOML file. Resolved through
+    /// `Policy::load`; `cryptoscope policy list` names the built-in presets.
+    /// `--policy` on the command line overrides this.
     #[serde(default = "default_preset")]
     pub preset: String,
     /// Mirrors `--include-safe` CLI flag default.
@@ -207,11 +209,11 @@ mod tests {
         let dir = make_tempdir("partial");
         std::fs::write(
             dir.join(CONFIG_FILENAME),
-            b"[policy]\npreset = \"cnsa-2\"\n",
+            b"[policy]\npreset = \"nsa-cnsa2\"\n",
         )
         .expect("write");
         let config = load_from_dir(&dir).expect("no error").expect("file found");
-        assert_eq!(config.policy.preset, "cnsa-2");
+        assert_eq!(config.policy.preset, "nsa-cnsa2");
         assert_eq!(config.output.html, "reports/cryptoscope.html");
         assert_eq!(config.scan.paths, vec!["src", "lib"]);
     }
@@ -232,7 +234,7 @@ cbom = "out/cbom.json"
 summary_json = "out/summary.json"
 
 [policy]
-preset = "strict"
+preset = "policies/house-rules.toml"
 include_safe = true
 
 [diagnostics]
@@ -244,7 +246,7 @@ show_errors = true
         assert_eq!(config.scan.exclude_paths, vec!["dist"]);
         assert_eq!(config.scan.languages, vec!["go", "rust"]);
         assert_eq!(config.output.html, "out/report.html");
-        assert_eq!(config.policy.preset, "strict");
+        assert_eq!(config.policy.preset, "policies/house-rules.toml");
         assert!(config.policy.include_safe);
         assert!(config.diagnostics.show_errors);
     }

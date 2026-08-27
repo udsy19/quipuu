@@ -1,7 +1,8 @@
 # Default policy — NIST IR 8547 IPD (November 2024)
 #
-# This is the canonical default. Override with `--policy <file>` or use a
-# named preset: `--policy nsa-cnsa2 | uk-ncsc | au-asd-ism | eu-cra`.
+# This is the canonical default (preset name: `nist-default`). Override with
+# `--policy <file.toml>` or another built-in preset — run
+# `cryptoscope policy list` for the shipped set.
 #
 # Source: NIST IR 8547 IPD — "Transition to Post-Quantum Cryptographic Standards"
 # https://csrc.nist.gov/pubs/ir/8547/ipd  (also knowledge/sources/NIST.IR.8547.ipd.pdf)
@@ -44,6 +45,14 @@ sha_512_acceptable = true
 # Already-broken classical primitives (SP 800-131A Rev 3 IPD). Never acceptable.
 # These get max severity regardless of any other policy axis.
 classically_broken = ["md5", "sha-1", "sha-224", "des", "3des", "rc4"]
+
+# Algorithm ids this *jurisdiction* excludes from its approved list even though
+# they are not broken for anyone else — scored at the full
+# algorithm-vulnerability weight and never hidden as quantum-safe inventory.
+# Empty here: IR 8547 takes no position beyond the timeline above. See
+# `crates/core/data/policies/nsa-cnsa2.toml`, which uses it for AES-128 and
+# SHA-256.
+policy_disallowed = []
 
 # -----------------------------------------------------------------------------
 # QuantumRiskScore weights (D-10) — additive, totals 100.

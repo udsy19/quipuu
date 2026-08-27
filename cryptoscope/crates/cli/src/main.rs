@@ -7,6 +7,7 @@
 //! ## Subcommands
 //! * `init [PATH]`          — onboarding wizard, writes `.cryptoscope.toml`
 //! * `scan <path> [FLAGS]`  — file/directory scan (existing)
+//! * `policy list`          — print the built-in policy presets
 //! * `mcp-serve [FLAGS]`    — JSON-RPC 2.0 MCP server over stdio
 
 mod config;
@@ -20,7 +21,7 @@ use std::process::ExitCode;
 use cryptoscope_cbom::SchemaVersion;
 use cryptoscope_cbom::emit::{EmitOptions, ScanTarget};
 use cryptoscope_cbom::emit_cbom_json;
-use cryptoscope_core::{Finding, QuantumRiskScore, load_builtins};
+use cryptoscope_core::{Finding, Policy, QuantumRiskScore, load_builtins};
 use cryptoscope_report::{
     ReportOptions, emit_html, emit_sarif, emit_summary_json, partition_audible,
 };
@@ -58,6 +59,19 @@ fn main() -> ExitCode {
                 ExitCode::FAILURE
             }
         },
+        Some("policy") => match args.get(2).map(String::as_str) {
+            Some("list") => {
+                print_policy_list();
+                ExitCode::SUCCESS
+            }
+            other => {
+                eprintln!(
+                    "cryptoscope: usage: cryptoscope policy list{}",
+                    other.map(|o| format!(" (got `{o}`)")).unwrap_or_default()
+                );
+                ExitCode::FAILURE
+            }
+        },
         Some("mcp-serve") => {
             let allow_network = args[2..].iter().any(|a| a == "--allow-network");
             mcp::run(allow_network);
@@ -78,6 +92,7 @@ fn print_help() {
 USAGE:
     cryptoscope init [PATH]                   Walk through setup, write .cryptoscope.toml
     cryptoscope scan [PATH] [FLAGS]           Scan a file or directory
+    cryptoscope policy list                   List the built-in policy presets
     cryptoscope mcp-serve [--allow-network]   Start MCP server over stdio
 
 INIT:
@@ -106,6 +121,12 @@ OUTPUT:
     --summary-json <file>     Emit a compact CI dashboard JSON
     --tui                     Open the interactive TUI explorer
 
+POLICY:
+    --policy <name|file>      Score against a built-in preset or a policy TOML
+                              file. `cryptoscope policy list` names the presets;
+                              the default is nist-default. A policy reweights
+                              findings — it never changes what is detected.
+
 FILTERS:
     --include-safe            Show inventory-only findings (QuantumSafe, PqcFinal,
                               PqcDraft) in HTML / SARIF / summary / stdout. They
@@ -127,6 +148,23 @@ This is a walking-skeleton build. Full clap CLI per SPEC.md §11 to follow."#,
     );
 }
 
+/// Print the built-in presets. `Policy::preset_names` is the single source of
+/// truth quoted by README, SPEC.md, MCP.md and `cryptoscope init`.
+fn print_policy_list() {
+    println!("Built-in policy presets (use with `--policy <name>`):");
+    for name in Policy::preset_names() {
+        match Policy::from_preset(name) {
+            Some(Ok(p)) => println!(
+                "  {name:<14} {} — {}",
+                p.meta.display_name, p.meta.source_url
+            ),
+            Some(Err(e)) => println!("  {name:<14} <failed to load: {e}>"),
+            None => unreachable!("preset_names yields only built-in names"),
+        }
+    }
+    println!("\n`--policy <file.toml>` also accepts a policy file of your own.");
+}
+
 #[derive(Default)]
 struct ScanFlags {
     scan_source: bool,
@@ -146,6 +184,9 @@ struct ScanFlags {
     open_tui: bool,
     include_safe: bool,
     show_errors: bool,
+    /// `--policy <name-or-path>`. `None` means "whatever .cryptoscope.toml
+    /// says", falling back to the built-in nist-default.
+    policy: Option<String>,
 }
 
 fn parse_scan_flags(tail: &[String]) -> ScanFlags {
@@ -211,6 +252,10 @@ fn parse_scan_flags(tail: &[String]) -> ScanFlags {
             "--show-errors" => {
                 flags.show_errors = true;
             }
+            "--policy" => match it.next() {
+                Some(p) => flags.policy = Some(p.clone()),
+                None => eprintln!("cryptoscope: --policy requires a preset name or file path"),
+            },
             "--schema-version" => {
                 if let Some(v) = it.next() {
                     flags.schema_version = match v.as_str() {
@@ -251,6 +296,7 @@ fn run_scan(path: PathBuf, mut flags: ScanFlags) -> ExitCode {
             .map(|p| p.to_path_buf())
             .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
     };
+    let mut config_preset: Option<String> = None;
     if let Ok(Some(cfg)) = config::load_from_dir(&config_dir) {
         if cfg.policy.include_safe {
             flags.include_safe = true;
@@ -258,15 +304,36 @@ fn run_scan(path: PathBuf, mut flags: ScanFlags) -> ExitCode {
         if cfg.diagnostics.show_errors {
             flags.show_errors = true;
         }
+        config_preset = Some(cfg.policy.preset);
     }
 
-    let builtins = match load_builtins() {
+    let mut builtins = match load_builtins() {
         Ok(b) => b,
         Err(e) => {
             eprintln!("cryptoscope: failed to load built-in tables: {e}");
             return ExitCode::FAILURE;
         }
     };
+
+    // Policy resolution: --policy wins over .cryptoscope.toml's `preset`,
+    // which wins over the built-in nist-default already in `builtins`.
+    // An unresolvable name is fatal — silently scoring against NIST defaults
+    // when the operator asked for CNSA 2.0 is the bug this replaces.
+    if let Some(requested) = flags.policy.as_deref().or(config_preset.as_deref()) {
+        match Policy::load(requested) {
+            Ok(p) => {
+                if let Err(e) = p.cross_check(&builtins.algorithms) {
+                    eprintln!("cryptoscope: policy `{requested}` is inconsistent: {e}");
+                    return ExitCode::FAILURE;
+                }
+                builtins.policy = p;
+            }
+            Err(e) => {
+                eprintln!("cryptoscope: cannot load policy `{requested}`: {e}");
+                return ExitCode::FAILURE;
+            }
+        }
+    }
 
     let mut findings: Vec<Finding> = Vec::new();
     let mut warnings: Vec<cryptoscope_core::ScanWarning> = Vec::new();
@@ -352,7 +419,8 @@ fn run_scan(path: PathBuf, mut flags: ScanFlags) -> ExitCode {
     // it's an inventory. Everything else defaults to the audible subset so
     // ~85 AES-256-GCM findings from a single rustls scan don't drown out the
     // real signals. `--include-safe` collapses the two back together.
-    let (audible_refs, suppressed_refs) = partition_audible(&findings, &builtins.algorithms);
+    let (audible_refs, suppressed_refs) =
+        partition_audible(&findings, &builtins.algorithms, &builtins.policy);
     let displayed_findings: Vec<Finding> = if flags.include_safe {
         findings.clone()
     } else {

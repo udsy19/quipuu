@@ -9,7 +9,7 @@ use cryptoscope_report::{ReportOptions, emit_sarif};
 use serde_json::{Value, json};
 
 use crate::mcp::errors::{E_RULESET_INVALID, E_SCAN_NOT_FOUND};
-use crate::mcp::session::SessionStore;
+use crate::mcp::session::{SessionStore, apply_policy_param};
 
 pub fn handle(params: Option<Value>, session: &SessionStore) -> Result<Value, (i32, String)> {
     let params = params.unwrap_or(Value::Null);
@@ -29,7 +29,8 @@ pub fn handle(params: Option<Value>, session: &SessionStore) -> Result<Value, (i
         .unwrap_or("mcp-session")
         .to_string();
 
-    let builtins = load_builtins().map_err(|e| (E_RULESET_INVALID, e.to_string()))?;
+    let mut builtins = load_builtins().map_err(|e| (E_RULESET_INVALID, e.to_string()))?;
+    apply_policy_param(&params, &mut builtins)?;
 
     let report_opts = ReportOptions {
         scan_target,

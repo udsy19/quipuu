@@ -19,7 +19,7 @@ use cryptoscope_scan_source::Scanner;
 use serde_json::{Value, json};
 
 use crate::mcp::errors::{E_PATH_NOT_FOUND, E_RULESET_INVALID};
-use crate::mcp::session::{ScanResult, ScanStats, SessionStore, encode_cursor};
+use crate::mcp::session::{ScanResult, ScanStats, SessionStore, apply_policy_param, encode_cursor};
 
 pub fn handle(params: Option<Value>, session: &mut SessionStore) -> Result<Value, (i32, String)> {
     let params = params.unwrap_or(Value::Null);
@@ -41,7 +41,8 @@ pub fn handle(params: Option<Value>, session: &mut SessionStore) -> Result<Value
         .and_then(Value::as_str)
         .unwrap_or("blocking");
 
-    let builtins = load_builtins().map_err(|e| (E_RULESET_INVALID, e.to_string()))?;
+    let mut builtins = load_builtins().map_err(|e| (E_RULESET_INVALID, e.to_string()))?;
+    apply_policy_param(&params, &mut builtins)?;
 
     let scanner = Scanner::with_builtins(builtins.algorithms.clone())
         .map_err(|e| (E_RULESET_INVALID, e.to_string()))?;

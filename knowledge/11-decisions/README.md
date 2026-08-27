@@ -76,7 +76,7 @@ Every load-bearing build decision for cryptoscope, in **Why → Evidence → Dec
 - UK NCSC's 2028 Phase 1 ("full discovery exercise") is the tightest national deadline today (`knowledge/09-regulatory`).
 - Australia ASD ISM-1917 is the only currently-binding hard deadline globally: ML-KEM-1024/ML-DSA-87 by 2030 (`knowledge/09-regulatory`).
 
-**Decision:** Ship a default `policy.toml` shipping NIST IR 8547 IPD values as the default. CLI accepts `--policy <file>` to override. Provide named presets: `nist-default` (IR 8547 IPD), `nsa-cnsa2`, `uk-ncsc`, `au-asd-ism`, `eu-cra`. Every report header prints the policy in force ("Risk classified per NIST IR 8547 IPD, Nov 2024").
+**Decision:** Ship a default `policy.toml` shipping NIST IR 8547 IPD values as the default. CLI accepts `--policy <file>` to override. Provide named presets, one TOML each under `crates/core/data/policies/`. Shipped as of Phase 19: `nist-default` (IR 8547 IPD) and `nsa-cnsa2` (CNSA 2.0 for NSS). `uk-ncsc`, `au-asd-ism` and `eu-cra` were listed here in June 2026 and are **not** shipped — a preset is only added once its algorithm verdicts trace to a primary source held in `knowledge/09-regulatory/`. Every report header prints the policy in force ("Risk classified per NIST IR 8547 IPD, Nov 2024").
 
 **Revisit when:** IR 8547 reaches final, or any major regulator publishes a binding deadline that supersedes ours.
 

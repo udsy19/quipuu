@@ -218,9 +218,15 @@ fn wizard(detected: &Detected, interactive: bool) -> Config {
     };
 
     // Q3: policy preset
+    // Offered choices come from core so `init` cannot write a preset name
+    // that `scan` will later refuse to load.
+    let preset_names: Vec<&str> = cryptoscope_core::Policy::preset_names().collect();
     let preset = prompt_choice(
-        "Policy preset — nist-default / cnsa-2 / strict? [nist-default]: ",
-        &["nist-default", "cnsa-2", "strict"],
+        &format!(
+            "Policy preset — {}? [nist-default]: ",
+            preset_names.join(" / ")
+        ),
+        &preset_names,
         "nist-default",
         interactive,
     );

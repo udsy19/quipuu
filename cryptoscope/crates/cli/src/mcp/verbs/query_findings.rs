@@ -17,7 +17,7 @@ use cryptoscope_core::{Finding, QuantumRiskScore, Severity, load_builtins};
 use serde_json::{Value, json};
 
 use crate::mcp::errors::{E_RULESET_INVALID, E_SCAN_NOT_FOUND};
-use crate::mcp::session::SessionStore;
+use crate::mcp::session::{SessionStore, apply_policy_param};
 
 pub fn handle(params: Option<Value>, session: &SessionStore) -> Result<Value, (i32, String)> {
     let params = params.unwrap_or(Value::Null);
@@ -36,7 +36,8 @@ pub fn handle(params: Option<Value>, session: &SessionStore) -> Result<Value, (i
     let sort_by = params.get("sort").and_then(Value::as_str);
 
     // Compute severity for each finding (needed for severity filter).
-    let builtins = load_builtins().map_err(|e| (E_RULESET_INVALID, e.to_string()))?;
+    let mut builtins = load_builtins().map_err(|e| (E_RULESET_INVALID, e.to_string()))?;
+    apply_policy_param(&params, &mut builtins)?;
 
     let mut findings: Vec<&Finding> = stored
         .findings

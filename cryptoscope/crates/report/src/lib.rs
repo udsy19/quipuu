@@ -17,7 +17,7 @@ pub use html::emit_html;
 pub use sarif::emit_sarif;
 pub use summary::emit_summary_json;
 
-use cryptoscope_core::{AlgorithmTable, Finding, ScanWarning};
+use cryptoscope_core::{AlgorithmTable, Finding, Policy, ScanWarning};
 
 /// Partition findings into (audible, suppressed) sets.
 ///
@@ -30,17 +30,25 @@ use cryptoscope_core::{AlgorithmTable, Finding, ScanWarning};
 /// represent something the scanner saw but couldn't classify — surfacing them
 /// helps users catch coverage gaps).
 ///
+/// An algorithm the active policy disallows is always audible even when its
+/// quantum status is inventory-only. Under `nsa-cnsa2` SHA-256 is quantum-safe
+/// and still off the approved suite; hiding it would contradict the profile
+/// the operator selected.
+///
 /// The CBOM is built from the full finding set, not the audible subset, so the
 /// inventory remains complete. Only HTML / SARIF / summary / stdout filter.
 pub fn partition_audible<'a>(
     findings: &'a [Finding],
     algorithms: &AlgorithmTable,
+    policy: &Policy,
 ) -> (Vec<&'a Finding>, Vec<&'a Finding>) {
     let mut audible = Vec::with_capacity(findings.len());
     let mut suppressed = Vec::new();
     for f in findings {
         match algorithms.get(&f.algorithm_id) {
-            Some(a) if a.quantum_status.is_inventory_only() => suppressed.push(f),
+            Some(a) if a.quantum_status.is_inventory_only() && !policy.disallows(&a.id) => {
+                suppressed.push(f)
+            }
             _ => audible.push(f),
         }
     }

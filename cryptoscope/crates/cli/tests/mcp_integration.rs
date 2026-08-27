@@ -170,6 +170,87 @@ fn test_get_capabilities_with_network() {
     s.close();
 }
 
+// ── Test 5b: the documented `policy` parameter ───────────────────────────────
+
+#[test]
+fn test_get_capabilities_lists_policy_presets() {
+    let mut s = McpSession::start(false);
+    let resp = s.request(51, "get_capabilities", json!({}));
+    let presets = resp["result"]["policyPresets"]
+        .as_array()
+        .expect("policyPresets must be an array");
+    assert!(presets.iter().any(|p| p == "nist-default"));
+    assert!(presets.iter().any(|p| p == "nsa-cnsa2"));
+    s.close();
+}
+
+#[test]
+fn test_policy_param_reweights_findings_without_changing_them() {
+    // MCP.md documents `policy` on every scoring verb. It must change the
+    // severity of findings and nothing else — a policy never creates or
+    // suppresses a detection.
+    // The Rust fixture calls Aes128Gcm, Sha256 and ChaCha20Poly1305 — three
+    // algorithms CNSA 2.0 excludes from its suite and IR 8547 does not.
+    let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../crates/scan-source/tests/fixtures/rust/main.rs");
+
+    let mut s = McpSession::start(false);
+    let scan_id = s.request(
+        52,
+        "scan_source",
+        json!({ "path": fixture.to_str().unwrap() }),
+    )["result"]["scanId"]
+        .as_str()
+        .unwrap()
+        .to_string();
+
+    let ids_and_severities = |resp: &Value| -> (Vec<String>, Vec<String>) {
+        let findings = resp["result"]["findings"].as_array().expect("findings");
+        (
+            findings
+                .iter()
+                .map(|f| f["algorithm_id"].as_str().unwrap_or_default().to_string())
+                .collect(),
+            findings
+                .iter()
+                .map(|f| f["severity"].as_str().unwrap_or_default().to_string())
+                .collect(),
+        )
+    };
+
+    let default = s.request(
+        53,
+        "get_scan_results",
+        json!({ "scanId": scan_id, "pageSize": 500 }),
+    );
+    let cnsa2 = s.request(
+        54,
+        "get_scan_results",
+        json!({ "scanId": scan_id, "pageSize": 500, "policy": "nsa-cnsa2" }),
+    );
+    let (default_ids, default_sevs) = ids_and_severities(&default);
+    let (cnsa2_ids, cnsa2_sevs) = ids_and_severities(&cnsa2);
+    assert!(!default_ids.is_empty(), "fixture must produce findings");
+    assert_eq!(
+        default_ids, cnsa2_ids,
+        "a policy must not change what is detected"
+    );
+    assert_ne!(
+        default_sevs, cnsa2_sevs,
+        "AES-128 / SHA-256 / ChaCha20 must score differently under CNSA 2.0"
+    );
+
+    // An unknown preset is an error, not a silent fall-back to NIST defaults.
+    let bad = s.request(
+        55,
+        "get_scan_results",
+        json!({ "scanId": scan_id, "policy": "uk-ncsc" }),
+    );
+    assert_eq!(bad["error"]["code"], -32003, "{bad}");
+
+    s.close();
+}
+
 // ── Test 6: scan_source on a fixture file ────────────────────────────────────
 
 #[test]

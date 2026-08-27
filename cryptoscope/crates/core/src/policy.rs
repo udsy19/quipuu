@@ -1,14 +1,28 @@
 //! Policy file — NIST IR 8547 IPD defaults plus QuantumRiskScore weights.
 //!
-//! Source: `crates/core/data/default-policy.toml`.
+//! Source: `crates/core/data/default-policy.toml` (the `nist-default` preset)
+//! and `crates/core/data/policies/` (every other built-in preset).
+//!
+//! A policy reweights findings. It never creates or suppresses a detection —
+//! the scanners run identically under every preset.
 
 use std::collections::BTreeMap;
+use std::path::Path;
 
 use serde::Deserialize;
 
 use crate::{AlgorithmTable, LoadError, QuantumStatus};
 
 const BUILTIN_TOML: &str = include_str!("../data/default-policy.toml");
+const CNSA2_TOML: &str = include_str!("../data/policies/nsa-cnsa2.toml");
+
+/// Every built-in preset, as `(name, toml)`, in the order they are listed by
+/// `cryptoscope policy list`.
+///
+/// This is the single source of truth for the preset vocabulary. README, SPEC,
+/// MCP.md, `cryptoscope init` and `get_capabilities` all quote it, and
+/// `documented_preset_names_match_the_shipped_ones` fails the build on drift.
+const PRESETS: &[(&str, &str)] = &[("nist-default", BUILTIN_TOML), ("nsa-cnsa2", CNSA2_TOML)];
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Meta {
@@ -31,6 +45,15 @@ pub struct Deprecation {
     pub sha_384_acceptable: bool,
     pub sha_512_acceptable: bool,
     pub classically_broken: Vec<String>,
+    /// Algorithm ids this *jurisdiction* excludes from its approved list, even
+    /// though they are not broken for anyone else. CNSA 2.0 excluding AES-128
+    /// and SHA-256 from national security systems is the motivating case.
+    ///
+    /// Scored at the full `risk_weights.algorithm_vulnerability` and never
+    /// suppressed as quantum-safe inventory. Empty in `nist-default`, which
+    /// takes no position beyond NIST IR 8547.
+    #[serde(default)]
+    pub policy_disallowed: Vec<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -137,6 +160,47 @@ impl Policy {
         Self::from_toml(BUILTIN_TOML)
     }
 
+    /// The built-in preset names, in listing order.
+    pub fn preset_names() -> impl Iterator<Item = &'static str> {
+        PRESETS.iter().map(|(name, _)| *name)
+    }
+
+    /// Load a built-in preset by name. `None` when the name is not built in.
+    pub fn from_preset(name: &str) -> Option<Result<Self, LoadError>> {
+        PRESETS
+            .iter()
+            .find(|(n, _)| *n == name)
+            .map(|(_, toml)| Self::from_toml(toml))
+    }
+
+    /// Resolve the `--policy <name-or-path>` argument.
+    ///
+    /// A built-in preset name wins over a same-named file on disk, so
+    /// `--policy nist-default` means the same thing in every directory.
+    pub fn load(name_or_path: &str) -> Result<Self, LoadError> {
+        if let Some(result) = Self::from_preset(name_or_path) {
+            return result;
+        }
+        let path = Path::new(name_or_path);
+        if !path.is_file() {
+            return Err(LoadError::Invariant(format!(
+                "`{}` is neither a built-in policy preset ({}) nor a readable file",
+                name_or_path,
+                Self::preset_names().collect::<Vec<_>>().join(", "),
+            )));
+        }
+        Self::from_toml(&std::fs::read_to_string(path)?)
+    }
+
+    /// True when this policy's jurisdiction excludes `algorithm_id` from its
+    /// approved list. See [`Deprecation::policy_disallowed`].
+    pub fn disallows(&self, algorithm_id: &str) -> bool {
+        self.deprecation
+            .policy_disallowed
+            .iter()
+            .any(|id| id == algorithm_id)
+    }
+
     pub fn from_toml(s: &str) -> Result<Self, LoadError> {
         let p: Self = toml::from_str(s)?;
         p.validate()?;
@@ -202,14 +266,22 @@ impl Policy {
         Ok(())
     }
 
-    /// Cross-check: every id in `classically_broken` exists in the algorithm table.
+    /// Cross-check: every algorithm id the policy names exists in the table.
+    ///
+    /// A typo in a preset would otherwise silently do nothing — the id would
+    /// simply never match a finding.
     pub fn cross_check(&self, algorithms: &AlgorithmTable) -> Result<(), LoadError> {
-        for id in &self.deprecation.classically_broken {
-            if algorithms.get(id).is_none() {
-                return Err(LoadError::Invariant(format!(
-                    "policy.classically_broken contains `{}` which is not in the algorithm table",
-                    id
-                )));
+        for (field, ids) in [
+            ("classically_broken", &self.deprecation.classically_broken),
+            ("policy_disallowed", &self.deprecation.policy_disallowed),
+        ] {
+            for id in ids {
+                if algorithms.get(id).is_none() {
+                    return Err(LoadError::Invariant(format!(
+                        "policy.{} contains `{}` which is not in the algorithm table",
+                        field, id
+                    )));
+                }
             }
         }
         Ok(())

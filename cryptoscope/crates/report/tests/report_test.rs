@@ -344,7 +344,7 @@ fn phase2_partition_audible_separates_inventory_from_real_findings() {
         finding_for("ecdsa-p256"),  // BrokenByShor — audible
     ];
 
-    let (audible, suppressed) = partition_audible(&findings, &b.algorithms);
+    let (audible, suppressed) = partition_audible(&findings, &b.algorithms, &b.policy);
 
     let audible_ids: Vec<&str> = audible.iter().map(|f| f.algorithm_id.as_str()).collect();
     let suppressed_ids: Vec<&str> = suppressed.iter().map(|f| f.algorithm_id.as_str()).collect();
@@ -372,6 +372,43 @@ fn phase2_partition_audible_separates_inventory_from_real_findings() {
 }
 
 #[test]
+fn policy_disallowed_algorithm_is_audible_even_when_quantum_safe() {
+    // Under nsa-cnsa2, SHA-256 and AES-128-GCM are quantum-safe and off the
+    // approved suite. Suppressing them as "inventory" would hide exactly the
+    // findings the operator selected that profile to see.
+    use cryptoscope_core::Policy;
+    use cryptoscope_report::partition_audible;
+
+    let b = cryptoscope_core::load_builtins().expect("builtins load");
+    let cnsa2 = Policy::from_preset("nsa-cnsa2")
+        .expect("nsa-cnsa2 is a built-in preset")
+        .expect("nsa-cnsa2 parses");
+    let findings = vec![
+        finding_for("sha-256"),
+        finding_for("aes-128-gcm"),
+        finding_for("aes-256-gcm"),
+    ];
+
+    let (audible, suppressed) = partition_audible(&findings, &b.algorithms, &cnsa2);
+    let audible_ids: Vec<&str> = audible.iter().map(|f| f.algorithm_id.as_str()).collect();
+    let suppressed_ids: Vec<&str> = suppressed.iter().map(|f| f.algorithm_id.as_str()).collect();
+    assert!(audible_ids.contains(&"sha-256"));
+    assert!(audible_ids.contains(&"aes-128-gcm"));
+    assert!(
+        suppressed_ids.contains(&"aes-256-gcm"),
+        "AES-256-GCM is CNSA 2.0 approved and stays inventory-only"
+    );
+
+    // ...and the default profile still suppresses SHA-256, unchanged.
+    let (_, default_suppressed) = partition_audible(&findings, &b.algorithms, &b.policy);
+    let default_suppressed_ids: Vec<&str> = default_suppressed
+        .iter()
+        .map(|f| f.algorithm_id.as_str())
+        .collect();
+    assert!(default_suppressed_ids.contains(&"sha-256"));
+}
+
+#[test]
 fn phase2_unknown_algorithm_id_stays_audible() {
     // If the scanner produced a finding whose algorithm_id we can't classify
     // (table miss, dep scanner unknown), we surface it — better to overcount
@@ -380,7 +417,7 @@ fn phase2_unknown_algorithm_id_stays_audible() {
 
     let b = cryptoscope_core::load_builtins().expect("builtins load");
     let findings = vec![finding_for("not-an-algorithm-in-the-table")];
-    let (audible, suppressed) = partition_audible(&findings, &b.algorithms);
+    let (audible, suppressed) = partition_audible(&findings, &b.algorithms, &b.policy);
     assert_eq!(audible.len(), 1, "unknown algo-ids must stay audible");
     assert_eq!(suppressed.len(), 0);
 }
@@ -397,7 +434,7 @@ fn phase2_sarif_excludes_suppressed_when_audible_subset_passed() {
         finding_for("aes-256-gcm"),
         finding_for("ml-kem-768"),
     ];
-    let (audible, _) = partition_audible(&findings, &b.algorithms);
+    let (audible, _) = partition_audible(&findings, &b.algorithms, &b.policy);
     let displayed: Vec<cryptoscope_core::Finding> = audible.iter().map(|f| (*f).clone()).collect();
 
     let sarif =

@@ -52,6 +52,12 @@ impl QuantumRiskScore {
 }
 
 fn score_algorithm_vulnerability(algorithm: &AlgorithmRecord, policy: &Policy) -> u8 {
+    // A jurisdiction that excludes an algorithm from its approved list has
+    // already made the judgement; the quantum_status weight would understate
+    // it. CNSA 2.0 vs AES-128 is the motivating case — unbroken, non-compliant.
+    if policy.disallows(&algorithm.id) {
+        return policy.risk_weights.algorithm_vulnerability;
+    }
     policy
         .algorithm_vulnerability
         .get(&algorithm.quantum_status)

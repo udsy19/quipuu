@@ -6,8 +6,10 @@
 
 use std::collections::HashMap;
 
-use cryptoscope_core::{AlgorithmTable, Finding, Policy, QuantumRiskScore, ScanWarning};
+use cryptoscope_core::{AlgorithmTable, Builtins, Finding, Policy, QuantumRiskScore, ScanWarning};
 use serde::{Deserialize, Serialize};
+
+use crate::mcp::errors::E_POLICY_INVALID;
 use serde_json::Value;
 
 /// A completed scan result held in memory until the session ends.
@@ -84,6 +86,27 @@ pub fn decode_cursor(cursor: &str) -> Option<(&str, usize)> {
     let (id, off) = cursor.rsplit_once(':')?;
     let offset = off.parse::<usize>().ok()?;
     Some((id, offset))
+}
+
+// ── Policy resolution ─────────────────────────────────────────────────────────
+//
+// MCP.md documents an optional `policy` parameter on every scoring verb.
+// Resolving it here keeps the CLI and the MCP server on one code path:
+// `Policy::load` accepts a built-in preset name or a policy TOML path, and an
+// unresolvable name is an error rather than a silent fall-back to NIST
+// defaults.
+
+pub fn apply_policy_param(params: &Value, builtins: &mut Builtins) -> Result<(), (i32, String)> {
+    let Some(requested) = params.get("policy").and_then(Value::as_str) else {
+        return Ok(());
+    };
+    let policy = Policy::load(requested)
+        .map_err(|e| (E_POLICY_INVALID, format!("policy `{requested}`: {e}")))?;
+    policy
+        .cross_check(&builtins.algorithms)
+        .map_err(|e| (E_POLICY_INVALID, format!("policy `{requested}`: {e}")))?;
+    builtins.policy = policy;
+    Ok(())
 }
 
 // ── Risk-aware Finding serialization ──────────────────────────────────────────

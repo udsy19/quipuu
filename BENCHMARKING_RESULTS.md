@@ -249,3 +249,44 @@ python3 scan_corpus.py                  # ~5-15 min
 python3 render_results.py               # writes ../../BENCHMARKING_RESULTS.md
 ```
 
+
+---
+
+## Policy-profile divergence — measured 2026-08-27
+
+`--policy` selects a scoring profile. The claim it has to survive is that a
+profile reweights findings without changing what is detected, and that it is
+not decorative — a preset whose verdicts never differ from the default is not
+worth shipping.
+
+Corpus B was dumped twice with the same binary, once per built-in preset,
+`--source --deps --include-safe` on every project:
+
+| | Findings | Same rule / algorithm / file:line | Severity band differs |
+|---|---|---|---|
+| `nist-default` | 898 | — | — |
+| `nsa-cnsa2` | 898 | byte-identical | **80 (8.9 %)** |
+
+Every one of the 80 is `sha-256` moving Medium → High, across 18 of the 54
+projects that produce findings. That is the whole story on this corpus and it
+is worth stating precisely: CNSA 2.0 excludes 26 algorithm ids from its
+approved suite, and **`sha-256` is the only one corpus B contains** — no
+AES-128, no AES-192, no ChaCha20-Poly1305 and no sub-1024 PQC parameter set
+appears anywhere in the 898 findings. All 80 findings carrying a
+CNSA-2-disallowed id changed band; none of the other 818 did.
+
+The `nsa-cnsa2` profile also raises the unmatched-file shelf-life default from
+`short` to `medium` (NSS data retention). That adds 7 points to every finding's
+score but moved **no** finding across a band boundary on this corpus, so it does
+not appear in the table above.
+
+The `nist-default` dump is byte-identical to the run recorded at `d492a12`,
+which is the check that matters for the published precision figure: the
+audited label set still applies unchanged.
+
+Reproduce:
+
+```
+cryptoscope scan <project> --source --deps --include-safe                      # nist-default
+cryptoscope scan <project> --source --deps --include-safe --policy nsa-cnsa2   # CNSA 2.0
+```
