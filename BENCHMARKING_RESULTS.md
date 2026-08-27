@@ -449,3 +449,29 @@ lookups in `const` tables on callee text the walker already computed.
 derived from the same `const` tables the matchers dispatch on, so it cannot
 drift from them. Confirmed the gate fails by adding a rule for a nonexistent
 api and re-running, per the "a gate that cannot fail is not a gate" rule.
+
+---
+
+## Rename verification — 2026-08-27 (cryptoscope → seawall)
+
+The rename touched files inside the detection paths, so the precision gate demanded a measurement.
+No new measurement was taken, because none was warranted: the change was verified to be
+**detection-neutral** rather than assumed to be.
+
+Method: for each file under `crates/core/data/` — the algorithm table, the OID table, the default
+policy, and all seven rule packs — the pre-rename revision and the post-rename file were normalised
+by replacing the product name with a placeholder and compared.
+
+| File | Result |
+|---|---|
+| `algorithm-table.toml` | identical apart from the product name |
+| `default-policy.toml` | identical apart from the product name |
+| `oid-table.toml` | identical apart from the product name |
+| `rules/{cpp,csharp,go,java,javascript,python,rust}.toml` | identical, all seven |
+
+No rule, `when` clause, `algorithm_id`, severity mapping, or policy weight changed. The only edits
+were comments and the tool name emitted into reports. Precision therefore stands at **87.1%**
+(n=272), carried forward from the previous cycle rather than re-derived.
+
+This is recorded so the number in `state/precision.json` is traceable to a reason, not just to a
+green gate.
