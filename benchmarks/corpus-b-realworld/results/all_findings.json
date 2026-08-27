@@ -382,92 +382,92 @@
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/expires_format.tests.js",
     "line": 8,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-361",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/claim-iat.test.js",
     "line": 190,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'HS256'}) \u2014 HMAC-SHA256. Confirm signing key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-361",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/claim-iat.test.js",
     "line": 237,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'HS256'}) \u2014 HMAC-SHA256. Confirm signing key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-361",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.hs.tests.js",
     "line": 15,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'HS256'}) \u2014 HMAC-SHA256. Confirm signing key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-361",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.hs.tests.js",
     "line": 21,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'HS256'}) \u2014 HMAC-SHA256. Confirm signing key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.hs.tests.js",
     "line": 27,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-361",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.hs.tests.js",
     "line": 35,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'HS256'}) \u2014 HMAC-SHA256. Confirm signing key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-361",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.hs.tests.js",
     "line": 99,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'HS256'}) \u2014 HMAC-SHA256. Confirm signing key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-361",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.hs.tests.js",
     "line": 108,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'HS256'}) \u2014 HMAC-SHA256. Confirm signing key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -477,97 +477,97 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.hs.tests.js",
     "line": 118,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-361",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.hs.tests.js",
     "line": 127,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'HS256'}) \u2014 HMAC-SHA256. Confirm signing key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-361",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/wrong_alg.tests.js",
     "line": 46,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'HS256'}) \u2014 HMAC-SHA256. Confirm signing key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/noTimestamp.tests.js",
     "line": 7,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
+    "rule_id": "CRYPTO-364",
     "algorithm_id": "rsa-pkcs1-sha256-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/issue_70.tests.js",
     "line": 10,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'RS256'}) \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/encoding.tests.js",
     "line": 13,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/encoding.tests.js",
     "line": 20,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/encoding.tests.js",
     "line": 28,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/set_headers.tests.js",
     "line": 7,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/set_headers.tests.js",
     "line": 13,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -582,112 +582,112 @@
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.malicious.tests.js",
     "line": 34,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-361",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/async_sign.tests.js",
     "line": 13,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'HS256'}) \u2014 HMAC-SHA256. Confirm signing key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-361",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/async_sign.tests.js",
     "line": 15,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'HS256'}) \u2014 HMAC-SHA256. Confirm signing key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/async_sign.tests.js",
     "line": 24,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/async_sign.tests.js",
     "line": 31,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-381",
+    "algorithm_id": "jwt-alg-none",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/async_sign.tests.js",
     "line": 38,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'none'}) \u2014 signature verification disabled. CVE-2015-9235 class."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-381",
+    "algorithm_id": "jwt-alg-none",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/async_sign.tests.js",
     "line": 48,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'none'}) \u2014 signature verification disabled. CVE-2015-9235 class."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
+    "rule_id": "CRYPTO-364",
     "algorithm_id": "rsa-pkcs1-sha256-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/async_sign.tests.js",
     "line": 57,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'RS256'}) \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
+    "rule_id": "CRYPTO-364",
     "algorithm_id": "rsa-pkcs1-sha256-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/async_sign.tests.js",
     "line": 66,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'RS256'}) \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
+    "rule_id": "CRYPTO-364",
     "algorithm_id": "rsa-pkcs1-sha256-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/async_sign.tests.js",
     "line": 75,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'RS256'}) \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-367",
+    "algorithm_id": "rsa-pss-sha256-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/async_sign.tests.js",
     "line": 81,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'PS256'}) \u2014 RSA-PSS-SHA256. Quantum-vulnerable."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -697,47 +697,47 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/async_sign.tests.js",
     "line": 90,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/async_sign.tests.js",
     "line": 97,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/async_sign.tests.js",
     "line": 105,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/async_sign.tests.js",
     "line": 115,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/async_sign.tests.js",
     "line": 127,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -747,27 +747,27 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/async_sign.tests.js",
     "line": 140,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/non_object_values.tests.js",
     "line": 7,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/non_object_values.tests.js",
     "line": 13,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -777,7 +777,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/verify.tests.js",
     "line": 223,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -787,7 +787,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/verify.tests.js",
     "line": 230,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -797,17 +797,17 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/verify.tests.js",
     "line": 241,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/issue_147.tests.js",
     "line": 7,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -817,7 +817,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/test-utils.js",
     "line": 102,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -827,17 +827,17 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/test-utils.js",
     "line": 107,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-361",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/option-nonce.test.js",
     "line": 12,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'HS256'}) \u2014 HMAC-SHA256. Confirm signing key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -847,7 +847,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.asymmetric_signing.tests.js",
     "line": 48,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -857,7 +857,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.asymmetric_signing.tests.js",
     "line": 90,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -867,7 +867,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.asymmetric_signing.tests.js",
     "line": 100,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -877,7 +877,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.asymmetric_signing.tests.js",
     "line": 113,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -887,7 +887,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.asymmetric_signing.tests.js",
     "line": 135,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -897,7 +897,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.asymmetric_signing.tests.js",
     "line": 157,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -907,7 +907,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.asymmetric_signing.tests.js",
     "line": 164,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -917,7 +917,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.asymmetric_signing.tests.js",
     "line": 182,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -927,7 +927,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.asymmetric_signing.tests.js",
     "line": 194,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -937,7 +937,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/jwt.asymmetric_signing.tests.js",
     "line": 204,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
@@ -947,77 +947,77 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/schema.tests.js",
     "line": 15,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key \u2014 algorithm not statically determinable. Confirm algorithm at runtime."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/schema.tests.js",
     "line": 64,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-382",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/buffer.tests.js",
     "line": 7,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign(payload, <string secret>) \u2014 HMAC-SHA256 by default. Confirm key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
+    "rule_id": "CRYPTO-361",
+    "algorithm_id": "sha-256",
+    "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/option-maxAge.test.js",
     "line": 14,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'HS256'}) \u2014 HMAC-SHA256. Confirm signing key entropy."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
+    "rule_id": "CRYPTO-364",
     "algorithm_id": "rsa-pkcs1-sha256-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/rsa-public-key.tests.js",
     "line": 13,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'RS256'}) \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
+    "rule_id": "CRYPTO-364",
     "algorithm_id": "rsa-pkcs1-sha256-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/rsa-public-key.tests.js",
     "line": 22,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'RS256'}) \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
+    "rule_id": "CRYPTO-364",
     "algorithm_id": "rsa-pkcs1-sha256-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/rsa-public-key.tests.js",
     "line": 31,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'RS256'}) \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable."
   },
   {
     "project": "npm:jsonwebtoken",
     "ecosystem": "npm",
-    "rule_id": "CRYPTO-360",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-367",
+    "algorithm_id": "rsa-pss-sha256-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/npm/jsonwebtoken/test/rsa-public-key.tests.js",
     "line": 40,
-    "message": "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+    "message": "jsonwebtoken jwt.sign({algorithm:'PS256'}) \u2014 RSA-PSS-SHA256. Quantum-vulnerable."
   },
   {
     "project": "npm:node-forge",
@@ -8902,12 +8902,32 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-037",
+    "algorithm_id": "ecdh-p256",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/ecdh_es_ext_test.go",
+    "line": 17,
+    "message": "crypto/ecdh P-256 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-762",
     "algorithm_id": "aes-128-gcm",
     "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/ecdh_es_ext_test.go",
     "line": 24,
     "message": "JWE enc=A128GCM \u2014 AES-128-GCM content encryption. Weakened by Grover; prefer AES-256."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-038",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/ecdh_es_ext_test.go",
+    "line": 31,
+    "message": "crypto/ecdh P-384 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-1024 encap/decap."
   },
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
@@ -8922,12 +8942,32 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-039",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/ecdh_es_ext_test.go",
+    "line": 44,
+    "message": "crypto/ecdh P-521 \u2014 quantum-vulnerable ECDH. Migrate to ML-KEM hybrid encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-760",
     "algorithm_id": "aes-256-gcm",
     "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/ecdh_es_ext_test.go",
     "line": 50,
     "message": "JWE enc=A256GCM \u2014 AES-256-GCM content encryption. Quantum-safe; inventory only."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/ecdh_es_ext_test.go",
+    "line": 57,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
   },
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
@@ -8962,6 +9002,16 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-037",
+    "algorithm_id": "ecdh-p256",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/ecdh_es_ext_test.go",
+    "line": 83,
+    "message": "crypto/ecdh P-256 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-011",
     "algorithm_id": "ecdsa-p256",
     "severity": "High",
@@ -8972,12 +9022,52 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-037",
+    "algorithm_id": "ecdh-p256",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/ecdh_es_ext_test.go",
+    "line": 108,
+    "message": "crypto/ecdh P-256 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/ecdh_es_ext_test.go",
+    "line": 117,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-011",
     "algorithm_id": "ecdsa-p256",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/ecdh_es_ext_test.go",
     "line": 126,
     "message": "ECDSA P-256 \u2014 quantum-vulnerable to Shor. Replace with ML-DSA-65."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-037",
+    "algorithm_id": "ecdh-p256",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/ecdh_es_ext_test.go",
+    "line": 135,
+    "message": "crypto/ecdh P-256 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-037",
+    "algorithm_id": "ecdh-p256",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/ecdh_es_ext_test.go",
+    "line": 156,
+    "message": "crypto/ecdh P-256 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-768 encap/decap."
   },
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
@@ -8998,6 +9088,16 @@
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/ecdh_es_ext_test.go",
     "line": 168,
     "message": "JWE enc=A128GCM \u2014 AES-128-GCM content encryption. Weakened by Grover; prefer AES-256."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/ecdh_es_ext_test.go",
+    "line": 175,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
   },
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
@@ -9072,6 +9172,66 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-037",
+    "algorithm_id": "ecdh-p256",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/hpke_params.go",
+    "line": 19,
+    "message": "crypto/ecdh P-256 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-038",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/hpke_params.go",
+    "line": 20,
+    "message": "crypto/ecdh P-384 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-1024 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-039",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/hpke_params.go",
+    "line": 21,
+    "message": "crypto/ecdh P-521 \u2014 quantum-vulnerable ECDH. Migrate to ML-KEM hybrid encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/hpke_params.go",
+    "line": 22,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/hpke_params.go",
+    "line": 23,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-037",
+    "algorithm_id": "ecdh-p256",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/hpke_params.go",
+    "line": 24,
+    "message": "crypto/ecdh P-256 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-051",
     "algorithm_id": "sha-1",
     "severity": "High",
@@ -9142,6 +9302,16 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwe_test.go",
+    "line": 393,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-012",
     "algorithm_id": "ecdsa-p384",
     "severity": "High",
@@ -9168,6 +9338,16 @@
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwe_test.go",
     "line": 1529,
     "message": "RSA-2048 key generation. Quantum-vulnerable: NIST IR 8547 deprecates after 2030, disallows after 2035."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-037",
+    "algorithm_id": "ecdh-p256",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwe_test.go",
+    "line": 1696,
+    "message": "crypto/ecdh P-256 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-768 encap/decap."
   },
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
@@ -9228,6 +9408,46 @@
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwe_test.go",
     "line": 2110,
     "message": "RSA-2048 key generation. Quantum-vulnerable: NIST IR 8547 deprecates after 2030, disallows after 2035."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-037",
+    "algorithm_id": "ecdh-p256",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/hpke_test.go",
+    "line": 36,
+    "message": "crypto/ecdh P-256 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-038",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/hpke_test.go",
+    "line": 43,
+    "message": "crypto/ecdh P-384 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-1024 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-039",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/hpke_test.go",
+    "line": 50,
+    "message": "crypto/ecdh P-521 \u2014 quantum-vulnerable ECDH. Migrate to ML-KEM hybrid encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/hpke_test.go",
+    "line": 57,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
   },
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
@@ -9352,6 +9572,16 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/bench_convert_test.go",
+    "line": 32,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-002",
     "algorithm_id": "rsa-2048",
     "severity": "High",
@@ -9382,6 +9612,96 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/bench_convert_test.go",
+    "line": 154,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/convert.go",
+    "line": 406,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-037",
+    "algorithm_id": "ecdh-p256",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/convert.go",
+    "line": 412,
+    "message": "crypto/ecdh P-256 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-038",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/convert.go",
+    "line": 414,
+    "message": "crypto/ecdh P-384 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-1024 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-039",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/convert.go",
+    "line": 416,
+    "message": "crypto/ecdh P-521 \u2014 quantum-vulnerable ECDH. Migrate to ML-KEM hybrid encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/convert.go",
+    "line": 447,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-037",
+    "algorithm_id": "ecdh-p256",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/convert.go",
+    "line": 453,
+    "message": "crypto/ecdh P-256 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-038",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/convert.go",
+    "line": 455,
+    "message": "crypto/ecdh P-384 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-1024 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-039",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/convert.go",
+    "line": 457,
+    "message": "crypto/ecdh P-521 \u2014 quantum-vulnerable ECDH. Migrate to ML-KEM hybrid encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-002",
     "algorithm_id": "rsa-2048",
     "severity": "High",
@@ -9402,12 +9722,142 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-037",
+    "algorithm_id": "ecdh-p256",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/ecdsa.go",
+    "line": 19,
+    "message": "crypto/ecdh P-256 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-038",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/ecdsa.go",
+    "line": 20,
+    "message": "crypto/ecdh P-384 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-1024 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-039",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/ecdsa.go",
+    "line": 21,
+    "message": "crypto/ecdh P-521 \u2014 quantum-vulnerable ECDH. Migrate to ML-KEM hybrid encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/ecdsa.go",
+    "line": 207,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-037",
+    "algorithm_id": "ecdh-p256",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/ecdsa.go",
+    "line": 209,
+    "message": "crypto/ecdh P-256 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-038",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/ecdsa.go",
+    "line": 211,
+    "message": "crypto/ecdh P-384 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-1024 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-039",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/ecdsa.go",
+    "line": 213,
+    "message": "crypto/ecdh P-521 \u2014 quantum-vulnerable ECDH. Migrate to ML-KEM hybrid encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/ecdsa.go",
+    "line": 229,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-037",
+    "algorithm_id": "ecdh-p256",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/ecdsa.go",
+    "line": 231,
+    "message": "crypto/ecdh P-256 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-038",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/ecdsa.go",
+    "line": 233,
+    "message": "crypto/ecdh P-384 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-1024 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-039",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/ecdsa.go",
+    "line": 235,
+    "message": "crypto/ecdh P-521 \u2014 quantum-vulnerable ECDH. Migrate to ML-KEM hybrid encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-011",
     "algorithm_id": "ecdsa-p256",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/validation_boundary_test.go",
     "line": 55,
     "message": "ECDSA P-256 \u2014 quantum-vulnerable to Shor. Replace with ML-DSA-65."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/okp.go",
+    "line": 226,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/okp.go",
+    "line": 256,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
   },
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
@@ -9492,12 +9942,42 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-037",
+    "algorithm_id": "ecdh-p256",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/jwk_test.go",
+    "line": 1658,
+    "message": "crypto/ecdh P-256 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-020",
     "algorithm_id": "ed25519",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/jwk_test.go",
     "line": 1666,
     "message": "Ed25519 \u2014 quantum-vulnerable to Shor. Replace with ML-DSA-65."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-038",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/jwk_test.go",
+    "line": 2403,
+    "message": "crypto/ecdh P-384 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-1024 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-038",
+    "algorithm_id": "ecdh-p384",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwk/jwk_test.go",
+    "line": 2416,
+    "message": "crypto/ecdh P-384 \u2014 quantum-vulnerable ECDH. Replace with ML-KEM-1024 encap/decap."
   },
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
@@ -9538,6 +10018,26 @@
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jws_test.go",
     "line": 451,
     "message": "JWT alg=EdDSA \u2014 Ed25519. Quantum-vulnerable to Shor's algorithm."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jws_test.go",
+    "line": 1507,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
+  },
+  {
+    "project": "go-modules:github.com/lestrrat-go/jwx",
+    "ecosystem": "go-modules",
+    "rule_id": "CRYPTO-036",
+    "algorithm_id": "x25519",
+    "severity": "High",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jws_test.go",
+    "line": 1549,
+    "message": "crypto/ecdh X25519 \u2014 classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
   },
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
