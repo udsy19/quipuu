@@ -1,0 +1,34 @@
+// Fixture: Rust call patterns the Phase 10 fixes address.
+//
+// Pre-Phase-10 fix, each line below produced zero findings even though
+// the patterns are common in real-world Rust crypto consumer code. The
+// V5 corpus run (RUST_COVERAGE_GAPS.md) cited specific file:line
+// citations for each — every example here mirrors a real one.
+
+use rsa::{RsaPrivateKey, pkcs1v15::SigningKey};
+use sha2::{Sha256, Sha384, Sha512};
+
+fn shapes(mut rng: impl rand::CryptoRng + rand::RngCore) {
+    // BUG-A: qualified-path callee.
+    // p256/p256/src/ecdsa.rs:118 - sha2::Sha384::digest(b"test")
+    let _ = sha2::Sha256::digest(b"hello");    // CRYPTO-530 (suppressed inventory)
+    let _ = sha2::Sha384::digest(b"hello");    // CRYPTO-531 (suppressed inventory)
+    let _ = rustls::ClientConfig::builder();   // CRYPTO-560 (suppressed inventory)
+    let _ = rustls::ServerConfig::builder();   // CRYPTO-561 (NEW, suppressed inventory)
+
+    // BUG-B: RsaPrivateKey::new with runtime-variable bit size.
+    // rsa/src/pkcs1v15/signing_key.rs:58 - RsaPrivateKey::new(rng, bit_size)
+    let bits: usize = 2048;
+    let _ = RsaPrivateKey::new(&mut rng, bits);  // CRYPTO-543 catch-all
+
+    // BUG-C: rcgen::KeyPair::generate_for, used by rustls-webpki test utils.
+    // rustls-webpki/src/test_utils.rs:7
+    let _ = rcgen::KeyPair::generate_for(&rcgen::PKCS_ECDSA_P256_SHA256); // CRYPTO-570
+
+    // BUG-F: turbofish-encoded hash in rsa SigningKey.
+    // rsa/src/pkcs1v15.rs:468 - SigningKey::<Sha256>::new(priv_key)
+    let priv_key = RsaPrivateKey::new(&mut rng, 2048).unwrap();
+    let _ = SigningKey::<Sha256>::new(priv_key.clone()); // CRYPTO-544
+    let _ = SigningKey::<Sha384>::new(priv_key.clone()); // CRYPTO-545
+    let _ = SigningKey::<Sha512>::new(priv_key);         // CRYPTO-546
+}

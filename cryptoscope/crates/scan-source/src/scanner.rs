@@ -736,10 +736,13 @@ fn match_c_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
 }
 
 fn match_rust_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
-    // Rust scoped paths — tree-sitter renders them as "Type::method"
-    // when the path has a single segment (local import) or the full
-    // scoped_identifier text for deeper paths.
-    let api = match callee {
+    // Rust scoped paths — tree-sitter renders them verbatim. The raw callee
+    // text can carry module prefixes (`sha2::Sha256::digest`) and turbofish
+    // generics (`SigningKey::<Sha256>::new`). We strip both before matching
+    // against the exact-match table below. The bare table is the single
+    // source of truth for which Type::method shapes we recognise.
+    let normalized = normalize_rust_callee(callee);
+    let api = match normalized.as_str() {
         "EcdsaKeyPair::generate_pkcs8" => "ring.EcdsaKeyPair.generate_pkcs8",
         "Ed25519KeyPair::generate_pkcs8" => "ring.Ed25519KeyPair.generate_pkcs8",
         "Aes256Gcm::new" => "rustcrypto.Aes256Gcm.new",
@@ -750,10 +753,99 @@ fn match_rust_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)
         "ChaCha20Poly1305::new" => "rustcrypto.ChaCha20Poly1305.new",
         "RsaPrivateKey::new" => "rsa.RsaPrivateKey.new",
         "SigningKey::generate" => "ed25519_dalek.SigningKey.generate",
+        // RSA pkcs1v15 / pss SigningKey — turbofish stripped by normalize_*.
+        // The hash algorithm is encoded in the turbofish (e.g. `<Sha256>`)
+        // and is captured separately by `populate_args` below.
+        "SigningKey::new" => "rsa.SigningKey.new",
         "ClientConfig::builder" => "rustls.ClientConfig.builder",
+        "ServerConfig::builder" => "rustls.ServerConfig.builder",
+        // rcgen — used by rustls-webpki / webpki test utilities. Defaults
+        // to ECDSA P-256 SHA-256 when called with PKCS_ECDSA_P256_SHA256.
+        "KeyPair::generate_for" => "rcgen.KeyPair.generate_for",
         _ => return None,
     };
-    Some((api.into(), HashMap::new()))
+    let mut args = HashMap::new();
+    // If the original callee text had a turbofish, expose the inside as a
+    // capture so classify rules can dispatch on the hash algorithm.
+    if let Some(turbo) = extract_turbofish_inner(callee) {
+        args.insert("turbofish".into(), ArgValue::Str(turbo));
+    }
+    Some((api.into(), args))
+}
+
+/// Strip Rust callee text down to the bare `Type::method` form by removing
+/// (a) leading module path segments and (b) turbofish generic parameters.
+///
+/// Examples:
+///   `sha2::Sha384::digest`            → `Sha384::digest`
+///   `rustls::ClientConfig::builder`   → `ClientConfig::builder`
+///   `SigningKey::<Sha256>::new`       → `SigningKey::new`
+///   `ring::signature::RsaKeyPair::from_pkcs8` → `RsaKeyPair::from_pkcs8`
+///
+/// The heuristic: collapse to the last two `::`-separated segments after
+/// stripping turbofish. That captures `Type::method` for every Rust shape
+/// we currently match and matches the form of the existing match-table
+/// entries.
+fn normalize_rust_callee(callee: &str) -> String {
+    // Drop everything inside <...> turbofish groups. Nesting depth matters
+    // for cases like `<Hmac<Sha256>>`.
+    let mut stripped = String::with_capacity(callee.len());
+    let mut depth: i32 = 0;
+    for ch in callee.chars() {
+        match ch {
+            '<' => depth += 1,
+            '>' if depth > 0 => depth -= 1,
+            _ if depth == 0 => stripped.push(ch),
+            _ => {}
+        }
+    }
+    // Collapse any `::::` left over from `Foo::<...>::method` → `Foo::method`.
+    while stripped.contains("::::") {
+        stripped = stripped.replace("::::", "::");
+    }
+    // Keep only the last two `::`-separated segments.
+    let segments: Vec<&str> = stripped.split("::").filter(|s| !s.is_empty()).collect();
+    match segments.len() {
+        0 => stripped,
+        1 => segments[0].to_string(),
+        _ => format!(
+            "{}::{}",
+            segments[segments.len() - 2],
+            segments[segments.len() - 1]
+        ),
+    }
+}
+
+/// Pull the contents of the first `<...>` turbofish group out of a Rust
+/// callee text. Returns the inner text trimmed of whitespace. Used to
+/// expose the hash algorithm in `SigningKey::<Sha256>::new` to the
+/// classify layer.
+fn extract_turbofish_inner(callee: &str) -> Option<String> {
+    let lt = callee.find('<')?;
+    // Match the outermost angle pair from `lt`.
+    let bytes = callee.as_bytes();
+    let mut depth: i32 = 0;
+    let mut end = None;
+    for (i, &b) in bytes.iter().enumerate().skip(lt) {
+        match b {
+            b'<' => depth += 1,
+            b'>' => {
+                depth -= 1;
+                if depth == 0 {
+                    end = Some(i);
+                    break;
+                }
+            }
+            _ => {}
+        }
+    }
+    let end = end?;
+    let inner = callee[lt + 1..end].trim();
+    if inner.is_empty() {
+        None
+    } else {
+        Some(inner.to_string())
+    }
 }
 
 fn match_csharp_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {

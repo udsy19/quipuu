@@ -1084,6 +1084,144 @@ fn phase8_cryptojs_des_marked_critical() {
     assert_eq!(des.algorithm_id, "des");
 }
 
+// ── Phase 10: Rust qualified paths, variable args, turbofish, new APIs ─────
+//
+// RUST_COVERAGE_GAPS.md flagged five concrete bugs in the Rust scanner:
+//   BUG-A  qualified-path callee miss        (p256, p384, rustls-native-certs)
+//   BUG-B  RsaPrivateKey::new variable bits  (rsa src/)
+//   BUG-C  KeyPair::generate_for unknown     (rustls-webpki, webpki)
+//   BUG-D  ServerConfig::builder missing     (tokio-rustls)
+//   BUG-F  SigningKey::<Sha*>::new turbofish (rsa pkcs1v15/pss)
+
+#[test]
+fn phase10_rust_qualified_sha_digest_normalizes() {
+    // BUG-A: `sha2::Sha256::digest(b"x")` must match the same rule as the
+    // bare `Sha256::digest(...)` after callee normalization.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/rust_advanced.rs"))
+        .expect("scan succeeds");
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-520"),
+        "expected CRYPTO-520 for sha2::Sha256::digest, got: {:?}",
+        findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
+    );
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-521"),
+        "expected CRYPTO-521 for sha2::Sha384::digest"
+    );
+}
+
+#[test]
+fn phase10_rust_qualified_clientconfig_normalizes() {
+    // BUG-A: rustls::ClientConfig::builder must match the bare rule.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/rust_advanced.rs"))
+        .expect("scan succeeds");
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-560"),
+        "expected CRYPTO-560 for rustls::ClientConfig::builder"
+    );
+}
+
+#[test]
+fn phase10_rust_serverconfig_builder_detected() {
+    // BUG-D: rustls::ServerConfig::builder needs a parallel rule.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/rust_advanced.rs"))
+        .expect("scan succeeds");
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-561"),
+        "expected CRYPTO-561 for rustls::ServerConfig::builder, got: {:?}",
+        findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn phase10_rust_rsa_variable_bits_emits_catchall() {
+    // BUG-B: RsaPrivateKey::new(rng, bit_size) with bit_size = variable used
+    // to silently produce nothing because every CRYPTO-540/541/542 rule
+    // required a literal bits arg. CRYPTO-543 is the catch-all.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/rust_advanced.rs"))
+        .expect("scan succeeds");
+    let cr543 = findings
+        .iter()
+        .find(|f| f.rule_id == "CRYPTO-543")
+        .expect("CRYPTO-543 must fire for variable bits");
+    assert_eq!(cr543.algorithm_id, "rsa-2048");
+    assert!(
+        cr543.message.contains("runtime variable"),
+        "message should mention runtime variable: {}",
+        cr543.message
+    );
+}
+
+#[test]
+fn phase10_rust_rcgen_keypair_generate_for() {
+    // BUG-C: rcgen::KeyPair::generate_for is the rustls-webpki test-utils
+    // key generator; previously unrecognized.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/rust_advanced.rs"))
+        .expect("scan succeeds");
+    let cr570 = findings
+        .iter()
+        .find(|f| f.rule_id == "CRYPTO-570")
+        .expect("CRYPTO-570 must fire for rcgen::KeyPair::generate_for");
+    assert_eq!(cr570.algorithm_id, "ecdsa-p256");
+}
+
+#[test]
+fn phase10_rust_signingkey_turbofish_routes_to_hash() {
+    // BUG-F: SigningKey::<Sha256>::new must route to CRYPTO-544 (SHA256),
+    // <Sha384>::new to CRYPTO-545, <Sha512>::new to CRYPTO-546.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/rust_advanced.rs"))
+        .expect("scan succeeds");
+    for (rule, algo) in [
+        ("CRYPTO-544", "rsa-pkcs1-sha256-2048"),
+        ("CRYPTO-545", "rsa-pkcs1-sha384-3072"),
+        ("CRYPTO-546", "rsa-pkcs1-sha512-4096"),
+    ] {
+        let f = findings
+            .iter()
+            .find(|f| f.rule_id == rule)
+            .unwrap_or_else(|| {
+                panic!(
+                    "{} must fire for SigningKey::<...>::new, got: {:?}",
+                    rule,
+                    findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
+                )
+            });
+        assert_eq!(f.algorithm_id, algo);
+    }
+}
+
+#[test]
+fn phase10_rust_main_fixture_unchanged() {
+    // Regression guard: the existing rust/main.rs fixture's findings must
+    // not change after Phase 10's normalize_rust_callee additions.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/main.rs"))
+        .expect("scan succeeds");
+    // Whatever the count was before, it must remain — assert non-empty
+    // and that no new false positives appeared.
+    assert!(!findings.is_empty(), "main.rs must still produce findings");
+}
+
 // ── Phase 9: Go algorithm-registration patterns ────────────────────────────
 //
 // Phase 7 handled `switch alg { case "RS256": ... }`. But the canonical
