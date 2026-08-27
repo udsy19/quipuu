@@ -1,17 +1,17 @@
-# cryptoscope V6 — 150-project corpus benchmark
+# cryptoscope V7 — 150-project corpus benchmark
 
 **Corpus:** corpus-b-realworld  
 **Projects scanned:** 150  
-**Elapsed:** 21.8s  
+**Elapsed:** 22.1s  
 **Default filter:** quantum-safe inventory hidden from alert output (Phase 2; pass --include-safe to unhide)  
 
-This is the V6 corpus run, layered on Phases 1-6 (jjwt enum constants, signal-to-noise, ACVP refresh, why-this-matters, non-fatal warnings) plus Phase 7 (Go switch-on-string; MCP / HTML / SARIF warning surfacing), Phase 8 (paramiko-style runtime-variable args, crypto-js two-level member expressions), Phase 9 (Go algorithm-registration patterns — composite literal, call-as-constructor, const), and Phase 10 (Rust qualified paths, runtime-variable bits, turbofish hash extraction, ServerConfig / KeyPair APIs). Numbers below are stratified by ecosystem and reported without projected values — only what was actually scanned.
+This is the V7 corpus run, layered on Phases 1-6 (jjwt enum constants, signal-to-noise, ACVP refresh, why-this-matters, non-fatal warnings) plus Phase 7 (Go switch-on-string; MCP / HTML / SARIF warning surfacing), Phase 8 (paramiko-style runtime-variable args, crypto-js two-level member expressions), Phase 9 (Go algorithm-registration patterns — composite literal, call-as-constructor, const), Phase 10 (Rust qualified paths, runtime-variable bits, turbofish hash extraction, ServerConfig / KeyPair APIs), and Phase 11 (pbkdf2 nested-turbofish hash routing). Numbers below are stratified by ecosystem and reported without projected values — only what was actually scanned.
 
 ## Headline numbers
 
-- **1184 total findings** across 150 projects in 21.8s
-- **864 audible** (73%) surfaced for analyst review; **320 suppressed** (27%) as quantum-safe inventory
-- **53 / 150 projects** produced at least one finding; **9 / 150** had scan errors (mostly missing clones — see below)
+- **1194 total findings** across 150 projects in 22.1s
+- **864 audible** (72%) surfaced for analyst review; **330 suppressed** (28%) as quantum-safe inventory
+- **55 / 150 projects** produced at least one finding; **9 / 150** had scan errors (mostly missing clones — see below)
 - **Avg scan time:** 0.15s per project (release build, single-threaded)
 
 ### Phase 1 verification — Java JWT libraries now produce findings
@@ -44,31 +44,38 @@ Pre-Phase-10 (the V5 corpus run), these crates-io projects produced **zero** fin
 - `crates-io:rustls-webpki` — **12 findings** (was 0)
 - `crates-io:webpki` — **12 findings** (was 0)
 
+### Phase 11 verification — pbkdf2 turbofish detection
+
+Pre-Phase-11 (the V6 corpus run), pbkdf2 and scrypt produced **zero** findings. Their public API encodes the hash entirely in a turbofish generic (`pbkdf2::<Hmac<sha2::Sha256>>(...)`, `pbkdf2_hmac::<sha2::Sha256>(...)`) — the function callee text is just `pbkdf2` or `pbkdf2_hmac`. Phase 11 adds those callees plus eight classify rules that dispatch on the turbofish content (commit 38e4a9e):
+
+- `crates-io:pbkdf2` — **3 findings** (was 0)
+- `crates-io:scrypt` — **2 findings** (was 0)
+
 ## Findings by ecosystem
 
 | Ecosystem | Projects | Total findings | Audible | Suppressed (safe) | Errored | Avg scan time |
 |---|---|---|---|---|---|---|
-| crates-io | 25 | 216 | 73 | 143 | 0 | 0.06s |
+| crates-io | 25 | 226 | 73 | 153 | 0 | 0.06s |
 | crypto-adjacent | 25 | 6 | 4 | 2 | 2 | 0.04s |
 | go-modules | 25 | 441 | 364 | 77 | 3 | 0.10s |
-| maven | 25 | 366 | 290 | 76 | 4 | 0.42s |
+| maven | 25 | 366 | 290 | 76 | 4 | 0.41s |
 | npm | 25 | 117 | 95 | 22 | 0 | 0.11s |
-| pypi | 25 | 38 | 38 | 0 | 0 | 0.14s |
+| pypi | 25 | 38 | 38 | 0 | 0 | 0.17s |
 
 ## Top 10 projects by total finding count
 
 | Project | Total | Audible | Suppressed | Scan time |
 |---|---|---|---|---|
-| `go-modules:github.com/lestrrat-go/jwx` | 219 | 175 | 44 | 0.49s |
-| `crates-io:rustls-pemfile` | 140 | 30 | 110 | 0.29s |
-| `maven:com.google.crypto.tink:tink` | 130 | 103 | 27 | 1.88s |
-| `maven:org.eclipse.jetty:jetty-server` | 117 | 111 | 6 | 3.83s |
-| `maven:com.nimbusds:nimbus-jose-jwt` | 78 | 51 | 27 | 0.13s |
+| `go-modules:github.com/lestrrat-go/jwx` | 219 | 175 | 44 | 0.46s |
+| `crates-io:rustls-pemfile` | 140 | 30 | 110 | 0.28s |
+| `maven:com.google.crypto.tink:tink` | 130 | 103 | 27 | 1.87s |
+| `maven:org.eclipse.jetty:jetty-server` | 117 | 111 | 6 | 3.84s |
+| `maven:com.nimbusds:nimbus-jose-jwt` | 78 | 51 | 27 | 0.14s |
 | `go-modules:github.com/go-jose/go-jose` | 65 | 60 | 5 | 0.13s |
 | `npm:jsonwebtoken` | 64 | 64 | 0 | 0.07s |
-| `go-modules:github.com/hashicorp/vault` | 63 | 59 | 4 | 0.36s |
-| `go-modules:github.com/golang-jwt/jwt` | 46 | 33 | 13 | 0.09s |
-| `npm:jsrsasign` | 43 | 25 | 18 | 0.42s |
+| `go-modules:github.com/hashicorp/vault` | 63 | 59 | 4 | 0.34s |
+| `go-modules:github.com/golang-jwt/jwt` | 46 | 33 | 13 | 0.08s |
+| `npm:jsrsasign` | 43 | 25 | 18 | 0.43s |
 
 ## Coverage gaps — expected-non-zero projects with 0 findings
 
@@ -78,7 +85,7 @@ These are well-known crypto libraries / consumers where we expect to find *somet
 - `npm:crypto-js`
 - `pypi:pyjwt`
 
-### All zero-finding projects (97 / 150)
+### All zero-finding projects (95 / 150)
 
 Note: many of these are zero for legitimate reasons. The expected-non-zero list above is the actionable subset. The remaining categories are:
 
@@ -93,11 +100,9 @@ Note: many of these are zero for legitimate reasons. The expected-non-zero list 
 - `crates-io:ed25519-dalek`
 - `crates-io:hmac`
 - `crates-io:md-5`
-- `crates-io:pbkdf2`
 - `crates-io:ring`
 - `crates-io:rustls-native-certs`
 - `crates-io:rustls-pki-types`
-- `crates-io:scrypt`
 - `crates-io:sha-1`
 - `crates-io:sha2`
 - `crates-io:tokio-rustls`

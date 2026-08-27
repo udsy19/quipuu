@@ -2,7 +2,7 @@
   "corpus": "corpus-b-realworld",
   "include_safe": false,
   "total_projects_scanned": 150,
-  "total_elapsed_seconds": 21.78,
+  "total_elapsed_seconds": 22.13,
   "by_ecosystem": {
     "pypi": {
       "projects_scanned": 25,
@@ -11,7 +11,7 @@
       "total_findings": 38,
       "audible_findings": 38,
       "suppressed_findings": 0,
-      "total_duration_seconds": 3.6000000000000005
+      "total_duration_seconds": 4.13
     },
     "npm": {
       "projects_scanned": 25,
@@ -20,7 +20,7 @@
       "total_findings": 117,
       "audible_findings": 95,
       "suppressed_findings": 22,
-      "total_duration_seconds": 2.6700000000000004
+      "total_duration_seconds": 2.64
     },
     "maven": {
       "projects_scanned": 25,
@@ -29,16 +29,16 @@
       "total_findings": 366,
       "audible_findings": 290,
       "suppressed_findings": 76,
-      "total_duration_seconds": 10.48
+      "total_duration_seconds": 10.329999999999998
     },
     "crates-io": {
       "projects_scanned": 25,
-      "projects_with_findings": 12,
+      "projects_with_findings": 14,
       "projects_with_errors": 0,
-      "total_findings": 216,
+      "total_findings": 226,
       "audible_findings": 73,
-      "suppressed_findings": 143,
-      "total_duration_seconds": 1.4600000000000009
+      "suppressed_findings": 153,
+      "total_duration_seconds": 1.5000000000000004
     },
     "go-modules": {
       "projects_scanned": 25,
@@ -47,7 +47,7 @@
       "total_findings": 441,
       "audible_findings": 364,
       "suppressed_findings": 77,
-      "total_duration_seconds": 2.529999999999998
+      "total_duration_seconds": 2.429999999999998
     },
     "crypto-adjacent": {
       "projects_scanned": 25,
@@ -56,7 +56,7 @@
       "total_findings": 6,
       "audible_findings": 4,
       "suppressed_findings": 2,
-      "total_duration_seconds": 1.08
+      "total_duration_seconds": 1.0500000000000003
     }
   },
   "top_10_by_findings": [
@@ -73,7 +73,7 @@
       "total_findings": 219,
       "audible_findings": 175,
       "suppressed_findings": 44,
-      "duration_seconds": 0.49,
+      "duration_seconds": 0.46,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -185,7 +185,7 @@
       "total_findings": 140,
       "audible_findings": 30,
       "suppressed_findings": 110,
-      "duration_seconds": 0.29,
+      "duration_seconds": 0.28,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -209,7 +209,7 @@
       "total_findings": 130,
       "audible_findings": 103,
       "suppressed_findings": 27,
-      "duration_seconds": 1.88,
+      "duration_seconds": 1.87,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -245,7 +245,7 @@
       "total_findings": 117,
       "audible_findings": 111,
       "suppressed_findings": 6,
-      "duration_seconds": 3.83,
+      "duration_seconds": 3.84,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -281,7 +281,7 @@
       "total_findings": 78,
       "audible_findings": 51,
       "suppressed_findings": 27,
-      "duration_seconds": 0.13,
+      "duration_seconds": 0.14,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -375,7 +375,7 @@
       "total_findings": 63,
       "audible_findings": 59,
       "suppressed_findings": 4,
-      "duration_seconds": 0.36,
+      "duration_seconds": 0.34,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -427,7 +427,7 @@
       "total_findings": 46,
       "audible_findings": 33,
       "suppressed_findings": 13,
-      "duration_seconds": 0.09,
+      "duration_seconds": 0.08,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -463,7 +463,7 @@
       "total_findings": 43,
       "audible_findings": 25,
       "suppressed_findings": 18,
-      "duration_seconds": 0.42,
+      "duration_seconds": 0.43,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -529,8 +529,6 @@
     "crates-io:ed25519-dalek",
     "crates-io:x25519-dalek",
     "crates-io:hmac",
-    "crates-io:pbkdf2",
-    "crates-io:scrypt",
     "crates-io:argon2",
     "go-modules:github.com/aws/aws-sdk-go",
     "go-modules:github.com/aws/aws-sdk-go-v2",

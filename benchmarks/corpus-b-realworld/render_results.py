@@ -74,7 +74,7 @@ def main() -> int:
     lines: list[str] = []
     w = lines.append
 
-    w("# cryptoscope V6 — 150-project corpus benchmark")
+    w("# cryptoscope V7 — 150-project corpus benchmark")
     w("")
     w(f"**Corpus:** {summary.get('corpus', 'corpus-b-realworld')}  ")
     w(f"**Projects scanned:** {summary['total_projects_scanned']}  ")
@@ -85,16 +85,17 @@ def main() -> int:
     )
     w("")
     w(
-        "This is the V6 corpus run, layered on Phases 1-6 (jjwt enum constants, "
+        "This is the V7 corpus run, layered on Phases 1-6 (jjwt enum constants, "
         "signal-to-noise, ACVP refresh, why-this-matters, non-fatal warnings) "
         "plus Phase 7 (Go switch-on-string; MCP / HTML / SARIF warning "
         "surfacing), Phase 8 (paramiko-style runtime-variable args, crypto-js "
         "two-level member expressions), Phase 9 (Go algorithm-registration "
-        "patterns — composite literal, call-as-constructor, const), and "
-        "Phase 10 (Rust qualified paths, runtime-variable bits, turbofish "
-        "hash extraction, ServerConfig / KeyPair APIs). Numbers below are "
-        "stratified by ecosystem and reported without projected values — "
-        "only what was actually scanned."
+        "patterns — composite literal, call-as-constructor, const), Phase 10 "
+        "(Rust qualified paths, runtime-variable bits, turbofish hash "
+        "extraction, ServerConfig / KeyPair APIs), and Phase 11 (pbkdf2 "
+        "nested-turbofish hash routing). Numbers below are stratified by "
+        "ecosystem and reported without projected values — only what was "
+        "actually scanned."
     )
     w("")
 
@@ -223,6 +224,29 @@ def main() -> int:
         )
         w("")
         for cid, n in sorted(phase10_winners):
+            w(f"- `{cid}` — **{n} findings** (was 0)")
+        w("")
+
+    # ── Phase 11 — explicit verification ───────────────────────────────
+    phase11_winners = []
+    phase11_targets = {"crates-io:pbkdf2", "crates-io:scrypt"}
+    for r in per_project:
+        if r["canonical_id"] in phase11_targets and r["total_findings"] > 0:
+            phase11_winners.append((r["canonical_id"], r["total_findings"]))
+    if phase11_winners:
+        w("### Phase 11 verification — pbkdf2 turbofish detection")
+        w("")
+        w(
+            "Pre-Phase-11 (the V6 corpus run), pbkdf2 and scrypt produced "
+            "**zero** findings. Their public API encodes the hash entirely in "
+            "a turbofish generic (`pbkdf2::<Hmac<sha2::Sha256>>(...)`, "
+            "`pbkdf2_hmac::<sha2::Sha256>(...)`) — the function callee text "
+            "is just `pbkdf2` or `pbkdf2_hmac`. Phase 11 adds those callees "
+            "plus eight classify rules that dispatch on the turbofish "
+            "content (commit 38e4a9e):"
+        )
+        w("")
+        for cid, n in sorted(phase11_winners):
             w(f"- `{cid}` — **{n} findings** (was 0)")
         w("")
 
