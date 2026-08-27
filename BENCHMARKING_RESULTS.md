@@ -475,3 +475,56 @@ were comments and the tool name emitted into reports. Precision therefore stands
 
 This is recorded so the number in `state/precision.json` is traceable to a reason, not just to a
 green gate.
+
+---
+
+## Corpus integrity and the corrected precision figure — 2026-08-27
+
+**Measurement tuple:** corpus B (150 projects, **all 150 with a populated working tree for the first
+time**) · scanner set `--source --deps --include-safe` · profile `nist-default`.
+
+**Precision 81.8% (Wilson 95% CI 77.4–86.1%), stratified**, against a previously published 87.1%.
+The number fell, the scanner did not regress, and the fall is the deliverable.
+
+### Root cause
+
+46 of 150 projects had empty working trees. `clone_all.sh` clones `--no-checkout`, and each
+project's manifest `commit_sha` **is not a commit in the repository that project names** — so the
+checkout failed, printed `[warn] … leaving at HEAD`, counted the project as cloned, and left the
+tree empty. The pins were shuffled across project files at corpus construction.
+
+Checkable without network access: `61b250ac42af` is the pin for *both* `pypi:cryptography` and
+`microsoft/SymCrypt`, and the pin recorded for `liboqs` is a real `sslyze` commit dated 2026-03-29.
+Eight further bad pins are the current HEAD of a different corpus project. The 46 are re-pinned to
+what is on disk, each with a comment naming the unreachable sha it replaces.
+
+| | before | after |
+|---|---|---|
+| Projects with a populated working tree | 104 / 150 | **150 / 150** |
+| Findings, `nist-default` | 964 | **1604** |
+| Findings from the 104 always-present projects | 964 | **964, byte-identical** |
+
+### The estimator
+
+| Stratum | Findings | Audited | TP | FP | DEPENDS | Precision |
+|---|---|---|---|---|---|---|
+| 104 always-scanned | 964 | 272 | 217 | 32 | 23 | 87.1% |
+| 46 restored | 640 | 100 | 70 | 25 | 5 | 73.7% (Wilson 64.0–81.5) |
+| **weighted 0.601 / 0.399** | **1604** | **372** | | | | **81.8% (77.4–86.1)** |
+
+The restored stratum was sampled uniformly (seed 20260827, n=100 of 640) and every row labelled by
+opening the cited `file:line`. Unweighted pooling — the estimator that produced the old series —
+gives 83.4% on the same labels; that is quoted only to separate estimator effect from domain
+effect. **Most of the 5.3 pp fall is domain**: the crypto-dense strata that had been missing audit
+13 pp worse than the strata the old number was measured on.
+
+An advance prediction of ≈283 restored findings (total ≈1247) was made before the run. Actual:
+**+640, total 1604**. `jwx` alone contributes 230. The prediction is recorded as wrong.
+
+### Fixed in the same pass, because the sample surfaced it
+
+Four classify rules published a curve their own `when` clause contradicts: `CRYPTO-039`/`CRYPTO-035`
+matched P-521 and published `ecdh-p384`; `CRYPTO-010`/`CRYPTO-110` matched P-224 and published
+`ecdsa-p256` under a comment reading "map to nearest baseline". Corpus effect: **0 call sites added
+or removed, 0 severity changes, 25 `algorithm_id` values corrected.** Stratum B 70.5% → 73.7%,
+weighted 80.5% → **81.8%**.

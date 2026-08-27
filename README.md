@@ -167,9 +167,11 @@ not perform.
 | Avg per project | ~150ms |
 | Languages covered | 7 (Go, Python, Java, JavaScript/TypeScript, C/C++, Rust, C#) |
 
-Audit-validated precision: **84.5%** on a stratified 196-finding sample (Wilson 95% CI: 78.5%–89.1%), up from 75.5% in Phase 14a — the largest single-phase gain recorded. Full methodology and per-finding verdicts are in `PRECISION_AUDIT_V3.md`.
+Audit-validated precision: **81.8%** (Wilson 95% CI: 77.4%–86.1%) on the 150-project corpus, measured 2026-08-27. Methodology and per-finding verdicts are in `PRECISION_AUDIT_V3.md` and `BENCHMARKING_RESULTS.md`.
 
-Being precise about what that does and does not claim: the point estimate is 84.5%, but the **lower CI bound is 78.5%**, so the scanner does not yet clear an 85% precision floor at 95% confidence. The confidence interval is tighter than prior audits (±5.3 pp vs ±8.6 pp) because the sample is larger. Treat it as defensible for pilot deployments with human triage, not as a claim of 85%.
+**Why this number is lower than the one previously published here.** Earlier figures — 84.5%, and later 85.2% and 87.1% — were measured against a corpus in which **46 of the 150 projects had empty working trees**. `clone_all.sh` clones `--no-checkout`, and the manifest's `commit_sha` pins had been shuffled across project files, so the checkout failed, printed a warning, and the project was still counted as cloned. Those numbers were taken on a biased two-thirds sample.
+
+81.8% is the first measurement on a fully populated corpus. **The scanner did not regress — the earlier numbers were inflated by a broken corpus.** We are publishing the lower, correct figure and the reason for it, because a benchmark you cannot reproduce is worth nothing.
 
 The benchmark corpus and reproduce script live in `benchmarks/corpus-b-realworld/`. Clone it, run `python3 scan_corpus.py`, and verify the numbers yourself.
 
@@ -221,7 +223,7 @@ seawall scan .
 | MCP server | Yes | No | No | No | No |
 | Auditable open rule format | Yes (TOML) | No (binary) | Yes (QL) | No | Yes (YAML) |
 | Languages (crypto-specific) | 7 | 7+ | 7+ | Java only | Any |
-| Published precision (crypto findings) | 84.5% (196-sample audit) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
+| Published precision (crypto findings) | 81.8% (full 150-project corpus) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
 | Scan speed (150 projects) | ~22s | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
 
 **Where CodeQL wins:** CodeQL has full inter-procedural data-flow. It can trace a key from generation through storage to use and flag misuse that a pattern-based scanner cannot see. If you need that depth and can absorb the scan time, CodeQL delivers it. seawall does not attempt to replicate data-flow analysis — it trades that capability for speed, locality, and PQC specificity.
