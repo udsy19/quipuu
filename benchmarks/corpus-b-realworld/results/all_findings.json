@@ -1552,12 +1552,22 @@
   {
     "project": "maven:io.jsonwebtoken:jjwt-api",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-241",
-    "algorithm_id": "sha-256",
+    "rule_id": "CRYPTO-246",
+    "algorithm_id": "sha-512",
     "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/jjwt-api/api/src/main/java/io/jsonwebtoken/SignatureAlgorithm.java",
     "line": 115,
-    "message": "jjwt SignatureAlgorithm.HS512 (HMAC). Symmetric; confirm signing key entropy."
+    "message": "jjwt SignatureAlgorithm.HS512 (HMAC-SHA512). Symmetric; confirm signing key entropy."
+  },
+  {
+    "project": "maven:io.jsonwebtoken:jjwt-api",
+    "ecosystem": "maven",
+    "rule_id": "CRYPTO-245",
+    "algorithm_id": "sha-384",
+    "severity": "Medium",
+    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/jjwt-api/api/src/main/java/io/jsonwebtoken/SignatureAlgorithm.java",
+    "line": 115,
+    "message": "jjwt SignatureAlgorithm.HS384 (HMAC-SHA384). Symmetric; confirm signing key entropy."
   },
   {
     "project": "maven:io.jsonwebtoken:jjwt-api",
@@ -1567,17 +1577,7 @@
     "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/jjwt-api/api/src/main/java/io/jsonwebtoken/SignatureAlgorithm.java",
     "line": 115,
-    "message": "jjwt SignatureAlgorithm.HS384 (HMAC). Symmetric; confirm signing key entropy."
-  },
-  {
-    "project": "maven:io.jsonwebtoken:jjwt-api",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-241",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/jjwt-api/api/src/main/java/io/jsonwebtoken/SignatureAlgorithm.java",
-    "line": 115,
-    "message": "jjwt SignatureAlgorithm.HS256 (HMAC). Symmetric; confirm signing key entropy."
+    "message": "jjwt SignatureAlgorithm.HS256 (HMAC-SHA256). Symmetric; confirm signing key entropy."
   },
   {
     "project": "maven:io.jsonwebtoken:jjwt-api",
@@ -1727,7 +1727,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/jetty-server/jetty-integrations/jetty-ethereum/src/test/java/org/eclipse/jetty/security/siwe/util/EthereumCredentials.java",
     "line": 50,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:org.eclipse.jetty:jetty-server",
@@ -1827,7 +1827,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/jetty-server/tests/test-distribution/test-distribution-common/src/test/java/org/eclipse/jetty/tests/distribution/siwe/EthereumCredentials.java",
     "line": 47,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:org.eclipse.jetty:jetty-server",
@@ -2937,7 +2937,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/test/java/com/google/crypto/tink/signature/KeyConversionTest.java",
     "line": 56,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -2957,7 +2957,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/test/java/com/google/crypto/tink/signature/EcdsaVerifyKeyManagerTest.java",
     "line": 157,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -2967,7 +2967,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/test/java/com/google/crypto/tink/signature/EcdsaVerifyKeyManagerTest.java",
     "line": 194,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -2977,7 +2977,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/test/java/com/google/crypto/tink/signature/EcdsaPrivateKeyTest.java",
     "line": 134,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -3007,7 +3007,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/test/java/com/google/crypto/tink/internal/LegacyKeyManagerImplTest.java",
     "line": 84,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -3017,7 +3017,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/test/java/com/google/crypto/tink/subtle/EcdsaSignJceTest.java",
     "line": 75,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -3027,7 +3027,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/test/java/com/google/crypto/tink/subtle/EcdsaSignJceTest.java",
     "line": 98,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -3037,7 +3037,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/test/java/com/google/crypto/tink/subtle/EcdsaSignJceTest.java",
     "line": 115,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -3047,7 +3047,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/test/java/com/google/crypto/tink/subtle/EcdsaSignJceTest.java",
     "line": 150,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -3057,7 +3057,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/test/java/com/google/crypto/tink/subtle/SignatureThreadSafetyTest.java",
     "line": 224,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -3177,7 +3177,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/test/java/com/google/crypto/tink/subtle/EcdsaVerifyJceTest.java",
     "line": 162,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -3187,7 +3187,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/test/java/com/google/crypto/tink/subtle/EcdsaVerifyJceTest.java",
     "line": 219,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -3197,7 +3197,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/test/java/com/google/crypto/tink/subtle/EcdsaVerifyJceTest.java",
     "line": 246,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -3207,7 +3207,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/test/java/com/google/crypto/tink/subtle/EcdsaVerifyJceTest.java",
     "line": 272,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -3217,7 +3217,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/test/java/com/google/crypto/tink/subtle/EcdsaVerifyJceTest.java",
     "line": 313,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -3267,7 +3267,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/main/java/com/google/crypto/tink/testing/TestUtil.java",
     "line": 371,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -3277,7 +3277,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/java_src/src/main/java/com/google/crypto/tink/testing/TestUtil.java",
     "line": 474,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -4297,57 +4297,57 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSASSAProvider.java",
     "line": 57,
-    "message": "nimbus JWSAlgorithm.RS256 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.RS256 \u2014 RSA-PKCS1-SHA256 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-250",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-259",
+    "algorithm_id": "rsa-pkcs1-sha384-3072",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSASSAProvider.java",
     "line": 58,
-    "message": "nimbus JWSAlgorithm.RS384 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.RS384 \u2014 RSA-PKCS1-SHA384 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-250",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-280",
+    "algorithm_id": "rsa-pkcs1-sha512-4096",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSASSAProvider.java",
     "line": 59,
-    "message": "nimbus JWSAlgorithm.RS512 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.RS512 \u2014 RSA-PKCS1-SHA512 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-250",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-281",
+    "algorithm_id": "rsa-pss-sha256-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSASSAProvider.java",
     "line": 60,
-    "message": "nimbus JWSAlgorithm.PS256 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.PS256 \u2014 RSA-PSS-SHA256 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-250",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-282",
+    "algorithm_id": "rsa-pss-sha384-3072",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSASSAProvider.java",
     "line": 61,
-    "message": "nimbus JWSAlgorithm.PS384 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.PS384 \u2014 RSA-PSS-SHA384 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-250",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-283",
+    "algorithm_id": "rsa-pss-sha512-4096",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSASSAProvider.java",
     "line": 62,
-    "message": "nimbus JWSAlgorithm.PS512 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.PS512 \u2014 RSA-PSS-SHA512 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
@@ -4357,7 +4357,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/ECDHEncrypter.java",
     "line": 194,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
@@ -4367,37 +4367,37 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/ECDHEncrypter.java",
     "line": 196,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-254",
+    "rule_id": "CRYPTO-285",
     "algorithm_id": "rsa-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSADecrypter.java",
     "line": 211,
-    "message": "nimbus JWEAlgorithm.RSA1_5 \u2014 RSA key wrapping, quantum-vulnerable."
+    "message": "nimbus JWEAlgorithm.RSA1_5 \u2014 RSA-PKCS1-v1.5 key wrapping (legacy; consider RSA-OAEP-256). Quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-254",
-    "algorithm_id": "rsa-2048",
+    "rule_id": "CRYPTO-284",
+    "algorithm_id": "rsa-oaep",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSADecrypter.java",
     "line": 236,
-    "message": "nimbus JWEAlgorithm.RSA_OAEP \u2014 RSA key wrapping, quantum-vulnerable."
+    "message": "nimbus JWEAlgorithm.RSA_OAEP \u2014 RSA-OAEP (SHA-1) key wrapping. Quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
     "rule_id": "CRYPTO-254",
-    "algorithm_id": "rsa-2048",
+    "algorithm_id": "rsa-oaep-256",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSADecrypter.java",
     "line": 240,
-    "message": "nimbus JWEAlgorithm.RSA_OAEP_256 \u2014 RSA key wrapping, quantum-vulnerable."
+    "message": "nimbus JWEAlgorithm.RSA_OAEP_256 \u2014 RSA-OAEP-256 key wrapping. Quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
@@ -4647,87 +4647,87 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSASSA.java",
     "line": 62,
-    "message": "nimbus JWSAlgorithm.RS256 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.RS256 \u2014 RSA-PKCS1-SHA256 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-250",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-259",
+    "algorithm_id": "rsa-pkcs1-sha384-3072",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSASSA.java",
     "line": 64,
-    "message": "nimbus JWSAlgorithm.RS384 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.RS384 \u2014 RSA-PKCS1-SHA384 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-250",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-280",
+    "algorithm_id": "rsa-pkcs1-sha512-4096",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSASSA.java",
     "line": 66,
-    "message": "nimbus JWSAlgorithm.RS512 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.RS512 \u2014 RSA-PKCS1-SHA512 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-250",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-281",
+    "algorithm_id": "rsa-pss-sha256-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSASSA.java",
     "line": 68,
-    "message": "nimbus JWSAlgorithm.PS256 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.PS256 \u2014 RSA-PSS-SHA256 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-250",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-282",
+    "algorithm_id": "rsa-pss-sha384-3072",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSASSA.java",
     "line": 72,
-    "message": "nimbus JWSAlgorithm.PS384 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.PS384 \u2014 RSA-PSS-SHA384 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-250",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-283",
+    "algorithm_id": "rsa-pss-sha512-4096",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSASSA.java",
     "line": 76,
-    "message": "nimbus JWSAlgorithm.PS512 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.PS512 \u2014 RSA-PSS-SHA512 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-254",
+    "rule_id": "CRYPTO-285",
     "algorithm_id": "rsa-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSAEncrypter.java",
     "line": 137,
-    "message": "nimbus JWEAlgorithm.RSA1_5 \u2014 RSA key wrapping, quantum-vulnerable."
+    "message": "nimbus JWEAlgorithm.RSA1_5 \u2014 RSA-PKCS1-v1.5 key wrapping (legacy; consider RSA-OAEP-256). Quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-254",
-    "algorithm_id": "rsa-2048",
+    "rule_id": "CRYPTO-284",
+    "algorithm_id": "rsa-oaep",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSAEncrypter.java",
     "line": 141,
-    "message": "nimbus JWEAlgorithm.RSA_OAEP \u2014 RSA key wrapping, quantum-vulnerable."
+    "message": "nimbus JWEAlgorithm.RSA_OAEP \u2014 RSA-OAEP (SHA-1) key wrapping. Quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
     "rule_id": "CRYPTO-254",
-    "algorithm_id": "rsa-2048",
+    "algorithm_id": "rsa-oaep-256",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSAEncrypter.java",
     "line": 145,
-    "message": "nimbus JWEAlgorithm.RSA_OAEP_256 \u2014 RSA key wrapping, quantum-vulnerable."
+    "message": "nimbus JWEAlgorithm.RSA_OAEP_256 \u2014 RSA-OAEP-256 key wrapping. Quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
@@ -4762,32 +4762,32 @@
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-254",
+    "rule_id": "CRYPTO-285",
     "algorithm_id": "rsa-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSACryptoProvider.java",
     "line": 75,
-    "message": "nimbus JWEAlgorithm.RSA1_5 \u2014 RSA key wrapping, quantum-vulnerable."
+    "message": "nimbus JWEAlgorithm.RSA1_5 \u2014 RSA-PKCS1-v1.5 key wrapping (legacy; consider RSA-OAEP-256). Quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-254",
-    "algorithm_id": "rsa-2048",
+    "rule_id": "CRYPTO-284",
+    "algorithm_id": "rsa-oaep",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSACryptoProvider.java",
     "line": 76,
-    "message": "nimbus JWEAlgorithm.RSA_OAEP \u2014 RSA key wrapping, quantum-vulnerable."
+    "message": "nimbus JWEAlgorithm.RSA_OAEP \u2014 RSA-OAEP (SHA-1) key wrapping. Quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
     "rule_id": "CRYPTO-254",
-    "algorithm_id": "rsa-2048",
+    "algorithm_id": "rsa-oaep-256",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/crypto/RSACryptoProvider.java",
     "line": 77,
-    "message": "nimbus JWEAlgorithm.RSA_OAEP_256 \u2014 RSA key wrapping, quantum-vulnerable."
+    "message": "nimbus JWEAlgorithm.RSA_OAEP_256 \u2014 RSA-OAEP-256 key wrapping. Quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
@@ -4897,57 +4897,57 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/jca/JCASupport.java",
     "line": 115,
-    "message": "nimbus JWSAlgorithm.RS256 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.RS256 \u2014 RSA-PKCS1-SHA256 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-250",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-259",
+    "algorithm_id": "rsa-pkcs1-sha384-3072",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/jca/JCASupport.java",
     "line": 117,
-    "message": "nimbus JWSAlgorithm.RS384 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.RS384 \u2014 RSA-PKCS1-SHA384 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-250",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-280",
+    "algorithm_id": "rsa-pkcs1-sha512-4096",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/jca/JCASupport.java",
     "line": 119,
-    "message": "nimbus JWSAlgorithm.RS512 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.RS512 \u2014 RSA-PKCS1-SHA512 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-250",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-281",
+    "algorithm_id": "rsa-pss-sha256-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/jca/JCASupport.java",
     "line": 121,
-    "message": "nimbus JWSAlgorithm.PS256 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.PS256 \u2014 RSA-PSS-SHA256 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-250",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-282",
+    "algorithm_id": "rsa-pss-sha384-3072",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/jca/JCASupport.java",
     "line": 123,
-    "message": "nimbus JWSAlgorithm.PS384 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.PS384 \u2014 RSA-PSS-SHA384 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-250",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
+    "rule_id": "CRYPTO-283",
+    "algorithm_id": "rsa-pss-sha512-4096",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/jca/JCASupport.java",
     "line": 125,
-    "message": "nimbus JWSAlgorithm.PS512 \u2014 RSA signature, quantum-vulnerable."
+    "message": "nimbus JWSAlgorithm.PS512 \u2014 RSA-PSS-SHA512 signature, quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
@@ -4982,32 +4982,32 @@
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-254",
+    "rule_id": "CRYPTO-285",
     "algorithm_id": "rsa-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/jca/JCASupport.java",
     "line": 188,
-    "message": "nimbus JWEAlgorithm.RSA1_5 \u2014 RSA key wrapping, quantum-vulnerable."
+    "message": "nimbus JWEAlgorithm.RSA1_5 \u2014 RSA-PKCS1-v1.5 key wrapping (legacy; consider RSA-OAEP-256). Quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-254",
-    "algorithm_id": "rsa-2048",
+    "rule_id": "CRYPTO-284",
+    "algorithm_id": "rsa-oaep",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/jca/JCASupport.java",
     "line": 190,
-    "message": "nimbus JWEAlgorithm.RSA_OAEP \u2014 RSA key wrapping, quantum-vulnerable."
+    "message": "nimbus JWEAlgorithm.RSA_OAEP \u2014 RSA-OAEP (SHA-1) key wrapping. Quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
     "ecosystem": "maven",
     "rule_id": "CRYPTO-254",
-    "algorithm_id": "rsa-2048",
+    "algorithm_id": "rsa-oaep-256",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/nimbus-jose-jwt/src/main/java/com/nimbusds/jose/jca/JCASupport.java",
     "line": 192,
-    "message": "nimbus JWEAlgorithm.RSA_OAEP_256 \u2014 RSA key wrapping, quantum-vulnerable."
+    "message": "nimbus JWEAlgorithm.RSA_OAEP_256 \u2014 RSA-OAEP-256 key wrapping. Quantum-vulnerable."
   },
   {
     "project": "maven:com.nimbusds:nimbus-jose-jwt",
@@ -5057,27 +5057,27 @@
     "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/jose4j/src/main/java/org/jose4j/jws/HmacUsingShaAlgorithm.java",
     "line": 112,
-    "message": "jose4j AlgorithmIdentifiers.HMAC_SHA256 (HMAC). Symmetric; confirm key entropy."
+    "message": "jose4j AlgorithmIdentifiers.HMAC_SHA256 (HMAC-SHA256). Symmetric; confirm key entropy."
   },
   {
     "project": "maven:org.bitbucket.b_c:jose4j",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-263",
-    "algorithm_id": "sha-256",
+    "rule_id": "CRYPTO-265",
+    "algorithm_id": "sha-384",
     "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/jose4j/src/main/java/org/jose4j/jws/HmacUsingShaAlgorithm.java",
     "line": 120,
-    "message": "jose4j AlgorithmIdentifiers.HMAC_SHA384 (HMAC). Symmetric; confirm key entropy."
+    "message": "jose4j AlgorithmIdentifiers.HMAC_SHA384 (HMAC-SHA384). Symmetric; confirm key entropy."
   },
   {
     "project": "maven:org.bitbucket.b_c:jose4j",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-263",
-    "algorithm_id": "sha-256",
+    "rule_id": "CRYPTO-266",
+    "algorithm_id": "sha-512",
     "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/jose4j/src/main/java/org/jose4j/jws/HmacUsingShaAlgorithm.java",
     "line": 128,
-    "message": "jose4j AlgorithmIdentifiers.HMAC_SHA512 (HMAC). Symmetric; confirm key entropy."
+    "message": "jose4j AlgorithmIdentifiers.HMAC_SHA512 (HMAC-SHA512). Symmetric; confirm key entropy."
   },
   {
     "project": "maven:org.bitbucket.b_c:jose4j",
@@ -5087,27 +5087,27 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/jose4j/src/main/java/org/jose4j/jws/EcdsaUsingShaAlgorithm.java",
     "line": 243,
-    "message": "jose4j AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256 \u2014 ECDSA, quantum-vulnerable."
+    "message": "jose4j AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256 \u2014 ECDSA P-256, quantum-vulnerable."
   },
   {
     "project": "maven:org.bitbucket.b_c:jose4j",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-262",
-    "algorithm_id": "ecdsa-p256",
+    "rule_id": "CRYPTO-267",
+    "algorithm_id": "ecdsa-p384",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/jose4j/src/main/java/org/jose4j/jws/EcdsaUsingShaAlgorithm.java",
     "line": 251,
-    "message": "jose4j AlgorithmIdentifiers.ECDSA_USING_P384_CURVE_AND_SHA384 \u2014 ECDSA, quantum-vulnerable."
+    "message": "jose4j AlgorithmIdentifiers.ECDSA_USING_P384_CURVE_AND_SHA384 \u2014 ECDSA P-384, quantum-vulnerable."
   },
   {
     "project": "maven:org.bitbucket.b_c:jose4j",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-262",
-    "algorithm_id": "ecdsa-p256",
+    "rule_id": "CRYPTO-268",
+    "algorithm_id": "ecdsa-p521",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/jose4j/src/main/java/org/jose4j/jws/EcdsaUsingShaAlgorithm.java",
     "line": 259,
-    "message": "jose4j AlgorithmIdentifiers.ECDSA_USING_P521_CURVE_AND_SHA512 \u2014 ECDSA, quantum-vulnerable."
+    "message": "jose4j AlgorithmIdentifiers.ECDSA_USING_P521_CURVE_AND_SHA512 \u2014 ECDSA P-521, quantum-vulnerable."
   },
   {
     "project": "maven:org.bitbucket.b_c:jose4j",
@@ -11917,7 +11917,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/crypto-adjacent/tink-java/src/main/java/com/google/crypto/tink/testing/TestUtil.java",
     "line": 371,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "crypto-adjacent:github.com/tink-crypto/tink-java",
@@ -11927,7 +11927,7 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/crypto-adjacent/tink-java/src/main/java/com/google/crypto/tink/testing/TestUtil.java",
     "line": 474,
-    "message": "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+    "message": "EC keypair generator \u2014 curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
   },
   {
     "project": "crypto-adjacent:github.com/tink-crypto/tink-java",

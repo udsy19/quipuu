@@ -2,7 +2,7 @@
   "corpus": "corpus-b-realworld",
   "include_safe": false,
   "total_projects_scanned": 150,
-  "total_elapsed_seconds": 23.27,
+  "total_elapsed_seconds": 20.14,
   "by_ecosystem": {
     "pypi": {
       "projects_scanned": 25,
@@ -11,7 +11,7 @@
       "total_findings": 38,
       "audible_findings": 38,
       "suppressed_findings": 0,
-      "total_duration_seconds": 4.409999999999999
+      "total_duration_seconds": 3.2900000000000005
     },
     "npm": {
       "projects_scanned": 25,
@@ -20,7 +20,7 @@
       "total_findings": 117,
       "audible_findings": 95,
       "suppressed_findings": 22,
-      "total_duration_seconds": 2.59
+      "total_duration_seconds": 2.5100000000000002
     },
     "maven": {
       "projects_scanned": 25,
@@ -29,7 +29,7 @@
       "total_findings": 366,
       "audible_findings": 290,
       "suppressed_findings": 76,
-      "total_duration_seconds": 10.999999999999998
+      "total_duration_seconds": 9.33
     },
     "crates-io": {
       "projects_scanned": 25,
@@ -38,7 +38,7 @@
       "total_findings": 226,
       "audible_findings": 73,
       "suppressed_findings": 153,
-      "total_duration_seconds": 1.4800000000000009
+      "total_duration_seconds": 1.4800000000000004
     },
     "go-modules": {
       "projects_scanned": 25,
@@ -47,7 +47,7 @@
       "total_findings": 441,
       "audible_findings": 364,
       "suppressed_findings": 77,
-      "total_duration_seconds": 2.449999999999998
+      "total_duration_seconds": 2.4399999999999977
     },
     "crypto-adjacent": {
       "projects_scanned": 25,
@@ -56,7 +56,7 @@
       "total_findings": 6,
       "audible_findings": 4,
       "suppressed_findings": 2,
-      "total_duration_seconds": 1.2300000000000002
+      "total_duration_seconds": 1.0400000000000003
     }
   },
   "top_10_by_findings": [
@@ -73,7 +73,7 @@
       "total_findings": 219,
       "audible_findings": 175,
       "suppressed_findings": 44,
-      "duration_seconds": 0.49,
+      "duration_seconds": 0.48,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -185,7 +185,7 @@
       "total_findings": 140,
       "audible_findings": 30,
       "suppressed_findings": 110,
-      "duration_seconds": 0.29,
+      "duration_seconds": 0.28,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -209,7 +209,7 @@
       "total_findings": 130,
       "audible_findings": 103,
       "suppressed_findings": 27,
-      "duration_seconds": 1.89,
+      "duration_seconds": 1.57,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -245,7 +245,7 @@
       "total_findings": 117,
       "audible_findings": 111,
       "suppressed_findings": 6,
-      "duration_seconds": 4.31,
+      "duration_seconds": 3.52,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -287,14 +287,6 @@
       "errors": [],
       "sample_findings": [
         {
-          "algorithm_id": "rsa-pkcs1-sha256-2048",
-          "count": 18
-        },
-        {
-          "algorithm_id": "rsa-2048",
-          "count": 12
-        },
-        {
           "algorithm_id": "ecdsa-p256",
           "count": 8
         },
@@ -305,6 +297,14 @@
         {
           "algorithm_id": "ecdsa-p521",
           "count": 6
+        },
+        {
+          "algorithm_id": "rsa-2048",
+          "count": 4
+        },
+        {
+          "algorithm_id": "rsa-oaep",
+          "count": 4
         }
       ]
     },
@@ -379,7 +379,7 @@
       "total_findings": 63,
       "audible_findings": 59,
       "suppressed_findings": 4,
-      "duration_seconds": 0.32,
+      "duration_seconds": 0.33,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
