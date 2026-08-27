@@ -1,6 +1,6 @@
 # NIST PQC Migration Timeline — Authoritative Reference
 
-**For:** cryptoscope risk engine  
+**For:** seawall risk engine  
 **As of:** 2026-06-12  
 **Sources:** Primary only (NIST CSRC, NSA media.defense.gov). Blog summaries excluded.  
 **Files in `/knowledge/sources/`:** NIST.IR.8547.ipd.pdf, NIST.FIPS.203.pdf, NIST.FIPS.204.pdf, NIST.FIPS.205.pdf, NIST.SP.800-131Ar3.ipd.pdf
@@ -21,7 +21,7 @@
 | Canonical URL | https://csrc.nist.gov/pubs/ir/8547/ipd |
 | PDF | https://nvlpubs.nist.gov/nistpubs/ir/2024/NIST.IR.8547.ipd.pdf |
 
-**Implication for cryptoscope:** All deprecation/disallow years below are from the IPD. They may change in the final. Monitor https://csrc.nist.gov/pubs/ir/8547 for a non-IPD URL to appear.
+**Implication for seawall:** All deprecation/disallow years below are from the IPD. They may change in the final. Monitor https://csrc.nist.gov/pubs/ir/8547 for a non-IPD URL to appear.
 
 ---
 
@@ -69,7 +69,7 @@ The critical distinction is:
 
 This was a revision from prior NIST guidance. SP 800-57 Part 1 had projected disallow of 112-bit by 2031; IR 8547 softens this to *deprecate* 112-bit by 2030 and *disallow* everything by 2035.
 
-### 2.3 Security Strength to Key-Size Mapping (for cryptoscope classifier)
+### 2.3 Security Strength to Key-Size Mapping (for seawall classifier)
 
 | Algorithm | Key/Parameter | Security Strength (classical) |
 |---|---|---|
@@ -302,7 +302,7 @@ Source: https://github.com/CycloneDX/specification/blob/1.6/schema/bom-1.6.schem
 
 **Level 6 is reserved in the CycloneDX schema** (maximum = 6) but has no corresponding NIST-defined category. It is likely reserved for future use or implementation-defined extensions.
 
-### 8.2 Algorithm-to-Level Mapping for cryptoscope
+### 8.2 Algorithm-to-Level Mapping for seawall
 
 | Algorithm | nistQuantumSecurityLevel | Rationale |
 |---|---|---|
@@ -330,7 +330,7 @@ Source: https://github.com/CycloneDX/specification/blob/1.6/schema/bom-1.6.schem
 
 ---
 
-## 9. DECISIONS — cryptoscope Risk Engine
+## 9. DECISIONS — seawall Risk Engine
 
 ### Hard-code
 

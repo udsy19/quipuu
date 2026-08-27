@@ -1,6 +1,6 @@
 # Operational data files
 
-These TOML files are the *what cryptoscope ships with* — the static data its Rust code will deserialize. They live here (under decisions) because each one **implements** one or more decisions in `../README.md`. Validated 2026-06-15: all parse, all cross-references resolve.
+These TOML files are the *what seawall ships with* — the static data its Rust code will deserialize. They live here (under decisions) because each one **implements** one or more decisions in `../README.md`. Validated 2026-06-15: all parse, all cross-references resolve.
 
 | File | Implements | Contents (validated) |
 |---|---|---|

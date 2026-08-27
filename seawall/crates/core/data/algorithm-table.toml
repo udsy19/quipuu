@@ -1,0 +1,957 @@
+# Canonical Algorithm Table
+#
+# This is the static lookup table seawall ships with — every detected
+# algorithm-id maps to one of these records. The Rust core crate deserializes
+# this at compile time via include_dir!.
+#
+# Schema (per entry):
+#   id                       canonical algorithm-id (kebab-case, stable across releases)
+#   display_name             human-facing name in reports
+#   family                   broad family (RSA, ECDSA, ML-KEM, SHA-2, AES, ...)
+#   primitive                CycloneDX 1.7 algorithmProperties.primitive enum value
+#                            (drbg | mac | block-cipher | stream-cipher | signature | hash |
+#                             pke | xof | kdf | key-agree | kem | ae | combiner | key-wrap |
+#                             other | unknown)
+#   classical_security_bits  classical security in bits (omitted = not applicable)
+#   nist_quantum_security_level  CBOM nistQuantumSecurityLevel integer 0..6 (0 = vuln)
+#   quantum_status           BrokenByShor | WeakenedByGrover | QuantumSafe |
+#                            BrokenClassically | PqcFinal | PqcDraft
+#   replacement              recommended PQC replacement algorithm-id (optional)
+#   fips                     FIPS reference if any (e.g. "FIPS 203")
+#   oid                      most common OID (string, dotted decimal)
+#   notes                    free-form; cite sources where they matter
+#
+# Sources tracked at the entry level. Family-wide source notes:
+#   * Quantum status follows NIST IR 8547 IPD (Nov 2024) — see knowledge/02-nist-pqc-timeline.
+#   * CBOM nistQuantumSecurityLevel anchors per CycloneDX 1.7 schema docs.
+#   * Classical security bits per NIST SP 800-57 Part 1 Rev. 5.
+#   * OIDs per RFC 9881 (ML-DSA), RFC 9909 (SLH-DSA), RFC 9935 (ML-KEM), classical RFCs.
+
+# ============================================================================
+# ASYMMETRIC — BROKEN BY SHOR
+# ============================================================================
+
+[[algorithm]]
+id = "rsa-1024"
+display_name = "RSA-1024"
+family = "RSA"
+primitive = "pke"
+classical_security_bits = 80
+nist_quantum_security_level = 0
+quantum_status = "BrokenClassically"
+replacement = "ml-kem-768"
+oid = "1.2.840.113549.1.1.1"
+notes = "Classical security below NIST SP 800-131A minimum (112-bit); already disallowed for new use."
+
+[[algorithm]]
+id = "rsa-2048"
+display_name = "RSA-2048"
+family = "RSA"
+primitive = "pke"
+classical_security_bits = 112
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-768"
+oid = "1.2.840.113549.1.1.1"
+notes = "NIST IR 8547 IPD: deprecated after 2030, disallowed after 2035."
+
+[[algorithm]]
+id = "rsa-oaep"
+display_name = "RSA-OAEP (SHA-1 MGF)"
+family = "RSA"
+primitive = "pke"
+classical_security_bits = 112
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-768"
+oid = "1.2.840.113549.1.1.7"
+notes = "RSAES-OAEP with SHA-1 MGF (default). JWE RFC 7518 § A. Quantum-vulnerable."
+
+[[algorithm]]
+id = "rsa-oaep-256"
+display_name = "RSA-OAEP-256 (SHA-256 MGF)"
+family = "RSA"
+primitive = "pke"
+classical_security_bits = 112
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-768"
+oid = "1.2.840.113549.1.1.7"
+notes = "RSAES-OAEP with SHA-256 hash + MGF1-SHA256. JWE RFC 7518 § A.3. Same OID as rsa-oaep; algorithm parameters distinguish them. Quantum-vulnerable."
+
+[[algorithm]]
+id = "rsa-3072"
+display_name = "RSA-3072"
+family = "RSA"
+primitive = "pke"
+classical_security_bits = 128
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-768"
+oid = "1.2.840.113549.1.1.1"
+notes = "NIST IR 8547 IPD: disallowed after 2035 (no intermediate deprecation)."
+
+[[algorithm]]
+id = "rsa-4096"
+display_name = "RSA-4096"
+family = "RSA"
+primitive = "pke"
+classical_security_bits = 152
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-1024"
+oid = "1.2.840.113549.1.1.1"
+
+[[algorithm]]
+id = "rsa-pss-sha256-2048"
+display_name = "RSA-PSS-SHA256 (2048-bit)"
+family = "RSASSA-PSS"
+primitive = "signature"
+classical_security_bits = 112
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-65"
+oid = "1.2.840.113549.1.1.10"
+
+[[algorithm]]
+id = "rsa-pss-sha384-3072"
+display_name = "RSA-PSS-SHA384 (3072-bit typical)"
+family = "RSASSA-PSS"
+primitive = "signature"
+classical_security_bits = 128
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-87"
+oid = "1.2.840.113549.1.1.10"
+notes = "JWT PS384 — RSASSA-PSS with SHA-384. Same OID as PS256/PS512 (algorithm parameters distinguish them)."
+
+[[algorithm]]
+id = "rsa-pss-sha512-4096"
+display_name = "RSA-PSS-SHA512 (4096-bit typical)"
+family = "RSASSA-PSS"
+primitive = "signature"
+classical_security_bits = 152
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-87"
+oid = "1.2.840.113549.1.1.10"
+notes = "JWT PS512 — RSASSA-PSS with SHA-512."
+
+[[algorithm]]
+id = "rsa-pkcs1-sha1"
+display_name = "RSA-PKCS1-SHA1"
+family = "RSASSA-PKCS1"
+primitive = "signature"
+classical_security_bits = 80
+nist_quantum_security_level = 0
+quantum_status = "BrokenClassically"
+replacement = "ml-dsa-65"
+oid = "1.2.840.113549.1.1.5"
+notes = "SHA-1 signatures: CA/B Forum Ballot SC097 (Feb 2026) — disallowed."
+
+[[algorithm]]
+id = "rsa-pkcs1-md5"
+display_name = "RSA-PKCS1-MD5"
+family = "RSASSA-PKCS1"
+primitive = "signature"
+classical_security_bits = 0
+nist_quantum_security_level = 0
+quantum_status = "BrokenClassically"
+replacement = "ml-dsa-65"
+oid = "1.2.840.113549.1.1.4"
+notes = "MD5 broken since 2004 (collision attacks)."
+
+[[algorithm]]
+id = "rsa-pkcs1-sha256-2048"
+display_name = "RSA-PKCS1-SHA256 (2048-bit)"
+family = "RSASSA-PKCS1"
+primitive = "signature"
+classical_security_bits = 112
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-65"
+oid = "1.2.840.113549.1.1.11"
+
+[[algorithm]]
+id = "rsa-pkcs1-sha384-3072"
+display_name = "RSA-PKCS1-SHA384 (3072-bit)"
+family = "RSASSA-PKCS1"
+primitive = "signature"
+classical_security_bits = 128
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-65"
+oid = "1.2.840.113549.1.1.12"
+
+[[algorithm]]
+id = "rsa-pkcs1-sha512-4096"
+display_name = "RSA-PKCS1-SHA512 (4096-bit)"
+family = "RSASSA-PKCS1"
+primitive = "signature"
+classical_security_bits = 152
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-87"
+oid = "1.2.840.113549.1.1.13"
+
+# ECDSA / ECDH on standard curves --------------------------------------------
+
+[[algorithm]]
+id = "ecdsa-p256"
+display_name = "ECDSA P-256 (secp256r1)"
+family = "ECDSA"
+primitive = "signature"
+classical_security_bits = 128
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-65"
+oid = "1.2.840.10045.4.3.2"
+notes = "P-256 curve OID 1.2.840.10045.3.1.7."
+
+[[algorithm]]
+id = "ecdsa-p384"
+display_name = "ECDSA P-384 (secp384r1)"
+family = "ECDSA"
+primitive = "signature"
+classical_security_bits = 192
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-87"
+oid = "1.2.840.10045.4.3.3"
+
+[[algorithm]]
+id = "ecdsa-p521"
+display_name = "ECDSA P-521 (secp521r1)"
+family = "ECDSA"
+primitive = "signature"
+classical_security_bits = 256
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-87"
+oid = "1.2.840.10045.4.3.4"
+
+[[algorithm]]
+id = "ecdsa-secp256k1"
+display_name = "ECDSA secp256k1"
+family = "ECDSA"
+primitive = "signature"
+classical_security_bits = 128
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-65"
+oid = "1.3.132.0.10"
+notes = "Bitcoin/Ethereum curve; not in NIST suite but widely deployed."
+
+[[algorithm]]
+id = "ecdsa-sha1"
+display_name = "ECDSA-SHA1"
+family = "ECDSA"
+primitive = "signature"
+classical_security_bits = 80
+nist_quantum_security_level = 0
+quantum_status = "BrokenClassically"
+replacement = "ml-dsa-65"
+oid = "1.2.840.10045.4.1"
+notes = "SHA-1 in signatures: disallowed."
+
+[[algorithm]]
+id = "ecdh-p256"
+display_name = "ECDH P-256"
+family = "ECDH"
+primitive = "key-agree"
+classical_security_bits = 128
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-768"
+
+[[algorithm]]
+id = "ecdh-p384"
+display_name = "ECDH P-384"
+family = "ECDH"
+primitive = "key-agree"
+classical_security_bits = 192
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-1024"
+
+[[algorithm]]
+id = "ecdh-p521"
+display_name = "ECDH P-521"
+family = "ECDH"
+primitive = "key-agree"
+classical_security_bits = 256
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-1024"
+
+# EdDSA / X25519 / X448 ------------------------------------------------------
+
+[[algorithm]]
+id = "ed25519"
+display_name = "Ed25519"
+family = "EdDSA"
+primitive = "signature"
+classical_security_bits = 128
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-65"
+oid = "1.3.101.112"
+
+[[algorithm]]
+id = "ed448"
+display_name = "Ed448"
+family = "EdDSA"
+primitive = "signature"
+classical_security_bits = 224
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-87"
+oid = "1.3.101.113"
+
+[[algorithm]]
+id = "x25519"
+display_name = "X25519 (Curve25519 ECDH)"
+family = "X25519"
+primitive = "key-agree"
+classical_security_bits = 128
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "x25519-mlkem768"
+oid = "1.3.101.110"
+notes = "Used in TLS hybrid groups when combined with ML-KEM."
+
+[[algorithm]]
+id = "x448"
+display_name = "X448"
+family = "X448"
+primitive = "key-agree"
+classical_security_bits = 224
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-1024"
+oid = "1.3.101.111"
+
+# DH / DSA -------------------------------------------------------------------
+
+[[algorithm]]
+id = "dh-2048"
+display_name = "Finite-Field DH (2048-bit)"
+family = "DH"
+primitive = "key-agree"
+classical_security_bits = 112
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-768"
+notes = "NIST IR 8547 IPD: deprecated after 2030, disallowed after 2035."
+
+[[algorithm]]
+id = "dh-3072"
+display_name = "Finite-Field DH (3072-bit)"
+family = "DH"
+primitive = "key-agree"
+classical_security_bits = 128
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-768"
+
+[[algorithm]]
+id = "dsa-2048"
+display_name = "DSA (2048-bit)"
+family = "DSA"
+primitive = "signature"
+classical_security_bits = 112
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-65"
+notes = "Already deprecated for new use independent of PQC (FIPS 186-5)."
+
+# ============================================================================
+# SYMMETRIC — WEAKENED BY GROVER OR RETAINED
+# ============================================================================
+
+[[algorithm]]
+id = "aes-128-gcm"
+display_name = "AES-128-GCM"
+family = "AES"
+primitive = "ae"
+classical_security_bits = 128
+nist_quantum_security_level = 1
+quantum_status = "WeakenedByGrover"
+replacement = "aes-256-gcm"
+oid = "2.16.840.1.101.3.4.1.6"
+notes = "NIST retains; CNSA 2.0 disallows. Use --policy nsa-cnsa2 to enforce."
+
+[[algorithm]]
+id = "aes-128-cbc"
+display_name = "AES-128-CBC"
+family = "AES"
+primitive = "block-cipher"
+classical_security_bits = 128
+nist_quantum_security_level = 1
+quantum_status = "WeakenedByGrover"
+replacement = "aes-256-gcm"
+oid = "2.16.840.1.101.3.4.1.2"
+notes = "CBC mode: prefer GCM or ChaCha20-Poly1305 for new use."
+
+[[algorithm]]
+id = "aes-192-gcm"
+display_name = "AES-192-GCM"
+family = "AES"
+primitive = "ae"
+classical_security_bits = 192
+nist_quantum_security_level = 3
+quantum_status = "QuantumSafe"
+oid = "2.16.840.1.101.3.4.1.26"
+
+[[algorithm]]
+id = "aes-256-gcm"
+display_name = "AES-256-GCM"
+family = "AES"
+primitive = "ae"
+classical_security_bits = 256
+nist_quantum_security_level = 5
+quantum_status = "QuantumSafe"
+oid = "2.16.840.1.101.3.4.1.46"
+
+[[algorithm]]
+id = "aes-256-cbc"
+display_name = "AES-256-CBC"
+family = "AES"
+primitive = "block-cipher"
+classical_security_bits = 256
+nist_quantum_security_level = 5
+quantum_status = "QuantumSafe"
+oid = "2.16.840.1.101.3.4.1.42"
+
+[[algorithm]]
+id = "aes-128-ecb"
+display_name = "AES-128-ECB"
+family = "AES"
+primitive = "block-cipher"
+classical_security_bits = 128
+nist_quantum_security_level = 1
+quantum_status = "BrokenClassically"
+replacement = "aes-256-gcm"
+notes = "ECB mode never appropriate beyond single-block; severity high regardless of key size."
+
+[[algorithm]]
+id = "aes-192-ecb"
+display_name = "AES-192-ECB"
+family = "AES"
+primitive = "block-cipher"
+classical_security_bits = 192
+nist_quantum_security_level = 3
+quantum_status = "BrokenClassically"
+replacement = "aes-256-gcm"
+notes = "ECB mode never appropriate beyond single-block; severity high regardless of key size."
+
+[[algorithm]]
+id = "aes-256-ecb"
+display_name = "AES-256-ECB"
+family = "AES"
+primitive = "block-cipher"
+classical_security_bits = 256
+nist_quantum_security_level = 5
+quantum_status = "BrokenClassically"
+replacement = "aes-256-gcm"
+notes = "ECB mode never appropriate beyond single-block; severity high regardless of key size."
+
+[[algorithm]]
+id = "3des"
+display_name = "Triple DES"
+family = "3DES"
+primitive = "block-cipher"
+classical_security_bits = 80
+nist_quantum_security_level = 0
+quantum_status = "BrokenClassically"
+replacement = "aes-256-gcm"
+notes = "Disallowed for encryption after 2023 (NIST SP 800-131A)."
+
+[[algorithm]]
+id = "des"
+display_name = "DES"
+family = "DES"
+primitive = "block-cipher"
+classical_security_bits = 56
+nist_quantum_security_level = 0
+quantum_status = "BrokenClassically"
+replacement = "aes-256-gcm"
+
+[[algorithm]]
+id = "rc4"
+display_name = "RC4"
+family = "RC4"
+primitive = "stream-cipher"
+classical_security_bits = 0
+nist_quantum_security_level = 0
+quantum_status = "BrokenClassically"
+replacement = "chacha20-poly1305"
+
+[[algorithm]]
+id = "chacha20-poly1305"
+display_name = "ChaCha20-Poly1305"
+family = "ChaCha20"
+primitive = "ae"
+classical_security_bits = 256
+nist_quantum_security_level = 5
+quantum_status = "QuantumSafe"
+notes = "RFC 7539/8439. No FIPS approval but unaffected by Shor."
+
+# ============================================================================
+# HASHES
+# ============================================================================
+
+[[algorithm]]
+id = "md5"
+display_name = "MD5"
+family = "MD5"
+primitive = "hash"
+classical_security_bits = 0
+nist_quantum_security_level = 0
+quantum_status = "BrokenClassically"
+replacement = "sha-256"
+oid = "1.2.840.113549.2.5"
+
+[[algorithm]]
+id = "sha-1"
+display_name = "SHA-1"
+family = "SHA-1"
+primitive = "hash"
+classical_security_bits = 0
+nist_quantum_security_level = 0
+quantum_status = "BrokenClassically"
+replacement = "sha-256"
+oid = "1.3.14.3.2.26"
+
+[[algorithm]]
+id = "sha-224"
+display_name = "SHA-224"
+family = "SHA-2"
+primitive = "hash"
+classical_security_bits = 112
+nist_quantum_security_level = 1
+quantum_status = "WeakenedByGrover"
+replacement = "sha-256"
+
+[[algorithm]]
+id = "sha-256"
+display_name = "SHA-256"
+family = "SHA-2"
+primitive = "hash"
+classical_security_bits = 128
+nist_quantum_security_level = 2
+quantum_status = "QuantumSafe"
+oid = "2.16.840.1.101.3.4.2.1"
+
+[[algorithm]]
+id = "sha-384"
+display_name = "SHA-384"
+family = "SHA-2"
+primitive = "hash"
+classical_security_bits = 192
+nist_quantum_security_level = 3
+quantum_status = "QuantumSafe"
+oid = "2.16.840.1.101.3.4.2.2"
+
+[[algorithm]]
+id = "sha-512"
+display_name = "SHA-512"
+family = "SHA-2"
+primitive = "hash"
+classical_security_bits = 256
+nist_quantum_security_level = 4
+quantum_status = "QuantumSafe"
+oid = "2.16.840.1.101.3.4.2.3"
+
+[[algorithm]]
+id = "sha3-256"
+display_name = "SHA3-256"
+family = "SHA-3"
+primitive = "hash"
+classical_security_bits = 128
+nist_quantum_security_level = 2
+quantum_status = "QuantumSafe"
+oid = "2.16.840.1.101.3.4.2.8"
+
+[[algorithm]]
+id = "sha3-512"
+display_name = "SHA3-512"
+family = "SHA-3"
+primitive = "hash"
+classical_security_bits = 256
+nist_quantum_security_level = 4
+quantum_status = "QuantumSafe"
+oid = "2.16.840.1.101.3.4.2.10"
+
+# ============================================================================
+# PQC FINAL — FIPS 203 / 204 / 205
+# ============================================================================
+
+[[algorithm]]
+id = "ml-kem-512"
+display_name = "ML-KEM-512"
+family = "ML-KEM"
+primitive = "kem"
+nist_quantum_security_level = 1
+quantum_status = "PqcFinal"
+fips = "FIPS 203"
+oid = "2.16.840.1.101.3.4.4.1"
+notes = "RFC 9935. Equivalent to AES-128 security category."
+
+[[algorithm]]
+id = "ml-kem-768"
+display_name = "ML-KEM-768"
+family = "ML-KEM"
+primitive = "kem"
+nist_quantum_security_level = 3
+quantum_status = "PqcFinal"
+fips = "FIPS 203"
+oid = "2.16.840.1.101.3.4.4.2"
+notes = "Used in X25519MLKEM768 hybrid. Equivalent to AES-192 security category."
+
+[[algorithm]]
+id = "ml-kem-1024"
+display_name = "ML-KEM-1024"
+family = "ML-KEM"
+primitive = "kem"
+nist_quantum_security_level = 5
+quantum_status = "PqcFinal"
+fips = "FIPS 203"
+oid = "2.16.840.1.101.3.4.4.3"
+notes = "Equivalent to AES-256 security category."
+
+[[algorithm]]
+id = "ml-dsa-44"
+display_name = "ML-DSA-44"
+family = "ML-DSA"
+primitive = "signature"
+nist_quantum_security_level = 2
+quantum_status = "PqcFinal"
+fips = "FIPS 204"
+oid = "2.16.840.1.101.3.4.3.17"
+notes = "RFC 9881."
+
+[[algorithm]]
+id = "ml-dsa-65"
+display_name = "ML-DSA-65"
+family = "ML-DSA"
+primitive = "signature"
+nist_quantum_security_level = 3
+quantum_status = "PqcFinal"
+fips = "FIPS 204"
+oid = "2.16.840.1.101.3.4.3.18"
+
+[[algorithm]]
+id = "ml-dsa-87"
+display_name = "ML-DSA-87"
+family = "ML-DSA"
+primitive = "signature"
+nist_quantum_security_level = 5
+quantum_status = "PqcFinal"
+fips = "FIPS 204"
+oid = "2.16.840.1.101.3.4.3.19"
+
+[[algorithm]]
+id = "slh-dsa-sha2-128s"
+display_name = "SLH-DSA-SHA2-128s"
+family = "SLH-DSA"
+primitive = "signature"
+nist_quantum_security_level = 1
+quantum_status = "PqcFinal"
+fips = "FIPS 205"
+oid = "2.16.840.1.101.3.4.3.20"
+notes = "RFC 9909. Hash-based; small key, slow sign, fast verify."
+
+[[algorithm]]
+id = "slh-dsa-sha2-128f"
+display_name = "SLH-DSA-SHA2-128f"
+family = "SLH-DSA"
+primitive = "signature"
+nist_quantum_security_level = 1
+quantum_status = "PqcFinal"
+fips = "FIPS 205"
+oid = "2.16.840.1.101.3.4.3.21"
+
+[[algorithm]]
+id = "slh-dsa-sha2-192s"
+display_name = "SLH-DSA-SHA2-192s"
+family = "SLH-DSA"
+primitive = "signature"
+nist_quantum_security_level = 3
+quantum_status = "PqcFinal"
+fips = "FIPS 205"
+oid = "2.16.840.1.101.3.4.3.22"
+
+[[algorithm]]
+id = "slh-dsa-sha2-192f"
+display_name = "SLH-DSA-SHA2-192f"
+family = "SLH-DSA"
+primitive = "signature"
+nist_quantum_security_level = 3
+quantum_status = "PqcFinal"
+fips = "FIPS 205"
+oid = "2.16.840.1.101.3.4.3.23"
+
+[[algorithm]]
+id = "slh-dsa-sha2-256s"
+display_name = "SLH-DSA-SHA2-256s"
+family = "SLH-DSA"
+primitive = "signature"
+nist_quantum_security_level = 5
+quantum_status = "PqcFinal"
+fips = "FIPS 205"
+oid = "2.16.840.1.101.3.4.3.24"
+
+[[algorithm]]
+id = "slh-dsa-sha2-256f"
+display_name = "SLH-DSA-SHA2-256f"
+family = "SLH-DSA"
+primitive = "signature"
+nist_quantum_security_level = 5
+quantum_status = "PqcFinal"
+fips = "FIPS 205"
+oid = "2.16.840.1.101.3.4.3.25"
+
+# SHAKE variants 0x91{7..C} of TLS sigscheme map to SLH-DSA-SHAKE-{128,192,256}{s,f} —
+# OIDs are the prehash variants 2.16.840.1.101.3.4.3.{26..31} per RFC 9909 §3.
+# Adding the shake variants:
+
+[[algorithm]]
+id = "slh-dsa-shake-128s"
+display_name = "SLH-DSA-SHAKE-128s"
+family = "SLH-DSA"
+primitive = "signature"
+nist_quantum_security_level = 1
+quantum_status = "PqcFinal"
+fips = "FIPS 205"
+oid = "2.16.840.1.101.3.4.3.26"
+
+[[algorithm]]
+id = "slh-dsa-shake-128f"
+display_name = "SLH-DSA-SHAKE-128f"
+family = "SLH-DSA"
+primitive = "signature"
+nist_quantum_security_level = 1
+quantum_status = "PqcFinal"
+fips = "FIPS 205"
+oid = "2.16.840.1.101.3.4.3.27"
+
+[[algorithm]]
+id = "slh-dsa-shake-192s"
+display_name = "SLH-DSA-SHAKE-192s"
+family = "SLH-DSA"
+primitive = "signature"
+nist_quantum_security_level = 3
+quantum_status = "PqcFinal"
+fips = "FIPS 205"
+oid = "2.16.840.1.101.3.4.3.28"
+
+[[algorithm]]
+id = "slh-dsa-shake-192f"
+display_name = "SLH-DSA-SHAKE-192f"
+family = "SLH-DSA"
+primitive = "signature"
+nist_quantum_security_level = 3
+quantum_status = "PqcFinal"
+fips = "FIPS 205"
+oid = "2.16.840.1.101.3.4.3.29"
+
+[[algorithm]]
+id = "slh-dsa-shake-256s"
+display_name = "SLH-DSA-SHAKE-256s"
+family = "SLH-DSA"
+primitive = "signature"
+nist_quantum_security_level = 5
+quantum_status = "PqcFinal"
+fips = "FIPS 205"
+oid = "2.16.840.1.101.3.4.3.30"
+
+[[algorithm]]
+id = "slh-dsa-shake-256f"
+display_name = "SLH-DSA-SHAKE-256f"
+family = "SLH-DSA"
+primitive = "signature"
+nist_quantum_security_level = 5
+quantum_status = "PqcFinal"
+fips = "FIPS 205"
+oid = "2.16.840.1.101.3.4.3.31"
+
+# ============================================================================
+# PQC DRAFT — FIPS 206 (FN-DSA / FALCON) — D-06
+# Not yet IPD as of mid-2026; OIDs placeholders, no nistQuantumSecurityLevel.
+# ============================================================================
+
+[[algorithm]]
+id = "fn-dsa-512"
+display_name = "FN-DSA-512 (FALCON-512)"
+family = "FN-DSA"
+primitive = "signature"
+quantum_status = "PqcDraft"
+fips = "FIPS 206 (DRAFT)"
+notes = "FIPS 206 not yet IPD as of mid-2026. No OID assigned."
+
+[[algorithm]]
+id = "fn-dsa-1024"
+display_name = "FN-DSA-1024 (FALCON-1024)"
+family = "FN-DSA"
+primitive = "signature"
+quantum_status = "PqcDraft"
+fips = "FIPS 206 (DRAFT)"
+
+# ============================================================================
+# TLS HYBRID GROUPS — combined classical + PQC key agreement
+# Used as algorithm-id when a TLS prober detects them in scan-network.
+# ============================================================================
+
+[[algorithm]]
+id = "x25519-mlkem768"
+display_name = "X25519MLKEM768 (TLS hybrid)"
+family = "Hybrid-KEM"
+primitive = "combiner"
+nist_quantum_security_level = 3
+quantum_status = "PqcFinal"
+notes = "IANA TLS supported_groups codepoint 4588 (0x11EC). draft-ietf-tls-ecdhe-mlkem."
+
+[[algorithm]]
+id = "secp256r1-mlkem768"
+display_name = "SecP256r1MLKEM768 (TLS hybrid)"
+family = "Hybrid-KEM"
+primitive = "combiner"
+nist_quantum_security_level = 3
+quantum_status = "PqcFinal"
+notes = "IANA codepoint 4587 (0x11EB). FIPS-compliant path (P-256 + ML-KEM-768)."
+
+[[algorithm]]
+id = "secp384r1-mlkem1024"
+display_name = "SecP384r1MLKEM1024 (TLS hybrid)"
+family = "Hybrid-KEM"
+primitive = "combiner"
+nist_quantum_security_level = 5
+quantum_status = "PqcFinal"
+notes = "IANA codepoint 4589 (0x11ED)."
+
+[[algorithm]]
+id = "x25519-kyber768-draft00"
+display_name = "X25519Kyber768Draft00 (LEGACY)"
+family = "Hybrid-KEM-Draft"
+primitive = "combiner"
+quantum_status = "PqcDraft"
+replacement = "x25519-mlkem768"
+notes = "IANA codepoint 25497 (0x6399) marked Deprecated. Was Chrome 116-130 default."
+
+# ============================================================================
+# SENTINELS — generic ids used by the network scanner when we know a TLS
+# handshake happened but cannot attribute it to a specific group.
+# ============================================================================
+
+[[algorithm]]
+id = "tls-handshake"
+display_name = "TLS handshake (generic)"
+family = "TLS"
+primitive = "other"
+quantum_status = "QuantumSafe"
+notes = "Generic sentinel for scan-network's default-handshake findings; the per-group probes provide algorithm-specific attribution. Not scored as vulnerable."
+
+[[algorithm]]
+id = "ecdsa-unattributed"
+display_name = "ECDSA (curve not stated at the call site)"
+family = "ECDSA"
+primitive = "signature"
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-65"
+oid = "1.2.840.10045.4.3.2"
+notes = "A JCA transformation such as `SHA256withECDSA` names the digest and the key family but never the curve — that comes from the key passed to initSign(). Shor breaks ECDSA at every curve, so the migration verdict is exact; only the classical strength is unknown, which is why no classical_security_bits is recorded. Sentinel, in the same role as aes-unattributed."
+
+[[algorithm]]
+id = "tls-legacy-protocol"
+display_name = "Legacy TLS/SSL protocol version"
+family = "TLS"
+primitive = "other"
+classical_security_bits = 0
+nist_quantum_security_level = 0
+quantum_status = "BrokenClassically"
+notes = "SSL 3.0 / TLS 1.0 / TLS 1.1 selected as the floor of a TLS configuration. A protocol-version setting names no algorithm, so findings on these call sites carry this id rather than asserting a cipher the source never states. Broken classically (POODLE, BEAST); deprecated by RFC 8996."
+
+[[algorithm]]
+id = "tls-client-config"
+display_name = "TLS client config (topology marker)"
+family = "TLS"
+primitive = "other"
+quantum_status = "QuantumSafe"
+notes = "Topology marker for rustls::ClientConfig::builder() and equivalent calls. The algorithm itself is determined at handshake time; this id flags the call site so an auditor can locate it without misclassifying it as a specific cipher. Inventory-tier."
+
+[[algorithm]]
+id = "tls-server-config"
+display_name = "TLS server config (topology marker)"
+family = "TLS"
+primitive = "other"
+quantum_status = "QuantumSafe"
+notes = "Topology marker for rustls::ServerConfig::builder() and equivalent calls. Same semantics as tls-client-config: flags the call site without assigning a misleading cipher id. Inventory-tier."
+
+[[algorithm]]
+id = "webcrypto-unattributed"
+display_name = "WebCrypto call (algorithm not statically determined)"
+family = "WebCrypto"
+primitive = "unknown"
+quantum_status = "QuantumSafe"
+notes = "Marker for a SubtleCrypto call whose algorithm argument is a variable, or names an algorithm with no row in this table. Same semantics as tls-client-config: it records the call site so an auditor can find it, without asserting an algorithm the source does not state. Inventory-tier — deliberately not scored as vulnerable, because scoring it would mean guessing which algorithm it is."
+
+[[algorithm]]
+id = "aes-unattributed"
+display_name = "AES (key size and mode not stated at the call site)"
+family = "AES"
+primitive = "block-cipher"
+quantum_status = "QuantumSafe"
+notes = "Marker for an AES call site that names neither a key size nor a mode — Cipher/engine constructors that take both from a key object or a later call (BouncyCastle AESEngine, .NET Aes.Create(), Go crypto/aes.NewCipher, CryptoJS.AES). Same semantics as webcrypto-unattributed: the operation is real and locatable, the parameters are not in the source. Scored as QuantumSafe because the alternative is guessing AES-128 or AES-256, and both guesses are wrong on some call sites. Resolve by hand, or by whichever call supplies the key."
+
+[[algorithm]]
+id = "aes-unattributed-gcm"
+display_name = "AES-GCM (key size not stated at the call site)"
+family = "AES"
+primitive = "ae"
+quantum_status = "QuantumSafe"
+notes = "Marker for an AES-GCM call site whose key size is supplied by a key object rather than the transformation string — `Cipher.getInstance(\"AES/GCM/NoPadding\")` is the common case, since the JCE `AES_128`/`AES_192`/`AES_256` forms are optional and rare. The mode is stated and the key size is not, so this row asserts only the mode."
+
+[[algorithm]]
+id = "aes-unattributed-ecb"
+display_name = "AES-ECB (key size not stated at the call site)"
+family = "AES"
+primitive = "block-cipher"
+quantum_status = "BrokenClassically"
+replacement = "aes-256-gcm"
+notes = "Marker for an AES-ECB call site whose key size is not in the source. Unlike the other two AES sentinels this one is scored, because the verdict does not depend on the missing parameter: ECB is never appropriate beyond a single block at any key size — the same reason aes-128-ecb, aes-192-ecb and aes-256-ecb all carry BrokenClassically."
+
+[[algorithm]]
+id = "crypto-provider-registration"
+display_name = "Crypto provider registration (topology marker)"
+family = "Provider"
+primitive = "other"
+quantum_status = "QuantumSafe"
+notes = "Marker for registering or instantiating a JCA/JCE provider — `new BouncyCastleProvider()` and equivalents. It selects an implementation, not an algorithm, so it names none. Useful as an inventory anchor: a provider registration means the algorithms in that provider are reachable from this codebase."
+
+[[algorithm]]
+id = "tls-cipher-suite-config"
+display_name = "TLS cipher-suite configuration (topology marker)"
+family = "TLS"
+primitive = "other"
+quantum_status = "QuantumSafe"
+notes = "Marker for a call that configures which cipher suites a TLS context will offer — OpenSSL SSL_CTX_set_cipher_list and equivalents — where the suite string named no algorithm we can fault. Companion to tls-client-config/tls-server-config for the case where the topology role (client or server) is also not stated."
+
+[[algorithm]]
+id = "csprng"
+display_name = "CSPRNG (cryptographically secure random)"
+family = "RNG"
+primitive = "drbg"
+quantum_status = "QuantumSafe"
+notes = "Marker for a call into a platform CSPRNG — .NET RandomNumberGenerator.Create() and equivalents. Not an encryption algorithm; recorded so the CBOM shows where key and IV material originates. Quantum-relevant only through the key sizes it is asked for, which are at the caller."
+
+[[algorithm]]
+id = "jwt-alg-none"
+display_name = "JWT alg=none (signature verification disabled)"
+family = "JWT"
+primitive = "other"
+classical_security_bits = 0
+nist_quantum_security_level = 0
+quantum_status = "BrokenClassically"
+notes = "CWE-347: JWT with alg=none disables signature verification entirely. CVE-2015-9235 class. Not a quantum issue — already broken classically. Distinct from rsa-1024 which is a real algorithm with a too-small key."

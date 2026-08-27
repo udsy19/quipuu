@@ -6,12 +6,12 @@
 # Syntax: <pattern>  <owner> [<owner> ...]
 # Owners can be GitHub usernames (@user), teams (@org/team), or email addresses.
 #
-# Replace @cryptoscope with the real team or user once the repository is live.
+# Ownership for review routing. Replace with a team once one exists.
 
 # Default owner for everything not matched by a more specific rule.
-*  @cryptoscope
+*  @udsy19
 
 # CI / release plumbing — anyone touching this should tag the infra team.
-.github/  @cryptoscope
-install.sh  @cryptoscope
-Formula/  @cryptoscope
+.github/  @udsy19
+install.sh  @udsy19
+Formula/  @udsy19

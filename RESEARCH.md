@@ -49,7 +49,7 @@ All initial `[VERIFY]` items resolved in `knowledge/11-decisions/verify-resoluti
 - ✅ `rustls-post-quantum` latest — 0.2.4 (2025-09-23, superseded by rustls core).
 - ✅ Composite ML-DSA codepoints — still TBD; pure ML-DSA/SLH-DSA registered.
 - ✅ foxguard walkthrough — confirmed 6/10 wedge axes hold; collaboration play identified.
-- ✅ Working name — `cryptoscope` available on crates.io, no real collision; keep.
+- ✅ Working name — `seawall` available on crates.io, no real collision; keep.
 
 Standing watch item:
 - NIST IR 8547 final publication date — currently still IPD. Update default `policy.toml` when final lands.

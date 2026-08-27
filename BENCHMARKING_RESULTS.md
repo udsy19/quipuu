@@ -1,4 +1,4 @@
-# cryptoscope V8 — 150-project corpus benchmark
+# seawall V8 — 150-project corpus benchmark
 
 **Corpus:** corpus-b-realworld  
 **Projects scanned:** 150  
@@ -287,8 +287,8 @@ audited label set still applies unchanged.
 Reproduce:
 
 ```
-cryptoscope scan <project> --source --deps --include-safe                      # nist-default
-cryptoscope scan <project> --source --deps --include-safe --policy nsa-cnsa2   # CNSA 2.0
+seawall scan <project> --source --deps --include-safe                      # nist-default
+seawall scan <project> --source --deps --include-safe --policy nsa-cnsa2   # CNSA 2.0
 ```
 
 ---

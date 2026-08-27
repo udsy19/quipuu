@@ -1,4 +1,4 @@
-# Precision Audit V3 — Cryptoscope Phase 18 (Post-Phase 17) Corpus-B Run
+# Precision Audit V3 — Seawall Phase 18 (Post-Phase 17) Corpus-B Run
 
 **Audit date:** 2026-06-16
 **Sample size:** 196 findings (stratified, deterministic)

@@ -1,6 +1,6 @@
 # Corpus B — Real-World OSS Projects
 
-Corpus B is a stratified sample of **150 real open-source projects** spanning six package ecosystems (25 per ecosystem). It is one of three corpora in the QuantumOSS-Analysis benchmark suite (see `BENCHMARKING.md`). The corpus is designed to stress-test the cryptoscope PQC scanner across:
+Corpus B is a stratified sample of **150 real open-source projects** spanning six package ecosystems (25 per ecosystem). It is one of three corpora in the QuantumOSS-Analysis benchmark suite (see `BENCHMARKING.md`). The corpus is designed to stress-test the seawall PQC scanner across:
 
 - Varied languages and build systems
 - Diverse cryptographic surfaces (TLS, JWT, KEM, signature, MAC, hash, KDF)

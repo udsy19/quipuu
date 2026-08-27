@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seawall.dev/schema/0.1.0/crypto-asset.schema.json",
+  "title": "CryptoAsset",
+  "description": "A cryptographic algorithm/primitive identified during a scan.",
+  "type": "object",
+  "properties": {
+    "algorithmId": {
+      "type": "string",
+      "description": "Canonical algorithm identifier from the algorithm table (e.g. rsa-2048).",
+      "minLength": 1
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Human-readable name (e.g. RSA-2048).",
+      "minLength": 1
+    },
+    "family": {
+      "type": "string",
+      "description": "Algorithm family (e.g. RSA, ECC, AES).",
+      "minLength": 1
+    },
+    "primitive": {
+      "type": "string",
+      "description": "CycloneDX 1.7 algorithmProperties.primitive value.",
+      "enum": [
+        "drbg", "mac", "block-cipher", "stream-cipher", "signature",
+        "hash", "pke", "xof", "kdf", "key-agree", "kem", "ae",
+        "combiner", "key-wrap", "other", "unknown"
+      ]
+    },
+    "classicalSecurityBits": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Classical security level in bits."
+    },
+    "nistQuantumSecurityLevel": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 6,
+      "description": "NIST PQC security category (0-6)."
+    },
+    "quantumStatus": {
+      "type": "string",
+      "description": "Quantum security assessment.",
+      "enum": [
+        "BrokenClassically",
+        "BrokenByShor",
+        "WeakenedByGrover",
+        "QuantumSafe",
+        "PqcFinal",
+        "PqcDraft"
+      ]
+    },
+    "replacement": {
+      "type": "string",
+      "description": "Suggested replacement algorithm id.",
+      "minLength": 1
+    },
+    "fips": {
+      "type": "string",
+      "description": "FIPS standard reference (e.g. FIPS 203).",
+      "minLength": 1
+    },
+    "oid": {
+      "type": "string",
+      "description": "OID for the algorithm.",
+      "pattern": "^([0-9]+\\.)+[0-9]+$"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Free-form notes."
+    }
+  },
+  "required": ["algorithmId", "displayName", "family", "quantumStatus"],
+  "additionalProperties": false
+}

@@ -25,7 +25,7 @@
 
 **2026 updates:** A January 8, 2024 technical correction was published; no substantive deadline changes confirmed. A July 2024 White House report estimated the total government-wide PQC migration cost at ~$7.1 billion (2024 dollars, 2025–2035).
 
-**Implication for cryptoscope:** The annual inventory obligation creates a recurring procurement opportunity — federal agencies need crypto-discovery tooling to satisfy this mandate every year, and OMB has published no native tooling to help them.
+**Implication for seawall:** The annual inventory obligation creates a recurring procurement opportunity — federal agencies need crypto-discovery tooling to satisfy this mandate every year, and OMB has published no native tooling to help them.
 
 ---
 
@@ -59,7 +59,7 @@
 
 **Approved CNSA 2.0 algorithms for NSS:** ML-KEM-1024 (FIPS 203), ML-DSA-87 (FIPS 204), LMS/single-tree XMSS (NIST SP 800-208) for firmware signing, AES-256, SHA-384+. SLH-DSA (FIPS 205) and FN-DSA (FIPS 206/Falcon) are **not** approved for NSS. HSS and XMSS^MT are prohibited.
 
-**Implication for cryptoscope:** The CNSA 2.0 procurement gate (Jan 2027) means NSS contractors must demonstrate algorithm-level compliance — a scanner that produces a CBOM (Cryptography Bill of Materials) per system is the natural compliance artifact.
+**Implication for seawall:** The CNSA 2.0 procurement gate (Jan 2027) means NSS contractors must demonstrate algorithm-level compliance — a scanner that produces a CBOM (Cryptography Bill of Materials) per system is the natural compliance artifact.
 
 ---
 
@@ -87,7 +87,7 @@
 
 **Hard deadline:** None imposed on CI operators in this document. Guidance only.
 
-**Implication for cryptoscope:** CISA explicitly names "cryptographic inventory" using "discovery tools across IT/OT/CI/CD" as the first technical action item — this is precisely cryptoscope's primary use case, cited by the top US cyber regulator.
+**Implication for seawall:** CISA explicitly names "cryptographic inventory" using "discovery tools across IT/OT/CI/CD" as the first technical action item — this is precisely seawall's primary use case, cited by the top US cyber regulator.
 
 ---
 
@@ -107,7 +107,7 @@
 
 **Named industry CRADA collaborators (47+, partial list):** Amazon Web Services, Cisco Systems, IBM, JPMorgan Chase, Microsoft, NSA, CISA, Palo Alto Networks, Samsung SDS, SandboxAQ, Keyfactor, Thales DIS CPL USA, InfoSec Global, MITRE, HSBC, wolfSSL, ISARA Corporation, U.S. Army DEVCOM C5ISR Center.
 
-**Implication for cryptoscope:** This is a buyer-signal goldmine — every named collaborator is actively engaged in solving the crypto-discovery problem. The explicit finding that "no single product finds all vulnerable crypto" validates a multi-layer scanner. SP 1800-38B is the reference architecture cryptoscope should align to.
+**Implication for seawall:** This is a buyer-signal goldmine — every named collaborator is actively engaged in solving the crypto-discovery problem. The explicit finding that "no single product finds all vulnerable crypto" validates a multi-layer scanner. SP 1800-38B is the reference architecture seawall should align to.
 
 ---
 
@@ -134,7 +134,7 @@ Published November 12, 2024. Public comment period closed January 10, 2025. No s
 
 **Important caveat:** These 2030/2035 dates are IPD proposals, not yet binding federal standards. They signal NIST's direction and are already being treated as de facto targets by industry.
 
-**Implication for cryptoscope:** Once finalized, IR 8547 will be the statutory basis for deprecation warnings in any crypto scanner. Cryptoscope's severity classifications should map directly to these 2030/2035 thresholds.
+**Implication for seawall:** Once finalized, IR 8547 will be the statutory basis for deprecation warnings in any crypto scanner. Seawall's severity classifications should map directly to these 2030/2035 thresholds.
 
 ---
 
@@ -151,7 +151,7 @@ FedRAMP's January 16, 2025 cryptographic module policy update introduced two com
 
 **Hard deadline: No hard FedRAMP PQC deadline found** as of June 2026.
 
-**Implication for cryptoscope:** When FedRAMP mandates PQC (expected 2027+), cloud service providers pursuing FedRAMP authorization will need to demonstrate cryptographic compliance in their System Security Plans — cryptoscope output (CBOM, SARIF findings) maps directly to that evidence package.
+**Implication for seawall:** When FedRAMP mandates PQC (expected 2027+), cloud service providers pursuing FedRAMP authorization will need to demonstrate cryptographic compliance in their System Security Plans — seawall output (CBOM, SARIF findings) maps directly to that evidence package.
 
 ---
 
@@ -170,7 +170,7 @@ FedRAMP's January 16, 2025 cryptographic module policy update introduced two com
 
 **Hard deadline: No CMVP mandate requiring PQC for non-NSS systems found** as of June 2026.
 
-**Implication for cryptoscope:** Detecting FIPS 140-2 modules in a fleet (which become non-compliant for new procurements after Sep 2026) is an immediate scanner use case with a hard date.
+**Implication for seawall:** Detecting FIPS 140-2 modules in a fleet (which become non-compliant for new procurements after Sep 2026) is an immediate scanner use case with a hard date.
 
 ---
 
@@ -193,7 +193,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline: No binding PQC deadline from any US banking regulator found** as of June 2026.
 
-**Implication for cryptoscope:** US banking is in a pre-mandate awareness phase — OCC and FFIEC supervisory guidance creates reputational pressure without hard deadlines. The G7 CEG roadmap (see §12 below) is the more actionable international signal for financial sector buyers.
+**Implication for seawall:** US banking is in a pre-mandate awareness phase — OCC and FFIEC supervisory guidance creates reputational pressure without hard deadlines. The G7 CEG roadmap (see §12 below) is the more actionable international signal for financial sector buyers.
 
 ---
 
@@ -210,7 +210,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline: No hard PQC deadline in current NIS2 text.** COM(2026)13 amendment is pending.
 
-**Implication for cryptoscope:** When COM(2026)13 is adopted, NIS2-regulated essential entities (~100,000+ organizations across the EU) will need PQC migration plans — cryptoscope provides the inventory foundation those plans require.
+**Implication for seawall:** When COM(2026)13 is adopted, NIS2-regulated essential entities (~100,000+ organizations across the EU) will need PQC migration plans — seawall provides the inventory foundation those plans require.
 
 ---
 
@@ -227,7 +227,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline: No hard PQC deadline found in DORA text.**
 
-**Implication for cryptoscope:** DORA's ICT risk framework requires demonstrable resilience testing — a scanner that validates cryptographic agility (i.e., can the system switch to PQC algorithms?) supports DORA audit evidence.
+**Implication for seawall:** DORA's ICT risk framework requires demonstrable resilience testing — a scanner that validates cryptographic agility (i.e., can the system switch to PQC algorithms?) supports DORA audit evidence.
 
 ---
 
@@ -247,7 +247,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline: December 11, 2027** for full Annex I compliance (PQC not named but implied by "state-of-the-art" interpretation).
 
-**Implication for cryptoscope:** Hardware/software product vendors selling into the EU market need to demonstrate state-of-the-art cryptography by December 2027 — cryptoscope scanning their codebase and generating a CBOM is exactly the evidence needed for conformity assessment.
+**Implication for seawall:** Hardware/software product vendors selling into the EU market need to demonstrate state-of-the-art cryptography by December 2027 — seawall scanning their codebase and generating a CBOM is exactly the evidence needed for conformity assessment.
 
 ---
 
@@ -271,7 +271,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Status:** Non-binding soft law. The 2026/2030/2035 milestones are from the NIS CG roadmap, not directly from the Recommendation text.
 
-**Implication for cryptoscope:** The 2026 inventory obligation (even soft-law) drives immediate budget allocation across EU member states for crypto-discovery tooling — the procurement window is open now.
+**Implication for seawall:** The 2026 inventory obligation (even soft-law) drives immediate budget allocation across EU member states for crypto-discovery tooling — the procurement window is open now.
 
 ---
 
@@ -297,7 +297,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Status:** Guidance deadlines, not legally enforceable mandates. Aligned with NIST IR 8547's 2035 federal deprecation target.
 
-**Implication for cryptoscope:** The 2028 "full discovery exercise" deadline is the clearest single-date driver for a crypto-inventory scanner in the UK market — Phase 1 is literally "do the inventory."
+**Implication for seawall:** The 2028 "full discovery exercise" deadline is the clearest single-date driver for a crypto-inventory scanner in the UK market — Phase 1 is literally "do the inventory."
 
 ---
 
@@ -319,7 +319,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline:** No binding German law mandating PQC adoption for private sector. BSI TR guidelines are mandatory for German federal IT systems; the 2030 target is from the joint EU statement.
 
-**Implication for cryptoscope:** BSI TR-02102 is the most algorithmically specific European PQC guidance — cryptoscope findings should map to BSI parameter requirements (Category 3 minimum), not just NIST generic levels.
+**Implication for seawall:** BSI TR-02102 is the most algorithmically specific European PQC guidance — seawall findings should map to BSI parameter requirements (Category 3 minimum), not just NIST generic levels.
 
 ---
 
@@ -341,7 +341,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline:** 2027 for PQC requirement in ANSSI qualification process. No hard deadline for private-sector PQC adoption in binding French law.
 
-**Implication for cryptoscope:** Products seeking ANSSI qualification must demonstrate hybrid PQC implementation from 2027 — cryptoscope provides the audit trail.
+**Implication for seawall:** Products seeking ANSSI qualification must demonstrate hybrid PQC implementation from 2027 — seawall provides the audit trail.
 
 ---
 
@@ -362,7 +362,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Binding status:** For Commonwealth agencies, ISM compliance is mandatory. The 2030 PQC target is the only confirmed hard deadline in any current binding law globally (for the stated agencies and scope).
 
-**Implication for cryptoscope:** Australia has the hardest statutory PQC deadline of any surveyed jurisdiction (2030 for Commonwealth agencies). ASD specifies exact algorithm parameter sets — cryptoscope should flag any deployment using ML-KEM-512 or ML-KEM-768 in an Australian government context as non-compliant (ISM requires ML-KEM-1024).
+**Implication for seawall:** Australia has the hardest statutory PQC deadline of any surveyed jurisdiction (2030 for Commonwealth agencies). ASD specifies exact algorithm parameter sets — seawall should flag any deployment using ML-KEM-512 or ML-KEM-768 in an Australian government context as non-compliant (ISM requires ML-KEM-1024).
 
 ---
 
@@ -382,7 +382,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline: No hard PQC deadline found** in MAS binding regulation.
 
-**Implication for cryptoscope:** MAS advisory recommending cryptographic asset inventory is a direct use-case statement for cryptoscope, from a regulator covering Singapore's $800B+ banking sector.
+**Implication for seawall:** MAS advisory recommending cryptographic asset inventory is a direct use-case statement for seawall, from a regulator covering Singapore's $800B+ banking sector.
 
 ---
 
@@ -404,7 +404,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline:** No single unified Japanese law mandating PQC as of mid-2026. The 2035 target is policy direction.
 
-**Implication for cryptoscope:** Japan's financial sector is under FSA pressure without a hard mandate — early mover tooling adoption is feasible.
+**Implication for seawall:** Japan's financial sector is under FSA pressure without a hard mandate — early mover tooling adoption is feasible.
 
 ---
 
@@ -421,7 +421,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline: No hard PQC deadline found** in PCI DSS text.
 
-**Implication for cryptoscope:** PCI DSS 12.3.3's crypto-inventory and cipher-suite-monitoring requirements (already in force as of April 2025) are a compliance driver for cryptoscope today, in ~9 million merchant environments and their acquirers.
+**Implication for seawall:** PCI DSS 12.3.3's crypto-inventory and cipher-suite-monitoring requirements (already in force as of April 2025) are a compliance driver for seawall today, in ~9 million merchant environments and their acquirers.
 
 ---
 
@@ -438,7 +438,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline: No hard PQC deadline found** in any current or proposed HIPAA Security Rule text.
 
-**Implication for cryptoscope:** Healthcare sector lags in PQC mandate but faces the same harvest-now-decrypt-later risk as finance — HIPAA's 10-year minimum PHI retention periods make long-lived records prime HNDL targets.
+**Implication for seawall:** Healthcare sector lags in PQC mandate but faces the same harvest-now-decrypt-later risk as finance — HIPAA's 10-year minimum PHI retention periods make long-lived records prime HNDL targets.
 
 ---
 
@@ -460,7 +460,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline: No explicit PQC obligations in NYDFS Part 500** — but the asset-inventory and encryption requirements create the implicit foundation.
 
-**Implication for cryptoscope:** 3,000+ NYDFS-regulated entities (banks, insurers, MSBs) must maintain asset inventories per 500.13. Cryptoscope output integrates directly into that evidence requirement.
+**Implication for seawall:** 3,000+ NYDFS-regulated entities (banks, insurers, MSBs) must maintain asset inventories per 500.13. Seawall output integrates directly into that evidence requirement.
 
 ---
 
@@ -477,7 +477,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Bottom line:** "As of early 2026, no U.S. sector has a binding, mandatory PQC adoption requirement for private-sector entities." (confirmed by multiple law review analyses)
 
-**Implication for cryptoscope:** No state creates an immediate compliance mandate, but the federal+EU+UK+AU pressure is sufficient for enterprise sales without state mandates.
+**Implication for seawall:** No state creates an immediate compliance mandate, but the federal+EU+UK+AU pressure is sufficient for enterprise sales without state mandates.
 
 ---
 

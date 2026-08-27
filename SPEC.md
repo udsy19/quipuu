@@ -1,14 +1,14 @@
-# PROJECT SPEC — cryptoscope (working name; see Decision D-13)
+# PROJECT SPEC — seawall (working name; see Decision D-13)
 
 > **Read first:** `knowledge/README.md` → `knowledge/11-decisions/README.md`. Every decision below has a `D-NN` reference. If you have to change one, update the decisions register in the same change.
 
-> **Invariants:** This codebase is governed by four trust invariants (P1–P4) defined in `cryptoscope/MCP.md §0` and repeated in `README.md`. Any change to P1–P4 is a breaking contract change requiring a major version bump of `contractVersion` in the MCP wire contract.
+> **Invariants:** This codebase is governed by four trust invariants (P1–P4) defined in `seawall/MCP.md §0` and repeated in `README.md`. Any change to P1–P4 is a breaking contract change requiring a major version bump of `contractVersion` in the MCP wire contract.
 
 ## 0. Mission
 
 Build the best open-source cryptographic discovery tool in existence. A single, fast, dependency-free binary that scans source code, running TLS services, X.509 certificates, and dependency manifests; identifies every cryptographic asset; scores each for quantum vulnerability against the NIST IR 8547 timeline; and produces (a) a standards-compliant CycloneDX 1.7 CBOM (with `--schema-version 1.6` opt-in), (b) a self-contained HTML report, and (c) machine outputs (JSON / SARIF 2.1.0). Ships with a sophisticated, lightweight TUI.
 
-**Positioning (D-12):** Browsers solved the easy half of the PQC migration. The other half — internal services, dependency trees, certificates, forgotten cron jobs — is the long tail. cryptoscope finds it in one pass. (NIST NCCoE SP 1800-38B: *"no single product finds all vulnerable crypto."* That's the gap.)
+**Positioning (D-12):** Browsers solved the easy half of the PQC migration. The other half — internal services, dependency trees, certificates, forgotten cron jobs — is the long tail. seawall finds it in one pass. (NIST NCCoE SP 1800-38B: *"no single product finds all vulnerable crypto."* That's the gap.)
 
 Design tenets, in priority order:
 
@@ -33,7 +33,7 @@ Design tenets, in priority order:
 ## 2. Architecture (workspace crates)
 
 ```
-cryptoscope/
+seawall/
 ├─ crates/
 │  ├─ core/         # domain types: CryptoAsset, Finding, RiskScore, Evidence, Location
 │  │                # + the static algorithm-id → nistQuantumSecurityLevel table (D-04)
@@ -54,13 +54,13 @@ cryptoscope/
 **No separate `risk` crate.** The 5-axis QuantumRiskScore engine (D-10) lives at
 `core::risk`. The "separate scoring crate" pattern (Grype+Syft, Sentry) is the
 right call when scoring normalizes heterogeneous inputs from multiple scanner
-backends — CVSS, EPSS, KEV, RustSec metadata. cryptoscope has one scoring
+backends — CVSS, EPSS, KEV, RustSec metadata. seawall has one scoring
 formula defined in our own data (`default-policy.toml`), tightly coupled to
 types in `core` (`AlgorithmRecord`, `Policy`, `Finding`, `QuantumStatus`). A
 separate crate would force every dependent type to become `pub` at the `core`
 boundary for the sole purpose of being re-imported. Keep it inline.
 
-The **MCP wire contract** (`cryptoscope/MCP.md`) is the architectural spine between this deterministic Rust workspace and any agent layer. It specifies the stdio JSON-RPC 2.0 transport, the full 11-tool surface, streaming semantics, failure modes, and versioning rules for the `cryptoscope mcp` subcommand. JSON schemas for the core domain types (`Finding`, `CryptoAsset`, `RiskScore`) live in `crates/core/schema/` and are referenced by `$ref` from the wire contract. No schema definitions are duplicated between the workspace and the contract document.
+The **MCP wire contract** (`seawall/MCP.md`) is the architectural spine between this deterministic Rust workspace and any agent layer. It specifies the stdio JSON-RPC 2.0 transport, the full 11-tool surface, streaming semantics, failure modes, and versioning rules for the `seawall mcp` subcommand. JSON schemas for the core domain types (`Finding`, `CryptoAsset`, `RiskScore`) live in `crates/core/schema/` and are referenced by `$ref` from the wire contract. No schema definitions are duplicated between the workspace and the contract document.
 
 ## 3. The crypto knowledge base (D-04)
 
@@ -134,7 +134,7 @@ internal_service = 4
 local_only = 1
 ```
 
-Built-in presets selectable via `--policy nist-default | nsa-cnsa2`; `--policy <file.toml>` takes a profile of your own. `cryptoscope policy list` is the authoritative list — `core::policy::PRESETS` is the single source of truth and `documented_preset_names_match_the_shipped_ones` fails the build if this line drifts from it. Report header always names the policy in force.
+Built-in presets selectable via `--policy nist-default | nsa-cnsa2`; `--policy <file.toml>` takes a profile of your own. `seawall policy list` is the authoritative list — `core::policy::PRESETS` is the single source of truth and `documented_preset_names_match_the_shipped_ones` fails the build if this line drifts from it. Report header always names the policy in force.
 
 ## 6. Scanners — required behavior
 
@@ -180,15 +180,15 @@ Use `evidence.occurrences[]` + `evidence.callstack.frames[]` (D-02) for file/lin
 
 ## 8. SARIF output (D-11)
 
-`cryptoscope scan ... --format sarif` emits a single SARIF 2.1.0 file:
+`seawall scan ... --format sarif` emits a single SARIF 2.1.0 file:
 
 - Always emit `runAutomationDetails.id` (unique per run).
 - Rule IDs `CRYPTO-001` … `CRYPTO-999`, stable across releases. Rule metadata includes `name`, `shortDescription`, `fullDescription`, `helpUri` (link to our docs), `defaultConfiguration.level`, `properties.security-severity` (on the rule, not the result).
 - Severity mapping: Critical → `level: error`, `security-severity: "9.0"`; High → `error`, `"8.0"`; Medium → `warning`, `"5.0"`; Low → `note`, `"3.0"`.
 - `partialFingerprints.primaryLocationLineHash` = SHA-256(`ruleId:snippet`)[:16].
-- Cross-ref CBOM: each result has `properties."cryptoscope/cbom-ref": "<bom-ref>"`.
+- Cross-ref CBOM: each result has `properties."seawall/cbom-ref": "<bom-ref>"`.
 - No `fix` objects in v1.
-- GitLab 18.11+ ingests SARIF natively; for older GitLab, `cryptoscope report --format gitlab-sast` produces `gl-sast-report.json`.
+- GitLab 18.11+ ingests SARIF natively; for older GitLab, `seawall report --format gitlab-sast` produces `gl-sast-report.json`.
 
 ## 9. The TUI (`tui/`)
 
@@ -220,15 +220,15 @@ Also emits: `cbom.json` (CycloneDX 1.7 or 1.6), `findings.sarif`, `summary.json`
 ## 11. CLI design (`cli/`)
 
 ```
-cryptoscope scan <path>                          # source scan, opens TUI
-cryptoscope scan <path> --no-tui --format json   # headless
-cryptoscope scan --net 10.0.0.0/24 --ports 443,8443
-cryptoscope scan --certs ./certs/                # or --certs-host example.com:443
-cryptoscope scan <path> --all                    # source + deps + (opt) net/certs
-cryptoscope report --in cbom.json --out report.html
-cryptoscope report --in cbom.json --format gitlab-sast
-cryptoscope validate cbom.json                   # CBOM schema validation
-cryptoscope policy list                          # nist-default | nsa-cnsa2
+seawall scan <path>                          # source scan, opens TUI
+seawall scan <path> --no-tui --format json   # headless
+seawall scan --net 10.0.0.0/24 --ports 443,8443
+seawall scan --certs ./certs/                # or --certs-host example.com:443
+seawall scan <path> --all                    # source + deps + (opt) net/certs
+seawall report --in cbom.json --out report.html
+seawall report --in cbom.json --format gitlab-sast
+seawall validate cbom.json                   # CBOM schema validation
+seawall policy list                          # nist-default | nsa-cnsa2
 ```
 
 Flags: `--rules <dir>`, `--exclude <glob>`, `--format {tui,json,sarif,html,cbom,gitlab-sast}`, `--schema-version {1.7,1.6}`, `--policy <file-or-preset>`, `--fail-on {critical,high,…}` (CI gate), `--config <file>`, `--no-color`, `-v`.

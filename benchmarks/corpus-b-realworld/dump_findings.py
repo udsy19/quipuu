@@ -22,7 +22,7 @@ except ImportError:
     import tomli as toml_lib
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-BINARY = SCRIPT_DIR.parent.parent / "cryptoscope/target/release/cryptoscope"
+BINARY = SCRIPT_DIR.parent.parent / "seawall/target/release/seawall"
 CLONES = SCRIPT_DIR / "clones"
 
 # Match the human-readable scan output:

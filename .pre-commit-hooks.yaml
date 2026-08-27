@@ -1,6 +1,6 @@
-# .pre-commit-hooks.yaml — cryptoscope pre-commit framework hook definition
+# .pre-commit-hooks.yaml — seawall pre-commit framework hook definition
 #
-# This file is the hook *definition* that lives in the cryptoscope repo.
+# This file is the hook *definition* that lives in the seawall repo.
 # It is read by pre-commit when users add this repo as a hook source.
 #
 # USAGE IN A DOWNSTREAM REPO:
@@ -8,43 +8,43 @@
 #   Add the following to your .pre-commit-config.yaml:
 #
 #     repos:
-#       - repo: https://github.com/<TBD>/cryptoscope
+#       - repo: https://github.com/<TBD>/seawall
 #         rev: v0.1.0          # pin to a release tag
 #         hooks:
-#           - id: cryptoscope-scan
+#           - id: seawall-scan
 #
 #   Then run:
 #     pre-commit install
 #
-#   cryptoscope will now run on every `git commit`.
-#   It reads .cryptoscope.toml from the repo root when present.
+#   seawall will now run on every `git commit`.
+#   It reads .seawall.toml from the repo root when present.
 
-- id: cryptoscope-scan
-  name: cryptoscope — cryptographic hygiene scan
+- id: seawall-scan
+  name: seawall — cryptographic hygiene scan
   language: system
 
-  # The hook runs `cryptoscope scan` on the files that are staged for commit.
+  # The hook runs `seawall scan` on the files that are staged for commit.
   # pre-commit passes the list of staged files as positional arguments;
-  # cryptoscope accepts a path or list of paths to scan.
+  # seawall accepts a path or list of paths to scan.
   #
   # --fail-on critical  exits non-zero only when a HNDL-critical finding is
   #                     present, so medium/low findings don't block every
   #                     commit.  Change to 'high' or 'medium' to tighten this.
   #
-  # --config is optional; cryptoscope auto-discovers .cryptoscope.toml at the
+  # --config is optional; seawall auto-discovers .seawall.toml at the
   # repo root.  Uncomment and adjust the path if your config lives elsewhere.
-  entry: cryptoscope scan
+  entry: seawall scan
   args:
     - --fail-on
     - critical
     # - --config
-    # - .cryptoscope.toml
+    # - .seawall.toml
 
-  # Pass the list of staged file paths to cryptoscope.
+  # Pass the list of staged file paths to seawall.
   pass_filenames: true
 
   # File types to check.  Pre-commit filters to these before invoking the hook.
-  # cryptoscope is file-type-agnostic; "files" here is a regex matched against
+  # seawall is file-type-agnostic; "files" here is a regex matched against
   # the staged file path so you can narrow it (e.g. only Rust/Go/Python files).
   # Empty string means "all staged files".
   files: ""
@@ -66,6 +66,6 @@
   # Minimum pre-commit version required.
   minimum_pre_commit_version: "2.9.0"
 
-  # Verbose output is off by default; set verbose: true to see cryptoscope's
+  # Verbose output is off by default; set verbose: true to see seawall's
   # full output even when the hook passes.
   verbose: false

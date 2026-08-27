@@ -1,0 +1,15 @@
+[package]
+name = "seawall-tui"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "seawall tui crate (scaffold)."
+
+[dependencies]
+seawall-core = { path = "../core" }
+seawall-cbom = { path = "../cbom" }
+serde.workspace = true
+thiserror.workspace = true
+ratatui.workspace = true
+crossterm.workspace = true

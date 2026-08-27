@@ -1,9 +1,9 @@
 # .github/dependabot.yml
 #
-# Dependabot configuration for cryptoscope.
+# Dependabot configuration for seawall.
 #
 # Two ecosystems are tracked:
-#   1. cargo — Rust workspace under cryptoscope/
+#   1. cargo — Rust workspace under seawall/
 #   2. github-actions — Actions used in .github/workflows/
 #
 # Dependabot opens a PR once a week for each ecosystem.  PRs are grouped by
@@ -15,7 +15,7 @@ updates:
   # ── Rust / Cargo ──────────────────────────────────────────────────────────
   - package-ecosystem: "cargo"
     # Path to the directory containing Cargo.toml (workspace root).
-    directory: "/cryptoscope"
+    directory: "/seawall"
     schedule:
       interval: "weekly"
       day: "monday"

@@ -1,4 +1,4 @@
-# cryptoscope V3 Corpus — Coverage Gaps Report
+# seawall V3 Corpus — Coverage Gaps Report
 
 **Corpus:** corpus-b-realworld (150 OSS projects, 577 total findings)
 **Investigation date:** 2026-06-16
@@ -79,7 +79,7 @@ if child.kind() == "call" {
 
 `curve` is an `identifier` node, not a `call` node. The function only handles the case where the first argument is a call expression like `ec.SECP256R1()`. An identifier passes straight through and returns `None`, so no curve is extracted and the classify step produces no finding.
 
-**Fix:** Extend `python_first_arg_call_method()` to also handle `identifier` nodes as the first positional argument, emitting the identifier name as a symbolic value. Update PY-010 (or add PY-011) in `cryptoscope/crates/core/data/rules/python.toml` to classify calls where the curve argument is a runtime variable.
+**Fix:** Extend `python_first_arg_call_method()` to also handle `identifier` nodes as the first positional argument, emitting the identifier name as a symbolic value. Update PY-010 (or add PY-011) in `seawall/crates/core/data/rules/python.toml` to classify calls where the curve argument is a runtime variable.
 
 ---
 
@@ -160,7 +160,7 @@ There are no entries for `CryptoJS.AES.encrypt`, `CryptoJS.DES.encrypt`, `Crypto
    - `"CryptoJS.MD5"` → weak hash
    - `"CryptoJS.SHA1"` → weak hash
    - `"CryptoJS.HmacMD5"`, `"CryptoJS.HmacSHA1"` → weak HMAC
-3. Add corresponding classify rules to `cryptoscope/crates/core/data/rules/javascript.toml`.
+3. Add corresponding classify rules to `seawall/crates/core/data/rules/javascript.toml`.
 
 ---
 

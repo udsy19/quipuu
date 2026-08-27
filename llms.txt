@@ -1,4 +1,4 @@
-# cryptoscope
+# seawall
 
 > A single static binary that finds every piece of cryptography in your
 > codebase, dependencies, X.509 certs, and TLS endpoints — then classifies
@@ -10,13 +10,13 @@
 
 - [README.md](README.md): project overview, positioning, quickstart, trust invariants
 - [SPEC.md](SPEC.md): build spec; every section traces to a D-NN decision in knowledge/11-decisions/
-- [cryptoscope/MCP.md](cryptoscope/MCP.md): MCP wire contract — the spine between the deterministic scanner and any agent layer
+- [seawall/MCP.md](seawall/MCP.md): MCP wire contract — the spine between the deterministic scanner and any agent layer
 - [knowledge/README.md](knowledge/README.md): research and decisions index
 
 ## Wire contract
 
-- [cryptoscope/crates/core/schema/](cryptoscope/crates/core/schema/): JSON Schemas (Draft 2020-12)
-- 11 MCP verbs documented in cryptoscope/MCP.md §3
+- [seawall/crates/core/schema/](seawall/crates/core/schema/): JSON Schemas (Draft 2020-12)
+- 11 MCP verbs documented in seawall/MCP.md §3
 - P3 enforced: provenance enum = ["deterministic"] only in OSS
 
 ## Knowledge base

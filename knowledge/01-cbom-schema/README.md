@@ -266,7 +266,7 @@ This is what got falsely refuted by the deep-research verifiers. The canonical s
 }
 ```
 
-**For cryptoscope's emitter:**
+**For seawall's emitter:**
 - Every finding → an `occurrences[]` entry on the relevant component:
   - `location` = relative file path
   - `line` = 1-based line number from tree-sitter
@@ -290,7 +290,7 @@ This is what got falsely refuted by the deep-research verifiers. The canonical s
 
 `provides` is documented verbatim as: *"a cryptographic library which implements a cryptographic algorithm. A component which implements another component does not imply that the implementation is in use."*
 
-**For cryptoscope's emitter:**
+**For seawall's emitter:**
 - Use `dependsOn` for the protocol↔suite↔algorithm tree where the linkage isn't already captured inside `cipherSuites[].algorithms` (it usually is — see §3).
 - Use `provides` to say "this library (component A) implements this algorithm (component B)", e.g. `openssl@3.2.0` provides `rsa-2048`, `aes-256-gcm`, etc. This is how the `scan-deps` output integrates with `scan-source` findings.
 
@@ -315,4 +315,4 @@ This is what got falsely refuted by the deep-research verifiers. The canonical s
 - **ECMA-424 1st Edition** = CycloneDX 1.6 (June 2024).
 - **ECMA-424 2nd Edition** = CycloneDX 1.7 (December 2025).
 
-**Why this matters for cryptoscope:** "ECMA-standardized format" is a positioning lever for the auditor-grade-report claim. We can say "ECMA-424 conformant" in the report header. To make that true under the 2nd Edition, we either target 1.7 or stamp `specVersion: "1.6"` (which is ECMA-424 1st Edition — also valid).
+**Why this matters for seawall:** "ECMA-standardized format" is a positioning lever for the auditor-grade-report claim. We can say "ECMA-424 conformant" in the report header. To make that true under the 2nd Edition, we either target 1.7 or stamp `specVersion: "1.6"` (which is ECMA-424 1st Edition — also valid).

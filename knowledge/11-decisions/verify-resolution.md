@@ -30,7 +30,7 @@ Three hybrids also live in the registry from `draft-ietf-tls-ecdhe-mlkem-04`:
 
 Plus the obsolete pre-standard entries (4590 curveSM2MLKEM768, 25497/25498 Kyber Draft00 marked `D` for deprecated).
 
-**Impact on the build:** cryptoscope's network prober should enumerate **all six** PQC TLS groups (3 pure + 3 hybrids), plus the two deprecated codepoints (so we can *flag* legacy deployments). Updates `knowledge/04-tls-pqc` §1 (`[VERIFY]` removed).
+**Impact on the build:** seawall's network prober should enumerate **all six** PQC TLS groups (3 pure + 3 hybrids), plus the two deprecated codepoints (so we can *flag* legacy deployments). Updates `knowledge/04-tls-pqc` §1 (`[VERIFY]` removed).
 
 ---
 
@@ -67,7 +67,7 @@ The IANA TLS SignatureScheme registry (`knowledge/sources/iana-tls-signaturesche
 
 All `Recommended: N` (drafts not yet RFC). Codepoints formally allocated.
 
-**Impact on the build:** Cryptoscope's network prober supports the 15 pure ML-DSA/SLH-DSA signature codepoints. Composite ML-DSA support deferred until IANA allocates real numbers. Updates `knowledge/05-x509-pqc` §2 (`[VERIFY]` removed for pure entries; composite kept as `[DRAFT-TBD]`).
+**Impact on the build:** Seawall's network prober supports the 15 pure ML-DSA/SLH-DSA signature codepoints. Composite ML-DSA support deferred until IANA allocates real numbers. Updates `knowledge/05-x509-pqc` §2 (`[VERIFY]` removed for pure entries; composite kept as `[DRAFT-TBD]`).
 
 ---
 
@@ -79,7 +79,7 @@ All `Recommended: N` (drafts not yet RFC). Codepoints formally allocated.
 
 **Feature matrix:**
 
-| Capability | foxguard | cryptoscope (planned) |
+| Capability | foxguard | seawall (planned) |
 |---|---|---|
 | Source-code scan | JS/TS, Python, Go, Ruby, Java, PHP, Rust, C#, Swift, Kotlin, C (11 langs) | Go + Python (v1), then expand |
 | Taint tracking | JS/TS, Python, Go, Kotlin | not v1 |
@@ -100,35 +100,35 @@ All `Recommended: N` (drafts not yet RFC). Codepoints formally allocated.
 **Verdict — wedge holds, narrower than the original spec assumed:**
 
 - foxguard is **the** open-source Rust security scanner with PQC awareness. It is not a CBOM-first tool; it is a SAST/SCA tool that happens to include PQC findings. 267 stars suggests modest but real traction.
-- **Gaps cryptoscope fills cleanly:** network/TLS, X.509, auditor-grade HTML, risk scoring (vs ordinal severity), NIST IR 8547 mapping, CycloneDX 1.7.
+- **Gaps seawall fills cleanly:** network/TLS, X.509, auditor-grade HTML, risk scoring (vs ordinal severity), NIST IR 8547 mapping, CycloneDX 1.7.
 - **foxguard's strengths over us:** 11 languages (vs 2 at v1), taint tracking, existing momentum.
 
-**Strategic posture:** Don't compete on language coverage in v1 — foxguard has us there. Compete on (a) the **non-code estate** (network + certs + deps as first-class), (b) **report and risk-scoring quality**, (c) **CBOM 1.7 + round-trip compatibility with CBOMkit**. Marketing line: *"foxguard scans your code. cryptoscope scans your estate."*
+**Strategic posture:** Don't compete on language coverage in v1 — foxguard has us there. Compete on (a) the **non-code estate** (network + certs + deps as first-class), (b) **report and risk-scoring quality**, (c) **CBOM 1.7 + round-trip compatibility with CBOMkit**. Marketing line: *"foxguard scans your code. seawall scans your estate."*
 
-**One-line collaboration possibility:** foxguard outputs CycloneDX 1.6 CBOM; cryptoscope can **consume** that CBOM as one of its inputs (`--in-cbom foxguard-output.json`) and add the network/cert/risk layer on top. Day-one ecosystem play.
+**One-line collaboration possibility:** foxguard outputs CycloneDX 1.6 CBOM; seawall can **consume** that CBOM as one of its inputs (`--in-cbom foxguard-output.json`) and add the network/cert/risk layer on top. Day-one ecosystem play.
 
 Full feature matrix added; wedge axes re-confirmed.
 
 ---
 
-## V-05 — Working name decision: **keep `cryptoscope`**
+## V-05 — Working name decision: **keep `seawall`**
 
 **Question (D-13):** Pick a working name that's available across crates.io, GitHub, Homebrew.
 
 **Sources:**
-- crates.io API for `cryptoscope` → **not found, available**
-- GitHub search `cryptoscope` → 119 results, but **none crypto-asset-scanner adjacent**. Top result by stars is `DaveBeusing/CryptoScope` (1 star, "full auto crypto trading" — cryptocurrency trading bot, not a security tool). The `oscargar1978/cryptoscope`, `Andrej094/CryptoScope` (web app), `Anas001989/cryptoscope` are all empty/unrelated educational repos.
+- crates.io API for `seawall` → **not found, available**
+- GitHub search `seawall` → 119 results, but **none crypto-asset-scanner adjacent**. Top result by stars is `DaveBeusing/Seawall` (1 star, "full auto crypto trading" — cryptocurrency trading bot, not a security tool). The `oscargar1978/seawall`, `Andrej094/Seawall` (web app), `Anas001989/seawall` are all empty/unrelated educational repos.
 - crates.io for backup names: `qsight`, `cbomx`, `pqfind`, `qbom`, `cryptotrace`, `pqsight`, `qx-scan`, `kx-scan` — **all available**. `pqaudit` is **taken** by a 35-download Rust TLS scanner (active March 2026, but very small).
 - **`csnp/cryptoscan`** (singular, no `pe`) is the credible name-space neighbour previously surfaced — different name, different ecosystem.
 
-**Decision:** **Keep `cryptoscope`.** The original concern (D-13) overstated the collision. The phonetic/semantic neighbours are:
+**Decision:** **Keep `seawall`.** The original concern (D-13) overstated the collision. The phonetic/semantic neighbours are:
 - `cryptoscan` (csnp) — different name, but adjacent. Acceptable.
-- `cryptoscope` GitHub repos — all hobby/unrelated. Acceptable.
+- `seawall` GitHub repos — all hobby/unrelated. Acceptable.
 - crates.io — **clear**.
 
 **Action:** Register the GitHub org and the crates.io name **before** any code lands publicly. Backup names if either becomes contested at publication time: `cbomx` (best — short, descriptive, distinctive), `cryptotrace`, `qsight`.
 
-**Updates** `knowledge/11-decisions/README.md` D-13 status → **RESOLVED, keeping cryptoscope.**
+**Updates** `knowledge/11-decisions/README.md` D-13 status → **RESOLVED, keeping seawall.**
 
 ---
 
@@ -140,6 +140,6 @@ Full feature matrix added; wedge axes re-confirmed.
 | V-02 | rustls-post-quantum latest version? | 0.2.4 (2025-09-23, superseded by rustls core) | crates.io API |
 | V-03 | Composite ML-DSA TLS codepoints assigned? | NO (still TBD1–TBD15, draft -10) | datatracker.ietf.org |
 | V-04 | foxguard feature matrix? | Confirmed; wedge holds in 6/10 axes | github.com/0sec-labs/foxguard README |
-| V-05 | Working name available? | YES — keeping cryptoscope | crates.io API + GitHub search |
+| V-05 | Working name available? | YES — keeping seawall | crates.io API + GitHub search |
 
 All `[VERIFY]` items now resolved. The build is unblocked.

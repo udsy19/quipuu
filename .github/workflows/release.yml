@@ -1,4 +1,4 @@
-# Release workflow for cryptoscope
+# Release workflow for seawall
 #
 # Triggered when a tag matching "v*" (e.g. v0.1.0) is pushed.
 # Builds fully-static / native binaries for every supported target,
@@ -26,7 +26,7 @@ env:
   RUST_TOOLCHAIN: stable
   CARGO_TERM_COLOR: always
   # The binary name must match the [[bin]] name in crates/cli/Cargo.toml.
-  BIN_NAME: cryptoscope
+  BIN_NAME: seawall
 
 jobs:
   # ─────────────────────────────────────────────────────────────────────────
@@ -87,7 +87,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: cryptoscope
+        working-directory: seawall
 
     steps:
       # ── 1. Checkout (full history so the tag ref is available) ────────────
@@ -133,11 +133,11 @@ jobs:
       - name: Cargo cache
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: "cryptoscope -> target"
+          workspaces: "seawall -> target"
 
       # ── 4. Build the release binary ───────────────────────────────────────
       #
-      # -p cryptoscope targets only the cli crate (the binary).
+      # -p seawall targets only the cli crate (the binary).
       # --locked ensures we use the exact dependency versions from Cargo.lock.
       - name: cargo build --release
         run: >
@@ -145,7 +145,7 @@ jobs:
           --release
           --target ${{ matrix.target }}
           --bin ${{ env.BIN_NAME }}
-          -p cryptoscope
+          -p seawall
           --locked
 
       # ── 5. Strip the binary (Linux + macOS) ──────────────────────────────

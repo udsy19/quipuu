@@ -1,0 +1,88 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/core",
+    "crates/scan-source",
+    "crates/scan-network",
+    "crates/scan-certs",
+    "crates/scan-deps",
+    "crates/cbom",
+    "crates/report",
+    "crates/tui",
+    "crates/cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.96"
+license = "Apache-2.0"
+repository = "https://github.com/udsy19/seawall"
+readme = "../README.md"
+
+[workspace.dependencies]
+# Serde + TOML + JSON for data loading and CBOM emission
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+
+# Errors
+thiserror = "2"
+
+# Logging
+tracing = "0.1"
+
+# Source parsing — tree-sitter + per-language grammars
+tree-sitter = "0.26"
+tree-sitter-go = "0.25"
+tree-sitter-python = "0.25"
+tree-sitter-java = "0.23"
+tree-sitter-javascript = "0.25"
+tree-sitter-typescript = "0.23"
+tree-sitter-c = "0.24"
+tree-sitter-cpp = "0.23"
+tree-sitter-rust = "0.24"
+tree-sitter-c-sharp = "0.23"
+
+# Walk source trees respecting .gitignore
+ignore = "0.4"
+
+# Regex for `when.args.<field> = { regex = "..." }` in classify rules
+regex = "1"
+
+# CBOM emitter dependencies
+jsonschema = { version = "0.46", default-features = false }
+uuid = { version = "1", features = ["v4"] }
+
+# scan-certs — X.509 parsing
+x509-parser = "0.18"
+pem = "3"
+
+# scan-deps — manifest parsers + glob walking (use existing serde_json/toml for JSON/TOML)
+quick-xml = { version = "0.38", features = ["serialize"] }   # pom.xml, *.csproj
+
+# report — HTML templating (askama is small + compile-time)
+askama = { version = "0.14", default-features = false, features = ["std"] }
+# General-purpose hashing for SARIF partialFingerprints
+sha2 = "0.10"
+
+# tui — terminal UI
+ratatui = "0.30"
+crossterm = "0.29"
+
+# scan-network — TLS prober (D-08). rustls 0.23 ships ML-KEM key exchange
+# since 0.23.27; tls-parser exposes ServerHello/Certificate parsing.
+rustls = { version = "0.23", default-features = false, features = ["std", "tls12", "ring", "logging"] }
+tokio = { version = "1", features = ["net", "io-util", "rt", "rt-multi-thread", "macros", "time"] }
+tokio-rustls = { version = "0.26", default-features = false, features = ["tls12", "ring", "logging"] }
+rustls-pki-types = "1"
+webpki-roots = "1"
+
+# Test-only
+insta = { version = "1.39", features = ["yaml"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true

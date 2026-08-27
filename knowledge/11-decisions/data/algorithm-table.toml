@@ -1,6 +1,6 @@
 # Canonical Algorithm Table
 #
-# This is the static lookup table cryptoscope ships with — every detected
+# This is the static lookup table seawall ships with — every detected
 # algorithm-id maps to one of these records. The Rust core crate deserializes
 # this at compile time via include_dir!.
 #

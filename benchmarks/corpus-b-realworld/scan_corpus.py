@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""scan_corpus.py — run cryptoscope across the 150-project corpus.
+"""scan_corpus.py — run seawall across the 150-project corpus.
 
 For each project in manifest.toml:
   1. Resolve the cloned path under clones/<ecosystem>/<name>/.
   2. Apply scan_hints.scan_paths if present (else scan the repo root).
-  3. Invoke cryptoscope binary on each scan path; aggregate finding count,
+  3. Invoke seawall binary on each scan path; aggregate finding count,
      wall-clock duration, and stderr.
   4. Emit results/<canonical-id>.json with per-project data.
   5. Emit results/summary.json with aggregate counts and per-ecosystem
@@ -18,7 +18,7 @@ Exit codes:
     0  All scans completed (may include per-project errors recorded in JSON)
     1  Binary not found / corpus directory missing / fatal I/O
 
-This is intentionally simple: each project gets one cryptoscope invocation
+This is intentionally simple: each project gets one seawall invocation
 with --source --deps. We never run any code from the cloned repos (P4).
 """
 
@@ -55,17 +55,17 @@ def load_project(file_path: Path) -> dict:
         return toml_lib.load(f)
 
 
-def discover_cryptoscope() -> Path:
-    """Find the cryptoscope binary built earlier."""
+def discover_seawall() -> Path:
+    """Find the seawall binary built earlier."""
     # Prefer the workspace target/release if present; fall back to debug.
-    workspace = SCRIPT_DIR.parent.parent / "cryptoscope"
+    workspace = SCRIPT_DIR.parent.parent / "seawall"
     for profile in ("release", "debug"):
-        candidate = workspace / "target" / profile / "cryptoscope"
+        candidate = workspace / "target" / profile / "seawall"
         if candidate.exists():
             return candidate
     raise SystemExit(
-        "cryptoscope binary not found; build with `cargo build --workspace` "
-        "from the cryptoscope/ directory first"
+        "seawall binary not found; build with `cargo build --workspace` "
+        "from the seawall/ directory first"
     )
 
 
@@ -75,7 +75,7 @@ def scan_one(
     clone_root: Path,
     include_safe: bool,
 ) -> dict:
-    """Run cryptoscope against one project; return a result dict.
+    """Run seawall against one project; return a result dict.
 
     The result dict captures:
       canonical_id, ecosystem, scan_paths, total_findings, audible_findings,
@@ -189,7 +189,7 @@ def scan_one(
 
             if summary is not None:
                 # Schema: {"totals": {"findings": N, ...}, "by_algorithm": [...]}
-                # This count reflects only what cryptoscope passed to the
+                # This count reflects only what seawall passed to the
                 # emitter — i.e. audible-only unless --include-safe.
                 summary_total = (summary.get("totals") or {}).get("findings", 0)
                 if include_safe:
@@ -254,7 +254,7 @@ def main() -> int:
     parser.add_argument(
         "--bin",
         default=None,
-        help="Path to cryptoscope binary (auto-detected if omitted)",
+        help="Path to seawall binary (auto-detected if omitted)",
     )
     parser.add_argument(
         "--ecosystem",
@@ -269,7 +269,7 @@ def main() -> int:
     parser.add_argument(
         "--include-safe",
         action="store_true",
-        help="Pass --include-safe through to cryptoscope (default: do not)",
+        help="Pass --include-safe through to seawall (default: do not)",
     )
     parser.add_argument(
         "--limit",
@@ -289,8 +289,8 @@ def main() -> int:
     per_proj_dir = out / "per-project"
     per_proj_dir.mkdir(exist_ok=True)
 
-    binary = Path(args.bin) if args.bin else discover_cryptoscope()
-    print(f"Using cryptoscope binary: {binary}")
+    binary = Path(args.bin) if args.bin else discover_seawall()
+    print(f"Using seawall binary: {binary}")
     print(f"Clones root: {clones}")
     print(f"Output dir:  {out}")
     if args.ecosystem:
