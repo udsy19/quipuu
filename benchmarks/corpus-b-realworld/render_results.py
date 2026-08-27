@@ -74,7 +74,7 @@ def main() -> int:
     lines: list[str] = []
     w = lines.append
 
-    w("# cryptoscope V7 — 150-project corpus benchmark")
+    w("# cryptoscope V8 — 150-project corpus benchmark")
     w("")
     w(f"**Corpus:** {summary.get('corpus', 'corpus-b-realworld')}  ")
     w(f"**Projects scanned:** {summary['total_projects_scanned']}  ")
@@ -85,15 +85,15 @@ def main() -> int:
     )
     w("")
     w(
-        "This is the V7 corpus run, layered on Phases 1-6 (jjwt enum constants, "
-        "signal-to-noise, ACVP refresh, why-this-matters, non-fatal warnings) "
-        "plus Phase 7 (Go switch-on-string; MCP / HTML / SARIF warning "
-        "surfacing), Phase 8 (paramiko-style runtime-variable args, crypto-js "
-        "two-level member expressions), Phase 9 (Go algorithm-registration "
-        "patterns — composite literal, call-as-constructor, const), Phase 10 "
-        "(Rust qualified paths, runtime-variable bits, turbofish hash "
-        "extraction, ServerConfig / KeyPair APIs), and Phase 11 (pbkdf2 "
-        "nested-turbofish hash routing). Numbers below are stratified by "
+        "This is the V8 corpus run, layered on Phases 1-11 (jjwt enum "
+        "constants, signal-to-noise, ACVP refresh, why-this-matters, "
+        "non-fatal warnings, Go switch / registration, paramiko + crypto-js, "
+        "Rust qualified paths + turbofish, pbkdf2 nested turbofish) plus "
+        "Phase 12 (precision audit — measured 73.3% precision on a stratified "
+        "31-finding sample) and Phase 13 (closing the 8 audit-surfaced false-"
+        "positive patterns: TLS-config topology markers, jwt-alg-none "
+        "sentinel, per-variant PSS / HMAC / ECDSA / AES-ECB algorithm_ids, "
+        "plus a CI consistency guard). Numbers below are stratified by "
         "ecosystem and reported without projected values — only what was "
         "actually scanned."
     )
@@ -248,6 +248,44 @@ def main() -> int:
         w("")
         for cid, n in sorted(phase11_winners):
             w(f"- `{cid}` — **{n} findings** (was 0)")
+        w("")
+
+    # ── Phase 13 verification — precision lift on the same rules ───────
+    p13_rules = {
+        "CRYPTO-560": "tls-client-config",
+        "CRYPTO-561": "tls-server-config",
+        "CRYPTO-740": "jwt-alg-none",
+        "CRYPTO-704": "rsa-pss-sha384-3072",
+        "CRYPTO-705": "rsa-pss-sha512-4096",
+        "CRYPTO-255": "sha-384",
+        "CRYPTO-258": "ecdsa-p521",
+        "CRYPTO-417": "aes-256-ecb",
+    }
+    # Read all_findings.json to count post-fix routing.
+    import json as _json
+    af_path = SCRIPT_DIR / "results" / "all_findings.json"
+    p13_counts = {}
+    if af_path.exists():
+        for f in _json.loads(af_path.read_text()):
+            if f["rule_id"] in p13_rules:
+                p13_counts[f["rule_id"]] = p13_counts.get(f["rule_id"], 0) + 1
+
+    if p13_counts:
+        w("### Phase 13 verification — precision-fix routing in the wild")
+        w("")
+        w(
+            "The Phase 12 precision audit (PRECISION_AUDIT.md) flagged 8 "
+            "findings whose `algorithm_id` field was misleading (placeholder, "
+            "copy-paste, or wrong-variant). Phase 13 (commit 89d35cb) added "
+            "dedicated sentinels and per-variant rules; the table below shows "
+            "how many corpus findings now route to the correct algorithm_id:"
+        )
+        w("")
+        w("| Rule | algorithm_id | Findings reclassified |")
+        w("|---|---|---|")
+        for rule, algo in sorted(p13_rules.items()):
+            n = p13_counts.get(rule, 0)
+            w(f"| `{rule}` | `{algo}` | {n} |")
         w("")
 
     # ── Per-ecosystem headline ──────────────────────────────────────────

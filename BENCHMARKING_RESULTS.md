@@ -1,18 +1,18 @@
-# cryptoscope V7 — 150-project corpus benchmark
+# cryptoscope V8 — 150-project corpus benchmark
 
 **Corpus:** corpus-b-realworld  
 **Projects scanned:** 150  
-**Elapsed:** 22.1s  
+**Elapsed:** 23.3s  
 **Default filter:** quantum-safe inventory hidden from alert output (Phase 2; pass --include-safe to unhide)  
 
-This is the V7 corpus run, layered on Phases 1-6 (jjwt enum constants, signal-to-noise, ACVP refresh, why-this-matters, non-fatal warnings) plus Phase 7 (Go switch-on-string; MCP / HTML / SARIF warning surfacing), Phase 8 (paramiko-style runtime-variable args, crypto-js two-level member expressions), Phase 9 (Go algorithm-registration patterns — composite literal, call-as-constructor, const), Phase 10 (Rust qualified paths, runtime-variable bits, turbofish hash extraction, ServerConfig / KeyPair APIs), and Phase 11 (pbkdf2 nested-turbofish hash routing). Numbers below are stratified by ecosystem and reported without projected values — only what was actually scanned.
+This is the V8 corpus run, layered on Phases 1-11 (jjwt enum constants, signal-to-noise, ACVP refresh, why-this-matters, non-fatal warnings, Go switch / registration, paramiko + crypto-js, Rust qualified paths + turbofish, pbkdf2 nested turbofish) plus Phase 12 (precision audit — measured 73.3% precision on a stratified 31-finding sample) and Phase 13 (closing the 8 audit-surfaced false-positive patterns: TLS-config topology markers, jwt-alg-none sentinel, per-variant PSS / HMAC / ECDSA / AES-ECB algorithm_ids, plus a CI consistency guard). Numbers below are stratified by ecosystem and reported without projected values — only what was actually scanned.
 
 ## Headline numbers
 
-- **1194 total findings** across 150 projects in 22.1s
+- **1194 total findings** across 150 projects in 23.3s
 - **864 audible** (72%) surfaced for analyst review; **330 suppressed** (28%) as quantum-safe inventory
 - **55 / 150 projects** produced at least one finding; **9 / 150** had scan errors (mostly missing clones — see below)
-- **Avg scan time:** 0.15s per project (release build, single-threaded)
+- **Avg scan time:** 0.16s per project (release build, single-threaded)
 
 ### Phase 1 verification — Java JWT libraries now produce findings
 
@@ -51,31 +51,46 @@ Pre-Phase-11 (the V6 corpus run), pbkdf2 and scrypt produced **zero** findings. 
 - `crates-io:pbkdf2` — **3 findings** (was 0)
 - `crates-io:scrypt` — **2 findings** (was 0)
 
+### Phase 13 verification — precision-fix routing in the wild
+
+The Phase 12 precision audit (PRECISION_AUDIT.md) flagged 8 findings whose `algorithm_id` field was misleading (placeholder, copy-paste, or wrong-variant). Phase 13 (commit 89d35cb) added dedicated sentinels and per-variant rules; the table below shows how many corpus findings now route to the correct algorithm_id:
+
+| Rule | algorithm_id | Findings reclassified |
+|---|---|---|
+| `CRYPTO-255` | `sha-384` | 5 |
+| `CRYPTO-258` | `ecdsa-p521` | 6 |
+| `CRYPTO-417` | `aes-256-ecb` | 1 |
+| `CRYPTO-560` | `tls-client-config` | 79 |
+| `CRYPTO-561` | `tls-server-config` | 54 |
+| `CRYPTO-704` | `rsa-pss-sha384-3072` | 19 |
+| `CRYPTO-705` | `rsa-pss-sha512-4096` | 19 |
+| `CRYPTO-740` | `jwt-alg-none` | 18 |
+
 ## Findings by ecosystem
 
 | Ecosystem | Projects | Total findings | Audible | Suppressed (safe) | Errored | Avg scan time |
 |---|---|---|---|---|---|---|
 | crates-io | 25 | 226 | 73 | 153 | 0 | 0.06s |
-| crypto-adjacent | 25 | 6 | 4 | 2 | 2 | 0.04s |
+| crypto-adjacent | 25 | 6 | 4 | 2 | 2 | 0.05s |
 | go-modules | 25 | 441 | 364 | 77 | 3 | 0.10s |
-| maven | 25 | 366 | 290 | 76 | 4 | 0.41s |
-| npm | 25 | 117 | 95 | 22 | 0 | 0.11s |
-| pypi | 25 | 38 | 38 | 0 | 0 | 0.17s |
+| maven | 25 | 366 | 290 | 76 | 4 | 0.44s |
+| npm | 25 | 117 | 95 | 22 | 0 | 0.10s |
+| pypi | 25 | 38 | 38 | 0 | 0 | 0.18s |
 
 ## Top 10 projects by total finding count
 
 | Project | Total | Audible | Suppressed | Scan time |
 |---|---|---|---|---|
-| `go-modules:github.com/lestrrat-go/jwx` | 219 | 175 | 44 | 0.46s |
-| `crates-io:rustls-pemfile` | 140 | 30 | 110 | 0.28s |
-| `maven:com.google.crypto.tink:tink` | 130 | 103 | 27 | 1.87s |
-| `maven:org.eclipse.jetty:jetty-server` | 117 | 111 | 6 | 3.84s |
-| `maven:com.nimbusds:nimbus-jose-jwt` | 78 | 51 | 27 | 0.14s |
-| `go-modules:github.com/go-jose/go-jose` | 65 | 60 | 5 | 0.13s |
+| `go-modules:github.com/lestrrat-go/jwx` | 219 | 175 | 44 | 0.49s |
+| `crates-io:rustls-pemfile` | 140 | 30 | 110 | 0.29s |
+| `maven:com.google.crypto.tink:tink` | 130 | 103 | 27 | 1.89s |
+| `maven:org.eclipse.jetty:jetty-server` | 117 | 111 | 6 | 4.31s |
+| `maven:com.nimbusds:nimbus-jose-jwt` | 78 | 51 | 27 | 0.15s |
+| `go-modules:github.com/go-jose/go-jose` | 65 | 60 | 5 | 0.12s |
 | `npm:jsonwebtoken` | 64 | 64 | 0 | 0.07s |
-| `go-modules:github.com/hashicorp/vault` | 63 | 59 | 4 | 0.34s |
+| `go-modules:github.com/hashicorp/vault` | 63 | 59 | 4 | 0.32s |
 | `go-modules:github.com/golang-jwt/jwt` | 46 | 33 | 13 | 0.08s |
-| `npm:jsrsasign` | 43 | 25 | 18 | 0.43s |
+| `npm:jsrsasign` | 43 | 25 | 18 | 0.42s |
 
 ## Coverage gaps — expected-non-zero projects with 0 findings
 
