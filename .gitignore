@@ -17,3 +17,16 @@ Cargo.lock.bak
 
 # Demo outputs
 /cryptoscope-demo/
+
+# Subagent scratch (per-spawn memory under engine/)
+cryptoscope-pro/engine/.claude/
+
+# Python build / cache leftovers
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.coverage
+htmlcov/
