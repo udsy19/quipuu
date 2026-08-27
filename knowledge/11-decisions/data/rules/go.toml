@@ -298,7 +298,7 @@ description = "JWT signing method (RS256, ES256, EdDSA, …)."
 id = "CRYPTO-060"
 when.api = "^jwt\\.NewWithClaims$"
 when.args.alg = { regex = "^(SigningMethodNone|None)$" }
-algorithm_id = "rsa-1024"   # placeholder; the report renders this as "alg=none"
+algorithm_id = "jwt-alg-none"
 severity_hint = "critical"
 message = "JWT alg=none — signature verification disabled. CVE-2015-9235 class."
 cwe = "CWE-347"
@@ -369,14 +369,14 @@ message = "JWT alg=PS256 — RSA-PSS-SHA256. Quantum-vulnerable to Shor's algori
 [[classify]]
 id = "CRYPTO-704"
 when.api = "^go\\.alg-(switch|register)\\.PS384$"
-algorithm_id = "rsa-pss-sha256-2048"
+algorithm_id = "rsa-pss-sha384-3072"
 severity_hint = "auto"
 message = "JWT alg=PS384 — RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
 
 [[classify]]
 id = "CRYPTO-705"
 when.api = "^go\\.alg-(switch|register)\\.PS512$"
-algorithm_id = "rsa-pss-sha256-2048"
+algorithm_id = "rsa-pss-sha512-4096"
 severity_hint = "auto"
 message = "JWT alg=PS512 — RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
 
@@ -436,7 +436,7 @@ message = "JWT alg=HS512 — HMAC-SHA512. Symmetric; not quantum-broken but inve
 [[classify]]
 id = "CRYPTO-740"
 when.api = "^go\\.alg-(switch|register)\\.none$"
-algorithm_id = "rsa-1024"
+algorithm_id = "jwt-alg-none"
 severity_hint = "critical"
 message = "JWT alg=none — signature verification is disabled. CVE-2015-9235 class vulnerability."
 cwe = "CWE-347"

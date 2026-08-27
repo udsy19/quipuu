@@ -90,6 +90,30 @@ replacement = "ml-dsa-65"
 oid = "1.2.840.113549.1.1.10"
 
 [[algorithm]]
+id = "rsa-pss-sha384-3072"
+display_name = "RSA-PSS-SHA384 (3072-bit typical)"
+family = "RSASSA-PSS"
+primitive = "signature"
+classical_security_bits = 128
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-87"
+oid = "1.2.840.113549.1.1.10"
+notes = "JWT PS384 — RSASSA-PSS with SHA-384. Same OID as PS256/PS512 (algorithm parameters distinguish them)."
+
+[[algorithm]]
+id = "rsa-pss-sha512-4096"
+display_name = "RSA-PSS-SHA512 (4096-bit typical)"
+family = "RSASSA-PSS"
+primitive = "signature"
+classical_security_bits = 152
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-87"
+oid = "1.2.840.113549.1.1.10"
+notes = "JWT PS512 — RSASSA-PSS with SHA-512."
+
+[[algorithm]]
 id = "rsa-pkcs1-sha1"
 display_name = "RSA-PKCS1-SHA1"
 family = "RSASSA-PKCS1"
@@ -382,6 +406,28 @@ family = "AES"
 primitive = "block-cipher"
 classical_security_bits = 128
 nist_quantum_security_level = 1
+quantum_status = "BrokenClassically"
+replacement = "aes-256-gcm"
+notes = "ECB mode never appropriate beyond single-block; severity high regardless of key size."
+
+[[algorithm]]
+id = "aes-192-ecb"
+display_name = "AES-192-ECB"
+family = "AES"
+primitive = "block-cipher"
+classical_security_bits = 192
+nist_quantum_security_level = 3
+quantum_status = "BrokenClassically"
+replacement = "aes-256-gcm"
+notes = "ECB mode never appropriate beyond single-block; severity high regardless of key size."
+
+[[algorithm]]
+id = "aes-256-ecb"
+display_name = "AES-256-ECB"
+family = "AES"
+primitive = "block-cipher"
+classical_security_bits = 256
+nist_quantum_security_level = 5
 quantum_status = "BrokenClassically"
 replacement = "aes-256-gcm"
 notes = "ECB mode never appropriate beyond single-block; severity high regardless of key size."
@@ -781,3 +827,29 @@ family = "TLS"
 primitive = "other"
 quantum_status = "QuantumSafe"
 notes = "Generic sentinel for scan-network's default-handshake findings; the per-group probes provide algorithm-specific attribution. Not scored as vulnerable."
+
+[[algorithm]]
+id = "tls-client-config"
+display_name = "TLS client config (topology marker)"
+family = "TLS"
+primitive = "other"
+quantum_status = "QuantumSafe"
+notes = "Topology marker for rustls::ClientConfig::builder() and equivalent calls. The algorithm itself is determined at handshake time; this id flags the call site so an auditor can locate it without misclassifying it as a specific cipher. Inventory-tier."
+
+[[algorithm]]
+id = "tls-server-config"
+display_name = "TLS server config (topology marker)"
+family = "TLS"
+primitive = "other"
+quantum_status = "QuantumSafe"
+notes = "Topology marker for rustls::ServerConfig::builder() and equivalent calls. Same semantics as tls-client-config: flags the call site without assigning a misleading cipher id. Inventory-tier."
+
+[[algorithm]]
+id = "jwt-alg-none"
+display_name = "JWT alg=none (signature verification disabled)"
+family = "JWT"
+primitive = "other"
+classical_security_bits = 0
+nist_quantum_security_level = 0
+quantum_status = "BrokenClassically"
+notes = "CWE-347: JWT with alg=none disables signature verification entirely. CVE-2015-9235 class. Not a quantum issue — already broken classically. Distinct from rsa-1024 which is a real algorithm with a too-small key."

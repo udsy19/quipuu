@@ -319,7 +319,7 @@ description = "PyJWT signing call with explicit algorithm kwarg."
 id = "CRYPTO-160"
 when.api = "^jwt\\.encode$"
 when.args.alg = { regex = "^[\"']?none[\"']?$" }
-algorithm_id = "rsa-1024"   # placeholder
+algorithm_id = "jwt-alg-none"
 severity_hint = "critical"
 message = "JWT algorithm='none' — signature verification disabled."
 

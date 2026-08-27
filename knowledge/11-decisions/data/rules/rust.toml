@@ -306,16 +306,16 @@ description = "rustls::ClientConfig::builder() — TLS client config."
 [[classify]]
 id = "CRYPTO-560"
 when.api = "^rustls\\.ClientConfig\\.builder$"
-algorithm_id = "aes-256-gcm"
+algorithm_id = "tls-client-config"
 severity_hint = "auto"
-message = "rustls::ClientConfig::builder() — TLS client configured. Confirm PQC hybrid group support."
+message = "rustls::ClientConfig::builder() — TLS client configured. Algorithm choice is determined at handshake time; confirm PQC hybrid group support (e.g. X25519MLKEM768)."
 
 [[classify]]
 id = "CRYPTO-561"
 when.api = "^rustls\\.ServerConfig\\.builder$"
-algorithm_id = "aes-256-gcm"
+algorithm_id = "tls-server-config"
 severity_hint = "auto"
-message = "rustls::ServerConfig::builder() — TLS server configured. Confirm PQC hybrid group support."
+message = "rustls::ServerConfig::builder() — TLS server configured. Algorithm choice is determined at handshake time; confirm PQC hybrid group support (e.g. X25519MLKEM768)."
 
 # ============================================================================
 # rcgen — KeyPair::generate_for(SIG_ALG)

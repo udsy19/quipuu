@@ -741,15 +741,19 @@ fn phase1_nimbus_jwsalgorithm_rs384() {
 
 #[test]
 fn phase1_nimbus_jwsalgorithm_es512() {
+    // Phase 13 split CRYPTO-251 (blanket ES256/384/512) into per-curve rules.
+    // ES512 now routes to CRYPTO-258 with algorithm_id ecdsa-p521 (was the
+    // buggy blanket ecdsa-p256 in CRYPTO-251).
     let b = load_builtins().unwrap();
     let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
     let findings = scanner
         .scan_path(&fixtures_root().join("java/Jwt.java"))
         .expect("scan succeeds");
-    assert!(
-        findings.iter().any(|f| f.rule_id == "CRYPTO-251"),
-        "expected CRYPTO-251 for nimbus JWSAlgorithm.ES512"
-    );
+    let f = findings
+        .iter()
+        .find(|f| f.rule_id == "CRYPTO-258")
+        .expect("expected CRYPTO-258 for nimbus JWSAlgorithm.ES512");
+    assert_eq!(f.algorithm_id, "ecdsa-p521");
 }
 
 #[test]
@@ -863,9 +867,11 @@ fn phase7_go_switch_none_critical() {
         .iter()
         .find(|f| f.rule_id == "CRYPTO-740")
         .expect("expected CRYPTO-740 for Go switch case \"none\" (CWE-347)");
+    // Phase 13: rsa-1024 placeholder replaced by the dedicated jwt-alg-none
+    // sentinel. The finding stays critical; only the algorithm_id changed.
     assert_eq!(
-        none_finding.algorithm_id, "rsa-1024",
-        "CRYPTO-740 must use rsa-1024 placeholder (same as Java NONE sentinel)"
+        none_finding.algorithm_id, "jwt-alg-none",
+        "CRYPTO-740 must use the dedicated jwt-alg-none sentinel (Phase 13)"
     );
 }
 
@@ -1453,5 +1459,142 @@ fn phase8_app_py_findings_unchanged() {
     assert!(
         !findings.iter().any(|f| f.rule_id == "CRYPTO-115"),
         "literal curve must not trigger the symbolic rule"
+    );
+}
+
+// ── Phase 13: classify-rule consistency guards ──────────────────────────────
+//
+// The precision audit (PRECISION_AUDIT.md) surfaced multiple copy-paste
+// bugs where a rule's `when` clause names a specific hash/curve variant but
+// the `algorithm_id` field references a different variant (e.g. CRYPTO-704
+// claims PS384 but assigns rsa-pss-sha256-2048). These tests scan every
+// shipped rule and assert variant-consistency: if a rule fires on `HS384`
+// it must NOT route to `sha-256`; if it fires on `PS512` it must NOT route
+// to `rsa-pss-sha256-2048`; etc.
+//
+// Hash and curve names from the `when` regex are compared against the
+// algorithm_id text. The rule is conservative: only flag obvious
+// mismatches (e.g., regex contains "384" but algorithm_id contains "256").
+
+use cryptoscope_scan_source::{ClassifyRule, RulePack};
+
+fn all_classify_rules() -> Vec<(&'static str, ClassifyRule)> {
+    let mut out = Vec::new();
+    for (lang, pack) in [
+        ("go", RulePack::builtin_go().unwrap()),
+        ("python", RulePack::builtin_python().unwrap()),
+        ("java", RulePack::builtin_java().unwrap()),
+        ("javascript", RulePack::builtin_javascript().unwrap()),
+        ("cpp", RulePack::builtin_cpp().unwrap()),
+        ("rust", RulePack::builtin_rust().unwrap()),
+        ("csharp", RulePack::builtin_csharp().unwrap()),
+    ] {
+        for r in pack.classify {
+            out.push((lang, r));
+        }
+    }
+    out
+}
+
+#[test]
+fn phase13_hash_variant_consistency() {
+    // If a classify rule's `when` clause references SHA-X (X in {256,384,512})
+    // — via api regex OR when.args.member regex — the algorithm_id must
+    // reference the same hash width. Catches the CRYPTO-252-class bug where
+    // an HS384 rule mistakenly routed to algorithm_id "sha-256".
+    let rules = all_classify_rules();
+    let mut violations = Vec::new();
+    for (lang, r) in &rules {
+        // Concatenate every regex this rule's `when` clause uses.
+        let mut probe = r.when.api.clone();
+        for am in r.when.args.values() {
+            if let cryptoscope_scan_source::rules::ArgMatch::Regex(rx) = am {
+                probe.push(' ');
+                probe.push_str(&rx.regex);
+            } else if let cryptoscope_scan_source::rules::ArgMatch::ExactStr(s) = am {
+                probe.push(' ');
+                probe.push_str(s);
+            }
+        }
+        // Strip the body of `(256|384|512)` alternatives — a rule that handles
+        // multiple variants jointly is allowed to keep a generic algorithm_id.
+        // We only flag rules that pin to ONE variant in `when` but use a
+        // DIFFERENT variant in algorithm_id.
+        let single_variant = |needle: &str| -> bool {
+            probe.contains(needle) && {
+                // Make sure `needle` isn't inside an alternative like (256|384).
+                let other_variants: Vec<&str> = ["256", "384", "512"]
+                    .iter()
+                    .filter(|v| **v != needle)
+                    .copied()
+                    .collect();
+                !other_variants.iter().any(|o| probe.contains(o))
+            }
+        };
+        for needle in ["256", "384", "512"] {
+            if single_variant(needle) {
+                // Now check the algorithm_id text.
+                let other_variants: Vec<&str> = ["256", "384", "512"]
+                    .iter()
+                    .filter(|v| **v != needle)
+                    .copied()
+                    .collect();
+                for wrong in &other_variants {
+                    if r.algorithm_id.contains(wrong) && !r.algorithm_id.contains(needle) {
+                        violations.push(format!(
+                            "[{lang}] {}: when.* mentions {needle} but algorithm_id={} mentions {wrong}",
+                            r.id, r.algorithm_id
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    assert!(
+        violations.is_empty(),
+        "hash-variant consistency violations:\n  {}",
+        violations.join("\n  ")
+    );
+}
+
+#[test]
+fn phase13_ecdsa_curve_consistency() {
+    // Same shape, for ECDSA curves: a rule that matches `ES384` must not
+    // route to ecdsa-p256 or ecdsa-p521.
+    let rules = all_classify_rules();
+    let mut violations = Vec::new();
+    let curve_pairs = [
+        ("ES384", "ecdsa-p256"),
+        ("ES384", "ecdsa-p521"),
+        ("ES512", "ecdsa-p256"),
+        ("ES512", "ecdsa-p384"),
+    ];
+    for (lang, r) in &rules {
+        let mut probe = r.when.api.clone();
+        for am in r.when.args.values() {
+            if let cryptoscope_scan_source::rules::ArgMatch::Regex(rx) = am {
+                probe.push(' ');
+                probe.push_str(&rx.regex);
+            }
+        }
+        for (variant, wrong_id) in &curve_pairs {
+            // Match only on a STRICT regex pin (no alternation that would
+            // legitimately cover this variant + others).
+            if probe.contains(variant)
+                && !probe.contains(&format!("{}|", variant))
+                && !probe.contains(&format!("|{}", variant))
+                && r.algorithm_id == *wrong_id
+            {
+                violations.push(format!(
+                    "[{lang}] {}: when.* pins {variant} but algorithm_id={}",
+                    r.id, r.algorithm_id
+                ));
+            }
+        }
+    }
+    assert!(
+        violations.is_empty(),
+        "ECDSA curve consistency violations:\n  {}",
+        violations.join("\n  ")
     );
 }

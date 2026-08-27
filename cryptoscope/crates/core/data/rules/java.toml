@@ -198,7 +198,7 @@ message = "BouncyCastle provider registered. Inventory all BC API usages."
 id = "CRYPTO-240"
 when.api = "^io\\.jsonwebtoken\\.SignatureAlgorithm$"
 when.args.member = { regex = "^(NONE|none)$" }
-algorithm_id = "rsa-1024"   # algorithm-table sentinel for "broken"; agent layer renders message
+algorithm_id = "jwt-alg-none"
 severity_hint = "critical"
 message = "jjwt SignatureAlgorithm.NONE — signature verification disabled (CVE-2015-9235 class)."
 cwe = "CWE-347"
@@ -250,21 +250,55 @@ algorithm_id = "rsa-pkcs1-sha256-2048"
 severity_hint = "auto"
 message = "nimbus JWSAlgorithm.{member} — RSA signature, quantum-vulnerable."
 
+# ECDSA variants — split per-curve so the algorithm_id matches.
 [[classify]]
 id = "CRYPTO-251"
 when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
-when.args.member = { regex = "^ES(256|256K|384|512)$" }
+when.args.member = { regex = "^ES256K?$" }
 algorithm_id = "ecdsa-p256"
 severity_hint = "auto"
-message = "nimbus JWSAlgorithm.{member} — ECDSA signature, quantum-vulnerable."
+message = "nimbus JWSAlgorithm.{member} — ECDSA P-256 signature, quantum-vulnerable."
 
+[[classify]]
+id = "CRYPTO-257"
+when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
+when.args.member = { regex = "^ES384$" }
+algorithm_id = "ecdsa-p384"
+severity_hint = "auto"
+message = "nimbus JWSAlgorithm.ES384 — ECDSA P-384 signature, quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-258"
+when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
+when.args.member = { regex = "^ES512$" }
+algorithm_id = "ecdsa-p521"
+severity_hint = "auto"
+message = "nimbus JWSAlgorithm.ES512 — ECDSA P-521 signature, quantum-vulnerable."
+
+# HMAC variants — split per-hash so the algorithm_id matches the variant.
 [[classify]]
 id = "CRYPTO-252"
 when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
-when.args.member = { regex = "^HS(256|384|512)$" }
+when.args.member = { regex = "^HS256$" }
 algorithm_id = "sha-256"
 severity_hint = "low"
-message = "nimbus JWSAlgorithm.{member} (HMAC). Symmetric; confirm key entropy."
+message = "nimbus JWSAlgorithm.HS256 (HMAC-SHA256). Symmetric; confirm key entropy."
+
+[[classify]]
+id = "CRYPTO-255"
+when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
+when.args.member = { regex = "^HS384$" }
+algorithm_id = "sha-384"
+severity_hint = "low"
+message = "nimbus JWSAlgorithm.HS384 (HMAC-SHA384). Symmetric; confirm key entropy."
+
+[[classify]]
+id = "CRYPTO-256"
+when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
+when.args.member = { regex = "^HS512$" }
+algorithm_id = "sha-512"
+severity_hint = "low"
+message = "nimbus JWSAlgorithm.HS512 (HMAC-SHA512). Symmetric; confirm key entropy."
 
 [[classify]]
 id = "CRYPTO-253"
@@ -319,7 +353,7 @@ message = "jose4j AlgorithmIdentifiers.{member} (HMAC). Symmetric; confirm key e
 id = "CRYPTO-264"
 when.api = "^org\\.jose4j\\.jws\\.AlgorithmIdentifiers$"
 when.args.member = { regex = "^NONE$" }
-algorithm_id = "rsa-1024"   # sentinel for "broken"
+algorithm_id = "jwt-alg-none"
 severity_hint = "critical"
 message = "jose4j AlgorithmIdentifiers.NONE — signature verification disabled."
 cwe = "CWE-347"
