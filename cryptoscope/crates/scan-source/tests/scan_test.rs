@@ -76,6 +76,41 @@ fn scans_go_fixture() {
             .iter()
             .any(|f| f.rule_id == "CRYPTO-051" && f.algorithm_id == "sha-1")
     );
+
+    // crypto/tls.Config.CurvePreferences — GO-032.
+    // The fixture lists tls.X25519, tls.CurveP256, tls.CurveP384.
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-032" && f.algorithm_id == "x25519"),
+        "expected CRYPTO-032 for tls.X25519 in CurvePreferences",
+    );
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-033" && f.algorithm_id == "ecdh-p256"),
+        "expected CRYPTO-033 for tls.CurveP256 in CurvePreferences",
+    );
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-034" && f.algorithm_id == "ecdh-p384"),
+        "expected CRYPTO-034 for tls.CurveP384 in CurvePreferences",
+    );
+
+    // crypto/ecdh.<Curve> — GO-033. Fixture calls ecdh.X25519() and ecdh.P256().
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-036" && f.algorithm_id == "x25519"),
+        "expected CRYPTO-036 for ecdh.X25519()",
+    );
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-037" && f.algorithm_id == "ecdh-p256"),
+        "expected CRYPTO-037 for ecdh.P256()",
+    );
 }
 
 #[test]
@@ -1420,13 +1455,18 @@ fn phase9_go_doc_string_with_embedded_jose_name_does_not_fire() {
 
 #[test]
 fn phase9_go_main_fixture_unchanged() {
-    // Phase 9 must not change findings on the existing Go fixtures.
+    // Pinned snapshot of the go/main.go fixture's finding count.
+    //   - 7 from Phase 9 baseline (RSA × 3, ECDSA × 2, MD5, SHA-1)
+    //   - 5 added with TLS CurvePreferences + crypto/ecdh detection:
+    //     CRYPTO-032 (tls.X25519), CRYPTO-033 (tls.CurveP256),
+    //     CRYPTO-034 (tls.CurveP384), CRYPTO-036 (ecdh.X25519),
+    //     CRYPTO-037 (ecdh.P256)
     let b = load_builtins().expect("builtins");
     let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
     let main_findings = scanner
         .scan_path(&fixtures_root().join("go/main.go"))
         .expect("scan succeeds");
-    assert_eq!(main_findings.len(), 7, "go/main.go count must not change");
+    assert_eq!(main_findings.len(), 12, "go/main.go count must not change");
 
     let switch_findings = scanner
         .scan_path(&fixtures_root().join("go/jwt_switch.go"))
@@ -1755,5 +1795,74 @@ fn phase14b_classify_rule_ids_unique_within_language() {
         "{} duplicate rule ids:\n  {}",
         dupes.len(),
         dupes.join("\n  ")
+    );
+}
+
+// ── Phase 16: SiteContext-based FP suppression ─────────────────────────────
+//
+// The phase16_sitecontext.go fixture has 4 operational TPs at known lines
+// and 7 non-operational lines that must NOT produce findings.
+
+#[test]
+fn phase16_operational_tps_fire() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("go/phase16_sitecontext.go"))
+        .expect("scan succeeds");
+    let want = [
+        (23, "CRYPTO-700"),
+        (26, "CRYPTO-730"),
+        (31, "CRYPTO-700"),
+        (33, "CRYPTO-704"),
+    ];
+    for (line, rule) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.location.line == Some(line) && f.rule_id == rule),
+            "expected {} on line {}, got: {:?}",
+            rule,
+            line,
+            findings
+                .iter()
+                .map(|f| (f.location.line, &f.rule_id))
+                .collect::<Vec<_>>()
+        );
+    }
+}
+
+#[test]
+fn phase16_non_operational_fps_suppressed() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("go/phase16_sitecontext.go"))
+        .expect("scan succeeds");
+    let must_not_fire = [41, 44, 45, 50, 51, 56];
+    for line in must_not_fire {
+        assert!(
+            !findings.iter().any(|f| f.location.line == Some(line)),
+            "line {} should be suppressed but produced a finding",
+            line
+        );
+    }
+}
+
+#[test]
+fn phase16_total_count_matches_design() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("go/phase16_sitecontext.go"))
+        .expect("scan succeeds");
+    assert_eq!(
+        findings.len(),
+        4,
+        "got: {:?}",
+        findings
+            .iter()
+            .map(|f| (f.location.line, &f.rule_id))
+            .collect::<Vec<_>>()
     );
 }

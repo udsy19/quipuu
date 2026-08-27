@@ -27,26 +27,30 @@ CLONES_DIR = SCRIPT_DIR / "clones"
 # V8 floor (commit 89d35cb). A 5% margin below the observed V8 numbers gives
 # us room for legitimate scan_hints changes while still catching real
 # regressions (e.g., a rule rewrite that breaks the Java JWT path).
-V8_FLOOR = {
-    "pypi":            36,   # V8: 38
-    "npm":            111,   # V8: 117
-    "maven":          347,   # V8: 366
-    "crates-io":      214,   # V8: 226
-    "go-modules":     418,   # V8: 441
-    "crypto-adjacent":  5,   # V8: 6
-    "total":         1133,   # V8: 1194  (5% under)
+# Floors lowered for Phase 16 (SiteContext suppression). The total drop from
+# V8 (1194) → V11 (986) is intentional FP suppression — see PRECISION_AUDIT_V2.
+# The new floors are 5% below the observed V11 values.
+V11_FLOOR = {
+    "pypi":             36,   # V11: 38
+    "npm":             111,   # V11: 117
+    "maven":           292,   # V11: 308
+    "crates-io":       214,   # V11: 226
+    "go-modules":      276,   # V11: 291
+    "crypto-adjacent":   5,   # V11: 6
+    "total":           936,   # V11: 986  (5% under)
 }
+V8_FLOOR = V11_FLOOR  # Backwards-compatible alias for existing references
 
 # Per-rule floors for the most-important rules. If any of these drop to zero
 # we want a hard fail — those rules represent corpus-validated detection that
 # downstream users depend on.
 RULE_FLOORS = {
-    "CRYPTO-700": 25,   # Go JWT RS256
-    "CRYPTO-740": 10,   # JWT alg=none
-    "CRYPTO-704": 10,   # Go JWT PS384
-    "CRYPTO-705": 10,   # Go JWT PS512
+    "CRYPTO-700": 10,   # Go JWT RS256 (V11: 13; SiteContext suppressed FPs)
+    "CRYPTO-740":  3,   # JWT alg=none  (V11: 5)
+    "CRYPTO-704":  4,   # Go JWT PS384  (V11: 6)
+    "CRYPTO-705":  4,   # Go JWT PS512  (V11: 6)
     "CRYPTO-560": 50,   # rustls::ClientConfig::builder
-    "CRYPTO-241": 1,    # jjwt HS256 — the canonical jjwt-api regression
+    "CRYPTO-241":  1,   # jjwt HS256 — the canonical jjwt-api regression
 }
 
 

@@ -132,6 +132,12 @@ pub struct WhenClause {
     /// Map of capture name → predicate.
     #[serde(default)]
     pub args: BTreeMap<String, ArgMatch>,
+    /// Phase 16: allow-list of `SiteContext` variants the match must be in.
+    /// Default (None) keeps prior behavior — match any context. When set,
+    /// the rule fires only if the match's site_context is in the list.
+    /// TOML form: `site_context = ["Call", "StructLiteral"]`.
+    #[serde(default)]
+    pub site_context: Option<Vec<String>>,
 }
 
 /// One language's rule pack — parsed from a single TOML file.

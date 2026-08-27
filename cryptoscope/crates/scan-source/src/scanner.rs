@@ -46,6 +46,10 @@ pub struct RawMatch {
     pub offset: u32,
     pub symbol: String,
     pub snippet: String,
+    /// Phase 16: syntactic site context captured by walking the AST
+    /// up from the matched node. Drives `when.site_context` filtering
+    /// in the classify layer.
+    pub site_context: cryptoscope_core::SiteContext,
 }
 
 /// A captured argument from an extract pattern.
@@ -301,6 +305,15 @@ fn walk(node: Node<'_>, source: &[u8], language: Language, out: &mut Vec<RawMatc
     {
         out.push(m);
     }
+    // Go `CurvePreferences: []tls.CurveID{tls.X25519, …}` — the v0.1 PQC
+    // migration target. The walker hooks `keyed_element` and the matcher
+    // emits one RawMatch per inner curve identifier.
+    if language == Language::Go
+        && kind == "keyed_element"
+        && let Some(ms) = match_go_curve_preferences(node, source)
+    {
+        out.extend(ms);
+    }
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
         walk(child, source, language, out);
@@ -338,6 +351,7 @@ fn match_call(call: Node<'_>, source: &[u8], language: Language) -> Option<RawMa
             offset: call.start_byte() as u32,
             symbol: callee_text,
             snippet: node_text(call, source),
+            site_context: cryptoscope_core::SiteContext::Call,
         });
     }
 
@@ -365,6 +379,7 @@ fn match_call(call: Node<'_>, source: &[u8], language: Language) -> Option<RawMa
         offset: call.start_byte() as u32,
         symbol: callee_text,
         snippet: node_text(call, source),
+        site_context: cryptoscope_core::SiteContext::Call,
     })
 }
 
@@ -393,6 +408,7 @@ fn match_java_method_invocation(call: Node<'_>, source: &[u8]) -> Option<RawMatc
         offset: call.start_byte() as u32,
         symbol: callee_text,
         snippet: node_text(call, source),
+        site_context: cryptoscope_core::SiteContext::Call,
     })
 }
 
@@ -417,10 +433,21 @@ fn match_object_creation(call: Node<'_>, source: &[u8], language: Language) -> O
         offset: call.start_byte() as u32,
         symbol: type_text,
         snippet: node_text(call, source),
+        site_context: cryptoscope_core::SiteContext::Call,
     })
 }
 
 fn match_go_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
+    // crypto/ecdh.<Curve>() calls: ecdh.X25519, ecdh.P256, ecdh.P384, ecdh.P521.
+    // The classify layer maps `args.curve_fn` to ecdh-pNNN / x25519 algorithm-ids.
+    if let Some(curve_fn) = callee.strip_prefix("ecdh.")
+        && matches!(curve_fn, "X25519" | "P256" | "P384" | "P521")
+    {
+        let mut args = HashMap::new();
+        args.insert("curve_fn".into(), ArgValue::Str(curve_fn.into()));
+        return Some(("crypto/ecdh.Curve".into(), args));
+    }
+
     let api = match callee {
         "rsa.GenerateKey" => "crypto/rsa.GenerateKey",
         "ecdsa.GenerateKey" => "crypto/ecdsa.GenerateKey",
@@ -517,6 +544,9 @@ fn match_java_field_access(node: Node<'_>, source: &[u8]) -> Option<RawMatch> {
         offset: node.start_byte() as u32,
         symbol: node_text(node, source),
         snippet: node_text(node, source),
+        // A Java field_access is itself a value reference, not a call;
+        // classify based on the surrounding context.
+        site_context: classify_site_context(node, source, Language::Java),
     })
 }
 
@@ -567,8 +597,102 @@ fn match_go_alg_switch(switch: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch>>
                 .next()
                 .unwrap_or("")
                 .to_string(),
+            site_context: cryptoscope_core::SiteContext::Call,
         });
     }
+    if results.is_empty() {
+        None
+    } else {
+        Some(results)
+    }
+}
+
+/// Match Go `CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256, ...}`.
+///
+/// The AST is `keyed_element(literal_element identifier, literal_element
+/// composite_literal(slice_type qualified_type{tls,CurveID}, literal_value{
+/// literal_element selector_expression{tls,<Curve>}}))`. This function
+/// pulls one RawMatch per inner selector_expression so the classify layer
+/// can route each curve to its own `algorithm_id`.
+///
+/// Returns None when the keyed_element does not name `CurvePreferences` OR
+/// when the slice's element type is not `tls.CurveID` — avoids false
+/// positives on unrelated `Curve*` field names.
+fn match_go_curve_preferences(keyed: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch>> {
+    // Children layout for `CurvePreferences: []tls.CurveID{...}` is:
+    //   keyed_element
+    //     literal_element  (key: identifier "CurvePreferences")
+    //     literal_element  (value: composite_literal {slice_type, literal_value})
+    let key_le = keyed.named_child(0)?;
+    let value_le = keyed.named_child(1)?;
+
+    let key_inner = key_le.named_child(0)?;
+    if key_inner.kind() != "identifier" {
+        return None;
+    }
+    if node_text(key_inner, source) != "CurvePreferences" {
+        return None;
+    }
+
+    let composite = value_le.named_child(0)?;
+    if composite.kind() != "composite_literal" {
+        return None;
+    }
+
+    // Slice-type guard: must be []tls.CurveID, not []SomethingElse.
+    let slice_type = composite.child_by_field_name("type")?;
+    if slice_type.kind() != "slice_type" {
+        return None;
+    }
+    let element_type = slice_type.named_child(0)?;
+    if element_type.kind() != "qualified_type" {
+        return None;
+    }
+    let pkg = element_type.child_by_field_name("package")?;
+    let name = element_type.child_by_field_name("name")?;
+    if node_text(pkg, source) != "tls" || node_text(name, source) != "CurveID" {
+        return None;
+    }
+
+    // Iterate the literal_value's elements, each of which is a literal_element
+    // wrapping a selector_expression tls.<Curve>.
+    let body = composite.child_by_field_name("body")?;
+    if body.kind() != "literal_value" {
+        return None;
+    }
+
+    let mut results = Vec::new();
+    let mut cursor = body.walk();
+    for element in body.children(&mut cursor) {
+        if element.kind() != "literal_element" {
+            continue;
+        }
+        let Some(sel) = element.named_child(0) else {
+            continue;
+        };
+        if sel.kind() != "selector_expression" {
+            continue;
+        }
+        let operand = sel.child_by_field_name("operand")?;
+        let field = sel.child_by_field_name("field")?;
+        if operand.kind() != "identifier" || node_text(operand, source) != "tls" {
+            continue;
+        }
+        let curve = node_text(field, source);
+        let mut args = HashMap::new();
+        args.insert("curve".into(), ArgValue::Str(curve.clone()));
+        let start = element.start_position();
+        results.push(RawMatch {
+            api: "crypto/tls.Config.CurvePreferences".into(),
+            args,
+            line: (start.row + 1) as u32,
+            offset: element.start_byte() as u32,
+            symbol: format!("tls.{}", curve),
+            snippet: node_text(element, source),
+            site_context: cryptoscope_core::SiteContext::Call,
+        });
+    }
+
     if results.is_empty() {
         None
     } else {
@@ -645,6 +769,9 @@ fn match_go_alg_string_literal(literal: Node<'_>, source: &[u8]) -> Option<RawMa
         offset: literal.start_byte() as u32,
         symbol: value.to_string(),
         snippet: node_text(literal, source),
+        // Phase 16: capture the real syntactic context. The classify layer
+        // can then opt out of MapEntry / TestAssertion via when.site_context.
+        site_context: classify_site_context(literal, source, Language::Go),
     })
 }
 
@@ -1163,6 +1290,257 @@ fn node_text(node: Node<'_>, source: &[u8]) -> String {
     String::from_utf8_lossy(&source[node.start_byte()..node.end_byte()]).into_owned()
 }
 
+/// Phase 16: walk up from a matched node and classify its syntactic site
+/// context. The classification is conservative — when a match could fit
+/// multiple buckets (e.g. a string in a struct literal positional element
+/// inside an argument list), the most specific bucket wins.
+///
+/// Strategy:
+/// - Walk parents up to a fixed depth (max 6 frames; deeper than that and
+///   the relationship is too distant to be meaningful for classification).
+/// - First match wins in priority order:
+///   MapEntry > TestAssertion > StructLiteral > Call > StringConstant > Default
+/// - Test detection is name-based on the call target (require.Equal,
+///   assert.Equal, etc.) — language-specific lists.
+pub(crate) fn classify_site_context(
+    node: Node<'_>,
+    source: &[u8],
+    language: Language,
+) -> cryptoscope_core::SiteContext {
+    use cryptoscope_core::SiteContext;
+
+    // Walk parents up to depth 6 collecting the chain. Then classify by
+    // priority — more-specific patterns win over less-specific ones, even
+    // if they appear deeper in the chain.
+    let mut chain: Vec<Node<'_>> = Vec::new();
+    let mut walker = node.parent();
+    let mut frames = 0;
+    while let Some(p) = walker {
+        chain.push(p);
+        frames += 1;
+        if frames >= 6 {
+            break;
+        }
+        // Stop at function body / source root.
+        if matches!(
+            p.kind(),
+            "source_file"
+                | "program"
+                | "compilation_unit"
+                | "function_declaration"
+                | "method_declaration"
+                | "function_definition"
+        ) {
+            break;
+        }
+        walker = p.parent();
+    }
+
+    // Priority 1: MapEntry. Most non-operational — allowlist maps, protobuf
+    // enum tables, JS/TS object literals. Wins over StructLiteral because
+    // a `keyed_element` IS technically a kind of composite literal field
+    // but the map-key semantics dominate.
+    if chain.iter().any(|p| {
+        matches!(
+            p.kind(),
+            "keyed_element" | "key_value_expression" | "pair" | "dictionary"
+        )
+    }) {
+        return SiteContext::MapEntry;
+    }
+
+    // Priority 2: TestAssertion. Walk up looking for argument_list whose
+    // call_expression's callee is a known test helper.
+    for p in &chain {
+        let kind = p.kind();
+        if matches!(kind, "argument_list" | "arguments")
+            && let Some(call) = p.parent()
+            && let Some(callee) = call.child_by_field_name("function")
+        {
+            let callee_text = node_text(callee, source);
+            if is_test_assertion_callee(&callee_text, language) {
+                return SiteContext::TestAssertion;
+            }
+        }
+    }
+
+    // Priority 3: StructLiteral, but ONLY when the composite_literal's type
+    // is a struct (or a struct pointer), not a slice/array/map type. A Go
+    // `[]string{"RS256", ...}` array is non-operational despite having a
+    // `literal_element` parent — treat it as Default so default-allow
+    // policies still suppress unless the rule explicitly opts in.
+    for (i, p) in chain.iter().enumerate() {
+        if matches!(
+            p.kind(),
+            "literal_element" | "literal_value" | "struct_initializer"
+        ) {
+            // Find the surrounding composite_literal (if any) and inspect
+            // its type. If the type is an array / slice / map type, this
+            // is NOT a struct literal — fall through to default. tree-sitter-go
+            // exposes the type as the first NAMED child (no `type` field
+            // name available; use the indexed child instead).
+            if let Some(composite) = chain
+                .get(i..)
+                .and_then(|tail| tail.iter().find(|q| q.kind() == "composite_literal"))
+                && let Some(type_node) = composite.named_child(0)
+            {
+                let tk = type_node.kind();
+                if matches!(tk, "slice_type" | "array_type" | "map_type") {
+                    continue;
+                }
+            }
+            return SiteContext::StructLiteral;
+        }
+    }
+
+    // Priority 4: Call. Any argument_list we didn't classify as
+    // TestAssertion is a regular call site — UNLESS the literal sits inside
+    // a slice / array / map composite literal that's then PASSED to a call
+    // (e.g. `WithValidMethods([]string{"HS256"})`). The collection-literal
+    // semantics dominate: the string is data, not an operational arg.
+    if chain
+        .iter()
+        .any(|p| matches!(p.kind(), "argument_list" | "arguments"))
+    {
+        // Check whether a non-struct composite_literal sits BETWEEN the
+        // matched node and the argument_list.
+        let mut nonstruct_collection_present = false;
+        for p in &chain {
+            if matches!(p.kind(), "argument_list" | "arguments") {
+                break;
+            }
+            if p.kind() == "composite_literal"
+                && let Some(type_node) = p.named_child(0)
+                && matches!(type_node.kind(), "slice_type" | "array_type" | "map_type")
+            {
+                nonstruct_collection_present = true;
+                break;
+            }
+        }
+        if !nonstruct_collection_present {
+            return SiteContext::Call;
+        }
+        // Fall through — collection-as-call-arg is non-operational.
+    }
+
+    // Priority 5: StringConstant. const/var declarations — but ONLY when
+    // the literal is a DIRECT child (via expression_list / spec). If the
+    // literal sits inside a composite_literal that's inside the var_spec
+    // (e.g. `var x = []string{"RS256"}`), the array semantics dominate and
+    // we don't want to classify the inner element as a StringConstant.
+    let has_composite_in_chain = chain.iter().any(|p| p.kind() == "composite_literal");
+    if !has_composite_in_chain
+        && chain.iter().any(|p| {
+            matches!(
+                p.kind(),
+                "const_spec" | "var_spec" | "const_declaration" | "var_declaration"
+            )
+        })
+    {
+        return SiteContext::StringConstant;
+    }
+
+    SiteContext::Default
+}
+
+/// Recognise test-framework assertion callees so SiteContext can mark
+/// matches inside them as TestAssertion (low signal).
+fn is_test_assertion_callee(callee: &str, language: Language) -> bool {
+    // Strip turbofish / generics; lowercase for case-insensitive check
+    // (some frameworks use capitalized names).
+    let head = callee
+        .split('.')
+        .next_back()
+        .unwrap_or(callee)
+        .split('<')
+        .next()
+        .unwrap_or(callee);
+    match language {
+        Language::Go => matches!(
+            head,
+            "Equal"
+                | "Equals"
+                | "Equalf"
+                | "NotEqual"
+                | "True"
+                | "False"
+                | "Nil"
+                | "NotNil"
+                | "Empty"
+                | "NotEmpty"
+                | "Contains"
+                | "NotContains"
+                | "Error"
+                | "NoError"
+                | "ErrorIs"
+                | "ErrorContains"
+                | "EqualValues"
+                | "Same"
+                | "NotSame"
+                | "JSONEq"
+                | "ElementsMatch"
+                | "Len"
+                | "EqualError"
+                | "Regexp"
+        ),
+        Language::Java => matches!(
+            head,
+            "assertEquals"
+                | "assertNotEquals"
+                | "assertTrue"
+                | "assertFalse"
+                | "assertNull"
+                | "assertNotNull"
+                | "assertThat"
+                | "assertSame"
+                | "assertArrayEquals"
+        ),
+        Language::JavaScript | Language::TypeScript => matches!(
+            head,
+            "equal"
+                | "deepEqual"
+                | "strictEqual"
+                | "notEqual"
+                | "toBe"
+                | "toEqual"
+                | "toMatch"
+                | "toContain"
+                | "expect"
+        ),
+        Language::Python => matches!(
+            head,
+            "assertEqual"
+                | "assertNotEqual"
+                | "assertTrue"
+                | "assertFalse"
+                | "assertIs"
+                | "assertIsNone"
+                | "assertIn"
+                | "assertRaises"
+                | "assertAlmostEqual"
+        ),
+        Language::Rust => matches!(
+            head,
+            "assert_eq" | "assert_ne" | "assert" | "debug_assert_eq" | "debug_assert_ne"
+        ),
+        Language::C | Language::Cpp => matches!(
+            head,
+            "EXPECT_EQ"
+                | "ASSERT_EQ"
+                | "EXPECT_NE"
+                | "ASSERT_NE"
+                | "EXPECT_TRUE"
+                | "ASSERT_TRUE"
+                | "EXPECT_STREQ"
+                | "ASSERT_STREQ"
+        ),
+        Language::CSharp => matches!(
+            head,
+            "Equal" | "True" | "False" | "Same" | "NotEqual" | "AreEqual"
+        ),
+    }
+}
+
 /// Try every classify rule's `when` against a raw match. On the first hit,
 /// look up the algorithm record and build a [`Finding`].
 fn apply_classify(
@@ -1175,6 +1553,15 @@ fn apply_classify(
     let api_re = regex::Regex::new(&rule.when.api)?;
     if !api_re.is_match(&raw.api) {
         return Ok(None);
+    }
+
+    // 1.5. Phase 16: site-context filter. When the rule names an allow-list,
+    // the match's site_context must be in it.
+    if let Some(allow) = &rule.when.site_context {
+        let ctx_name = format!("{:?}", raw.site_context);
+        if !allow.iter().any(|s| s == &ctx_name) {
+            return Ok(None);
+        }
     }
 
     // 2. All arg predicates must match

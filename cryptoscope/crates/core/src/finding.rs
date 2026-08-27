@@ -33,6 +33,40 @@ pub enum Confidence {
     Unknown,
 }
 
+/// Site-level syntactic context for a match — Phase 16.
+///
+/// Distinguishes WHERE in the AST a match was found, separately from the
+/// `Confidence` axis (which captures HOW the algorithm-id was derived).
+/// The classify layer can opt rules in or out per site context via the
+/// `when.site_context` TOML predicate, suppressing matches in
+/// non-operational positions (config arrays, test assertions, enum tables)
+/// while keeping matches in real call sites.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum SiteContext {
+    /// Match is an argument to a call expression — the canonical
+    /// "operational" position (e.g. `jwt.sign(payload, key, {algorithm:'RS256'})`).
+    Call,
+    /// Match is a const or var declaration value
+    /// (e.g. `const RS256 = "RS256"`). Operational at definition time; the
+    /// downstream consumer of the const is where the actual crypto happens.
+    StringConstant,
+    /// Match is a value in a struct / composite literal whose surrounding
+    /// type registers a crypto algorithm (e.g. golang-jwt's
+    /// `&SigningMethodRSA{"RS256", crypto.SHA256}`). High-signal operational.
+    StructLiteral,
+    /// Match is the value side of a map literal entry
+    /// (e.g. `"RS512": true` allowlist, `"HS384": 2` protobuf enum table).
+    /// Almost always non-operational data.
+    MapEntry,
+    /// Match is an argument to a test-framework assertion or helper
+    /// (e.g. `require.Equal(t, "HS256", got)`). Test scaffolding, not crypto.
+    TestAssertion,
+    /// Anything else — default for matches that don't fit above. Treated
+    /// as Default by classify rules unless the rule narrows on a specific
+    /// context.
+    Default,
+}
+
 /// Usage context — drives the `UsageContext` axis of the score.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum UsageContext {

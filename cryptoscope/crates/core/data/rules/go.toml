@@ -208,6 +208,109 @@ captures = { key = "ident", tls_pkg = "ident", suite = "ident" }
 api = "crypto/tls.Config.CipherSuites"
 description = "TLS cipher suite list."
 
+# CurvePreferences — TLS key-exchange group selection (the PQC migration target).
+# The slice `[]tls.CurveID{tls.X25519, tls.CurveP256, ...}` is matched by its
+# slice type (qualified_type tls.CurveID) and each element produces one extract
+# event. The query binds @curve to one selector_expression per slice element.
+
+[[extract]]
+id = "GO-032"
+language = "go"
+query = """
+(composite_literal
+  type: (slice_type
+    element: (qualified_type
+      package: (package_identifier) @tls_t (#eq? @tls_t "tls")
+      name: (type_identifier) @typ_name (#eq? @typ_name "CurveID")))
+  body: (literal_value
+    (literal_element
+      (selector_expression
+        operand: (identifier) @tls_pkg (#eq? @tls_pkg "tls")
+        field: (field_identifier) @curve))))
+"""
+captures = { tls_t = "ident", typ_name = "ident", tls_pkg = "ident", curve = "ident" }
+api = "crypto/tls.Config.CurvePreferences"
+description = "TLS key-exchange group preference list (tls.CurveID)."
+
+[[classify]]
+id = "CRYPTO-032"
+when.api = "^crypto/tls\\.Config\\.CurvePreferences$"
+when.args.curve = "X25519"
+algorithm_id = "x25519"
+severity_hint = "auto"
+message = "TLS curve X25519 — classical ECDH, vulnerable to Shor. Replace with tls.X25519MLKEM768 (Go 1.24+)."
+
+[[classify]]
+id = "CRYPTO-033"
+when.api = "^crypto/tls\\.Config\\.CurvePreferences$"
+when.args.curve = "CurveP256"
+algorithm_id = "ecdh-p256"
+severity_hint = "auto"
+message = "TLS curve P-256 ECDH — quantum-vulnerable. Add tls.X25519MLKEM768 first in the list (Go 1.24+)."
+
+[[classify]]
+id = "CRYPTO-034"
+when.api = "^crypto/tls\\.Config\\.CurvePreferences$"
+when.args.curve = "CurveP384"
+algorithm_id = "ecdh-p384"
+severity_hint = "auto"
+message = "TLS curve P-384 ECDH — quantum-vulnerable. Add tls.X25519MLKEM768 / tls.SecP384r1MLKEM1024 first."
+
+[[classify]]
+id = "CRYPTO-035"
+when.api = "^crypto/tls\\.Config\\.CurvePreferences$"
+when.args.curve = "CurveP521"
+algorithm_id = "ecdh-p384"
+severity_hint = "auto"
+message = "TLS curve P-521 ECDH — quantum-vulnerable. Migrate to ML-KEM hybrid groups."
+
+# crypto/ecdh — direct ECDH key-agreement usage (independent of TLS).
+
+[[extract]]
+id = "GO-033"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "ecdh")
+    field: (field_identifier) @curve_fn))
+"""
+captures = { pkg = "ident", curve_fn = "ident" }
+api = "crypto/ecdh.Curve"
+description = "Direct ECDH curve constructor (ecdh.X25519, ecdh.P256, …)."
+
+[[classify]]
+id = "CRYPTO-036"
+when.api = "^crypto/ecdh\\.Curve$"
+when.args.curve_fn = "X25519"
+algorithm_id = "x25519"
+severity_hint = "auto"
+message = "crypto/ecdh X25519 — classical ECDH key agreement. Replace with ML-KEM-768 encap/decap."
+
+[[classify]]
+id = "CRYPTO-037"
+when.api = "^crypto/ecdh\\.Curve$"
+when.args.curve_fn = "P256"
+algorithm_id = "ecdh-p256"
+severity_hint = "auto"
+message = "crypto/ecdh P-256 — quantum-vulnerable ECDH. Replace with ML-KEM-768 encap/decap."
+
+[[classify]]
+id = "CRYPTO-038"
+when.api = "^crypto/ecdh\\.Curve$"
+when.args.curve_fn = "P384"
+algorithm_id = "ecdh-p384"
+severity_hint = "auto"
+message = "crypto/ecdh P-384 — quantum-vulnerable ECDH. Replace with ML-KEM-1024 encap/decap."
+
+[[classify]]
+id = "CRYPTO-039"
+when.api = "^crypto/ecdh\\.Curve$"
+when.args.curve_fn = "P521"
+algorithm_id = "ecdh-p384"
+severity_hint = "auto"
+message = "crypto/ecdh P-521 — quantum-vulnerable ECDH. Migrate to ML-KEM hybrid encap/decap."
+
 # ============================================================================
 # crypto/aes — AES with mode detection requires a multi-step extract.
 # These are simplified for v1 (key size via crypto/aes.NewCipher arg length).
@@ -340,6 +443,7 @@ message = "JWT signed with EdDSA (Ed25519) — quantum-vulnerable."
 [[classify]]
 id = "CRYPTO-700"
 when.api = "^go\\.alg-(switch|register)\\.RS256$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "rsa-pkcs1-sha256-2048"
 severity_hint = "auto"
 message = "JWT alg=RS256 — RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
@@ -347,6 +451,7 @@ message = "JWT alg=RS256 — RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algo
 [[classify]]
 id = "CRYPTO-701"
 when.api = "^go\\.alg-(switch|register)\\.RS384$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "rsa-pkcs1-sha384-3072"
 severity_hint = "auto"
 message = "JWT alg=RS384 — RSA-PKCS1-SHA384. Quantum-vulnerable to Shor's algorithm."
@@ -354,6 +459,7 @@ message = "JWT alg=RS384 — RSA-PKCS1-SHA384. Quantum-vulnerable to Shor's algo
 [[classify]]
 id = "CRYPTO-702"
 when.api = "^go\\.alg-(switch|register)\\.RS512$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "rsa-pkcs1-sha512-4096"
 severity_hint = "auto"
 message = "JWT alg=RS512 — RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algorithm."
@@ -362,6 +468,7 @@ message = "JWT alg=RS512 — RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algo
 [[classify]]
 id = "CRYPTO-703"
 when.api = "^go\\.alg-(switch|register)\\.PS256$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "rsa-pss-sha256-2048"
 severity_hint = "auto"
 message = "JWT alg=PS256 — RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
@@ -369,6 +476,7 @@ message = "JWT alg=PS256 — RSA-PSS-SHA256. Quantum-vulnerable to Shor's algori
 [[classify]]
 id = "CRYPTO-704"
 when.api = "^go\\.alg-(switch|register)\\.PS384$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "rsa-pss-sha384-3072"
 severity_hint = "auto"
 message = "JWT alg=PS384 — RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
@@ -376,6 +484,7 @@ message = "JWT alg=PS384 — RSA-PSS-SHA384. Quantum-vulnerable to Shor's algori
 [[classify]]
 id = "CRYPTO-705"
 when.api = "^go\\.alg-(switch|register)\\.PS512$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "rsa-pss-sha512-4096"
 severity_hint = "auto"
 message = "JWT alg=PS512 — RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
@@ -384,6 +493,7 @@ message = "JWT alg=PS512 — RSA-PSS-SHA512. Quantum-vulnerable to Shor's algori
 [[classify]]
 id = "CRYPTO-710"
 when.api = "^go\\.alg-(switch|register)\\.ES256$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "ecdsa-p256"
 severity_hint = "auto"
 message = "JWT alg=ES256 — ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
@@ -391,6 +501,7 @@ message = "JWT alg=ES256 — ECDSA P-256. Quantum-vulnerable to Shor's algorithm
 [[classify]]
 id = "CRYPTO-711"
 when.api = "^go\\.alg-(switch|register)\\.ES384$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "ecdsa-p384"
 severity_hint = "auto"
 message = "JWT alg=ES384 — ECDSA P-384. Quantum-vulnerable to Shor's algorithm."
@@ -398,6 +509,7 @@ message = "JWT alg=ES384 — ECDSA P-384. Quantum-vulnerable to Shor's algorithm
 [[classify]]
 id = "CRYPTO-712"
 when.api = "^go\\.alg-(switch|register)\\.ES512$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "ecdsa-p521"
 severity_hint = "auto"
 message = "JWT alg=ES512 — ECDSA P-521. Quantum-vulnerable to Shor's algorithm."
@@ -406,6 +518,7 @@ message = "JWT alg=ES512 — ECDSA P-521. Quantum-vulnerable to Shor's algorithm
 [[classify]]
 id = "CRYPTO-720"
 when.api = "^go\\.alg-(switch|register)\\.EdDSA$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "ed25519"
 severity_hint = "auto"
 message = "JWT alg=EdDSA — Ed25519. Quantum-vulnerable to Shor's algorithm."
@@ -414,6 +527,7 @@ message = "JWT alg=EdDSA — Ed25519. Quantum-vulnerable to Shor's algorithm."
 [[classify]]
 id = "CRYPTO-730"
 when.api = "^go\\.alg-(switch|register)\\.HS256$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "sha-256"
 severity_hint = "low"
 message = "JWT alg=HS256 — HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
@@ -421,6 +535,7 @@ message = "JWT alg=HS256 — HMAC-SHA256. Symmetric; not quantum-broken but inve
 [[classify]]
 id = "CRYPTO-731"
 when.api = "^go\\.alg-(switch|register)\\.HS384$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "sha-384"
 severity_hint = "low"
 message = "JWT alg=HS384 — HMAC-SHA384. Symmetric; not quantum-broken but inventory for key rotation planning."
@@ -428,6 +543,7 @@ message = "JWT alg=HS384 — HMAC-SHA384. Symmetric; not quantum-broken but inve
 [[classify]]
 id = "CRYPTO-732"
 when.api = "^go\\.alg-(switch|register)\\.HS512$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "sha-512"
 severity_hint = "low"
 message = "JWT alg=HS512 — HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
@@ -436,6 +552,7 @@ message = "JWT alg=HS512 — HMAC-SHA512. Symmetric; not quantum-broken but inve
 [[classify]]
 id = "CRYPTO-740"
 when.api = "^go\\.alg-(switch|register)\\.none$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "jwt-alg-none"
 severity_hint = "critical"
 message = "JWT alg=none — signature verification is disabled. CVE-2015-9235 class vulnerability."
@@ -445,6 +562,7 @@ cwe = "CWE-347"
 [[classify]]
 id = "CRYPTO-750"
 when.api = "^go\\.alg-(switch|register)\\.RSA-OAEP$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "rsa-2048"
 severity_hint = "auto"
 message = "JWE alg=RSA-OAEP — RSA-OAEP key encryption. Quantum-vulnerable to Shor's algorithm."
@@ -452,6 +570,7 @@ message = "JWE alg=RSA-OAEP — RSA-OAEP key encryption. Quantum-vulnerable to S
 [[classify]]
 id = "CRYPTO-751"
 when.api = "^go\\.alg-(switch|register)\\.RSA-OAEP-256$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "rsa-2048"
 severity_hint = "auto"
 message = "JWE alg=RSA-OAEP-256 — RSA-OAEP-SHA256 key encryption. Quantum-vulnerable."
@@ -460,6 +579,7 @@ message = "JWE alg=RSA-OAEP-256 — RSA-OAEP-SHA256 key encryption. Quantum-vuln
 [[classify]]
 id = "CRYPTO-760"
 when.api = "^go\\.alg-(switch|register)\\.A256GCM$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "aes-256-gcm"
 severity_hint = "low"
 message = "JWE enc=A256GCM — AES-256-GCM content encryption. Quantum-safe; inventory only."
@@ -467,6 +587,7 @@ message = "JWE enc=A256GCM — AES-256-GCM content encryption. Quantum-safe; inv
 [[classify]]
 id = "CRYPTO-761"
 when.api = "^go\\.alg-(switch|register)\\.A192GCM$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "aes-192-gcm"
 severity_hint = "low"
 message = "JWE enc=A192GCM — AES-192-GCM content encryption. Quantum-safe; inventory only."
@@ -474,6 +595,7 @@ message = "JWE enc=A192GCM — AES-192-GCM content encryption. Quantum-safe; inv
 [[classify]]
 id = "CRYPTO-762"
 when.api = "^go\\.alg-(switch|register)\\.A128GCM$"
+when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "aes-128-gcm"
 severity_hint = "low"
 message = "JWE enc=A128GCM — AES-128-GCM content encryption. Weakened by Grover; prefer AES-256."
