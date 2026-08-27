@@ -184,7 +184,17 @@ severity_hint = "auto"
 message = "SHA-256 signature via createSign('{algo}'). Check key type for quantum exposure."
 
 # ============================================================================
-# WebCrypto — subtle.generateKey
+# WebCrypto — subtle.generateKey / subtle.sign
+#
+# One algorithm vocabulary serves both calls, so the classify arms below match
+# either API and are ordered most-specific first (the scanner takes the first
+# arm that matches). The algorithm name is read from argument 0 — either a bare
+# string or the `name` property of the algorithm object — and `curve`, `hash`
+# and `length` refine it. When argument 0 is a variable, nothing is captured and
+# the two unattributed arms at the end fire instead. Nothing here asserts an
+# algorithm the call site does not state: Node has accepted ML-DSA and ML-KEM in
+# `subtle.generateKey`/`sign` since v24.7.0, so a hard-coded classical guess
+# reports a migrated call site as quantum-vulnerable.
 # ============================================================================
 
 [[extract]]
@@ -193,23 +203,13 @@ language = "javascript"
 query = """
 (call_expression
   function: (member_expression
-    object: (identifier) @subtle (#eq? @subtle "subtle")
-    property: (property_identifier) @fn (#eq? @fn "generateKey")))
+    object: (_) @receiver
+    property: (property_identifier) @fn (#eq? @fn "generateKey"))
+  arguments: (arguments . (_) @alg))
 """
-captures = { subtle = "ident", fn = "ident" }
+captures = { receiver = "expr", fn = "ident", alg = "literal_string", curve = "literal_string", hash = "literal_string", length = "literal_int" }
 api = "webcrypto.subtle.generateKey"
-description = "WebCrypto subtle.generateKey({name, ...}, extractable, usages)."
-
-[[classify]]
-id = "CRYPTO-340"
-when.api = "^webcrypto\\.subtle\\.generateKey$"
-algorithm_id = "ecdsa-p256"
-severity_hint = "auto"
-message = "WebCrypto subtle.generateKey() called. Verify algorithm object name and key parameters."
-
-# ============================================================================
-# WebCrypto — subtle.sign
-# ============================================================================
+description = "WebCrypto subtle.generateKey(algorithm, extractable, usages), through any receiver ending in `.subtle`. `alg` is the algorithm name — argument 0 when it is a bare string, else its `name` property. `curve`, `hash` and `length` are read off the same object when present."
 
 [[extract]]
 id = "JST-050"
@@ -217,19 +217,343 @@ language = "javascript"
 query = """
 (call_expression
   function: (member_expression
-    object: (identifier) @subtle (#eq? @subtle "subtle")
-    property: (property_identifier) @fn (#eq? @fn "sign")))
+    object: (_) @receiver
+    property: (property_identifier) @fn (#eq? @fn "sign"))
+  arguments: (arguments . (_) @alg))
 """
-captures = { subtle = "ident", fn = "ident" }
+captures = { receiver = "expr", fn = "ident", alg = "literal_string", curve = "literal_string", hash = "literal_string", length = "literal_int" }
 api = "webcrypto.subtle.sign"
-description = "WebCrypto subtle.sign(algorithm, key, data)."
+description = "WebCrypto subtle.sign(algorithm, key, data), through any receiver ending in `.subtle`. Same captures as JST-040; a sign() algorithm object carries `hash` but never `namedCurve`, which belongs to the key."
+
+# --- PQC: FIPS 204 / 203, accepted by Node WebCrypto since v24.7.0 ----------
+# The parameter set is fully determined by the name, so these need no refining
+# capture.
+
+[[classify]]
+id = "CRYPTO-341"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^ML-DSA-44$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "WebCrypto ML-DSA-44 ({alg}) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-342"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^ML-DSA-65$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "WebCrypto ML-DSA-65 ({alg}) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-343"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^ML-DSA-87$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "WebCrypto ML-DSA-87 ({alg}) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-344"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^ML-KEM-512$" }
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "WebCrypto ML-KEM-512 ({alg}) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-345"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^ML-KEM-768$" }
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "WebCrypto ML-KEM-768 ({alg}) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-346"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^ML-KEM-1024$" }
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "WebCrypto ML-KEM-1024 ({alg}) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+# --- Classical elliptic curve ----------------------------------------------
+# `namedCurve` is required by WebCrypto for ECDSA/ECDH, so an ECDSA site with no
+# curve capture wrote it as a variable; that falls through to CRYPTO-398 rather
+# than being pinned to P-256.
+
+[[classify]]
+id = "CRYPTO-347"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^ECDSA$" }
+when.args.curve = { regex = "(?i)^P-256$" }
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "WebCrypto ECDSA on {curve}. Quantum-vulnerable — replace with ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-348"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^ECDSA$" }
+when.args.curve = { regex = "(?i)^P-384$" }
+algorithm_id = "ecdsa-p384"
+severity_hint = "auto"
+message = "WebCrypto ECDSA on {curve}. Quantum-vulnerable — replace with ML-DSA-87."
+
+[[classify]]
+id = "CRYPTO-349"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^ECDSA$" }
+when.args.curve = { regex = "(?i)^P-521$" }
+algorithm_id = "ecdsa-p521"
+severity_hint = "auto"
+message = "WebCrypto ECDSA on {curve}. Quantum-vulnerable — replace with ML-DSA-87."
+
+[[classify]]
+id = "CRYPTO-351"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^ECDH$" }
+when.args.curve = { regex = "(?i)^P-256$" }
+algorithm_id = "ecdh-p256"
+severity_hint = "auto"
+message = "WebCrypto ECDH on {curve}. Quantum-vulnerable key agreement — HNDL exposure."
+
+[[classify]]
+id = "CRYPTO-352"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^ECDH$" }
+when.args.curve = { regex = "(?i)^P-384$" }
+algorithm_id = "ecdh-p384"
+severity_hint = "auto"
+message = "WebCrypto ECDH on {curve}. Quantum-vulnerable key agreement — HNDL exposure."
+
+[[classify]]
+id = "CRYPTO-353"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^ECDH$" }
+when.args.curve = { regex = "(?i)^P-521$" }
+algorithm_id = "ecdh-p521"
+severity_hint = "auto"
+message = "WebCrypto ECDH on {curve}. Quantum-vulnerable key agreement — HNDL exposure."
+
+# `namedCurve` belongs to the key, not to the algorithm object `subtle.sign`
+# takes, so an ECDSA/ECDH sign call can never state its curve. These two arms
+# keep the part that is certain — the family, and therefore the Shor verdict —
+# and say in the message that the curve is not visible here. Same shape as
+# CRYPTO-211 (`KeyPairGenerator.getInstance("EC")`) and CRYPTO-610
+# (`ECDsa.Create()`), which have the same limitation for the same reason.
+
+[[classify]]
+id = "CRYPTO-395"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^ECDSA$" }
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "WebCrypto ECDSA; the curve is not stated at this call site (it comes from the key), reported as P-256. Quantum-vulnerable — replace with ML-DSA."
+
+[[classify]]
+id = "CRYPTO-396"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^ECDH$" }
+algorithm_id = "ecdh-p256"
+severity_hint = "auto"
+message = "WebCrypto ECDH; the curve is not stated at this call site (it comes from the key), reported as P-256. Quantum-vulnerable key agreement — HNDL exposure."
+
+[[classify]]
+id = "CRYPTO-354"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^Ed25519$" }
+algorithm_id = "ed25519"
+severity_hint = "auto"
+message = "WebCrypto Ed25519 signature. Quantum-vulnerable — replace with ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-355"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^Ed448$" }
+algorithm_id = "ed448"
+severity_hint = "auto"
+message = "WebCrypto Ed448 signature. Quantum-vulnerable — replace with ML-DSA-87."
+
+[[classify]]
+id = "CRYPTO-356"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^X25519$" }
+algorithm_id = "x25519"
+severity_hint = "auto"
+message = "WebCrypto X25519 key agreement. Quantum-vulnerable — HNDL exposure."
+
+[[classify]]
+id = "CRYPTO-357"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^X448$" }
+algorithm_id = "x448"
+severity_hint = "auto"
+message = "WebCrypto X448 key agreement. Quantum-vulnerable — HNDL exposure."
+
+# --- RSA -------------------------------------------------------------------
+# Keyed on the hash, not the modulus: WebCrypto requires `hash` for every RSA
+# algorithm but only requires `modulusLength` for generateKey, so the hash is
+# the parameter present at both call sites. This mirrors how the JWT alg names
+# (RS256 / PS384) already map onto these rows.
+
+[[classify]]
+id = "CRYPTO-358"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^RSA-OAEP$" }
+when.args.hash = { regex = "(?i)^SHA-256$" }
+algorithm_id = "rsa-oaep-256"
+severity_hint = "auto"
+message = "WebCrypto RSA-OAEP with {hash}. Quantum-vulnerable key transport — HNDL exposure."
+
+[[classify]]
+id = "CRYPTO-359"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^RSA-OAEP$" }
+when.args.hash = { regex = "(?i)^SHA-1$" }
+algorithm_id = "rsa-oaep"
+severity_hint = "auto"
+message = "WebCrypto RSA-OAEP with {hash} MGF. Quantum-vulnerable key transport — HNDL exposure."
+
+[[classify]]
+id = "CRYPTO-383"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^RSASSA-PKCS1-v1_5$" }
+when.args.hash = { regex = "(?i)^SHA-1$" }
+algorithm_id = "rsa-pkcs1-sha1"
+severity_hint = "auto"
+message = "WebCrypto RSASSA-PKCS1-v1_5 with {hash}. SHA-1 signatures are broken classically."
+
+[[classify]]
+id = "CRYPTO-384"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^RSASSA-PKCS1-v1_5$" }
+when.args.hash = { regex = "(?i)^SHA-384$" }
+algorithm_id = "rsa-pkcs1-sha384-3072"
+severity_hint = "auto"
+message = "WebCrypto RSASSA-PKCS1-v1_5 with {hash}. Quantum-vulnerable — replace with ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-385"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^RSASSA-PKCS1-v1_5$" }
+when.args.hash = { regex = "(?i)^SHA-512$" }
+algorithm_id = "rsa-pkcs1-sha512-4096"
+severity_hint = "auto"
+message = "WebCrypto RSASSA-PKCS1-v1_5 with {hash}. Quantum-vulnerable — replace with ML-DSA-87."
+
+[[classify]]
+id = "CRYPTO-386"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^RSASSA-PKCS1-v1_5$" }
+when.args.hash = { regex = "(?i)^SHA-256$" }
+algorithm_id = "rsa-pkcs1-sha256-2048"
+severity_hint = "auto"
+message = "WebCrypto RSASSA-PKCS1-v1_5 with {hash}. Quantum-vulnerable — replace with ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-387"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^RSA-PSS$" }
+when.args.hash = { regex = "(?i)^SHA-384$" }
+algorithm_id = "rsa-pss-sha384-3072"
+severity_hint = "auto"
+message = "WebCrypto RSA-PSS with {hash}. Quantum-vulnerable — replace with ML-DSA-87."
+
+[[classify]]
+id = "CRYPTO-388"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^RSA-PSS$" }
+when.args.hash = { regex = "(?i)^SHA-512$" }
+algorithm_id = "rsa-pss-sha512-4096"
+severity_hint = "auto"
+message = "WebCrypto RSA-PSS with {hash}. Quantum-vulnerable — replace with ML-DSA-87."
+
+[[classify]]
+id = "CRYPTO-389"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^RSA-PSS$" }
+when.args.hash = { regex = "(?i)^SHA-256$" }
+algorithm_id = "rsa-pss-sha256-2048"
+severity_hint = "auto"
+message = "WebCrypto RSA-PSS with {hash}. Quantum-vulnerable — replace with ML-DSA-65."
+
+# --- Symmetric -------------------------------------------------------------
+# `length` is required for AES generateKey, so an AES arm without it saw a
+# variable and falls through rather than assuming a key size.
+
+[[classify]]
+id = "CRYPTO-390"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^AES-GCM$" }
+when.args.length = 128
+algorithm_id = "aes-128-gcm"
+severity_hint = "auto"
+message = "WebCrypto AES-GCM, {length}-bit key. Grover halves the margin — 256-bit is the CNSA 2.0 floor."
+
+[[classify]]
+id = "CRYPTO-391"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^AES-GCM$" }
+when.args.length = 192
+algorithm_id = "aes-192-gcm"
+severity_hint = "auto"
+message = "WebCrypto AES-GCM, {length}-bit key. Grover halves the margin — 256-bit is the CNSA 2.0 floor."
+
+[[classify]]
+id = "CRYPTO-392"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^AES-GCM$" }
+when.args.length = 256
+algorithm_id = "aes-256-gcm"
+severity_hint = "auto"
+message = "WebCrypto AES-GCM, {length}-bit key. Quantum-safe at this size."
+
+[[classify]]
+id = "CRYPTO-393"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^AES-CBC$" }
+when.args.length = 128
+algorithm_id = "aes-128-cbc"
+severity_hint = "auto"
+message = "WebCrypto AES-CBC, {length}-bit key. Unauthenticated mode; Grover halves the margin."
+
+[[classify]]
+id = "CRYPTO-394"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "(?i)^AES-CBC$" }
+when.args.length = 256
+algorithm_id = "aes-256-cbc"
+severity_hint = "auto"
+message = "WebCrypto AES-CBC, {length}-bit key. Unauthenticated mode; prefer AES-GCM."
+
+# --- Unattributed ----------------------------------------------------------
+# Everything that named an algorithm we have no row for, then everything whose
+# algorithm argument was not a literal at all. Both record the call site without
+# claiming an algorithm; see the `webcrypto-unattributed` row in
+# algorithm-table.toml.
+
+[[classify]]
+id = "CRYPTO-398"
+when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
+when.args.alg = { regex = "." }
+algorithm_id = "webcrypto-unattributed"
+severity_hint = "auto"
+message = "WebCrypto call names algorithm '{alg}', which has no row in the cryptoscope algorithm table. Recorded as an unattributed call site — classify it by hand."
+
+[[classify]]
+id = "CRYPTO-340"
+when.api = "^webcrypto\\.subtle\\.generateKey$"
+algorithm_id = "webcrypto-unattributed"
+severity_hint = "auto"
+message = "WebCrypto subtle.generateKey() with a non-literal algorithm argument. The algorithm is not determinable from this call site — inspect the value passed in."
 
 [[classify]]
 id = "CRYPTO-350"
 when.api = "^webcrypto\\.subtle\\.sign$"
-algorithm_id = "ecdsa-p256"
+algorithm_id = "webcrypto-unattributed"
 severity_hint = "auto"
-message = "WebCrypto subtle.sign() called. Verify algorithm and key quantum exposure."
+message = "WebCrypto subtle.sign() with a non-literal algorithm argument. The algorithm is not determinable from this call site — inspect the value passed in."
 
 # ============================================================================
 # jsonwebtoken — jwt.sign

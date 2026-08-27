@@ -854,6 +854,16 @@ fn match_java_ctor(class_name: &str) -> Option<(String, HashMap<String, ArgValue
 }
 
 fn match_js_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
+    // WebCrypto is reached through a different receiver in almost every
+    // codebase — a destructured `subtle`, `crypto.subtle`,
+    // `window.crypto.subtle`, `self.crypto.subtle`, `globalThis.crypto.subtle`,
+    // `util.globalScope.msCrypto.subtle`. Matching the receiver exactly caught
+    // only the destructured form, which is the rarest of them, so the rules
+    // fired on none of the WebCrypto call sites in corpus B. Match on the
+    // trailing `subtle.<method>` segment instead.
+    if let Some(api) = match_webcrypto_callee(callee) {
+        return Some((api.into(), HashMap::new()));
+    }
     // JS/TS member expression callees. tree-sitter renders nested member
     // expressions as their full source text, so two-level chains like
     // `CryptoJS.AES.encrypt` come through as a single &str here.
@@ -883,6 +893,22 @@ fn match_js_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> 
         _ => return None,
     };
     Some((api.into(), HashMap::new()))
+}
+
+/// Resolve a `SubtleCrypto` method call reached through any receiver chain.
+///
+/// The `subtle` segment must be a whole identifier, so `mySubtle.sign` and
+/// `jwt.sign` do not match. Receiver text can span lines when the chain is
+/// formatted vertically, hence the `trim_end`.
+fn match_webcrypto_callee(callee: &str) -> Option<&'static str> {
+    let (receiver, method) = callee.rsplit_once('.')?;
+    let api = match method.trim() {
+        "generateKey" => "webcrypto.subtle.generateKey",
+        "sign" => "webcrypto.subtle.sign",
+        _ => return None,
+    };
+    let receiver = receiver.trim_end();
+    (receiver == "subtle" || receiver.ends_with(".subtle")).then_some(api)
 }
 
 fn match_c_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
@@ -1142,6 +1168,33 @@ fn populate_args(
                 out.insert("algo".into(), ArgValue::Str(s));
             }
         }
+        (
+            Language::JavaScript | Language::TypeScript,
+            "webcrypto.subtle.generateKey" | "webcrypto.subtle.sign",
+        ) => {
+            // WebCrypto argument 0 is the algorithm: either a bare name string
+            // (`subtle.sign('Ed25519', …)`) or an object whose `name` property
+            // carries it (`{ name: 'ML-DSA-65' }`). Everything else — a
+            // variable, a spread, a property read — is not knowable from this
+            // expression, and we insert no `alg` capture so the classify layer
+            // falls through to the unattributed arm rather than guessing.
+            if let Some(alg) = js_arg_algorithm_name(args_node, 0, source) {
+                out.insert("alg".into(), ArgValue::Str(alg));
+            }
+            // Parameters that pin down which member of a family this is.
+            // `namedCurve` selects the ECDSA/ECDH curve, `hash` selects the
+            // RSA signature/OAEP variant, `length` the AES key size.
+            for (prop, capture) in [("namedCurve", "curve"), ("hash", "hash")] {
+                if let Some(v) = js_object_arg_prop(args_node, 0, prop, source) {
+                    out.insert(capture.into(), ArgValue::Str(v));
+                }
+            }
+            if let Some(len) = js_object_arg_prop(args_node, 0, "length", source)
+                && let Ok(n) = len.parse::<i64>()
+            {
+                out.insert("length".into(), ArgValue::Int(n));
+            }
+        }
         (Language::JavaScript | Language::TypeScript, "jsonwebtoken.jwt.sign") => {
             // Phase 17 — jwt.sign(payload, key, options?) disambiguation.
             //   - key (arg 1): if a string literal → HMAC default.
@@ -1154,7 +1207,7 @@ fn populate_args(
                 None => "unknown",
             };
             out.insert("key_kind".into(), ArgValue::Str(key_kind.into()));
-            if let Some(alg) = js_options_algorithm(args_node, 2, source) {
+            if let Some(alg) = js_object_arg_prop(args_node, 2, "algorithm", source) {
                 out.insert("algorithm".into(), ArgValue::Str(alg));
             }
         }
@@ -1162,70 +1215,91 @@ fn populate_args(
     }
 }
 
+/// Return the Nth real argument node of an `arguments` list, skipping the
+/// punctuation and comment children tree-sitter interleaves.
+fn nth_real_arg(args: Node<'_>, n: usize) -> Option<Node<'_>> {
+    let mut cursor = args.walk();
+    args.children(&mut cursor)
+        .filter(|c| is_real_arg(*c))
+        .nth(n)
+}
+
 /// Phase 17 — return the tree-sitter kind of the Nth real argument in an
 /// `arguments` node, normalised to one of: "string", "identifier", "object",
 /// "call", "other". Used by `jwt.sign` to distinguish a string-secret HMAC
 /// call from a Buffer/KeyObject RSA call.
 fn nth_real_arg_kind(args: Node<'_>, n: usize) -> Option<&'static str> {
-    let mut cursor = args.walk();
-    let mut idx = 0;
-    for child in args.children(&mut cursor) {
-        if !is_real_arg(child) {
+    Some(match nth_real_arg(args, n)?.kind() {
+        "string" | "string_fragment" | "template_string" => "string",
+        "identifier" => "identifier",
+        "object" | "object_expression" => "object",
+        "call_expression" => "call",
+        _ => "other",
+    })
+}
+
+/// Strip the quote characters a JS/TS string literal can be written with.
+fn unquote_js(s: &str) -> String {
+    s.trim_matches(|c| c == '"' || c == '\'' || c == '`')
+        .to_string()
+}
+
+/// Read property `key` off the object literal at argument position `n`.
+///
+/// Handles both shapes the WebCrypto and jsonwebtoken option objects use for a
+/// value: a plain literal (`hash: "SHA-256"`, `length: 256`) and a nested
+/// algorithm object (`hash: { name: "SHA-256" }`), which is resolved to its
+/// `name`. Returns None when the argument is not an object literal, the key is
+/// absent, or the value is a variable — in which case the caller records no
+/// capture and the classify layer must not assume a value.
+fn js_object_arg_prop(args: Node<'_>, n: usize, key: &str, source: &[u8]) -> Option<String> {
+    let arg = nth_real_arg(args, n)?;
+    if !matches!(arg.kind(), "object" | "object_expression") {
+        return None;
+    }
+    js_object_prop(arg, key, source)
+}
+
+fn js_object_prop(obj: Node<'_>, key: &str, source: &[u8]) -> Option<String> {
+    let mut cursor = obj.walk();
+    for prop in obj.children(&mut cursor) {
+        if !matches!(prop.kind(), "pair" | "property") {
             continue;
         }
-        if idx == n {
-            return Some(match child.kind() {
-                "string" | "string_fragment" | "template_string" => "string",
-                "identifier" => "identifier",
-                "object" | "object_expression" => "object",
-                "call_expression" => "call",
-                _ => "other",
-            });
+        let prop_key = prop
+            .child_by_field_name("key")
+            .map(|k| unquote_js(&node_text(k, source)));
+        if prop_key.as_deref() != Some(key) {
+            continue;
         }
-        idx += 1;
+        let value = prop.child_by_field_name("value")?;
+        return match value.kind() {
+            "string" | "string_fragment" | "template_string" | "number" => {
+                Some(unquote_js(&node_text(value, source)))
+            }
+            // `{ name: "ECDSA", hash: { name: "SHA-256" } }`
+            "object" | "object_expression" => js_object_prop(value, "name", source),
+            _ => None,
+        };
     }
     None
 }
 
-/// Phase 17 — look for an object literal at position `n` of the arguments
-/// list and return the value of its `algorithm:` property as a string.
-/// Strips surrounding quote characters. Returns None if the position isn't
-/// an object literal or doesn't carry an `algorithm` key.
-fn js_options_algorithm(args: Node<'_>, n: usize, source: &[u8]) -> Option<String> {
-    let mut cursor = args.walk();
-    let mut idx = 0;
-    for child in args.children(&mut cursor) {
-        if !is_real_arg(child) {
-            continue;
+/// Resolve the algorithm name of a WebCrypto call's algorithm argument.
+///
+/// WebCrypto accepts either a bare name (`subtle.sign('Ed25519', …)`) or an
+/// algorithm object (`{ name: 'ML-DSA-65', … }`). Anything else is a variable
+/// and yields None, which is the signal that the algorithm is not knowable
+/// from this expression.
+fn js_arg_algorithm_name(args: Node<'_>, n: usize, source: &[u8]) -> Option<String> {
+    let arg = nth_real_arg(args, n)?;
+    match arg.kind() {
+        "string" | "string_fragment" | "template_string" => {
+            Some(unquote_js(&node_text(arg, source)))
         }
-        if idx == n {
-            if !matches!(child.kind(), "object" | "object_expression") {
-                return None;
-            }
-            let mut prop_cursor = child.walk();
-            for prop in child.children(&mut prop_cursor) {
-                if !matches!(prop.kind(), "pair" | "property") {
-                    continue;
-                }
-                let key = prop
-                    .child_by_field_name("key")
-                    .map(|k| node_text(k, source));
-                if key.as_deref() == Some("algorithm")
-                    && let Some(v) = prop.child_by_field_name("value")
-                    && matches!(v.kind(), "string" | "string_fragment" | "template_string")
-                {
-                    let raw = node_text(v, source);
-                    return Some(
-                        raw.trim_matches(|c| c == '"' || c == '\'' || c == '`')
-                            .to_string(),
-                    );
-                }
-            }
-            return None;
-        }
-        idx += 1;
+        "object" | "object_expression" => js_object_prop(arg, "name", source),
+        _ => None,
     }
-    None
 }
 
 /// Java-specific argument extraction for method invocations.

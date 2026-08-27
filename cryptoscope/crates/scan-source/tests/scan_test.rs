@@ -1936,3 +1936,102 @@ fn phase17_jwt_sign_alg_none_routes_to_sentinel() {
     assert_eq!(line40.algorithm_id, "jwt-alg-none");
     assert!(line40.message.contains("CVE-2015-9235"));
 }
+
+// ── WebCrypto: classify from the algorithm argument, never from a guess ────
+
+#[test]
+fn webcrypto_classifies_from_the_algorithm_argument() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/webcrypto.js"))
+        .expect("scan succeeds");
+
+    let expected = [
+        (16, "CRYPTO-342", "ml-dsa-65"),
+        (20, "CRYPTO-345", "ml-kem-768"),
+        (26, "CRYPTO-348", "ecdsa-p384"),
+        (30, "CRYPTO-389", "rsa-pss-sha256-2048"),
+        (35, "CRYPTO-354", "ed25519"),
+        (40, "CRYPTO-395", "ecdsa-p256"),
+        (44, "CRYPTO-392", "aes-256-gcm"),
+        (51, "CRYPTO-340", "webcrypto-unattributed"),
+        (56, "CRYPTO-398", "webcrypto-unattributed"),
+    ];
+    for (line, rule, algo) in expected {
+        let f = findings
+            .iter()
+            .find(|f| f.location.line == Some(line))
+            .unwrap_or_else(|| panic!("expected finding on line {line}"));
+        assert_eq!(f.rule_id, rule, "wrong rule on line {line}");
+        assert_eq!(f.algorithm_id, algo, "wrong algorithm_id on line {line}");
+    }
+    // Line 63 is `mySubtle.sign(...)`: the receiver ends in "Subtle", not
+    // ".subtle", so it must not be treated as WebCrypto.
+    assert_eq!(findings.len(), expected.len(), "unexpected extra findings");
+}
+
+/// The defect this fixture exists for: `subtle.generateKey({name:'ML-DSA-65'})`
+/// used to be reported as `ecdsa-p256`, High — a migrated call site flagged as
+/// quantum-vulnerable, with the wrong algorithm-id then flowing into the CBOM.
+#[test]
+fn webcrypto_pqc_is_not_reported_as_classical() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/webcrypto.js"))
+        .expect("scan succeeds");
+
+    for line in [16, 20] {
+        let f = findings
+            .iter()
+            .find(|f| f.location.line == Some(line))
+            .unwrap_or_else(|| panic!("expected finding on line {line}"));
+        assert!(
+            f.algorithm_id.starts_with("ml-"),
+            "line {line} classified as {}, expected a PQC algorithm",
+            f.algorithm_id
+        );
+    }
+}
+
+/// A WebCrypto call whose algorithm argument is a variable must record the
+/// call site without asserting an algorithm — the whole point of the
+/// `webcrypto-unattributed` sentinel.
+#[test]
+fn webcrypto_non_literal_algorithm_asserts_nothing() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/webcrypto.js"))
+        .expect("scan succeeds");
+
+    let f = findings
+        .iter()
+        .find(|f| f.location.line == Some(51))
+        .expect("expected finding on line 51");
+    assert_eq!(f.algorithm_id, "webcrypto-unattributed");
+    assert!(f.message.contains("not determinable"));
+}
+
+/// Real code reaches SubtleCrypto through `crypto.subtle`, `window.crypto`,
+/// `self.crypto` and `globalThis.crypto` far more often than through a
+/// destructured `subtle`. Matching only the destructured form meant the rules
+/// fired on none of the WebCrypto call sites in the benchmark corpus.
+#[test]
+fn webcrypto_matches_every_receiver_chain() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/webcrypto.js"))
+        .expect("scan succeeds");
+
+    // 16 = `subtle.`, 20 = `crypto.subtle.`, 26 = `window.crypto.subtle.`,
+    // 30 = `self.crypto.subtle.`, 35 = `globalThis.crypto.subtle.`.
+    for line in [16, 20, 26, 30, 35] {
+        assert!(
+            findings.iter().any(|f| f.location.line == Some(line)),
+            "no finding on line {line}"
+        );
+    }
+}

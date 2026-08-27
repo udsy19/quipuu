@@ -869,6 +869,14 @@ quantum_status = "QuantumSafe"
 notes = "Topology marker for rustls::ServerConfig::builder() and equivalent calls. Same semantics as tls-client-config: flags the call site without assigning a misleading cipher id. Inventory-tier."
 
 [[algorithm]]
+id = "webcrypto-unattributed"
+display_name = "WebCrypto call (algorithm not statically determined)"
+family = "WebCrypto"
+primitive = "unknown"
+quantum_status = "QuantumSafe"
+notes = "Marker for a SubtleCrypto call whose algorithm argument is a variable, or names an algorithm with no row in this table. Same semantics as tls-client-config: it records the call site so an auditor can find it, without asserting an algorithm the source does not state. Inventory-tier — deliberately not scored as vulnerable, because scoring it would mean guessing which algorithm it is."
+
+[[algorithm]]
 id = "jwt-alg-none"
 display_name = "JWT alg=none (signature verification disabled)"
 family = "JWT"
