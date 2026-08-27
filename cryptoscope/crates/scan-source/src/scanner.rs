@@ -290,6 +290,17 @@ fn walk(node: Node<'_>, source: &[u8], language: Language, out: &mut Vec<RawMatc
     {
         out.extend(ms);
     }
+    // Go algorithm-registration shapes: composite-literal / call-as-constructor
+    // / const / var. golang-jwt-jwt registers via `&SigningMethodRSA{"RS256",
+    // ...}`, go-jose via `SignatureAlgorithm("RS256")`, jwx via `const rs256
+    // = "RS256"`. All three end with a JOSE alg name as a string literal in
+    // a constrained syntactic position. Same whitelist as the switch path.
+    if language == Language::Go
+        && (kind == "interpreted_string_literal" || kind == "raw_string_literal")
+        && let Some(m) = match_go_alg_string_literal(node, source)
+    {
+        out.push(m);
+    }
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
         walk(child, source, language, out);
@@ -563,6 +574,78 @@ fn match_go_alg_switch(switch: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch>>
     } else {
         Some(results)
     }
+}
+
+/// Detect a Go JOSE algorithm string literal in an algorithm-registration
+/// position. The literal's value must match [`GO_ALG_SWITCH_WHITELIST`]; its
+/// syntactic context must be one of:
+///
+/// * `composite_literal` — golang-jwt-jwt: `&SigningMethodRSA{"RS256", ...}`
+/// * `argument_list` — go-jose: `SignatureAlgorithm("RS256")`, jwx:
+///   `NewSignatureAlgorithm("RS256")`
+/// * `const_spec` / `var_spec`
+/// * `expression_list` (assignment RHS, including `=` and `:=`)
+///
+/// The context guard avoids matching every doc-comment / log-message string
+/// that happens to contain a JOSE name. Together with the whitelist, the
+/// false-positive rate stays low while we light up the registration paths
+/// the V3 benchmark missed.
+fn match_go_alg_string_literal(literal: Node<'_>, source: &[u8]) -> Option<RawMatch> {
+    let raw = node_text(literal, source);
+    let value = raw.trim_matches(|c| c == '"' || c == '`');
+    if !GO_ALG_SWITCH_WHITELIST.contains(&value) {
+        return None;
+    }
+    // Reject if we're inside an expression_case — the switch detector
+    // already owns that path; emitting twice would double-count.
+    let mut walker = literal.parent();
+    while let Some(p) = walker {
+        match p.kind() {
+            "expression_case" | "type_case" | "default_case" => return None,
+            // Stop climbing at statement / declaration boundaries; we've
+            // either matched an allowed context by now, or we won't.
+            "source_file" => break,
+            _ => {}
+        }
+        walker = p.parent();
+    }
+    // Now check the immediate context. We accept the literal in any of:
+    //   * literal_element     (composite_literal positional element, e.g.
+    //                          golang-jwt's &SigningMethodRSA{"RS256", ...})
+    //   * literal_value       (composite_literal child without literal_element)
+    //   * argument_list       (positional arg of a call expression,
+    //                          e.g. go-jose's SignatureAlgorithm("RS256"))
+    //   * const_spec / var_spec      (declaration RHS)
+    //   * expression_list     (assignment RHS, := or =; also wraps the
+    //                          var_spec / const_spec value)
+    //   * keyed_element / element    (composite literal field-name : value)
+    let parent = literal.parent()?;
+    let ok = matches!(
+        parent.kind(),
+        "literal_element"
+            | "literal_value"
+            | "argument_list"
+            | "const_spec"
+            | "var_spec"
+            | "expression_list"
+            | "keyed_element"
+            | "element"
+    );
+    if !ok {
+        return None;
+    }
+    let api = format!("go.alg-register.{}", value);
+    let mut args = HashMap::new();
+    args.insert("member".into(), ArgValue::Str(value.to_string()));
+    let start = literal.start_position();
+    Some(RawMatch {
+        api,
+        args,
+        line: (start.row + 1) as u32,
+        offset: literal.start_byte() as u32,
+        symbol: value.to_string(),
+        snippet: node_text(literal, source),
+    })
 }
 
 /// JOSE/JWA algorithm names that trigger `go.alg-switch.*` rules.

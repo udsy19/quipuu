@@ -1084,6 +1084,107 @@ fn phase8_cryptojs_des_marked_critical() {
     assert_eq!(des.algorithm_id, "des");
 }
 
+// ── Phase 9: Go algorithm-registration patterns ────────────────────────────
+//
+// Phase 7 handled `switch alg { case "RS256": ... }`. But the canonical
+// Go JWT libraries (golang-jwt-jwt, go-jose, lestrrat-go/jwx) don't use
+// switch-on-string — they REGISTER algorithm names via composite-literal,
+// call-as-constructor, or const declarations. Phase 9 fires on a string
+// literal that's a known JOSE name AND sits in an algorithm-registration
+// syntactic position (literal_element, argument_list, const_spec, etc.).
+
+#[test]
+fn phase9_go_composite_literal_registers_rs256() {
+    // golang-jwt-jwt shape: &SigningMethodRSA{"RS256", crypto.SHA256}
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("go/jwt_register.go"))
+        .expect("scan succeeds");
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-700"),
+        "expected CRYPTO-700 for composite literal RS256, got: {:?}",
+        findings
+            .iter()
+            .map(|f| &f.rule_id)
+            .collect::<std::collections::BTreeSet<_>>()
+    );
+}
+
+#[test]
+fn phase9_go_call_constructor_registers_es256() {
+    // go-jose / jwx shape: SignatureAlgorithm("ES256") or NewSignatureAlgorithm("ES256")
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("go/jwt_register.go"))
+        .expect("scan succeeds");
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-710"),
+        "expected CRYPTO-710 for call-constructor ES256, got: {:?}",
+        findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn phase9_go_const_declaration_registers_none() {
+    // jwx shape: const none = "none"; CRYPTO-740 must fire.
+    // (Severity is High in the fixture because the usage context isn't
+    // KeyEstablishmentLongLived. The rule's `severity_hint = "critical"`
+    // applies when context drives the score that direction.)
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("go/jwt_register.go"))
+        .expect("scan succeeds");
+    assert!(
+        findings.iter().any(|f| f.rule_id == "CRYPTO-740"),
+        "CRYPTO-740 must fire on const none = \"none\", got: {:?}",
+        findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn phase9_go_doc_string_with_embedded_jose_name_does_not_fire() {
+    // A raw string containing "RS256" inside doc-style text is the FULL
+    // string literal, not a separate JOSE-named literal — so the whitelist
+    // miss is what prevents the false positive. Guard against regressions.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("go/jwt_register.go"))
+        .expect("scan succeeds");
+    // The docNote raw string is on line 46; ensure no finding fires for that line.
+    assert!(
+        !findings.iter().any(|f| f.location.line == Some(46)),
+        "doc-style raw string on line 46 must not produce a finding, got: {:?}",
+        findings
+            .iter()
+            .filter(|f| f.location.line == Some(46))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn phase9_go_main_fixture_unchanged() {
+    // Phase 9 must not change findings on the existing Go fixtures.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let main_findings = scanner
+        .scan_path(&fixtures_root().join("go/main.go"))
+        .expect("scan succeeds");
+    assert_eq!(main_findings.len(), 7, "go/main.go count must not change");
+
+    let switch_findings = scanner
+        .scan_path(&fixtures_root().join("go/jwt_switch.go"))
+        .expect("scan succeeds");
+    assert_eq!(
+        switch_findings.len(),
+        15,
+        "go/jwt_switch.go (Phase 7) count must not change"
+    );
+}
+
 #[test]
 fn phase8_app_py_findings_unchanged() {
     // Regression guard: the original Python fixture's findings must not

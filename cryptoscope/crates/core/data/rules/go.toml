@@ -339,21 +339,21 @@ message = "JWT signed with EdDSA (Ed25519) — quantum-vulnerable."
 # RSA-PKCS1 signatures (RS*)
 [[classify]]
 id = "CRYPTO-700"
-when.api = "^go\\.alg-switch\\.RS256$"
+when.api = "^go\\.alg-(switch|register)\\.RS256$"
 algorithm_id = "rsa-pkcs1-sha256-2048"
 severity_hint = "auto"
 message = "JWT alg=RS256 — RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
 
 [[classify]]
 id = "CRYPTO-701"
-when.api = "^go\\.alg-switch\\.RS384$"
+when.api = "^go\\.alg-(switch|register)\\.RS384$"
 algorithm_id = "rsa-pkcs1-sha384-3072"
 severity_hint = "auto"
 message = "JWT alg=RS384 — RSA-PKCS1-SHA384. Quantum-vulnerable to Shor's algorithm."
 
 [[classify]]
 id = "CRYPTO-702"
-when.api = "^go\\.alg-switch\\.RS512$"
+when.api = "^go\\.alg-(switch|register)\\.RS512$"
 algorithm_id = "rsa-pkcs1-sha512-4096"
 severity_hint = "auto"
 message = "JWT alg=RS512 — RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algorithm."
@@ -361,21 +361,21 @@ message = "JWT alg=RS512 — RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algo
 # RSA-PSS signatures (PS*)
 [[classify]]
 id = "CRYPTO-703"
-when.api = "^go\\.alg-switch\\.PS256$"
+when.api = "^go\\.alg-(switch|register)\\.PS256$"
 algorithm_id = "rsa-pss-sha256-2048"
 severity_hint = "auto"
 message = "JWT alg=PS256 — RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
 
 [[classify]]
 id = "CRYPTO-704"
-when.api = "^go\\.alg-switch\\.PS384$"
+when.api = "^go\\.alg-(switch|register)\\.PS384$"
 algorithm_id = "rsa-pss-sha256-2048"
 severity_hint = "auto"
 message = "JWT alg=PS384 — RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
 
 [[classify]]
 id = "CRYPTO-705"
-when.api = "^go\\.alg-switch\\.PS512$"
+when.api = "^go\\.alg-(switch|register)\\.PS512$"
 algorithm_id = "rsa-pss-sha256-2048"
 severity_hint = "auto"
 message = "JWT alg=PS512 — RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
@@ -383,21 +383,21 @@ message = "JWT alg=PS512 — RSA-PSS-SHA512. Quantum-vulnerable to Shor's algori
 # ECDSA signatures (ES*)
 [[classify]]
 id = "CRYPTO-710"
-when.api = "^go\\.alg-switch\\.ES256$"
+when.api = "^go\\.alg-(switch|register)\\.ES256$"
 algorithm_id = "ecdsa-p256"
 severity_hint = "auto"
 message = "JWT alg=ES256 — ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
 
 [[classify]]
 id = "CRYPTO-711"
-when.api = "^go\\.alg-switch\\.ES384$"
+when.api = "^go\\.alg-(switch|register)\\.ES384$"
 algorithm_id = "ecdsa-p384"
 severity_hint = "auto"
 message = "JWT alg=ES384 — ECDSA P-384. Quantum-vulnerable to Shor's algorithm."
 
 [[classify]]
 id = "CRYPTO-712"
-when.api = "^go\\.alg-switch\\.ES512$"
+when.api = "^go\\.alg-(switch|register)\\.ES512$"
 algorithm_id = "ecdsa-p521"
 severity_hint = "auto"
 message = "JWT alg=ES512 — ECDSA P-521. Quantum-vulnerable to Shor's algorithm."
@@ -405,7 +405,7 @@ message = "JWT alg=ES512 — ECDSA P-521. Quantum-vulnerable to Shor's algorithm
 # EdDSA
 [[classify]]
 id = "CRYPTO-720"
-when.api = "^go\\.alg-switch\\.EdDSA$"
+when.api = "^go\\.alg-(switch|register)\\.EdDSA$"
 algorithm_id = "ed25519"
 severity_hint = "auto"
 message = "JWT alg=EdDSA — Ed25519. Quantum-vulnerable to Shor's algorithm."
@@ -413,21 +413,21 @@ message = "JWT alg=EdDSA — Ed25519. Quantum-vulnerable to Shor's algorithm."
 # HMAC (HS*) — symmetric; inventory at low severity
 [[classify]]
 id = "CRYPTO-730"
-when.api = "^go\\.alg-switch\\.HS256$"
+when.api = "^go\\.alg-(switch|register)\\.HS256$"
 algorithm_id = "sha-256"
 severity_hint = "low"
 message = "JWT alg=HS256 — HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
 
 [[classify]]
 id = "CRYPTO-731"
-when.api = "^go\\.alg-switch\\.HS384$"
+when.api = "^go\\.alg-(switch|register)\\.HS384$"
 algorithm_id = "sha-384"
 severity_hint = "low"
 message = "JWT alg=HS384 — HMAC-SHA384. Symmetric; not quantum-broken but inventory for key rotation planning."
 
 [[classify]]
 id = "CRYPTO-732"
-when.api = "^go\\.alg-switch\\.HS512$"
+when.api = "^go\\.alg-(switch|register)\\.HS512$"
 algorithm_id = "sha-512"
 severity_hint = "low"
 message = "JWT alg=HS512 — HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
@@ -435,7 +435,7 @@ message = "JWT alg=HS512 — HMAC-SHA512. Symmetric; not quantum-broken but inve
 # alg=none — signature verification disabled; critical CWE-347
 [[classify]]
 id = "CRYPTO-740"
-when.api = "^go\\.alg-switch\\.none$"
+when.api = "^go\\.alg-(switch|register)\\.none$"
 algorithm_id = "rsa-1024"
 severity_hint = "critical"
 message = "JWT alg=none — signature verification is disabled. CVE-2015-9235 class vulnerability."
@@ -444,14 +444,14 @@ cwe = "CWE-347"
 # RSA-OAEP key-wrap algorithms
 [[classify]]
 id = "CRYPTO-750"
-when.api = "^go\\.alg-switch\\.RSA-OAEP$"
+when.api = "^go\\.alg-(switch|register)\\.RSA-OAEP$"
 algorithm_id = "rsa-2048"
 severity_hint = "auto"
 message = "JWE alg=RSA-OAEP — RSA-OAEP key encryption. Quantum-vulnerable to Shor's algorithm."
 
 [[classify]]
 id = "CRYPTO-751"
-when.api = "^go\\.alg-switch\\.RSA-OAEP-256$"
+when.api = "^go\\.alg-(switch|register)\\.RSA-OAEP-256$"
 algorithm_id = "rsa-2048"
 severity_hint = "auto"
 message = "JWE alg=RSA-OAEP-256 — RSA-OAEP-SHA256 key encryption. Quantum-vulnerable."
@@ -459,21 +459,21 @@ message = "JWE alg=RSA-OAEP-256 — RSA-OAEP-SHA256 key encryption. Quantum-vuln
 # AES-GCM content encryption (JWE enc values)
 [[classify]]
 id = "CRYPTO-760"
-when.api = "^go\\.alg-switch\\.A256GCM$"
+when.api = "^go\\.alg-(switch|register)\\.A256GCM$"
 algorithm_id = "aes-256-gcm"
 severity_hint = "low"
 message = "JWE enc=A256GCM — AES-256-GCM content encryption. Quantum-safe; inventory only."
 
 [[classify]]
 id = "CRYPTO-761"
-when.api = "^go\\.alg-switch\\.A192GCM$"
+when.api = "^go\\.alg-(switch|register)\\.A192GCM$"
 algorithm_id = "aes-192-gcm"
 severity_hint = "low"
 message = "JWE enc=A192GCM — AES-192-GCM content encryption. Quantum-safe; inventory only."
 
 [[classify]]
 id = "CRYPTO-762"
-when.api = "^go\\.alg-switch\\.A128GCM$"
+when.api = "^go\\.alg-(switch|register)\\.A128GCM$"
 algorithm_id = "aes-128-gcm"
 severity_hint = "low"
 message = "JWE enc=A128GCM — AES-128-GCM content encryption. Weakened by Grover; prefer AES-256."
