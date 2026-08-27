@@ -24,7 +24,7 @@ readme = "../README.md"
 # Serde + TOML + JSON for data loading and CBOM emission
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-toml = "0.8"
+toml = "1.1"
 
 # Errors
 thiserror = "2"
@@ -51,20 +51,20 @@ ignore = "0.4"
 regex = "1"
 
 # CBOM emitter dependencies
-jsonschema = { version = "0.46", default-features = false }
+jsonschema = { version = "0.49", default-features = false }
 uuid = { version = "1", features = ["v4"] }
 
 # scan-certs — X.509 parsing
 x509-parser = "0.18"
-pem = "3"
+pem = "4"
 
 # scan-deps — manifest parsers + glob walking (use existing serde_json/toml for JSON/TOML)
-quick-xml = { version = "0.38", features = ["serialize"] }   # pom.xml, *.csproj
+quick-xml = { version = "0.42", features = ["serialize"] }   # pom.xml, *.csproj
 
 # report — HTML templating (askama is small + compile-time)
-askama = { version = "0.14", default-features = false, features = ["std"] }
+askama = { version = "0.16", default-features = false, features = ["std"] }
 # General-purpose hashing for SARIF partialFingerprints
-sha2 = "0.10"
+sha2 = "0.11"
 
 # tui — terminal UI
 ratatui = "0.30"
