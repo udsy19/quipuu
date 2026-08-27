@@ -2,12 +2,14 @@
 package main
 
 import (
+	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/md5"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
+	"crypto/tls"
 )
 
 func keys() {
@@ -35,4 +37,22 @@ func keys() {
 func hashes() {
 	_ = md5.New()
 	_ = sha1.New()
+}
+
+// TLS key-exchange — exercises GO-032 / CRYPTO-032..035.
+func tlsCurves() *tls.Config {
+	return &tls.Config{
+		MinVersion: tls.VersionTLS13,
+		CurvePreferences: []tls.CurveID{
+			tls.X25519,
+			tls.CurveP256,
+			tls.CurveP384,
+		},
+	}
+}
+
+// crypto/ecdh — exercises GO-033 / CRYPTO-036..039.
+func ecdhCurves() {
+	_ = ecdh.X25519()
+	_ = ecdh.P256()
 }
