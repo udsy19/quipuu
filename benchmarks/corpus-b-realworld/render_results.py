@@ -74,7 +74,7 @@ def main() -> int:
     lines: list[str] = []
     w = lines.append
 
-    w("# cryptoscope V5 — 150-project corpus benchmark")
+    w("# cryptoscope V6 — 150-project corpus benchmark")
     w("")
     w(f"**Corpus:** {summary.get('corpus', 'corpus-b-realworld')}  ")
     w(f"**Projects scanned:** {summary['total_projects_scanned']}  ")
@@ -85,14 +85,16 @@ def main() -> int:
     )
     w("")
     w(
-        "This is the V5 corpus run, layered on Phases 1-6 (jjwt enum constants, "
+        "This is the V6 corpus run, layered on Phases 1-6 (jjwt enum constants, "
         "signal-to-noise, ACVP refresh, why-this-matters, non-fatal warnings) "
         "plus Phase 7 (Go switch-on-string; MCP / HTML / SARIF warning "
         "surfacing), Phase 8 (paramiko-style runtime-variable args, crypto-js "
-        "two-level member expressions), and Phase 9 (Go algorithm-registration "
-        "patterns — composite literal, call-as-constructor, const). Numbers "
-        "below are stratified by ecosystem and reported without projected "
-        "values — only what was actually scanned."
+        "two-level member expressions), Phase 9 (Go algorithm-registration "
+        "patterns — composite literal, call-as-constructor, const), and "
+        "Phase 10 (Rust qualified paths, runtime-variable bits, turbofish "
+        "hash extraction, ServerConfig / KeyPair APIs). Numbers below are "
+        "stratified by ecosystem and reported without projected values — "
+        "only what was actually scanned."
     )
     w("")
 
@@ -190,6 +192,37 @@ def main() -> int:
         )
         w("")
         for cid, n in sorted(phase9_winners):
+            w(f"- `{cid}` — **{n} findings** (was 0)")
+        w("")
+
+    # ── Phase 10 — explicit verification ───────────────────────────────
+    phase10_winners = []
+    phase10_targets = {
+        "crates-io:rsa",
+        "crates-io:p256",
+        "crates-io:p384",
+        "crates-io:rustls-native-certs",
+        "crates-io:tokio-rustls",
+        "crates-io:rustls-webpki",
+        "crates-io:webpki",
+    }
+    for r in per_project:
+        if r["canonical_id"] in phase10_targets and r["total_findings"] > 0:
+            phase10_winners.append((r["canonical_id"], r["total_findings"]))
+    if phase10_winners:
+        w("### Phase 10 verification — Rust opaque-type APIs now produce findings")
+        w("")
+        w(
+            "Pre-Phase-10 (the V5 corpus run), these crates-io projects produced "
+            "**zero** findings. `match_rust_callee` did exact-string matching on "
+            "the full scoped_identifier text, so qualified paths like "
+            "`sha2::Sha256::digest` and turbofish forms like "
+            "`SigningKey::<Sha256>::new` were invisible. Phase 10's "
+            "normalize_rust_callee + extract_turbofish_inner (commit f9f2760) "
+            "plus five new classify rules close the gap:"
+        )
+        w("")
+        for cid, n in sorted(phase10_winners):
             w(f"- `{cid}` — **{n} findings** (was 0)")
         w("")
 
