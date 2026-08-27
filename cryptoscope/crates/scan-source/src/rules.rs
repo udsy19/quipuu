@@ -240,6 +240,55 @@ when = { api = "^foo$", args = { bits = { lt = 2048 } } }
         }
     }
 
+    /// Every AES key size a classify rule publishes must be observable from
+    /// that rule's own `when` clause — either the api regex names the width
+    /// (`EVP_aes_256_gcm`, `Aes128Gcm`, `A256GCM`) or an arg predicate pins
+    /// it (`AES_128.*/GCM`, `length = 256`). A rule that names a width its
+    /// `when` never reads is publishing a guess, and that guess ships as an
+    /// asserted `parameterSetIdentifier` in the CBOM.
+    ///
+    /// Regression gate: `Cipher.getInstance("AES/GCM/NoPadding")`,
+    /// `AESEngine`, `BouncyCastleProvider`, `Aes.Create()`, `aes.NewCipher`
+    /// and `CryptoJS.AES.encrypt` were all published as `aes-256-gcm`. Use an
+    /// `aes-unattributed*` sentinel when the source does not state the width.
+    #[test]
+    fn aes_key_size_is_never_asserted_without_evidence() {
+        let packs = [
+            ("go", RulePack::builtin_go().unwrap()),
+            ("python", RulePack::builtin_python().unwrap()),
+            ("java", RulePack::builtin_java().unwrap()),
+            ("javascript", RulePack::builtin_javascript().unwrap()),
+            ("cpp", RulePack::builtin_cpp().unwrap()),
+            ("rust", RulePack::builtin_rust().unwrap()),
+            ("csharp", RulePack::builtin_csharp().unwrap()),
+        ];
+        let mut offenders = Vec::new();
+        for (lang, pack) in &packs {
+            for rule in &pack.classify {
+                let Some(width) = rule
+                    .algorithm_id
+                    .strip_prefix("aes-")
+                    .and_then(|rest| ["128", "192", "256"].iter().find(|w| rest.starts_with(**w)))
+                else {
+                    continue;
+                };
+                // Everything the `when` clause can actually see.
+                let evidence = format!("{} {:?}", rule.when.api, rule.when.args);
+                if !evidence.contains(width) {
+                    offenders.push(format!(
+                        "{}/{} publishes `{}` but its `when` never reads {}",
+                        lang, rule.id, rule.algorithm_id, width
+                    ));
+                }
+            }
+        }
+        assert!(
+            offenders.is_empty(),
+            "classify rules asserting an unread AES key size:\n  {}",
+            offenders.join("\n  ")
+        );
+    }
+
     #[test]
     fn builtin_rules_load() {
         let go = RulePack::builtin_go().expect("Go rule pack must parse");

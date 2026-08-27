@@ -227,9 +227,9 @@ id = "CRYPTO-132"
 when.api = "^cryptography\\.hazmat\\.ciphers\\.Cipher$"
 when.args.algo = { regex = "^AES" }
 when.args.mode = { regex = "^ECB$" }
-algorithm_id = "aes-128-ecb"
+algorithm_id = "aes-unattributed-ecb"
 severity_hint = "high"
-message = "AES-ECB leaks plaintext patterns. Use GCM or CBC+HMAC."
+message = "AES-ECB leaks plaintext patterns at every key size. The key size is in the `key` argument to algorithms.AES(), not at this call site. Use GCM or CBC+HMAC."
 
 # hashlib
 

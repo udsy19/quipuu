@@ -217,7 +217,10 @@ fn canonicalize_family(family: &str) -> Option<String> {
         // WebCrypto call sites whose algorithm the source never states) are
         // not algorithm families in the CycloneDX 1.7 enum — omit
         // `algorithmFamily` rather than emit something the schema rejects.
-        "TLS" | "JWT" | "WebCrypto" => return None,
+        // "Provider" (a JCA/JCE provider registration) and "RNG" (a CSPRNG
+        // call site) are the same case: real call sites that name no
+        // algorithm.
+        "TLS" | "JWT" | "WebCrypto" | "Provider" | "RNG" => return None,
         // Identity mapping for everything else (RSASSA-PSS, ECDSA, EdDSA,
         // ECDH, DSA, AES, DES, 3DES, RC4, ChaCha20, MD5, SHA-1/2/3,
         // ML-KEM, ML-DSA, SLH-DSA).

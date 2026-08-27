@@ -336,9 +336,9 @@ description = "AES cipher instantiation; key size determined by key byte slice l
 [[classify]]
 id = "CRYPTO-040"
 when.api = "^crypto/aes\\.NewCipher$"
-algorithm_id = "aes-128-gcm"   # conservative; refine when key-flow lands
+algorithm_id = "aes-unattributed"
 severity_hint = "low"
-message = "AES cipher in use (key length not statically resolved; confirm 32-byte key for AES-256)."
+message = "AES cipher in use. aes.NewCipher takes its key size from the slice passed in and names no mode — neither parameter is at this call site. Confirm a 32-byte key for AES-256 and an AEAD wrapper (cipher.NewGCM)."
 
 # ============================================================================
 # crypto/md5 / crypto/sha1 — classically broken

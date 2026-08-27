@@ -32,13 +32,47 @@ severity_hint = "critical"
 message = "DES/3DES detected in Cipher.getInstance('{spec}'). Disallowed for new encryption (NIST SP 800-131A)."
 cwe = "CWE-327"
 
+# The JCE transformation string states the key size only in the optional
+# `AES_128`/`AES_192`/`AES_256` forms (JCE standard names, used mainly with
+# GCM). Plain `AES/...` takes its key size from the SecretKey, which is not at
+# this call site — so the sized arms come first and CRYPTO-201/203 keep the
+# family match without asserting a width. Rule order is load-bearing:
+# apply_classify takes the first `when` that matches.
+
+[[classify]]
+id = "CRYPTO-207"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)AES_128.*/ECB" }
+algorithm_id = "aes-128-ecb"
+severity_hint = "high"
+message = "AES-128-ECB mode in Cipher.getInstance('{spec}'). ECB is deterministic and leaks patterns."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-208"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)AES_192.*/ECB" }
+algorithm_id = "aes-192-ecb"
+severity_hint = "high"
+message = "AES-192-ECB mode in Cipher.getInstance('{spec}'). ECB is deterministic and leaks patterns."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-209"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)AES_256.*/ECB" }
+algorithm_id = "aes-256-ecb"
+severity_hint = "high"
+message = "AES-256-ECB mode in Cipher.getInstance('{spec}'). ECB is deterministic and leaks patterns."
+cwe = "CWE-327"
+
 [[classify]]
 id = "CRYPTO-201"
 when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
 when.args.spec = { regex = "(?i)AES.*/ECB" }
-algorithm_id = "aes-128-ecb"
+algorithm_id = "aes-unattributed-ecb"
 severity_hint = "high"
-message = "AES-ECB mode in Cipher.getInstance('{spec}'). ECB is deterministic and leaks patterns."
+message = "AES-ECB mode in Cipher.getInstance('{spec}'). ECB is deterministic and leaks patterns at every key size; the key size itself is not stated here — it comes from the SecretKey."
 cwe = "CWE-327"
 
 [[classify]]
@@ -51,12 +85,36 @@ message = "RSA PKCS1v1.5 padding in Cipher.getInstance('{spec}'). Vulnerable to 
 cwe = "CWE-327"
 
 [[classify]]
+id = "CRYPTO-204"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)AES_128.*/GCM" }
+algorithm_id = "aes-128-gcm"
+severity_hint = "auto"
+message = "AES-128-GCM in Cipher.getInstance('{spec}'). Good AEAD mode; CNSA 2.0 requires 256-bit AES."
+
+[[classify]]
+id = "CRYPTO-205"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)AES_192.*/GCM" }
+algorithm_id = "aes-192-gcm"
+severity_hint = "auto"
+message = "AES-192-GCM in Cipher.getInstance('{spec}'). Good AEAD mode; CNSA 2.0 requires 256-bit AES."
+
+[[classify]]
+id = "CRYPTO-206"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)AES_256.*/GCM" }
+algorithm_id = "aes-256-gcm"
+severity_hint = "auto"
+message = "AES-256-GCM in Cipher.getInstance('{spec}'). Good AEAD choice at a CNSA 2.0-approved key size."
+
+[[classify]]
 id = "CRYPTO-203"
 when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
 when.args.spec = { regex = "(?i)AES.*/GCM" }
-algorithm_id = "aes-256-gcm"
+algorithm_id = "aes-unattributed-gcm"
 severity_hint = "auto"
-message = "AES-GCM in Cipher.getInstance('{spec}'). Good AEAD choice; confirm 256-bit key."
+message = "AES-GCM in Cipher.getInstance('{spec}'). Good AEAD mode. The key size is not in this string — it comes from the SecretKey, so this finding asserts the mode only. Confirm 256-bit key."
 
 # ============================================================================
 # java.security.KeyPairGenerator.getInstance
@@ -172,23 +230,23 @@ message = "BouncyCastle RSAKeyPairGenerator instantiated. Quantum-vulnerable RSA
 [[classify]]
 id = "CRYPTO-231"
 when.api = "^org\\.bouncycastle\\.AESEngine$"
-algorithm_id = "aes-256-gcm"
+algorithm_id = "aes-unattributed"
 severity_hint = "auto"
-message = "BouncyCastle AESEngine instantiated. Confirm key size and authenticated mode (GCM)."
+message = "BouncyCastle AESEngine instantiated. A raw AES block cipher: it names no mode and takes its key size from init(). Confirm both — an unwrapped AESEngine is ECB."
 
 [[classify]]
 id = "CRYPTO-232"
 when.api = "^org\\.bouncycastle\\.GCMBlockCipher$"
-algorithm_id = "aes-256-gcm"
+algorithm_id = "aes-unattributed-gcm"
 severity_hint = "auto"
-message = "BouncyCastle GCMBlockCipher instantiated. Good AEAD mode."
+message = "BouncyCastle GCMBlockCipher instantiated. Good AEAD mode; the key size comes from the wrapped engine's init(), not from this call."
 
 [[classify]]
 id = "CRYPTO-233"
 when.api = "^org\\.bouncycastle\\.BouncyCastleProvider$"
-algorithm_id = "aes-256-gcm"
+algorithm_id = "crypto-provider-registration"
 severity_hint = "low"
-message = "BouncyCastle provider registered. Inventory all BC API usages."
+message = "BouncyCastle provider registered. This selects an implementation, not an algorithm — it names none. Inventory all BC API usages reachable from here."
 
 # ============================================================================
 # Java JWT-library enum constants (jjwt, java-jwt, nimbus-jose-jwt, jose4j)

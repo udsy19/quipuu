@@ -222,11 +222,55 @@ fn scans_java_cipher_aes_ecb() {
         .scan_path(&fixtures_root().join("java/Main.java"))
         .expect("scan succeeds");
 
+    // `AES/ECB/PKCS5Padding` states the mode and not the key size, so the
+    // finding carries the mode-only sentinel. Asserting `aes-128-ecb` here
+    // would be asserting a width the source never wrote.
     assert!(
         findings
             .iter()
-            .any(|f| f.rule_id == "CRYPTO-201" && f.algorithm_id == "aes-128-ecb"),
-        "expected CRYPTO-201 (AES-ECB) in Java fixture"
+            .any(|f| f.rule_id == "CRYPTO-201" && f.algorithm_id == "aes-unattributed-ecb"),
+        "expected CRYPTO-201 (AES-ECB, key size unattributed) in Java fixture"
+    );
+    // `AES_128/ECB/NoPadding` does state it, and is read rather than guessed.
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-207" && f.algorithm_id == "aes-128-ecb"),
+        "expected CRYPTO-207 (AES-128-ECB) in Java fixture"
+    );
+    // Nothing in this fixture may claim a key size the JCE string omits.
+    assert!(
+        !findings.iter().any(|f| f.algorithm_id == "aes-256-ecb"),
+        "no finding may assert a key size the transformation string omits"
+    );
+}
+
+/// The `Cipher.getInstance` arms must read the key size from the JCE standard
+/// name when it is there, and fall back to a sentinel when it is not — never
+/// to a guessed width. Regression test for the defect where every
+/// `AES/GCM/NoPadding` call site was published as `aes-256-gcm`.
+#[test]
+fn java_cipher_aes_gcm_key_size_is_read_not_guessed() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Main.java"))
+        .expect("scan succeeds");
+
+    let gcm: Vec<_> = findings
+        .iter()
+        .filter(|f| f.algorithm_id.contains("gcm"))
+        .map(|f| (f.rule_id.as_str(), f.algorithm_id.as_str()))
+        .collect();
+    assert!(
+        gcm.contains(&("CRYPTO-203", "aes-unattributed-gcm")),
+        "AES/GCM/NoPadding must not assert a key size; got {:?}",
+        gcm
+    );
+    assert!(
+        gcm.contains(&("CRYPTO-206", "aes-256-gcm")),
+        "AES_256/GCM/NoPadding must resolve to aes-256-gcm; got {:?}",
+        gcm
     );
 }
 

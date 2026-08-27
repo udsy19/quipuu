@@ -877,6 +877,55 @@ quantum_status = "QuantumSafe"
 notes = "Marker for a SubtleCrypto call whose algorithm argument is a variable, or names an algorithm with no row in this table. Same semantics as tls-client-config: it records the call site so an auditor can find it, without asserting an algorithm the source does not state. Inventory-tier — deliberately not scored as vulnerable, because scoring it would mean guessing which algorithm it is."
 
 [[algorithm]]
+id = "aes-unattributed"
+display_name = "AES (key size and mode not stated at the call site)"
+family = "AES"
+primitive = "block-cipher"
+quantum_status = "QuantumSafe"
+notes = "Marker for an AES call site that names neither a key size nor a mode — Cipher/engine constructors that take both from a key object or a later call (BouncyCastle AESEngine, .NET Aes.Create(), Go crypto/aes.NewCipher, CryptoJS.AES). Same semantics as webcrypto-unattributed: the operation is real and locatable, the parameters are not in the source. Scored as QuantumSafe because the alternative is guessing AES-128 or AES-256, and both guesses are wrong on some call sites. Resolve by hand, or by whichever call supplies the key."
+
+[[algorithm]]
+id = "aes-unattributed-gcm"
+display_name = "AES-GCM (key size not stated at the call site)"
+family = "AES"
+primitive = "ae"
+quantum_status = "QuantumSafe"
+notes = "Marker for an AES-GCM call site whose key size is supplied by a key object rather than the transformation string — `Cipher.getInstance(\"AES/GCM/NoPadding\")` is the common case, since the JCE `AES_128`/`AES_192`/`AES_256` forms are optional and rare. The mode is stated and the key size is not, so this row asserts only the mode."
+
+[[algorithm]]
+id = "aes-unattributed-ecb"
+display_name = "AES-ECB (key size not stated at the call site)"
+family = "AES"
+primitive = "block-cipher"
+quantum_status = "BrokenClassically"
+replacement = "aes-256-gcm"
+notes = "Marker for an AES-ECB call site whose key size is not in the source. Unlike the other two AES sentinels this one is scored, because the verdict does not depend on the missing parameter: ECB is never appropriate beyond a single block at any key size — the same reason aes-128-ecb, aes-192-ecb and aes-256-ecb all carry BrokenClassically."
+
+[[algorithm]]
+id = "crypto-provider-registration"
+display_name = "Crypto provider registration (topology marker)"
+family = "Provider"
+primitive = "other"
+quantum_status = "QuantumSafe"
+notes = "Marker for registering or instantiating a JCA/JCE provider — `new BouncyCastleProvider()` and equivalents. It selects an implementation, not an algorithm, so it names none. Useful as an inventory anchor: a provider registration means the algorithms in that provider are reachable from this codebase."
+
+[[algorithm]]
+id = "tls-cipher-suite-config"
+display_name = "TLS cipher-suite configuration (topology marker)"
+family = "TLS"
+primitive = "other"
+quantum_status = "QuantumSafe"
+notes = "Marker for a call that configures which cipher suites a TLS context will offer — OpenSSL SSL_CTX_set_cipher_list and equivalents — where the suite string named no algorithm we can fault. Companion to tls-client-config/tls-server-config for the case where the topology role (client or server) is also not stated."
+
+[[algorithm]]
+id = "csprng"
+display_name = "CSPRNG (cryptographically secure random)"
+family = "RNG"
+primitive = "drbg"
+quantum_status = "QuantumSafe"
+notes = "Marker for a call into a platform CSPRNG — .NET RandomNumberGenerator.Create() and equivalents. Not an encryption algorithm; recorded so the CBOM shows where key and IV material originates. Quantum-relevant only through the key sizes it is asked for, which are at the caller."
+
+[[algorithm]]
 id = "jwt-alg-none"
 display_name = "JWT alg=none (signature verification disabled)"
 family = "JWT"

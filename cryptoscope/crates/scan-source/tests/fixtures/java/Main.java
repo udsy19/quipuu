@@ -15,10 +15,18 @@ public class Main {
         c.init(Cipher.ENCRYPT_MODE, null);
     }
 
-    // JAV-001 / CRYPTO-201 — AES-ECB in Cipher.getInstance
+    // JAV-001 / CRYPTO-201 — AES-ECB in Cipher.getInstance. The plain `AES`
+    // form states no key size (it comes from the SecretKey), so the expected
+    // algorithm-id is the aes-unattributed-ecb sentinel, not a guessed width.
     public static void cipherAesEcb() throws Exception {
         Cipher c = Cipher.getInstance("AES/ECB/PKCS5Padding");
         c.init(Cipher.ENCRYPT_MODE, null);
+    }
+
+    // JAV-001 / CRYPTO-207 — the JCE `AES_128` standard name does state the
+    // key size, so this one resolves to aes-128-ecb.
+    public static void cipherAes128Ecb() throws Exception {
+        Cipher c = Cipher.getInstance("AES_128/ECB/NoPadding");
     }
 
     // JAV-001 / CRYPTO-202 — RSA PKCS1Padding
@@ -26,9 +34,15 @@ public class Main {
         Cipher c = Cipher.getInstance("RSA/ECB/PKCS1Padding");
     }
 
-    // JAV-001 / CRYPTO-203 — AES-GCM (good)
+    // JAV-001 / CRYPTO-203 — AES-GCM, key size not stated at the call site.
     public static void cipherAesGcm() throws Exception {
         Cipher c = Cipher.getInstance("AES/GCM/NoPadding");
+    }
+
+    // JAV-001 / CRYPTO-206 — AES-256-GCM, key size stated by the JCE
+    // standard name.
+    public static void cipherAes256Gcm() throws Exception {
+        Cipher c = Cipher.getInstance("AES_256/GCM/NoPadding");
     }
 
     // JAV-010 / CRYPTO-210 — RSA KeyPairGenerator

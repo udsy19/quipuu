@@ -46,21 +46,78 @@ severity_hint = "critical"
 message = "RC4 in createCipheriv('{algo}'). Classically broken."
 cwe = "CWE-327"
 
+# A Node cipher name always carries the key size — `aes-256-gcm`, and the
+# legacy no-dash and `id-aesNNN-GCM` aliases. So the size is readable here and
+# is read, rather than assumed. CRYPTO-302/303 stay as the family fallback for
+# a name we do not recognise; they now say so instead of guessing. Rule order
+# is load-bearing: apply_classify takes the first `when` that matches.
+
+[[classify]]
+id = "CRYPTO-304"
+when.api = "^node:crypto\\.createCipheriv$"
+when.args.algo = { regex = "(?i)aes-?128-.*gcm" }
+algorithm_id = "aes-128-gcm"
+severity_hint = "auto"
+message = "AES-128-GCM in createCipheriv('{algo}'). Good AEAD mode; CNSA 2.0 requires 256-bit AES."
+
+[[classify]]
+id = "CRYPTO-305"
+when.api = "^node:crypto\\.createCipheriv$"
+when.args.algo = { regex = "(?i)aes-?192-.*gcm" }
+algorithm_id = "aes-192-gcm"
+severity_hint = "auto"
+message = "AES-192-GCM in createCipheriv('{algo}'). Good AEAD mode; CNSA 2.0 requires 256-bit AES."
+
+[[classify]]
+id = "CRYPTO-306"
+when.api = "^node:crypto\\.createCipheriv$"
+when.args.algo = { regex = "(?i)aes-?256-.*gcm" }
+algorithm_id = "aes-256-gcm"
+severity_hint = "auto"
+message = "AES-256-GCM in createCipheriv('{algo}'). Good AEAD mode at a CNSA 2.0-approved key size."
+
 [[classify]]
 id = "CRYPTO-302"
 when.api = "^node:crypto\\.createCipheriv$"
 when.args.algo = { regex = "(?i)aes-.*-gcm" }
-algorithm_id = "aes-256-gcm"
+algorithm_id = "aes-unattributed-gcm"
 severity_hint = "auto"
-message = "AES-GCM in createCipheriv('{algo}'). Good AEAD mode."
+message = "AES-GCM in createCipheriv('{algo}'). Good AEAD mode; the cipher name did not resolve to a key size cryptoscope recognises."
+
+[[classify]]
+id = "CRYPTO-307"
+when.api = "^node:crypto\\.createCipheriv$"
+when.args.algo = { regex = "(?i)aes-?128-.*ecb" }
+algorithm_id = "aes-128-ecb"
+severity_hint = "high"
+message = "AES-128-ECB in createCipheriv('{algo}'). Deterministic mode leaks patterns."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-308"
+when.api = "^node:crypto\\.createCipheriv$"
+when.args.algo = { regex = "(?i)aes-?192-.*ecb" }
+algorithm_id = "aes-192-ecb"
+severity_hint = "high"
+message = "AES-192-ECB in createCipheriv('{algo}'). Deterministic mode leaks patterns."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-309"
+when.api = "^node:crypto\\.createCipheriv$"
+when.args.algo = { regex = "(?i)aes-?256-.*ecb" }
+algorithm_id = "aes-256-ecb"
+severity_hint = "high"
+message = "AES-256-ECB in createCipheriv('{algo}'). Deterministic mode leaks patterns."
+cwe = "CWE-327"
 
 [[classify]]
 id = "CRYPTO-303"
 when.api = "^node:crypto\\.createCipheriv$"
 when.args.algo = { regex = "(?i)aes-.*-ecb" }
-algorithm_id = "aes-128-ecb"
+algorithm_id = "aes-unattributed-ecb"
 severity_hint = "high"
-message = "AES-ECB in createCipheriv('{algo}'). Deterministic mode leaks patterns."
+message = "AES-ECB in createCipheriv('{algo}'). Deterministic mode leaks patterns at every key size; the cipher name did not resolve to a key size cryptoscope recognises."
 cwe = "CWE-327"
 
 # ============================================================================
@@ -717,9 +774,9 @@ message = "jsonwebtoken jwt.sign() called without an explicit algorithm option a
 [[classify]]
 id = "CRYPTO-370"
 when.api = "^crypto-js\\.AES\\.encrypt$"
-algorithm_id = "aes-256-gcm"
+algorithm_id = "aes-unattributed"
 severity_hint = "auto"
-message = "crypto-js AES used. The CryptoJS.AES helper defaults to CBC mode with PKCS#7 padding; confirm key size and mode against project requirements. Inventory for CBOM."
+message = "crypto-js AES used. The CryptoJS.AES helper defaults to CBC mode with PKCS#7 padding, and derives its key size from the passphrase or key object — neither parameter is at this call site. Confirm both against project requirements. Inventory for CBOM."
 
 [[classify]]
 id = "CRYPTO-371"

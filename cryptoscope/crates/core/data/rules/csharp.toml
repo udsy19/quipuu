@@ -82,9 +82,9 @@ description = "Aes.Create() — factory for AES symmetric cipher."
 [[classify]]
 id = "CRYPTO-620"
 when.api = "^System\\.Security\\.Cryptography\\.Aes\\.Create$"
-algorithm_id = "aes-256-gcm"
+algorithm_id = "aes-unattributed"
 severity_hint = "auto"
-message = "Aes.Create() — ensure key size = 256 bits and GCM mode (AesCcm/AesGcm). Default CBC mode is not authenticated."
+message = "Aes.Create() — a factory that states neither key size nor mode; both come from the KeySize/Mode properties set afterwards. Ensure 256-bit keys and an authenticated mode (AesGcm/AesCcm). The default Mode is CBC, which is not authenticated."
 
 # ============================================================================
 # TripleDES.Create() / DES.Create()
@@ -195,9 +195,9 @@ description = "RandomNumberGenerator.Create/GetBytes/Fill — CSPRNG usage."
 [[classify]]
 id = "CRYPTO-650"
 when.api = "^System\\.Security\\.Cryptography\\.RandomNumberGenerator\\.Create$"
-algorithm_id = "aes-256-gcm"
+algorithm_id = "csprng"
 severity_hint = "low"
-message = "RandomNumberGenerator.Create() called. CSPRNG usage is fine; verify key/IV lengths meet policy."
+message = "RandomNumberGenerator.Create() called. A CSPRNG, not a cipher — recorded so the CBOM shows where key and IV material originates. Verify the key/IV lengths requested by the caller meet policy."
 
 # ============================================================================
 # RijndaelManaged (deprecated in .NET 6+, disallowed in FIPS mode)
@@ -217,7 +217,7 @@ description = "new RijndaelManaged() — deprecated managed AES/Rijndael class."
 [[classify]]
 id = "CRYPTO-660"
 when.api = "^System\\.Security\\.Cryptography\\.RijndaelManaged\\.new$"
-algorithm_id = "aes-128-ecb"
+algorithm_id = "aes-unattributed"
 severity_hint = "high"
-message = "new RijndaelManaged() — deprecated in .NET 6+; disallowed in FIPS mode. Use AesGcm instead."
+message = "new RijndaelManaged() — deprecated in .NET 6+; disallowed in FIPS mode. Key size and mode come from the properties set afterwards, not from this call. Use AesGcm instead."
 cwe = "CWE-327"

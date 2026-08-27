@@ -290,3 +290,71 @@ Reproduce:
 cryptoscope scan <project> --source --deps --include-safe                      # nist-default
 cryptoscope scan <project> --source --deps --include-safe --policy nsa-cnsa2   # CNSA 2.0
 ```
+
+---
+
+## AES key sizes: read, not assumed — measured 2026-08-27
+
+`(corpus B, 150 projects · source + deps · nist-default and nsa-cnsa2 · binary
+built from this commit)`
+
+Seven classify rules published an AES key size that their own `when` clause
+never read. `Cipher.getInstance("AES/GCM/NoPadding")` takes its key size from
+the `SecretKey`, `AESEngine` from `init()`, `Aes.Create()` from the `KeySize`
+property, `aes.NewCipher` from the slice it is handed, `CryptoJS.AES.encrypt`
+from the passphrase — and all of them shipped `algorithm_id = aes-256-gcm`
+anyway. `new BouncyCastleProvider()` and `RandomNumberGenerator.Create()`
+shipped it without being AES calls at all. That id flows into the CBOM as an
+asserted component, so the hedge in the message did not travel with it.
+
+Each rule now reads the width where the source states one (the JCE `AES_128` /
+`AES_192` / `AES_256` standard names, Node's `aes-256-gcm` cipher names) and
+falls back to an `aes-unattributed*` sentinel where it does not. This is the
+same fix Phase 13 applied to the TLS-config placeholders (Pattern A in
+`PRECISION_AUDIT_V2.md`), applied to the sites that pattern missed.
+
+| | Before | After |
+|---|---|---|
+| Findings | 898 | 898 |
+| Call sites added / removed | — | 0 / 0 |
+| Findings changing severity | — | 0 |
+| Findings asserting `aes-256-gcm` | 42 | **1** |
+| — of those, grounded in a source literal | 1 | 1 |
+
+| Rule | Before | After | Findings |
+|---|---|---|---|
+| `CRYPTO-203` Java `Cipher.getInstance("AES/GCM/…")` | `aes-256-gcm` | `aes-unattributed-gcm` | 13 |
+| `CRYPTO-370` `CryptoJS.AES.encrypt` | `aes-256-gcm` | `aes-unattributed` | 18 |
+| `CRYPTO-233` `new BouncyCastleProvider()` | `aes-256-gcm` | `crypto-provider-registration` | 8 |
+| `CRYPTO-231` BC `AESEngine` | `aes-256-gcm` | `aes-unattributed` | 1 |
+| `CRYPTO-232` BC `GCMBlockCipher` | `aes-256-gcm` | `aes-unattributed-gcm` | 1 |
+| `CRYPTO-302 → CRYPTO-306` `createCipheriv('aes-256-gcm')` | `aes-256-gcm` | `aes-256-gcm` | 1 |
+
+The last row is the control: that one call site does state its key size, and it
+keeps `aes-256-gcm` — now read from the literal rather than assumed. 41 of 42
+did not, and no longer claim to.
+
+**Precision is unchanged at 85.2 %** and this run does not re-measure it. The
+finding set is identical call site for call site, no verdict in the audited
+206-finding label set moves from TP to FP or back, and only the `algorithm_id`
+column differs. Four of the eight audited rows this touches were labelled
+`DEPENDS` in `PRECISION_AUDIT_V3.md` for exactly this reason — *"256-bit key
+unverifiable at this line"* — and they are deliberately **not** relabelled here:
+re-scoring another audit's rows in our own favour is not a measurement.
+
+**The `--policy` divergence number is undisturbed:** the same 898 findings, 80
+(8.9 %) in a different severity band under `nsa-cnsa2`, all `sha-256`
+Medium → High — bit-identical to the figure published above. Corpus B contains
+no AES-128 call site, so no sentinel reached `policy_disallowed`. Note what
+that leaves open: `aes-unattributed-gcm` is **not** on the CNSA 2.0 disallowed
+list, so an NSS codebase whose AES key size is unverifiable is still reported
+as compliant. Treating "unknown" as "non-compliant" is a policy decision, not a
+detection one, and is not made here.
+
+Speed held: `npm/jose` 0.11–0.23 s across three runs; `maven/nimbus-jose-jwt`
+0.31–0.56 s.
+
+A build gate prevents the regression: `aes_key_size_is_never_asserted_without_evidence`
+(`crates/scan-source/src/rules.rs`) fails when any classify rule in any of the
+seven packs publishes an `aes-128*` / `aes-192*` / `aes-256*` id that its own
+`when` clause cannot observe.
