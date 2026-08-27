@@ -83,12 +83,19 @@ pub fn handle(params: Option<Value>, session: &mut SessionStore) -> Result<Value
             "provenance": "deterministic",
         }))
     } else {
-        // Blocking: return findings inline.
+        // Blocking: return findings inline. Inject risk_score + severity
+        // so the Pro engine doesn't have to fall back to its heuristic.
         let stored = session.get(&scan_id).expect("just inserted");
         let findings_json: Vec<Value> = stored
             .findings
             .iter()
-            .map(|f| serde_json::to_value(f).unwrap_or(Value::Null))
+            .map(|f| {
+                crate::mcp::session::finding_with_risk_to_json(
+                    f,
+                    &builtins.algorithms,
+                    &builtins.policy,
+                )
+            })
             .collect();
         let warnings_json: Vec<Value> = stored
             .warnings

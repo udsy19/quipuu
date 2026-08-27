@@ -6,8 +6,9 @@
 
 use std::collections::HashMap;
 
-use cryptoscope_core::{Finding, ScanWarning};
+use cryptoscope_core::{AlgorithmTable, Finding, Policy, QuantumRiskScore, ScanWarning};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 /// A completed scan result held in memory until the session ends.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -83,4 +84,28 @@ pub fn decode_cursor(cursor: &str) -> Option<(&str, usize)> {
     let (id, off) = cursor.rsplit_once(':')?;
     let offset = off.parse::<usize>().ok()?;
     Some((id, offset))
+}
+
+// ── Risk-aware Finding serialization ──────────────────────────────────────────
+//
+// scan_source and get_scan_results both ship `Finding` objects to the wire.
+// The Pro engine needs the policy-aware QuantumRiskScore for planner gating;
+// without it, the engine falls back to a coarse per-algorithm heuristic.
+// `finding_with_risk_to_json` injects `risk_score` + `severity` into the
+// serialized form so callers see a complete record.
+
+pub fn finding_with_risk_to_json(
+    finding: &Finding,
+    algorithms: &AlgorithmTable,
+    policy: &Policy,
+) -> Value {
+    let mut value = serde_json::to_value(finding).unwrap_or(Value::Null);
+    if let Some(obj) = value.as_object_mut() {
+        if let Some(algo) = algorithms.get(&finding.algorithm_id) {
+            let score = QuantumRiskScore::compute(finding, algo, policy);
+            obj.insert("risk_score".into(), Value::from(score.total));
+            obj.insert("severity".into(), Value::from(format!("{:?}", score.severity)));
+        }
+    }
+    value
 }

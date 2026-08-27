@@ -9,10 +9,13 @@
 //!   cursor?: string    — opaque cursor from a previous response
 //!   pageSize?: number  — max findings per page (default 50, max 500)
 
+use cryptoscope_core::load_builtins;
 use serde_json::{Value, json};
 
-use crate::mcp::errors::{E_CURSOR_INVALID, E_SCAN_NOT_FOUND};
-use crate::mcp::session::{SessionStore, decode_cursor, encode_cursor};
+use crate::mcp::errors::{E_CURSOR_INVALID, E_RULESET_INVALID, E_SCAN_NOT_FOUND};
+use crate::mcp::session::{
+    SessionStore, decode_cursor, encode_cursor, finding_with_risk_to_json,
+};
 
 const DEFAULT_PAGE_SIZE: usize = 50;
 const MAX_PAGE_SIZE: usize = 500;
@@ -54,9 +57,10 @@ pub fn handle(params: Option<Value>, session: &SessionStore) -> Result<Value, (i
         None
     };
 
+    let builtins = load_builtins().map_err(|e| (E_RULESET_INVALID, e.to_string()))?;
     let findings_json: Vec<Value> = page
         .iter()
-        .map(|f| serde_json::to_value(f).unwrap_or(Value::Null))
+        .map(|f| finding_with_risk_to_json(f, &builtins.algorithms, &builtins.policy))
         .collect();
 
     Ok(json!({
