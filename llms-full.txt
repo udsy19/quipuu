@@ -29,7 +29,6 @@
 ## Optional
 
 - [knowledge/09-regulatory/](knowledge/09-regulatory/): OMB M-23-02, EU CRA, UK NCSC, CNSA 2.0
-- [knowledge/10-design-partners/](knowledge/10-design-partners/): Cloudflare, Apple, AWS PQC programs
 
 ---
 

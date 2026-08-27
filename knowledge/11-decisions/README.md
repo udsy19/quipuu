@@ -193,11 +193,11 @@ Severity bands: ≥75 Critical, 50–74 High, 25–49 Medium, 10–24 Low, <10 S
 **Why:** Browser PQC is *already deployed*. The "quantum cliff" narrative is partially closed and increasingly dated. We need positioning that survives the next news cycle.
 
 **Evidence:**
-- `knowledge/10-design-partners`: Cloudflare >50% of human web traffic PQC-encrypted Oct 2025; >65% April 2026. Chrome 131+, Firefox 132+, iOS 26 default-on. OpenSSL 3.5 (Apr 2025) ships native ML-KEM/ML-DSA/SLH-DSA.
+- Adoption telemetry: Cloudflare >50% of human web traffic PQC-encrypted Oct 2025; >65% April 2026. Chrome 131+, Firefox 132+, iOS 26 default-on. OpenSSL 3.5 (Apr 2025) ships native ML-KEM/ML-DSA/SLH-DSA.
 - Same source: signature migration (ECDSA, P-256 auth paths) is the universal **unsolved** problem. KEM is solved.
-- NIST NCCoE SP 1800-38B explicitly states *"no single product finds all vulnerable crypto."* (`knowledge/10-design-partners` final shortlist note).
+- NIST NCCoE SP 1800-38B explicitly states *"no single product finds all vulnerable crypto."* (NCCoE SP 1800-38B).
 - Meta has the most sophisticated internal monitoring (FBCrypto + Crypto Visibility) and *admits* it misses shadow dependencies.
-- `knowledge/08-competitors`: foxguard (Rust, source + TLS config + CBOM) is the closest open-source threat. None of {IBM CBOMkit, cryptobom-forge, SandboxAQ, PANW, QSecure, QuantumXC, Qtonic, Zerberus, Acubed, CryptoScan/CSNP} ship the full {source + net + cert + dep + risk + binary} bundle in one tool.
+- Competitive landscape: foxguard (Rust, source + TLS config + CBOM) is the closest open-source threat. None of {IBM CBOMkit, cryptobom-forge, SandboxAQ, PANW, QSecure, QuantumXC, Qtonic, Zerberus, Acubed, CryptoScan/CSNP} ship the full {source + net + cert + dep + risk + binary} bundle in one tool.
 
 **Decision:** Reposition the headline. Old: *"the nmap of cryptography"* (still unclaimed, keep as tagline). New thesis: **"Browsers solved the easy half. The other half — your internal services, your dependency tree, your certificates, your forgotten cron jobs — is where the long tail lives. cryptoscope finds it in one pass."** Lean on the NCCoE quote in marketing copy. Track foxguard.
 

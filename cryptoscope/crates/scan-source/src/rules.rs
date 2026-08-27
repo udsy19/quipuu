@@ -7,7 +7,7 @@
 //! * `[[classify]]` — maps `(api, captures)` tuples to canonical algorithm-ids
 //!   with severity hints.
 //!
-//! See `knowledge/11-decisions/data/README.md` and `data/rules/go.toml` for
+//! See `crates/core/data/README.md` and `data/rules/go.toml` for
 //! the field reference.
 
 use std::collections::BTreeMap;

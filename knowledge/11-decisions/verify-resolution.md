@@ -73,7 +73,7 @@ All `Recommended: N` (drafts not yet RFC). Codepoints formally allocated.
 
 ## V-04 — foxguard direct feature walkthrough
 
-**Question (`knowledge/08-competitors`):** Direct feature-matrix walkthrough of foxguard's current GitHub head.
+**Question (competitive landscape):** Direct feature-matrix walkthrough of foxguard's current GitHub head.
 
 **Source:** [github.com/0sec-labs/foxguard](https://github.com/0sec-labs/foxguard) README, fetched 2026-06-12. **267 stars.**
 
@@ -107,7 +107,7 @@ All `Recommended: N` (drafts not yet RFC). Codepoints formally allocated.
 
 **One-line collaboration possibility:** foxguard outputs CycloneDX 1.6 CBOM; cryptoscope can **consume** that CBOM as one of its inputs (`--in-cbom foxguard-output.json`) and add the network/cert/risk layer on top. Day-one ecosystem play.
 
-Updates `knowledge/08-competitors` (full feature matrix added; wedge axes re-confirmed).
+Full feature matrix added; wedge axes re-confirmed.
 
 ---
 

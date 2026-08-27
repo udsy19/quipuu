@@ -1,6 +1,6 @@
 //! Policy file — NIST IR 8547 IPD defaults plus QuantumRiskScore weights.
 //!
-//! Source: `knowledge/11-decisions/data/default-policy.toml`.
+//! Source: `crates/core/data/default-policy.toml`.
 
 use std::collections::BTreeMap;
 

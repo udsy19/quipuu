@@ -6,7 +6,7 @@ This is the **log** of the research passes that informed the build. The actual r
 |---|---|
 | `knowledge/README.md` | Index of the knowledge base. |
 | `knowledge/11-decisions/README.md` | The decisions register (13 entries, Why → Evidence → Decision). **Read first.** |
-| `knowledge/01-cbom-schema/` … `knowledge/10-design-partners/` | Topic deep dives, all primary-source cited. |
+| `knowledge/01-cbom-schema/` … `knowledge/11-decisions/` | Topic deep dives, all primary-source cited. |
 | `knowledge/sources/` | Canonical primary documents downloaded locally — CycloneDX schemas, FIPS 203/204/205 PDFs, NIST IR 8547 IPD PDF, SP 800-131A Rev 3 IPD PDF, CBOMkit detection rules. |
 | `SPEC.md` | Build spec, updated to reflect every decision in the register. |
 

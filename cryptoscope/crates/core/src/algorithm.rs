@@ -1,6 +1,6 @@
 //! Algorithm table — the canonical catalogue cryptoscope classifies against.
 //!
-//! Maps to `knowledge/11-decisions/data/algorithm-table.toml`. See that file
+//! Maps to `crates/core/data/algorithm-table.toml`. See that file
 //! and `knowledge/02-nist-pqc-timeline/README.md` for source citations.
 
 use std::collections::BTreeMap;
@@ -72,7 +72,7 @@ impl QuantumStatus {
 
 /// One row of the algorithm table.
 ///
-/// Field semantics documented in `knowledge/11-decisions/data/algorithm-table.toml`.
+/// Field semantics documented in `crates/core/data/algorithm-table.toml`.
 #[derive(Debug, Clone, Deserialize)]
 pub struct AlgorithmRecord {
     pub id: String,

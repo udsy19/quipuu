@@ -121,7 +121,7 @@ cryptoscope detects uses of the following algorithm families across all supporte
 
 **JSON summary** — machine-readable finding counts by severity, ecosystem, and algorithm family. Pipe it into your CI dashboard, Slack alerts, or compliance reports.
 
-**MCP server** — `cryptoscope mcp-serve` exposes every scan verb over newline-delimited JSON-RPC on stdio, following the Model Context Protocol. Agentic clients (including cryptoscope-pro, described below) use this interface to drive the scanner programmatically. The JSON schemas for `Finding`, `CryptoAsset`, and `RiskScore` live in `crates/core/schema/`.
+**MCP server** — `cryptoscope mcp-serve` exposes every scan verb over newline-delimited JSON-RPC on stdio, following the Model Context Protocol. Agentic clients use this interface to drive the scanner programmatically. The JSON schemas for `Finding`, `CryptoAsset`, and `RiskScore` live in `crates/core/schema/`.
 
 ---
 
@@ -228,7 +228,7 @@ All primary sources — NIST IR 8547 IPD, FIPS 203/204/205, CycloneDX 1.7 schema
 - **Phase 16/17 (next):** SiteContext precision improvements — structural guards on HMAC/RSA rules to eliminate the false-positive patterns documented in `PRECISION_AUDIT_V2.md`. Target: >85% precision on the next 101-sample audit.
 - **Broader language coverage:** C# and C/C++ rule packs are skeletal today; Go and Java are the most complete. Expanding C# and C/C++ classify rules is the highest-leverage near-term coverage move.
 - **Community rule packs:** the TOML rule format is public and stable. The path to community contributions is a contributed-rules directory and a CI gate that runs new rules against the benchmark corpus before merge.
-- **cryptoscope-pro — agentic remediation:** a separate Pydantic AI engine that reads the MCP output, proposes verified migration PRs (L1 ACVP KAT gate + L2 oqs-provider interop gate + L3 semantic-preservation differential testing), and emits an evidence bundle per finding. See `cryptoscope-pro/IMPLEMENTATION_ROADMAP.md` for the full build plan.
+- **Agentic remediation:** a companion engine that consumes the MCP output and proposes verified migration patches, gated on ACVP known-answer tests, oqs-provider interop, and semantic-preservation differential testing.
 - **Continuous CBOM drift monitoring:** weekly re-scans, CBOM diff between runs, and a one-paragraph alert per material change in your cryptographic inventory.
 
 ---

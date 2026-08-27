@@ -492,7 +492,7 @@ The Pro tier wraps the OSS binary as a child process over stdio and adds an orch
 
 ### 9.3 Prototype
 
-The `cryptoscope-prototype/` directory uses the same MCP server (`cryptoscope mcp`) over stdio. The prototype connects to the binary using the same JSON-RPC 2.0 framing described in §1.2. No separate server or wrapper is introduced.
+Agent clients connect to the same MCP server (`cryptoscope mcp`) over stdio, using the JSON-RPC 2.0 framing described in §1.2. No separate server or wrapper is introduced.
 
 ---
 

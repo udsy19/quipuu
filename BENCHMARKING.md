@@ -4,7 +4,7 @@
 > generate the numbers that turn "as good as the incumbents" from a hope into a
 > public, reproducible, auditable fact.
 
-**Read with:** `SPEC.md`, `cryptoscope-pro/VERIFICATION_v0_1.md` (which establishes the trust contract this evidence layer measures), `gtm/state-of-x-data/findings.md` (the first real data run).
+**Read with:** `SPEC.md`.
 
 ---
 
@@ -27,7 +27,7 @@ We need numbers on all six, against every credible incumbent. No hand-waving on 
 
 ## 2. The credible incumbents to benchmark against
 
-From `knowledge/08-competitors/README.md` and the V2 data run:
+From the V2 data run:
 
 | Tool | Status | Why included |
 |---|---|---|
@@ -242,7 +242,6 @@ This is the page a CISO sends their team. "Look at the F1 column. Compare deploy
 
 ### Artifact 2: The "State of Quantum-Vulnerable Cryptography 2026" report
 
-Already specced in `gtm/state-of-quantum-crypto-2026-outline.md`. The benchmarking corpus B *is* the data substrate for this report. Running it once produces both the leaderboard *and* the headline numbers ("0% PQC adoption across top 100 OSS packages") for the press magnet. **Same scan, two outputs, two audiences.**
 
 ### Artifact 3: The academic paper
 

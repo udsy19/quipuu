@@ -2,7 +2,7 @@
 //!
 //! The static data files (`algorithm-table.toml`, `oid-table.toml`,
 //! `default-policy.toml`, rules/) are embedded at compile time via
-//! `include_str!`. They originate at `knowledge/11-decisions/data/` and are
+//! `include_str!`. They originate at `crates/core/data/` and are
 //! copied into `crates/core/data/` for the build.
 //!
 //! Top-level types:

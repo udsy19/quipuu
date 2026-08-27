@@ -1,6 +1,6 @@
 //! OID table — maps X.509 / PKCS / NIST CSOR OIDs to canonical algorithm-ids.
 //!
-//! Source: `knowledge/11-decisions/data/oid-table.toml`.
+//! Source: `crates/core/data/oid-table.toml`.
 
 use std::collections::BTreeMap;
 
