@@ -74,7 +74,7 @@ def main() -> int:
     lines: list[str] = []
     w = lines.append
 
-    w("# cryptoscope V4 — 150-project corpus benchmark")
+    w("# cryptoscope V5 — 150-project corpus benchmark")
     w("")
     w(f"**Corpus:** {summary.get('corpus', 'corpus-b-realworld')}  ")
     w(f"**Projects scanned:** {summary['total_projects_scanned']}  ")
@@ -85,13 +85,14 @@ def main() -> int:
     )
     w("")
     w(
-        "This is the V4 corpus run, layered on top of Phases 1-6 (jjwt enum "
-        "constants, signal-to-noise, ACVP refresh, why-this-matters, non-fatal "
-        "warnings) plus Phase 7 (Go switch-on-string detection; MCP and HTML/"
-        "SARIF warning surfacing) and Phase 8 (paramiko-style runtime-variable "
-        "args, crypto-js two-level member expressions). Numbers below are "
-        "stratified by ecosystem and reported without projected values — only "
-        "what was actually scanned."
+        "This is the V5 corpus run, layered on Phases 1-6 (jjwt enum constants, "
+        "signal-to-noise, ACVP refresh, why-this-matters, non-fatal warnings) "
+        "plus Phase 7 (Go switch-on-string; MCP / HTML / SARIF warning "
+        "surfacing), Phase 8 (paramiko-style runtime-variable args, crypto-js "
+        "two-level member expressions), and Phase 9 (Go algorithm-registration "
+        "patterns — composite literal, call-as-constructor, const). Numbers "
+        "below are stratified by ecosystem and reported without projected "
+        "values — only what was actually scanned."
     )
     w("")
 
@@ -163,6 +164,33 @@ def main() -> int:
             "Before Phase 2 (commit 943dcda) every one of those would have "
             "been a Medium-severity alert competing for the user's attention."
         )
+        w("")
+
+    # ── Phase 9 — explicit verification ────────────────────────────────
+    phase9_winners = []
+    phase9_targets = {
+        "go-modules:github.com/golang-jwt/jwt",
+        "go-modules:github.com/dgrijalva/jwt-go",
+        "go-modules:github.com/go-jose/go-jose",
+        "go-modules:github.com/lestrrat-go/jwx",
+    }
+    for r in per_project:
+        if r["canonical_id"] in phase9_targets and r["total_findings"] > 0:
+            phase9_winners.append((r["canonical_id"], r["total_findings"]))
+    if phase9_winners:
+        w("### Phase 9 verification — Go JWT libraries now produce findings")
+        w("")
+        w(
+            "Pre-Phase-9 (the V4 corpus run), these canonical Go JWT libraries "
+            "produced **zero** findings. Phase 7 only detected `switch alg "
+            "{ case \"RS256\": ... }`, but real-world Go libraries register "
+            "algorithm names via composite literals, call-as-constructor, or "
+            "const declarations. Phase 9's literal-in-registration-context "
+            "detector (commit cde3d4c) closes the gap:"
+        )
+        w("")
+        for cid, n in sorted(phase9_winners):
+            w(f"- `{cid}` — **{n} findings** (was 0)")
         w("")
 
     # ── Per-ecosystem headline ──────────────────────────────────────────
