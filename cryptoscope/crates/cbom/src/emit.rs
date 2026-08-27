@@ -75,11 +75,31 @@ pub fn emit_cbom(
     }
 
     let mut components = Vec::with_capacity(by_algo.len());
+    let mut undetermined: Vec<&str> = Vec::new();
     for (algo_id, group) in by_algo {
-        let record = algorithms
-            .get(algo_id)
-            .ok_or_else(|| EmitError::UnknownAlgorithm(algo_id.to_owned()))?;
+        // A finding whose algorithm could not be determined is NOT a
+        // cryptographic-asset component, so it is omitted from the CBOM rather
+        // than treated as a fatal error.
+        //
+        // This used to return Err, which meant a single ordinary dependency
+        // line — `openssl = "0.10"` in a Cargo.toml, which scan-deps records as
+        // algorithm_id "unknown" — aborted the whole run and suppressed the
+        // SARIF, HTML, and summary outputs too. One benign manifest entry could
+        // silently produce an empty report.
+        let Some(record) = algorithms.get(algo_id) else {
+            undetermined.push(algo_id);
+            continue;
+        };
         components.push(component_for_algorithm(record, &group, opts.schema_version));
+    }
+    if !undetermined.is_empty() {
+        undetermined.sort_unstable();
+        eprintln!(
+            "cryptoscope: {} finding(s) had no resolvable algorithm and were omitted \
+             from the CBOM ({}). They still appear in the SARIF and summary outputs.",
+            undetermined.len(),
+            undetermined.join(", ")
+        );
     }
 
     let bom = Bom {

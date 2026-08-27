@@ -1,18 +1,19 @@
 //! Scanner — walks files and produces [`Finding`]s.
 //!
-//! The walking skeleton uses tree-sitter to parse each file and walks the
-//! tree looking for call sites that match well-known crypto API shapes.
-//! It does NOT execute the raw tree-sitter S-expression queries from the
-//! rule TOML yet — that's deferred (the rule queries need polishing against
-//! each grammar). Instead the matcher hard-codes a handful of shapes for
-//! the v0 rule set and uses the `classify` layer of the TOML to look up
-//! algorithm-id + message + severity.
+//! tree-sitter parses each file; this module walks the tree looking for call
+//! sites that match known crypto API shapes, then hands each candidate to the
+//! `classify` layer of the rule TOML for algorithm-id, message, and severity.
 //!
-//! This keeps the rule pack as the *source of truth* for classification
-//! while we build out the query engine in a follow-up pass.
+//! Note on the rule format: the `[[extract]]` S-expression queries in the rule
+//! packs are NOT executed. Matching is done by the hand-written walker below,
+//! and `[[extract]]` currently serves as documentation of intended shapes. The
+//! `[[classify]]` layer is fully live and is the source of truth for
+//! classification. Do not read an `[[extract]]` block as describing what the
+//! scanner actually matches — read `match_*_callee` for that.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, OnceLock, RwLock};
 
 use cryptoscope_core::{
     AlgorithmTable, Confidence, Exposure, Finding, Location, ScanWarning, ScanWarningKind,
@@ -35,6 +36,8 @@ pub enum ScanError {
     RegexCompile(#[from] regex::Error),
     #[error("walk: {0}")]
     Walk(#[from] ignore::Error),
+    #[error("file too large to scan: {path} ({size} bytes)")]
+    FileTooLarge { path: PathBuf, size: u64 },
 }
 
 /// One detected call site, before classify-layer lookup.
@@ -173,6 +176,18 @@ impl Scanner {
         let Some(rules) = self.rules_by_lang.get(&language) else {
             return Ok(());
         };
+        // Size cap before reading. cryptoscope runs in CI against arbitrary
+        // repositories, and an uncapped read of a vendored multi-GB blob is an
+        // OOM kill of the whole job. Real source files are orders of magnitude
+        // below this; anything above it is generated, minified, or hostile.
+        if let Ok(meta) = std::fs::metadata(path)
+            && meta.len() > MAX_SOURCE_BYTES
+        {
+            return Err(ScanError::FileTooLarge {
+                path: path.to_path_buf(),
+                size: meta.len(),
+            });
+        }
         let source = std::fs::read(path)?;
         let matches = run_extract(&source, language)?;
         for m in matches {
@@ -196,6 +211,7 @@ fn scan_warning_for(path: &Path, err: &ScanError) -> ScanWarning {
         ScanError::RegexCompile(_) => ScanWarningKind::Other,
         ScanError::Walk(_) => ScanWarningKind::WalkError,
         ScanError::UnknownAlgorithm(_) => ScanWarningKind::Other,
+        ScanError::FileTooLarge { .. } => ScanWarningKind::UnreadableFile,
     };
     ScanWarning::new(kind, Some(path.to_path_buf()), err.to_string())
 }
@@ -247,11 +263,34 @@ fn run_extract(source: &[u8], language: Language) -> Result<Vec<RawMatch>, ScanE
 
     let mut matches = Vec::new();
     let root = tree.root_node();
-    walk(root, source, language, &mut matches);
+    walk(root, source, language, &mut matches, 0);
     Ok(matches)
 }
 
-fn walk(node: Node<'_>, source: &[u8], language: Language, out: &mut Vec<RawMatch>) {
+/// Maximum AST depth we will descend.
+///
+/// This is a hard safety bound, not a tuning knob. `walk` recurses once per AST
+/// node, and tree-sitter will happily build a tree thousands of levels deep for
+/// a file of nested parentheses or braces — which minified and generated code
+/// produces routinely, and a hostile repository produces deliberately.
+/// Overflowing the stack is a SIGSEGV, not a catchable panic, so it would kill
+/// the whole scan rather than skipping one file. cryptoscope runs in CI against
+/// arbitrary untrusted repositories, so that is a real defect.
+///
+/// 512 is far beyond any hand-written source: real code rarely exceeds ~60.
+const MAX_AST_DEPTH: usize = 512;
+
+/// Largest source file we will read into memory (16 MiB).
+///
+/// Hand-written source is never close to this. Generated, minified, or
+/// deliberately hostile files are, and an uncapped `fs::read` of a vendored
+/// blob is an OOM kill of a CI container rather than a skipped file.
+const MAX_SOURCE_BYTES: u64 = 16 * 1024 * 1024;
+
+fn walk(node: Node<'_>, source: &[u8], language: Language, out: &mut Vec<RawMatch>, depth: usize) {
+    if depth >= MAX_AST_DEPTH {
+        return;
+    }
     let kind = node.kind();
     // call_expression     — Go, JS/TS, C, C++, Rust
     // call                — Python
@@ -316,7 +355,7 @@ fn walk(node: Node<'_>, source: &[u8], language: Language, out: &mut Vec<RawMatc
     }
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
-        walk(child, source, language, out);
+        walk(child, source, language, out, depth + 1);
     }
 }
 
@@ -1369,7 +1408,25 @@ fn is_real_arg(node: Node<'_>) -> bool {
 }
 
 fn node_text(node: Node<'_>, source: &[u8]) -> String {
-    String::from_utf8_lossy(&source[node.start_byte()..node.end_byte()]).into_owned()
+    // Clamp to the node's FIRST LINE.
+    //
+    // The snippet is only ever shown as a single line, but this used to copy
+    // the entire matched subtree. For nested calls that is quadratic: 3000
+    // nested crypto.createHash() calls allocated ~225 MB from a 57 KB file,
+    // because each of the 3000 matches copied the whole remaining tree.
+    let start = node.start_byte().min(source.len());
+    let end = node.end_byte().min(source.len());
+    if start >= end {
+        return String::new();
+    }
+    let slice = &source[start..end];
+    let cut = slice
+        .iter()
+        .position(|&b| b == b'\n')
+        .unwrap_or(slice.len());
+    String::from_utf8_lossy(&slice[..cut])
+        .trim_end()
+        .to_string()
 }
 
 /// Phase 16: walk up from a matched node and classify its syntactic site
@@ -1623,6 +1680,32 @@ fn is_test_assertion_callee(callee: &str, language: Language) -> bool {
     }
 }
 
+/// Process-wide compiled-regex cache.
+///
+/// `apply_classify` runs once per (raw match x classify rule). The Go pack
+/// alone has 44 classify rules, so a file yielding 10k matches previously
+/// compiled ~440k regexes — the patterns are identical every time, and
+/// compilation dominates the scan. Caching makes this linear in DISTINCT
+/// patterns (a few hundred, fixed by the rule packs) instead of quadratic in
+/// matches x rules.
+fn cached_regex(pattern: &str) -> Result<Arc<regex::Regex>, ScanError> {
+    static CACHE: OnceLock<RwLock<HashMap<String, Arc<regex::Regex>>>> = OnceLock::new();
+    let cache = CACHE.get_or_init(|| RwLock::new(HashMap::new()));
+
+    // A poisoned lock means another thread panicked mid-insert. The cache holds
+    // no invariant worth preserving, so recover rather than propagating.
+    if let Ok(map) = cache.read()
+        && let Some(re) = map.get(pattern)
+    {
+        return Ok(Arc::clone(re));
+    }
+    let compiled = Arc::new(regex::Regex::new(pattern)?);
+    if let Ok(mut map) = cache.write() {
+        map.insert(pattern.to_string(), Arc::clone(&compiled));
+    }
+    Ok(compiled)
+}
+
 /// Try every classify rule's `when` against a raw match. On the first hit,
 /// look up the algorithm record and build a [`Finding`].
 fn apply_classify(
@@ -1632,7 +1715,7 @@ fn apply_classify(
     path: &Path,
 ) -> Result<Option<Finding>, ScanError> {
     // 1. API regex
-    let api_re = regex::Regex::new(&rule.when.api)?;
+    let api_re = cached_regex(&rule.when.api)?;
     if !api_re.is_match(&raw.api) {
         return Ok(None);
     }
@@ -1698,7 +1781,7 @@ fn arg_matches(value: &ArgValue, predicate: &ArgMatch) -> Result<bool, ScanError
             && r.gt.is_none_or(|x| *n > x)
             && r.ge.is_none_or(|x| *n >= x)),
         (ArgValue::Str(s), ArgMatch::Regex(r)) => {
-            let re = regex::Regex::new(&r.regex)?;
+            let re = cached_regex(&r.regex)?;
             Ok(re.is_match(s))
         }
         // Cross-type mismatches just fail-soft.

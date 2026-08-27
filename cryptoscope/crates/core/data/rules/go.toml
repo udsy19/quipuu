@@ -184,7 +184,7 @@ description = "TLS minimum version setting."
 [[classify]]
 id = "CRYPTO-030"
 when.api = "^crypto/tls\\.Config\\.MinVersion$"
-when.args.version = { regex = "^VersionSSL30|VersionTLS10|VersionTLS11$" }
+when.args.version = { regex = "^(VersionSSL30|VersionTLS10|VersionTLS11)$" }
 algorithm_id = "rsa-2048"   # placeholder; rule emits a protocol-level finding via reporter
 severity_hint = "critical"
 message = "TLS minimum version is {version} — TLS < 1.2 is broken (POODLE, BEAST). Use tls.VersionTLS12 or tls.VersionTLS13."

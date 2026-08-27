@@ -1001,11 +1001,22 @@ pub fn row_to_string(row: &FindingRow) -> String {
 // ---------------------------------------------------------------------------
 
 fn truncate(s: &str, max: usize) -> String {
+    // Must cut on a CHARACTER boundary, not a byte index. `row.location` is a
+    // scanned file path, so any repo containing a non-ASCII filename could put
+    // a multibyte sequence across the cut point. The resulting panic fires
+    // inside terminal.draw() while raw mode is on, so the terminal-restore
+    // handler never runs and the user's shell is left unusable.
     if s.len() <= max {
-        s.to_string()
-    } else {
-        format!("{}…", &s[..max.saturating_sub(1)])
+        return s.to_string();
     }
+    let budget = max.saturating_sub(1);
+    let cut = s
+        .char_indices()
+        .map(|(i, c)| i + c.len_utf8())
+        .take_while(|&end| end <= budget)
+        .last()
+        .unwrap_or(0);
+    format!("{}\u{2026}", &s[..cut])
 }
 
 // Keep the Tui import used (suppress dead-code when cfg(test) is false).

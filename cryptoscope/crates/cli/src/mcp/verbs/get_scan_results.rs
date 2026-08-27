@@ -45,7 +45,12 @@ pub fn handle(params: Option<Value>, session: &SessionStore) -> Result<Value, (i
         .ok_or_else(|| (E_SCAN_NOT_FOUND, format!("scanId not found: {scan_id}")))?;
 
     let total = stored.findings.len();
-    let end = (offset + page_size).min(total);
+    // The cursor is client-supplied and decode_cursor accepts any usize, so
+    // both bounds must be clamped. Slicing on a raw offset panicked the MCP
+    // server — which the transport loop is explicitly designed never to do —
+    // and `offset + page_size` could overflow on a large cursor.
+    let offset = offset.min(total);
+    let end = offset.saturating_add(page_size).min(total);
     let page = &stored.findings[offset..end];
 
     let has_more = end < total;

@@ -90,10 +90,12 @@ MCP SERVER:
     --allow-network           Enable scan_network verb and scan_certs host-mode
 
 SCAN MODES (default: --source --deps; --certs and --net are opt-in):
-    --source                  Scan source code (tree-sitter, Go + Python today)
+    --source                  Scan source code (tree-sitter: Go, Python, Java,
+                              JavaScript/TypeScript, C/C++, Rust, C#)
     --certs                   Scan X.509 certificates (PEM/DER)
     --deps                    Scan dependency manifests
-    --net <host:port>         Probe a TLS endpoint (opens TCP connection)
+    --net <host:port>         Probe a TLS endpoint (requires --allow-network)
+    --allow-network           Permit outbound sockets. Without it, --net refuses (P2).
     --all                     Enable every scan mode (--net still requires --net <host>)
 
 OUTPUT:
@@ -131,6 +133,10 @@ struct ScanFlags {
     scan_certs: bool,
     scan_deps: bool,
     net_targets: Vec<String>,
+    /// P2: the binary opens no sockets unless the operator passes
+    /// `--allow-network`. Without this the flag was silently ignored in scan
+    /// mode and `--net` opened TCP connections regardless.
+    allow_network: bool,
     explicit_modes: bool,
     cbom_out: Option<PathBuf>,
     schema_version: Option<SchemaVersion>,
@@ -164,6 +170,9 @@ fn parse_scan_flags(tail: &[String]) -> ScanFlags {
                 flags.scan_certs = true;
                 flags.scan_deps = true;
                 flags.explicit_modes = true;
+            }
+            "--allow-network" => {
+                flags.allow_network = true;
             }
             "--net" => {
                 if let Some(t) = it.next() {
@@ -298,6 +307,19 @@ fn run_scan(path: PathBuf, mut flags: ScanFlags) -> ExitCode {
     }
 
     // Network probes — spin up a small tokio runtime only if needed.
+    //
+    // P2 is contractual: no socket is opened unless the operator explicitly
+    // passes --allow-network. Refusing here rather than warning is the whole
+    // point; a trust invariant that only prints a banner is not an invariant.
+    if !flags.net_targets.is_empty() && !flags.allow_network {
+        eprintln!(
+            "cryptoscope: --net requires --allow-network.\n\
+             \x20 cryptoscope refuses to open a socket unless you say so explicitly (trust invariant P2).\n\
+             \x20 Re-run as: cryptoscope scan . --allow-network --net {}",
+            flags.net_targets.join(" --net ")
+        );
+        std::process::exit(2);
+    }
     if !flags.net_targets.is_empty() {
         eprintln!(
             "cryptoscope: opening TCP connections to {} target(s) — inventory only, no exploit attempts",
@@ -379,6 +401,9 @@ fn run_scan(path: PathBuf, mut flags: ScanFlags) -> ExitCode {
 
     let timestamp = current_timestamp();
     let scan_target = path.to_string_lossy().into_owned();
+    // Any emitter may fail without preventing the others from running; the
+    // process exit code still reflects that something went wrong.
+    let mut emit_failed = false;
 
     if let Some(out_path) = &flags.cbom_out {
         let version = flags.schema_version.unwrap_or_default();
@@ -393,22 +418,27 @@ fn run_scan(path: PathBuf, mut flags: ScanFlags) -> ExitCode {
 
         match emit_cbom_json(&findings, &builtins.algorithms, &emit_opts) {
             Ok(json) => {
+                // Record the failure but keep going: the SARIF and summary
+                // outputs are written further down and are independently
+                // useful. Returning here made one emitter's problem look like
+                // a total scan failure.
                 if let Err(e) = std::fs::write(out_path, json) {
                     eprintln!(
                         "cryptoscope: failed to write CBOM to {}: {e}",
                         out_path.display()
                     );
-                    return ExitCode::FAILURE;
+                    emit_failed = true;
+                } else {
+                    eprintln!(
+                        "cryptoscope: wrote CycloneDX {} CBOM → {}",
+                        version.as_str(),
+                        out_path.display()
+                    );
                 }
-                eprintln!(
-                    "cryptoscope: wrote CycloneDX {} CBOM → {}",
-                    version.as_str(),
-                    out_path.display()
-                );
             }
             Err(e) => {
                 eprintln!("cryptoscope: CBOM emission failed: {e}");
-                return ExitCode::FAILURE;
+                emit_failed = true;
             }
         }
     }
@@ -511,6 +541,9 @@ fn run_scan(path: PathBuf, mut flags: ScanFlags) -> ExitCode {
         }
     }
 
+    if emit_failed {
+        return ExitCode::FAILURE;
+    }
     ExitCode::SUCCESS
 }
 
