@@ -70,7 +70,7 @@ cryptoscope scan . \
 cryptoscope scan . --allow-network example.com:443
 ```
 
-**Pre-built binaries** are available on the [Releases page](https://github.com/cryptoscope/cryptoscope/releases). The binary is fully static on Linux (musl), single-file on macOS and Windows. No JVM, no Node, no Python runtime, no Docker.
+**Pre-built binaries** are available on the [Releases page](https://github.com/udsy19/cryptoscope/releases). The binary is fully static on Linux (musl), single-file on macOS and Windows. No JVM, no Node, no Python runtime, no Docker.
 
 ---
 

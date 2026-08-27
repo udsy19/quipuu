@@ -8,13 +8,13 @@
 #   brew bump-formula-pr --tag=v<NEW_VERSION> --revision=<GIT_SHA> cryptoscope
 #
 # Or update the url / sha256 values manually from SHA256SUMS on the release page:
-#   https://github.com/cryptoscope/cryptoscope/releases
+#   https://github.com/udsy19/cryptoscope/releases
 
 class Cryptoscope < Formula
   desc "Single static binary that finds every piece of cryptography in your codebase, " \
        "dependencies, X.509 certificates, and TLS endpoints, then scores each for " \
        "quantum vulnerability against the NIST IR 8547 timeline"
-  homepage "https://github.com/cryptoscope/cryptoscope"
+  homepage "https://github.com/udsy19/cryptoscope"
   version "0.1.0"
   license "Apache-2.0"
 
@@ -26,13 +26,13 @@ class Cryptoscope < Formula
 
   on_macos do
     on_arm do
-      url "https://github.com/cryptoscope/cryptoscope/releases/download/v#{version}/cryptoscope-#{version}-aarch64-apple-darwin.tar.gz"
+      url "https://github.com/udsy19/cryptoscope/releases/download/v#{version}/cryptoscope-#{version}-aarch64-apple-darwin.tar.gz"
       # TODO: replace with real SHA-256 from SHA256SUMS
       sha256 "0000000000000000000000000000000000000000000000000000000000000001"
     end
 
     on_intel do
-      url "https://github.com/cryptoscope/cryptoscope/releases/download/v#{version}/cryptoscope-#{version}-x86_64-apple-darwin.tar.gz"
+      url "https://github.com/udsy19/cryptoscope/releases/download/v#{version}/cryptoscope-#{version}-x86_64-apple-darwin.tar.gz"
       # TODO: replace with real SHA-256 from SHA256SUMS
       sha256 "0000000000000000000000000000000000000000000000000000000000000002"
     end
@@ -40,13 +40,13 @@ class Cryptoscope < Formula
 
   on_linux do
     on_arm do
-      url "https://github.com/cryptoscope/cryptoscope/releases/download/v#{version}/cryptoscope-#{version}-aarch64-unknown-linux-musl.tar.gz"
+      url "https://github.com/udsy19/cryptoscope/releases/download/v#{version}/cryptoscope-#{version}-aarch64-unknown-linux-musl.tar.gz"
       # TODO: replace with real SHA-256 from SHA256SUMS
       sha256 "0000000000000000000000000000000000000000000000000000000000000003"
     end
 
     on_intel do
-      url "https://github.com/cryptoscope/cryptoscope/releases/download/v#{version}/cryptoscope-#{version}-x86_64-unknown-linux-musl.tar.gz"
+      url "https://github.com/udsy19/cryptoscope/releases/download/v#{version}/cryptoscope-#{version}-x86_64-unknown-linux-musl.tar.gz"
       # TODO: replace with real SHA-256 from SHA256SUMS
       sha256 "0000000000000000000000000000000000000000000000000000000000000004"
     end

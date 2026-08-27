@@ -19,7 +19,7 @@ use crate::{ReportError, ReportOptions};
 const SARIF_SCHEMA: &str =
     "https://docs.oasis-open.org/sarif/sarif/v2.1.0/cos02/schemas/sarif-schema-2.1.0.json";
 
-const TOOL_INFORMATION_URI: &str = "https://github.com/cryptoscope/cryptoscope";
+const TOOL_INFORMATION_URI: &str = "https://github.com/udsy19/cryptoscope";
 
 /// Emit a SARIF 2.1.0 JSON string for the given findings.
 pub fn emit_sarif(

@@ -127,7 +127,7 @@ detect_platform() {
 Windows is not supported by this shell installer.
 
 Please download the .zip archive from the GitHub Releases page:
-  https://github.com/cryptoscope/cryptoscope/releases
+  https://github.com/udsy19/cryptoscope/releases
 
 Extract cryptoscope.exe and place it somewhere on your PATH.
 EOF

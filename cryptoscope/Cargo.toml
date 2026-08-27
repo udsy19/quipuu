@@ -17,7 +17,7 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.96"
 license = "Apache-2.0"
-repository = "https://github.com/cryptoscope/cryptoscope"
+repository = "https://github.com/udsy19/cryptoscope"
 readme = "../README.md"
 
 [workspace.dependencies]

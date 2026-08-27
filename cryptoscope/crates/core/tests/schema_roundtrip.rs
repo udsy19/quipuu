@@ -3,8 +3,8 @@
 //! For every entry in `schema/fixtures/manifest.toml`:
 //!   * "valid"   – fixture must validate without errors
 //!   * "invalid" – fixture must fail validation; if error_instance_path /
-//!                 error_keyword are provided in the manifest the first error
-//!                 must match them.
+//!     error_keyword are provided in the manifest the first error must match
+//!     them.
 //!
 //! All validation is fully offline: schemas and meta-schemas are loaded from
 //! the vendored files in `schema/` via `LocalRegistry`.
