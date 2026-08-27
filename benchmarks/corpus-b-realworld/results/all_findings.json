@@ -3292,26 +3292,6 @@
   {
     "project": "maven:com.google.crypto.tink:tink",
     "ecosystem": "maven",
-    "rule_id": "CRYPTO-710",
-    "algorithm_id": "ecdsa-p256",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwt_ecdsa_signer_key_manager_test.go",
-    "line": 94,
-    "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-711",
-    "algorithm_id": "ecdsa-p384",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwt_ecdsa_signer_key_manager_test.go",
-    "line": 98,
-    "message": "JWT alg=ES384 \u2014 ECDSA P-384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
     "rule_id": "CRYPTO-730",
     "algorithm_id": "sha-256",
     "severity": "Medium",
@@ -3376,86 +3356,6 @@
     "algorithm_id": "sha-256",
     "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwt_encoding_test.go",
-    "line": 282,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwt_encoding_test.go",
-    "line": 291,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-732",
-    "algorithm_id": "sha-512",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwt_encoding_test.go",
-    "line": 296,
-    "message": "JWT alg=HS512 \u2014 HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwt_encoding_test.go",
-    "line": 301,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwt_encoding_test.go",
-    "line": 309,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwt_encoding_test.go",
-    "line": 315,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwt_encoding_test.go",
-    "line": 321,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwt_encoding_test.go",
-    "line": 326,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwt_encoding_test.go",
     "line": 377,
     "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
   },
@@ -3478,246 +3378,6 @@
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwt_encoding_test.go",
     "line": 417,
     "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-710",
-    "algorithm_id": "ecdsa-p256",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter_test.go",
-    "line": 47,
-    "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-711",
-    "algorithm_id": "ecdsa-p384",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter_test.go",
-    "line": 74,
-    "message": "JWT alg=ES384 \u2014 ECDSA P-384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-712",
-    "algorithm_id": "ecdsa-p521",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter_test.go",
-    "line": 98,
-    "message": "JWT alg=ES512 \u2014 ECDSA P-521. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter_test.go",
-    "line": 196,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-701",
-    "algorithm_id": "rsa-pkcs1-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter_test.go",
-    "line": 224,
-    "message": "JWT alg=RS384 \u2014 RSA-PKCS1-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-702",
-    "algorithm_id": "rsa-pkcs1-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter_test.go",
-    "line": 252,
-    "message": "JWT alg=RS512 \u2014 RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-703",
-    "algorithm_id": "rsa-pss-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter_test.go",
-    "line": 307,
-    "message": "JWT alg=PS256 \u2014 RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-704",
-    "algorithm_id": "rsa-pss-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter_test.go",
-    "line": 336,
-    "message": "JWT alg=PS384 \u2014 RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-705",
-    "algorithm_id": "rsa-pss-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter_test.go",
-    "line": 365,
-    "message": "JWT alg=PS512 \u2014 RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwt_hmac_key_manager_test.go",
-    "line": 275,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-731",
-    "algorithm_id": "sha-384",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwt_hmac_key_manager_test.go",
-    "line": 279,
-    "message": "JWT alg=HS384 \u2014 HMAC-SHA384. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-732",
-    "algorithm_id": "sha-512",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwt_hmac_key_manager_test.go",
-    "line": 283,
-    "message": "JWT alg=HS512 \u2014 HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-703",
-    "algorithm_id": "rsa-pss-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter.go",
-    "line": 158,
-    "message": "JWT alg=PS256 \u2014 RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-704",
-    "algorithm_id": "rsa-pss-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter.go",
-    "line": 159,
-    "message": "JWT alg=PS384 \u2014 RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-705",
-    "algorithm_id": "rsa-pss-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter.go",
-    "line": 160,
-    "message": "JWT alg=PS512 \u2014 RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter.go",
-    "line": 199,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-701",
-    "algorithm_id": "rsa-pkcs1-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter.go",
-    "line": 200,
-    "message": "JWT alg=RS384 \u2014 RSA-PKCS1-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-702",
-    "algorithm_id": "rsa-pkcs1-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter.go",
-    "line": 201,
-    "message": "JWT alg=RS512 \u2014 RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-703",
-    "algorithm_id": "rsa-pss-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter.go",
-    "line": 420,
-    "message": "JWT alg=PS256 \u2014 RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-704",
-    "algorithm_id": "rsa-pss-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter.go",
-    "line": 421,
-    "message": "JWT alg=PS384 \u2014 RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-705",
-    "algorithm_id": "rsa-pss-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter.go",
-    "line": 422,
-    "message": "JWT alg=PS512 \u2014 RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter.go",
-    "line": 455,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-701",
-    "algorithm_id": "rsa-pkcs1-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter.go",
-    "line": 456,
-    "message": "JWT alg=RS384 \u2014 RSA-PKCS1-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-702",
-    "algorithm_id": "rsa-pkcs1-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwk_converter.go",
-    "line": 457,
-    "message": "JWT alg=RS512 \u2014 RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algorithm."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -3758,246 +3418,6 @@
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/jwt/jwt_signer_verifier_kid_test.go",
     "line": 355,
     "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_rsa_ssa_pkcs1_go_proto/jwt_rsa_ssa_pkcs1.pb.go",
-    "line": 53,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-701",
-    "algorithm_id": "rsa-pkcs1-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_rsa_ssa_pkcs1_go_proto/jwt_rsa_ssa_pkcs1.pb.go",
-    "line": 54,
-    "message": "JWT alg=RS384 \u2014 RSA-PKCS1-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-702",
-    "algorithm_id": "rsa-pkcs1-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_rsa_ssa_pkcs1_go_proto/jwt_rsa_ssa_pkcs1.pb.go",
-    "line": 55,
-    "message": "JWT alg=RS512 \u2014 RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_rsa_ssa_pkcs1_go_proto/jwt_rsa_ssa_pkcs1.pb.go",
-    "line": 59,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-701",
-    "algorithm_id": "rsa-pkcs1-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_rsa_ssa_pkcs1_go_proto/jwt_rsa_ssa_pkcs1.pb.go",
-    "line": 60,
-    "message": "JWT alg=RS384 \u2014 RSA-PKCS1-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-702",
-    "algorithm_id": "rsa-pkcs1-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_rsa_ssa_pkcs1_go_proto/jwt_rsa_ssa_pkcs1.pb.go",
-    "line": 61,
-    "message": "JWT alg=RS512 \u2014 RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-710",
-    "algorithm_id": "ecdsa-p256",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_ecdsa_go_proto/jwt_ecdsa.pb.go",
-    "line": 53,
-    "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-711",
-    "algorithm_id": "ecdsa-p384",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_ecdsa_go_proto/jwt_ecdsa.pb.go",
-    "line": 54,
-    "message": "JWT alg=ES384 \u2014 ECDSA P-384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-712",
-    "algorithm_id": "ecdsa-p521",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_ecdsa_go_proto/jwt_ecdsa.pb.go",
-    "line": 55,
-    "message": "JWT alg=ES512 \u2014 ECDSA P-521. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-710",
-    "algorithm_id": "ecdsa-p256",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_ecdsa_go_proto/jwt_ecdsa.pb.go",
-    "line": 59,
-    "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-711",
-    "algorithm_id": "ecdsa-p384",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_ecdsa_go_proto/jwt_ecdsa.pb.go",
-    "line": 60,
-    "message": "JWT alg=ES384 \u2014 ECDSA P-384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-712",
-    "algorithm_id": "ecdsa-p521",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_ecdsa_go_proto/jwt_ecdsa.pb.go",
-    "line": 61,
-    "message": "JWT alg=ES512 \u2014 ECDSA P-521. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-703",
-    "algorithm_id": "rsa-pss-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_rsa_ssa_pss_go_proto/jwt_rsa_ssa_pss.pb.go",
-    "line": 53,
-    "message": "JWT alg=PS256 \u2014 RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-704",
-    "algorithm_id": "rsa-pss-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_rsa_ssa_pss_go_proto/jwt_rsa_ssa_pss.pb.go",
-    "line": 54,
-    "message": "JWT alg=PS384 \u2014 RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-705",
-    "algorithm_id": "rsa-pss-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_rsa_ssa_pss_go_proto/jwt_rsa_ssa_pss.pb.go",
-    "line": 55,
-    "message": "JWT alg=PS512 \u2014 RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-703",
-    "algorithm_id": "rsa-pss-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_rsa_ssa_pss_go_proto/jwt_rsa_ssa_pss.pb.go",
-    "line": 59,
-    "message": "JWT alg=PS256 \u2014 RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-704",
-    "algorithm_id": "rsa-pss-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_rsa_ssa_pss_go_proto/jwt_rsa_ssa_pss.pb.go",
-    "line": 60,
-    "message": "JWT alg=PS384 \u2014 RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-705",
-    "algorithm_id": "rsa-pss-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_rsa_ssa_pss_go_proto/jwt_rsa_ssa_pss.pb.go",
-    "line": 61,
-    "message": "JWT alg=PS512 \u2014 RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_hmac_go_proto/jwt_hmac.pb.go",
-    "line": 53,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-731",
-    "algorithm_id": "sha-384",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_hmac_go_proto/jwt_hmac.pb.go",
-    "line": 54,
-    "message": "JWT alg=HS384 \u2014 HMAC-SHA384. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-732",
-    "algorithm_id": "sha-512",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_hmac_go_proto/jwt_hmac.pb.go",
-    "line": 55,
-    "message": "JWT alg=HS512 \u2014 HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_hmac_go_proto/jwt_hmac.pb.go",
-    "line": 59,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-731",
-    "algorithm_id": "sha-384",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_hmac_go_proto/jwt_hmac.pb.go",
-    "line": 60,
-    "message": "JWT alg=HS384 \u2014 HMAC-SHA384. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "maven:com.google.crypto.tink:tink",
-    "ecosystem": "maven",
-    "rule_id": "CRYPTO-732",
-    "algorithm_id": "sha-512",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/tink/go/proto/jwt_hmac_go_proto/jwt_hmac.pb.go",
-    "line": 61,
-    "message": "JWT alg=HS512 \u2014 HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
   },
   {
     "project": "maven:com.google.crypto.tink:tink",
@@ -7545,16 +6965,6 @@
     "rule_id": "CRYPTO-740",
     "algorithm_id": "jwt-alg-none",
     "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/client-go/rest/request.go",
-    "line": 875,
-    "message": "JWT alg=none \u2014 signature verification is disabled. CVE-2015-9235 class vulnerability."
-  },
-  {
-    "project": "go-modules:k8s.io/client-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-740",
-    "algorithm_id": "jwt-alg-none",
-    "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/client-go/rest/config_test.go",
     "line": 673,
     "message": "JWT alg=none \u2014 signature verification is disabled. CVE-2015-9235 class vulnerability."
@@ -7798,136 +7208,6 @@
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/vault/builtin/logical/pki/backend_test.go",
     "line": 7945,
     "message": "RSA-2048 key generation. Quantum-vulnerable: NIST IR 8547 deprecates after 2030, disallows after 2035."
-  },
-  {
-    "project": "go-modules:github.com/hashicorp/vault",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/vault/builtin/logical/pki/acme_jws.go",
-    "line": 18,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/hashicorp/vault",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-701",
-    "algorithm_id": "rsa-pkcs1-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/vault/builtin/logical/pki/acme_jws.go",
-    "line": 19,
-    "message": "JWT alg=RS384 \u2014 RSA-PKCS1-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/hashicorp/vault",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-702",
-    "algorithm_id": "rsa-pkcs1-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/vault/builtin/logical/pki/acme_jws.go",
-    "line": 20,
-    "message": "JWT alg=RS512 \u2014 RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/hashicorp/vault",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-703",
-    "algorithm_id": "rsa-pss-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/vault/builtin/logical/pki/acme_jws.go",
-    "line": 21,
-    "message": "JWT alg=PS256 \u2014 RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/hashicorp/vault",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-704",
-    "algorithm_id": "rsa-pss-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/vault/builtin/logical/pki/acme_jws.go",
-    "line": 22,
-    "message": "JWT alg=PS384 \u2014 RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/hashicorp/vault",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-705",
-    "algorithm_id": "rsa-pss-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/vault/builtin/logical/pki/acme_jws.go",
-    "line": 23,
-    "message": "JWT alg=PS512 \u2014 RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/hashicorp/vault",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-710",
-    "algorithm_id": "ecdsa-p256",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/vault/builtin/logical/pki/acme_jws.go",
-    "line": 24,
-    "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/hashicorp/vault",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-711",
-    "algorithm_id": "ecdsa-p384",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/vault/builtin/logical/pki/acme_jws.go",
-    "line": 25,
-    "message": "JWT alg=ES384 \u2014 ECDSA P-384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/hashicorp/vault",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-712",
-    "algorithm_id": "ecdsa-p521",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/vault/builtin/logical/pki/acme_jws.go",
-    "line": 26,
-    "message": "JWT alg=ES512 \u2014 ECDSA P-521. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/hashicorp/vault",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/vault/builtin/logical/pki/acme_jws.go",
-    "line": 30,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/hashicorp/vault",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-731",
-    "algorithm_id": "sha-384",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/vault/builtin/logical/pki/acme_jws.go",
-    "line": 31,
-    "message": "JWT alg=HS384 \u2014 HMAC-SHA384. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/hashicorp/vault",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-732",
-    "algorithm_id": "sha-512",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/vault/builtin/logical/pki/acme_jws.go",
-    "line": 32,
-    "message": "JWT alg=HS512 \u2014 HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/hashicorp/vault",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/vault/builtin/logical/pki/acme_state_test.go",
-    "line": 79,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
   },
   {
     "project": "go-modules:github.com/hashicorp/vault",
@@ -8202,171 +7482,11 @@
   {
     "project": "go-modules:github.com/golang-jwt/jwt",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-703",
-    "algorithm_id": "rsa-pss-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/rsa_pss_test.go",
-    "line": 24,
-    "message": "JWT alg=PS256 \u2014 RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-704",
-    "algorithm_id": "rsa-pss-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/rsa_pss_test.go",
-    "line": 31,
-    "message": "JWT alg=PS384 \u2014 RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-705",
-    "algorithm_id": "rsa-pss-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/rsa_pss_test.go",
-    "line": 38,
-    "message": "JWT alg=PS512 \u2014 RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-703",
-    "algorithm_id": "rsa-pss-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/rsa_pss_test.go",
-    "line": 45,
-    "message": "JWT alg=PS256 \u2014 RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-740",
-    "algorithm_id": "jwt-alg-none",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/none.go",
-    "line": 24,
-    "message": "JWT alg=none \u2014 signature verification is disabled. CVE-2015-9235 class vulnerability."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-700",
     "algorithm_id": "rsa-pkcs1-sha256-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/http_example_test.go",
     "line": 137,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/parser_test.go",
-    "line": 323,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/parser_test.go",
-    "line": 333,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/parser_test.go",
-    "line": 333,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/parser_test.go",
-    "line": 343,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/parser_test.go",
-    "line": 343,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/parser_test.go",
-    "line": 353,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-710",
-    "algorithm_id": "ecdsa-p256",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/parser_test.go",
-    "line": 353,
-    "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/rsa_test.go",
-    "line": 26,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-701",
-    "algorithm_id": "rsa-pkcs1-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/rsa_test.go",
-    "line": 32,
-    "message": "JWT alg=RS384 \u2014 RSA-PKCS1-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-702",
-    "algorithm_id": "rsa-pkcs1-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/rsa_test.go",
-    "line": 38,
-    "message": "JWT alg=RS512 \u2014 RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/rsa_test.go",
-    "line": 44,
     "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
   },
   {
@@ -8382,36 +7502,6 @@
   {
     "project": "go-modules:github.com/golang-jwt/jwt",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-703",
-    "algorithm_id": "rsa-pss-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/rsa_pss.go",
-    "line": 31,
-    "message": "JWT alg=PS256 \u2014 RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-704",
-    "algorithm_id": "rsa-pss-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/rsa_pss.go",
-    "line": 48,
-    "message": "JWT alg=PS384 \u2014 RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-705",
-    "algorithm_id": "rsa-pss-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/rsa_pss.go",
-    "line": 65,
-    "message": "JWT alg=PS512 \u2014 RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-700",
     "algorithm_id": "rsa-pkcs1-sha256-2048",
     "severity": "High",
@@ -8438,56 +7528,6 @@
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/rsa.go",
     "line": 37,
     "message": "JWT alg=RS512 \u2014 RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-710",
-    "algorithm_id": "ecdsa-p256",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/ecdsa_test.go",
-    "line": 25,
-    "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-711",
-    "algorithm_id": "ecdsa-p384",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/ecdsa_test.go",
-    "line": 33,
-    "message": "JWT alg=ES384 \u2014 ECDSA P-384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-712",
-    "algorithm_id": "ecdsa-p521",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/ecdsa_test.go",
-    "line": 41,
-    "message": "JWT alg=ES512 \u2014 ECDSA P-521. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-710",
-    "algorithm_id": "ecdsa-p256",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/ecdsa_test.go",
-    "line": 49,
-    "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-720",
-    "algorithm_id": "ed25519",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/ed25519.go",
-    "line": 31,
-    "message": "JWT alg=EdDSA \u2014 Ed25519. Quantum-vulnerable to Shor's algorithm."
   },
   {
     "project": "go-modules:github.com/golang-jwt/jwt",
@@ -8522,116 +7562,6 @@
   {
     "project": "go-modules:github.com/golang-jwt/jwt",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-720",
-    "algorithm_id": "ed25519",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/ed25519_test.go",
-    "line": 23,
-    "message": "JWT alg=EdDSA \u2014 Ed25519. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-720",
-    "algorithm_id": "ed25519",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/ed25519_test.go",
-    "line": 31,
-    "message": "JWT alg=EdDSA \u2014 Ed25519. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-740",
-    "algorithm_id": "jwt-alg-none",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/none_test.go",
-    "line": 22,
-    "message": "JWT alg=none \u2014 signature verification is disabled. CVE-2015-9235 class vulnerability."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-740",
-    "algorithm_id": "jwt-alg-none",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/none_test.go",
-    "line": 30,
-    "message": "JWT alg=none \u2014 signature verification is disabled. CVE-2015-9235 class vulnerability."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-740",
-    "algorithm_id": "jwt-alg-none",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/none_test.go",
-    "line": 38,
-    "message": "JWT alg=none \u2014 signature verification is disabled. CVE-2015-9235 class vulnerability."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/hmac_test.go",
-    "line": 22,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-731",
-    "algorithm_id": "sha-384",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/hmac_test.go",
-    "line": 27,
-    "message": "JWT alg=HS384 \u2014 HMAC-SHA384. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-731",
-    "algorithm_id": "sha-384",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/hmac_test.go",
-    "line": 29,
-    "message": "JWT alg=HS384 \u2014 HMAC-SHA384. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-732",
-    "algorithm_id": "sha-512",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/hmac_test.go",
-    "line": 34,
-    "message": "JWT alg=HS512 \u2014 HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-732",
-    "algorithm_id": "sha-512",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/hmac_test.go",
-    "line": 36,
-    "message": "JWT alg=HS512 \u2014 HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/hmac_test.go",
-    "line": 43,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/golang-jwt/jwt",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-730",
     "algorithm_id": "sha-256",
     "severity": "Medium",
@@ -8658,56 +7588,6 @@
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/golang-jwt-jwt/hmac.go",
     "line": 38,
     "message": "JWT alg=HS512 \u2014 HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-703",
-    "algorithm_id": "rsa-pss-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/rsa_pss_test.go",
-    "line": 26,
-    "message": "JWT alg=PS256 \u2014 RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-704",
-    "algorithm_id": "rsa-pss-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/rsa_pss_test.go",
-    "line": 33,
-    "message": "JWT alg=PS384 \u2014 RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-705",
-    "algorithm_id": "rsa-pss-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/rsa_pss_test.go",
-    "line": 40,
-    "message": "JWT alg=PS512 \u2014 RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-703",
-    "algorithm_id": "rsa-pss-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/rsa_pss_test.go",
-    "line": 47,
-    "message": "JWT alg=PS256 \u2014 RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-740",
-    "algorithm_id": "jwt-alg-none",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/none.go",
-    "line": 24,
-    "message": "JWT alg=none \u2014 signature verification is disabled. CVE-2015-9235 class vulnerability."
   },
   {
     "project": "go-modules:github.com/dgrijalva/jwt-go",
@@ -8722,106 +7602,6 @@
   {
     "project": "go-modules:github.com/dgrijalva/jwt-go",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/parser_test.go",
-    "line": 117,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/parser_test.go",
-    "line": 126,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/parser_test.go",
-    "line": 126,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/rsa_test.go",
-    "line": 20,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-701",
-    "algorithm_id": "rsa-pkcs1-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/rsa_test.go",
-    "line": 27,
-    "message": "JWT alg=RS384 \u2014 RSA-PKCS1-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-702",
-    "algorithm_id": "rsa-pkcs1-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/rsa_test.go",
-    "line": 34,
-    "message": "JWT alg=RS512 \u2014 RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/rsa_test.go",
-    "line": 41,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-703",
-    "algorithm_id": "rsa-pss-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/rsa_pss.go",
-    "line": 33,
-    "message": "JWT alg=PS256 \u2014 RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-704",
-    "algorithm_id": "rsa-pss-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/rsa_pss.go",
-    "line": 50,
-    "message": "JWT alg=PS384 \u2014 RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-705",
-    "algorithm_id": "rsa-pss-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/rsa_pss.go",
-    "line": 67,
-    "message": "JWT alg=PS512 \u2014 RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-700",
     "algorithm_id": "rsa-pkcs1-sha256-2048",
     "severity": "High",
@@ -8855,46 +7635,6 @@
     "rule_id": "CRYPTO-710",
     "algorithm_id": "ecdsa-p256",
     "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/ecdsa_test.go",
-    "line": 24,
-    "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-711",
-    "algorithm_id": "ecdsa-p384",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/ecdsa_test.go",
-    "line": 32,
-    "message": "JWT alg=ES384 \u2014 ECDSA P-384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-712",
-    "algorithm_id": "ecdsa-p521",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/ecdsa_test.go",
-    "line": 40,
-    "message": "JWT alg=ES512 \u2014 ECDSA P-521. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-710",
-    "algorithm_id": "ecdsa-p256",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/ecdsa_test.go",
-    "line": 48,
-    "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-710",
-    "algorithm_id": "ecdsa-p256",
-    "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/ecdsa.go",
     "line": 34,
     "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
@@ -8918,96 +7658,6 @@
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/ecdsa.go",
     "line": 46,
     "message": "JWT alg=ES512 \u2014 ECDSA P-521. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-740",
-    "algorithm_id": "jwt-alg-none",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/none_test.go",
-    "line": 20,
-    "message": "JWT alg=none \u2014 signature verification is disabled. CVE-2015-9235 class vulnerability."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-740",
-    "algorithm_id": "jwt-alg-none",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/none_test.go",
-    "line": 28,
-    "message": "JWT alg=none \u2014 signature verification is disabled. CVE-2015-9235 class vulnerability."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-740",
-    "algorithm_id": "jwt-alg-none",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/none_test.go",
-    "line": 36,
-    "message": "JWT alg=none \u2014 signature verification is disabled. CVE-2015-9235 class vulnerability."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/hmac_test.go",
-    "line": 20,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-731",
-    "algorithm_id": "sha-384",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/hmac_test.go",
-    "line": 25,
-    "message": "JWT alg=HS384 \u2014 HMAC-SHA384. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-731",
-    "algorithm_id": "sha-384",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/hmac_test.go",
-    "line": 27,
-    "message": "JWT alg=HS384 \u2014 HMAC-SHA384. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-732",
-    "algorithm_id": "sha-512",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/hmac_test.go",
-    "line": 32,
-    "message": "JWT alg=HS512 \u2014 HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-732",
-    "algorithm_id": "sha-512",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/hmac_test.go",
-    "line": 34,
-    "message": "JWT alg=HS512 \u2014 HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/dgrijalva/jwt-go",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwt-go/hmac_test.go",
-    "line": 41,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
   },
   {
     "project": "go-modules:github.com/dgrijalva/jwt-go",
@@ -9152,46 +7802,6 @@
   {
     "project": "go-modules:github.com/go-jose/go-jose",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-720",
-    "algorithm_id": "ed25519",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/go-jose/cryptosigner/cryptosigner_test.go",
-    "line": 192,
-    "message": "JWT alg=EdDSA \u2014 Ed25519. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/go-jose/go-jose",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-710",
-    "algorithm_id": "ecdsa-p256",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/go-jose/cryptosigner/cryptosigner_test.go",
-    "line": 193,
-    "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/go-jose/go-jose",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-711",
-    "algorithm_id": "ecdsa-p384",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/go-jose/cryptosigner/cryptosigner_test.go",
-    "line": 194,
-    "message": "JWT alg=ES384 \u2014 ECDSA P-384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/go-jose/go-jose",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-712",
-    "algorithm_id": "ecdsa-p521",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/go-jose/cryptosigner/cryptosigner_test.go",
-    "line": 195,
-    "message": "JWT alg=ES512 \u2014 ECDSA P-521. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/go-jose/go-jose",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-051",
     "algorithm_id": "sha-1",
     "severity": "High",
@@ -9318,16 +7928,6 @@
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/go-jose/asymmetric_test.go",
     "line": 62,
     "message": "JWT alg=EdDSA \u2014 Ed25519. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/go-jose/go-jose",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-762",
-    "algorithm_id": "aes-128-gcm",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/go-jose/asymmetric_test.go",
-    "line": 146,
-    "message": "JWE enc=A128GCM \u2014 AES-128-GCM content encryption. Weakened by Grover; prefer AES-256."
   },
   {
     "project": "go-modules:github.com/go-jose/go-jose",
@@ -9692,16 +8292,6 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/jwa_test.go",
-    "line": 84,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-710",
     "algorithm_id": "ecdsa-p256",
     "severity": "High",
@@ -9992,26 +8582,6 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-762",
-    "algorithm_id": "aes-128-gcm",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/content_encryption_gen_test.go",
-    "line": 41,
-    "message": "JWE enc=A128GCM \u2014 AES-128-GCM content encryption. Weakened by Grover; prefer AES-256."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-762",
-    "algorithm_id": "aes-128-gcm",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/content_encryption_gen_test.go",
-    "line": 46,
-    "message": "JWE enc=A128GCM \u2014 AES-128-GCM content encryption. Weakened by Grover; prefer AES-256."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-761",
     "algorithm_id": "aes-192-gcm",
     "severity": "Medium",
@@ -10022,51 +8592,11 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-761",
-    "algorithm_id": "aes-192-gcm",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/content_encryption_gen_test.go",
-    "line": 73,
-    "message": "JWE enc=A192GCM \u2014 AES-192-GCM content encryption. Quantum-safe; inventory only."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-761",
-    "algorithm_id": "aes-192-gcm",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/content_encryption_gen_test.go",
-    "line": 78,
-    "message": "JWE enc=A192GCM \u2014 AES-192-GCM content encryption. Quantum-safe; inventory only."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-760",
     "algorithm_id": "aes-256-gcm",
     "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/content_encryption_gen_test.go",
     "line": 98,
-    "message": "JWE enc=A256GCM \u2014 AES-256-GCM content encryption. Quantum-safe; inventory only."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-760",
-    "algorithm_id": "aes-256-gcm",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/content_encryption_gen_test.go",
-    "line": 105,
-    "message": "JWE enc=A256GCM \u2014 AES-256-GCM content encryption. Quantum-safe; inventory only."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-760",
-    "algorithm_id": "aes-256-gcm",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/content_encryption_gen_test.go",
-    "line": 110,
     "message": "JWE enc=A256GCM \u2014 AES-256-GCM content encryption. Quantum-safe; inventory only."
   },
   {
@@ -10082,51 +8612,11 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-710",
-    "algorithm_id": "ecdsa-p256",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 25,
-    "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-710",
-    "algorithm_id": "ecdsa-p256",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 30,
-    "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-711",
     "algorithm_id": "ecdsa-p384",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
     "line": 34,
-    "message": "JWT alg=ES384 \u2014 ECDSA P-384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-711",
-    "algorithm_id": "ecdsa-p384",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 41,
-    "message": "JWT alg=ES384 \u2014 ECDSA P-384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-711",
-    "algorithm_id": "ecdsa-p384",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 46,
     "message": "JWT alg=ES384 \u2014 ECDSA P-384. Quantum-vulnerable to Shor's algorithm."
   },
   {
@@ -10142,51 +8632,11 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-712",
-    "algorithm_id": "ecdsa-p521",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 57,
-    "message": "JWT alg=ES512 \u2014 ECDSA P-521. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-712",
-    "algorithm_id": "ecdsa-p521",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 62,
-    "message": "JWT alg=ES512 \u2014 ECDSA P-521. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-720",
     "algorithm_id": "ed25519",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
     "line": 66,
-    "message": "JWT alg=EdDSA \u2014 Ed25519. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-720",
-    "algorithm_id": "ed25519",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 73,
-    "message": "JWT alg=EdDSA \u2014 Ed25519. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-720",
-    "algorithm_id": "ed25519",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 78,
     "message": "JWT alg=EdDSA \u2014 Ed25519. Quantum-vulnerable to Shor's algorithm."
   },
   {
@@ -10202,51 +8652,11 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 105,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 110,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-731",
     "algorithm_id": "sha-384",
     "severity": "Medium",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
     "line": 114,
-    "message": "JWT alg=HS384 \u2014 HMAC-SHA384. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-731",
-    "algorithm_id": "sha-384",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 121,
-    "message": "JWT alg=HS384 \u2014 HMAC-SHA384. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-731",
-    "algorithm_id": "sha-384",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 126,
     "message": "JWT alg=HS384 \u2014 HMAC-SHA384. Symmetric; not quantum-broken but inventory for key rotation planning."
   },
   {
@@ -10262,51 +8672,11 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-732",
-    "algorithm_id": "sha-512",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 137,
-    "message": "JWT alg=HS512 \u2014 HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-732",
-    "algorithm_id": "sha-512",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 142,
-    "message": "JWT alg=HS512 \u2014 HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-740",
     "algorithm_id": "jwt-alg-none",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
     "line": 146,
-    "message": "JWT alg=none \u2014 signature verification is disabled. CVE-2015-9235 class vulnerability."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-740",
-    "algorithm_id": "jwt-alg-none",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 153,
-    "message": "JWT alg=none \u2014 signature verification is disabled. CVE-2015-9235 class vulnerability."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-740",
-    "algorithm_id": "jwt-alg-none",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 158,
     "message": "JWT alg=none \u2014 signature verification is disabled. CVE-2015-9235 class vulnerability."
   },
   {
@@ -10322,51 +8692,11 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-703",
-    "algorithm_id": "rsa-pss-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 169,
-    "message": "JWT alg=PS256 \u2014 RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-703",
-    "algorithm_id": "rsa-pss-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 174,
-    "message": "JWT alg=PS256 \u2014 RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-704",
     "algorithm_id": "rsa-pss-sha384-3072",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
     "line": 178,
-    "message": "JWT alg=PS384 \u2014 RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-704",
-    "algorithm_id": "rsa-pss-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 185,
-    "message": "JWT alg=PS384 \u2014 RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-704",
-    "algorithm_id": "rsa-pss-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 190,
     "message": "JWT alg=PS384 \u2014 RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
   },
   {
@@ -10382,51 +8712,11 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-705",
-    "algorithm_id": "rsa-pss-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 201,
-    "message": "JWT alg=PS512 \u2014 RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-705",
-    "algorithm_id": "rsa-pss-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 206,
-    "message": "JWT alg=PS512 \u2014 RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-700",
     "algorithm_id": "rsa-pkcs1-sha256-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
     "line": 210,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 217,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 222,
     "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
   },
   {
@@ -10442,51 +8732,11 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-701",
-    "algorithm_id": "rsa-pkcs1-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 233,
-    "message": "JWT alg=RS384 \u2014 RSA-PKCS1-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-701",
-    "algorithm_id": "rsa-pkcs1-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 238,
-    "message": "JWT alg=RS384 \u2014 RSA-PKCS1-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-702",
     "algorithm_id": "rsa-pkcs1-sha512-4096",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
     "line": 242,
-    "message": "JWT alg=RS512 \u2014 RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-702",
-    "algorithm_id": "rsa-pkcs1-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 249,
-    "message": "JWT alg=RS512 \u2014 RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-702",
-    "algorithm_id": "rsa-pkcs1-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/signature_gen_test.go",
-    "line": 254,
     "message": "JWT alg=RS512 \u2014 RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algorithm."
   },
   {
@@ -10632,51 +8882,11 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-750",
-    "algorithm_id": "rsa-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/key_encryption_gen_test.go",
-    "line": 361,
-    "message": "JWE alg=RSA-OAEP \u2014 RSA-OAEP key encryption. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-750",
-    "algorithm_id": "rsa-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/key_encryption_gen_test.go",
-    "line": 366,
-    "message": "JWE alg=RSA-OAEP \u2014 RSA-OAEP key encryption. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-751",
     "algorithm_id": "rsa-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/key_encryption_gen_test.go",
     "line": 370,
-    "message": "JWE alg=RSA-OAEP-256 \u2014 RSA-OAEP-SHA256 key encryption. Quantum-vulnerable."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-751",
-    "algorithm_id": "rsa-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/key_encryption_gen_test.go",
-    "line": 377,
-    "message": "JWE alg=RSA-OAEP-256 \u2014 RSA-OAEP-SHA256 key encryption. Quantum-vulnerable."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-751",
-    "algorithm_id": "rsa-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwa/key_encryption_gen_test.go",
-    "line": 382,
     "message": "JWE alg=RSA-OAEP-256 \u2014 RSA-OAEP-SHA256 key encryption. Quantum-vulnerable."
   },
   {
@@ -10932,46 +9142,6 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-762",
-    "algorithm_id": "aes-128-gcm",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/jwebb_test.go",
-    "line": 278,
-    "message": "JWE enc=A128GCM \u2014 AES-128-GCM content encryption. Weakened by Grover; prefer AES-256."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-761",
-    "algorithm_id": "aes-192-gcm",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/jwebb_test.go",
-    "line": 279,
-    "message": "JWE enc=A192GCM \u2014 AES-192-GCM content encryption. Quantum-safe; inventory only."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-760",
-    "algorithm_id": "aes-256-gcm",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwebb/jwebb_test.go",
-    "line": 280,
-    "message": "JWE enc=A256GCM \u2014 AES-256-GCM content encryption. Quantum-safe; inventory only."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-740",
-    "algorithm_id": "jwt-alg-none",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/jwe_test.go",
-    "line": 205,
-    "message": "JWT alg=none \u2014 signature verification is disabled. CVE-2015-9235 class vulnerability."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-012",
     "algorithm_id": "ecdsa-p384",
     "severity": "High",
@@ -11092,16 +9262,6 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-750",
-    "algorithm_id": "rsa-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/bench_encrypt_test.go",
-    "line": 36,
-    "message": "JWE alg=RSA-OAEP \u2014 RSA-OAEP key encryption. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-002",
     "algorithm_id": "rsa-2048",
     "severity": "High",
@@ -11118,16 +9278,6 @@
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/bench_encrypt_test.go",
     "line": 82,
     "message": "ECDSA P-256 \u2014 quantum-vulnerable to Shor. Replace with ML-DSA-65."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-750",
-    "algorithm_id": "rsa-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwe/bench_encrypt_test.go",
-    "line": 101,
-    "message": "JWE alg=RSA-OAEP \u2014 RSA-OAEP key encryption. Quantum-vulnerable to Shor's algorithm."
   },
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
@@ -11392,36 +9542,6 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jws_test.go",
-    "line": 2251,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-731",
-    "algorithm_id": "sha-384",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jws_test.go",
-    "line": 2252,
-    "message": "JWT alg=HS384 \u2014 HMAC-SHA384. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jwsbb/header_test.go",
-    "line": 30,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-002",
     "algorithm_id": "rsa-2048",
     "severity": "High",
@@ -11442,132 +9562,12 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jwsbb/jwsbb_test.go",
-    "line": 30,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-731",
-    "algorithm_id": "sha-384",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jwsbb/jwsbb_test.go",
-    "line": 31,
-    "message": "JWT alg=HS384 \u2014 HMAC-SHA384. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-732",
-    "algorithm_id": "sha-512",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jwsbb/jwsbb_test.go",
-    "line": 32,
-    "message": "JWT alg=HS512 \u2014 HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jwsbb/jwsbb_test.go",
-    "line": 33,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-731",
-    "algorithm_id": "sha-384",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jwsbb/jwsbb_test.go",
-    "line": 34,
-    "message": "JWT alg=HS384 \u2014 HMAC-SHA384. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-732",
-    "algorithm_id": "sha-512",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jwsbb/jwsbb_test.go",
-    "line": 35,
-    "message": "JWT alg=HS512 \u2014 HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-002",
     "algorithm_id": "rsa-2048",
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jwsbb/jwsbb_test.go",
     "line": 75,
     "message": "RSA-2048 key generation. Quantum-vulnerable: NIST IR 8547 deprecates after 2030, disallows after 2035."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jwsbb/jwsbb_test.go",
-    "line": 84,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-701",
-    "algorithm_id": "rsa-pkcs1-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jwsbb/jwsbb_test.go",
-    "line": 85,
-    "message": "JWT alg=RS384 \u2014 RSA-PKCS1-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-702",
-    "algorithm_id": "rsa-pkcs1-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jwsbb/jwsbb_test.go",
-    "line": 86,
-    "message": "JWT alg=RS512 \u2014 RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-703",
-    "algorithm_id": "rsa-pss-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jwsbb/jwsbb_test.go",
-    "line": 87,
-    "message": "JWT alg=PS256 \u2014 RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-704",
-    "algorithm_id": "rsa-pss-sha384-3072",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jwsbb/jwsbb_test.go",
-    "line": 88,
-    "message": "JWT alg=PS384 \u2014 RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-705",
-    "algorithm_id": "rsa-pss-sha512-4096",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/jwsbb/jwsbb_test.go",
-    "line": 89,
-    "message": "JWT alg=PS512 \u2014 RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
   },
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
@@ -11782,76 +9782,6 @@
   {
     "project": "go-modules:github.com/lestrrat-go/jwx",
     "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/streaming_detached_test.go",
-    "line": 46,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/streaming_detached_test.go",
-    "line": 47,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-703",
-    "algorithm_id": "rsa-pss-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/streaming_detached_test.go",
-    "line": 48,
-    "message": "JWT alg=PS256 \u2014 RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-710",
-    "algorithm_id": "ecdsa-p256",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jws/streaming_detached_test.go",
-    "line": 49,
-    "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-700",
-    "algorithm_id": "rsa-pkcs1-sha256-2048",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwt/bench_parse_test.go",
-    "line": 36,
-    "message": "JWT alg=RS256 \u2014 RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-730",
-    "algorithm_id": "sha-256",
-    "severity": "Medium",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwt/bench_parse_test.go",
-    "line": 37,
-    "message": "JWT alg=HS256 \u2014 HMAC-SHA256. Symmetric; not quantum-broken but inventory for key rotation planning."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-710",
-    "algorithm_id": "ecdsa-p256",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwt/openid/openid_test.go",
-    "line": 768,
-    "message": "JWT alg=ES256 \u2014 ECDSA P-256. Quantum-vulnerable to Shor's algorithm."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
     "rule_id": "CRYPTO-002",
     "algorithm_id": "rsa-2048",
     "severity": "High",
@@ -11867,16 +9797,6 @@
     "severity": "High",
     "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwt/verify_test.go",
     "line": 70,
-    "message": "JWT alg=none \u2014 signature verification is disabled. CVE-2015-9235 class vulnerability."
-  },
-  {
-    "project": "go-modules:github.com/lestrrat-go/jwx",
-    "ecosystem": "go-modules",
-    "rule_id": "CRYPTO-740",
-    "algorithm_id": "jwt-alg-none",
-    "severity": "High",
-    "file": "/Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/jwx/jwt/verify_test.go",
-    "line": 225,
     "message": "JWT alg=none \u2014 signature verification is disabled. CVE-2015-9235 class vulnerability."
   },
   {
