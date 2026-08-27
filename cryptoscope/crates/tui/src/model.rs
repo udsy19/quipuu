@@ -1,7 +1,11 @@
 //! Pure model functions — produce display strings / structs for each pane
 //! given AppState + findings.  No ratatui widgets; those live in render.rs.
 
-use cryptoscope_core::{AlgorithmTable, Finding, Policy, QuantumRiskScore, Severity};
+use std::collections::BTreeMap;
+
+use cryptoscope_core::{
+    AlgorithmRecord, AlgorithmTable, Finding, Policy, QuantumRiskScore, QuantumStatus, Severity,
+};
 
 use crate::state::{AppState, Kpi, no_color};
 
@@ -32,7 +36,7 @@ pub fn severity_order(sev: Severity) -> u8 {
 }
 
 // ---------------------------------------------------------------------------
-// Left-pane list rows
+// Left-pane list rows (Findings tab)
 // ---------------------------------------------------------------------------
 
 /// One rendered row in the findings list.
@@ -99,6 +103,7 @@ pub struct FindingDetail {
     pub message: String,
     pub hndl: bool,
     pub score: Option<ScoreBreakdown>,
+    pub why_this_matters: String,
 }
 
 /// Five-axis score breakdown for display.
@@ -111,7 +116,6 @@ pub struct ScoreBreakdown {
     pub data_shelf_life: u8,
     pub exposure: u8,
     pub detection_confidence: u8,
-    /// Max value for each axis (from policy risk_weights).
     pub av_max: u8,
     pub uc_max: u8,
     pub ds_max: u8,
@@ -124,18 +128,21 @@ pub fn build_finding_detail(
     algorithms: &AlgorithmTable,
     policy: &Policy,
 ) -> FindingDetail {
-    let algorithm_display = algorithms
-        .get(&finding.algorithm_id)
+    let algo = algorithms.get(&finding.algorithm_id);
+
+    let algorithm_display = algo
         .map(|a| a.display_name.clone())
         .unwrap_or_else(|| finding.algorithm_id.clone());
 
-    let replacement_display = algorithms
-        .get(&finding.algorithm_id)
+    let replacement_algo = algo
         .and_then(|a| a.replacement.as_ref())
-        .and_then(|repl_id| algorithms.get(repl_id))
-        .map(|r| r.display_name.clone());
+        .and_then(|repl_id| algorithms.get(repl_id));
 
-    let score = algorithms.get(&finding.algorithm_id).map(|alg| {
+    let replacement_display = replacement_algo.map(|r| r.display_name.clone());
+
+    let why_this_matters = build_why_this_matters(algo, replacement_algo);
+
+    let score = algo.map(|alg| {
         let s = QuantumRiskScore::compute(finding, alg, policy);
         ScoreBreakdown {
             total: s.total,
@@ -164,15 +171,292 @@ pub fn build_finding_detail(
         message: finding.message.clone(),
         hndl: finding.hndl_critical,
         score,
+        why_this_matters,
     }
+}
+
+fn build_why_this_matters(
+    algo: Option<&AlgorithmRecord>,
+    replacement: Option<&AlgorithmRecord>,
+) -> String {
+    let Some(a) = algo else {
+        return "Algorithm not in the cryptoscope catalogue; classification unavailable. \
+                Investigate manually."
+            .to_string();
+    };
+    let preamble = match a.quantum_status {
+        QuantumStatus::BrokenClassically => {
+            "Classically broken — practical attacks exist today, independent of any quantum threat."
+        }
+        QuantumStatus::BrokenByShor => {
+            "Vulnerable to Shor's algorithm; a cryptographically relevant quantum computer breaks \
+             this in polynomial time."
+        }
+        QuantumStatus::WeakenedByGrover => {
+            "Weakened under Grover's algorithm; effective security halves against quantum search. \
+             Keep using only at sufficiently large parameters."
+        }
+        QuantumStatus::QuantumSafe => {
+            "Quantum-safe at the chosen parameters — Grover's algorithm does not reduce security \
+             below acceptable levels."
+        }
+        QuantumStatus::PqcFinal => {
+            "NIST-final post-quantum algorithm; designed to resist both classical and quantum \
+             attacks."
+        }
+        QuantumStatus::PqcDraft => {
+            "Draft post-quantum algorithm; expected to be standardized but the specification may \
+             still change."
+        }
+    };
+
+    let mut parts = vec![preamble.to_string()];
+    if !a.notes.trim().is_empty() {
+        parts.push(a.notes.trim().to_string());
+    }
+    if let Some(r) = replacement {
+        let fips = r
+            .fips
+            .as_deref()
+            .map(|f| format!(" per {f}"))
+            .unwrap_or_default();
+        parts.push(format!(
+            "Recommended replacement: {}{fips}.",
+            r.display_name
+        ));
+    }
+    parts.join(" ")
+}
+
+// ---------------------------------------------------------------------------
+// Inventory tab rows
+// ---------------------------------------------------------------------------
+
+/// One row in the Algorithm Inventory table.
+#[derive(Debug, Clone)]
+pub struct InventoryRow {
+    pub algorithm_id: String,
+    pub display_name: String,
+    pub quantum_status: QuantumStatus,
+    pub family: String,
+    pub count: usize,
+    pub file_count: usize,
+    pub replacement_display: String,
+}
+
+/// Build inventory rows from all findings, filtered by name substring.
+pub fn build_inventory_rows(
+    findings: &[Finding],
+    algorithms: &AlgorithmTable,
+    filter: &str,
+) -> Vec<InventoryRow> {
+    // Group findings by algorithm_id.
+    let mut by_algo: BTreeMap<&str, Vec<&Finding>> = BTreeMap::new();
+    for f in findings {
+        by_algo.entry(&f.algorithm_id).or_default().push(f);
+    }
+
+    let filter_lc = filter.to_lowercase();
+
+    let mut rows: Vec<InventoryRow> = by_algo
+        .iter()
+        .filter_map(|(id, group)| {
+            let record = algorithms.get(id)?;
+            // Apply filter.
+            if !filter_lc.is_empty()
+                && !record.display_name.to_lowercase().contains(&filter_lc)
+                && !record.id.to_lowercase().contains(&filter_lc)
+                && !record.family.to_lowercase().contains(&filter_lc)
+            {
+                return None;
+            }
+            let file_count = group
+                .iter()
+                .map(|f| f.location.location.as_str())
+                .collect::<std::collections::HashSet<_>>()
+                .len();
+            let replacement_display = record
+                .replacement
+                .as_ref()
+                .and_then(|r| algorithms.get(r))
+                .map(|r| r.display_name.clone())
+                .unwrap_or_default();
+            Some(InventoryRow {
+                algorithm_id: id.to_string(),
+                display_name: record.display_name.clone(),
+                quantum_status: record.quantum_status,
+                family: record.family.clone(),
+                count: group.len(),
+                file_count,
+                replacement_display,
+            })
+        })
+        .collect();
+
+    // Sort by quantum risk (most dangerous first), then by count descending.
+    rows.sort_by_key(|r| {
+        let risk_order: u8 = match r.quantum_status {
+            QuantumStatus::BrokenClassically => 0,
+            QuantumStatus::BrokenByShor => 1,
+            QuantumStatus::WeakenedByGrover => 2,
+            QuantumStatus::QuantumSafe => 3,
+            QuantumStatus::PqcDraft => 4,
+            QuantumStatus::PqcFinal => 5,
+        };
+        (risk_order, usize::MAX - r.count)
+    });
+
+    rows
+}
+
+/// Return all findings for a given algorithm_id.
+pub fn findings_for_algorithm<'a>(algorithm_id: &str, findings: &'a [Finding]) -> Vec<&'a Finding> {
+    findings
+        .iter()
+        .filter(|f| f.algorithm_id == algorithm_id)
+        .collect()
+}
+
+// ---------------------------------------------------------------------------
+// CBOM tab — grouped families
+// ---------------------------------------------------------------------------
+
+/// One family group row for the CBOM tree view.
+#[derive(Debug, Clone)]
+pub struct CbomFamily {
+    pub family: String,
+    pub algorithms: Vec<CbomAlgoRow>,
+}
+
+#[derive(Debug, Clone)]
+pub struct CbomAlgoRow {
+    pub display_name: String,
+    pub primitive: String,
+    pub nist_level: Option<u8>,
+    pub quantum_status: QuantumStatus,
+    pub count: usize,
+}
+
+pub fn build_cbom_families(findings: &[Finding], algorithms: &AlgorithmTable) -> Vec<CbomFamily> {
+    // Group findings by algorithm_id.
+    let mut by_algo: BTreeMap<&str, usize> = BTreeMap::new();
+    for f in findings {
+        *by_algo.entry(&f.algorithm_id).or_default() += 1;
+    }
+
+    // Build algo rows per family.
+    let mut family_map: BTreeMap<String, Vec<CbomAlgoRow>> = BTreeMap::new();
+    for (id, &count) in &by_algo {
+        if let Some(rec) = algorithms.get(id) {
+            let primitive = rec.primitive.map(|p| format!("{p:?}")).unwrap_or_default();
+            family_map
+                .entry(rec.family.clone())
+                .or_default()
+                .push(CbomAlgoRow {
+                    display_name: rec.display_name.clone(),
+                    primitive,
+                    nist_level: rec.nist_quantum_security_level,
+                    quantum_status: rec.quantum_status,
+                    count,
+                });
+        }
+    }
+
+    // Sort families: dangerous first.
+    let mut families: Vec<CbomFamily> = family_map
+        .into_iter()
+        .map(|(family, mut algorithms)| {
+            algorithms.sort_by_key(|a| match a.quantum_status {
+                QuantumStatus::BrokenClassically => 0u8,
+                QuantumStatus::BrokenByShor => 1,
+                QuantumStatus::WeakenedByGrover => 2,
+                QuantumStatus::QuantumSafe => 3,
+                QuantumStatus::PqcDraft => 4,
+                QuantumStatus::PqcFinal => 5,
+            });
+            CbomFamily { family, algorithms }
+        })
+        .collect();
+
+    // Order families by worst algorithm inside them.
+    families.sort_by_key(|fam| {
+        fam.algorithms
+            .first()
+            .map(|a| match a.quantum_status {
+                QuantumStatus::BrokenClassically => 0u8,
+                QuantumStatus::BrokenByShor => 1,
+                QuantumStatus::WeakenedByGrover => 2,
+                QuantumStatus::QuantumSafe => 3,
+                QuantumStatus::PqcDraft => 4,
+                QuantumStatus::PqcFinal => 5,
+            })
+            .unwrap_or(6)
+    });
+
+    families
+}
+
+// ---------------------------------------------------------------------------
+// Summary tab — top algorithms
+// ---------------------------------------------------------------------------
+
+pub struct TopAlgo {
+    pub display_name: String,
+    pub count: usize,
+    pub quantum_status: QuantumStatus,
+}
+
+/// Top N algorithms by finding count.
+pub fn top_algorithms(findings: &[Finding], algorithms: &AlgorithmTable, n: usize) -> Vec<TopAlgo> {
+    let mut counts: BTreeMap<&str, usize> = BTreeMap::new();
+    for f in findings {
+        *counts.entry(&f.algorithm_id).or_default() += 1;
+    }
+    let mut ranked: Vec<(&str, usize)> = counts.into_iter().collect();
+    ranked.sort_by_key(|&(_, c)| std::cmp::Reverse(c));
+    ranked
+        .into_iter()
+        .take(n)
+        .filter_map(|(id, count)| {
+            let rec = algorithms.get(id)?;
+            Some(TopAlgo {
+                display_name: rec.display_name.clone(),
+                count,
+                quantum_status: rec.quantum_status,
+            })
+        })
+        .collect()
+}
+
+/// Per-language/extension breakdown.
+pub struct LangBreakdown {
+    pub lang: String,
+    pub count: usize,
+}
+
+pub fn lang_breakdown(findings: &[Finding]) -> Vec<LangBreakdown> {
+    let mut counts: BTreeMap<String, usize> = BTreeMap::new();
+    for f in findings {
+        let ext = std::path::Path::new(&f.location.location)
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("?")
+            .to_string();
+        *counts.entry(ext).or_default() += 1;
+    }
+    let mut out: Vec<LangBreakdown> = counts
+        .into_iter()
+        .map(|(lang, count)| LangBreakdown { lang, count })
+        .collect();
+    out.sort_by_key(|b| std::cmp::Reverse(b.count));
+    out
 }
 
 // ---------------------------------------------------------------------------
 // KPI strip
 // ---------------------------------------------------------------------------
 
-/// Build KPI summary strings for the top strip.
-#[allow(clippy::too_many_arguments)]
+/// Build KPI summary string for the top strip.
 pub fn build_kpi_line(kpi: &Kpi, days: i64) -> String {
     let pct = |n: usize| -> u8 {
         if kpi.total == 0 {
@@ -216,8 +500,6 @@ pub fn score_bar(value: u8, max: u8, width: usize) -> String {
 // ---------------------------------------------------------------------------
 
 /// Returns whether to suppress colour output.
-///
-/// Exported so render.rs and tests can call it.
 pub fn use_color() -> bool {
     !no_color()
 }

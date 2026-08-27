@@ -8,6 +8,7 @@ description = "cryptoscope tui crate (scaffold)."
 
 [dependencies]
 cryptoscope-core = { path = "../core" }
+cryptoscope-cbom = { path = "../cbom" }
 serde.workspace = true
 thiserror.workspace = true
 ratatui.workspace = true
