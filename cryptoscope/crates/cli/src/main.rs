@@ -5,8 +5,12 @@
 //! and emitter the workspace ships.
 //!
 //! ## Subcommands
+//! * `init [PATH]`          — onboarding wizard, writes `.cryptoscope.toml`
 //! * `scan <path> [FLAGS]`  — file/directory scan (existing)
 //! * `mcp-serve [FLAGS]`    — JSON-RPC 2.0 MCP server over stdio
+
+mod config;
+mod init;
 
 use cryptoscope::mcp;
 
@@ -37,6 +41,13 @@ fn main() -> ExitCode {
             println!("cryptoscope {}", env!("CARGO_PKG_VERSION"));
             ExitCode::SUCCESS
         }
+        Some("init") => {
+            let path = args
+                .get(2)
+                .map(std::path::PathBuf::from)
+                .unwrap_or_default();
+            init::run(path)
+        }
         Some("scan") => match args.get(2) {
             Some(path) => {
                 let opts = parse_scan_flags(&args[3..]);
@@ -65,8 +76,14 @@ fn print_help() {
         r#"cryptoscope {ver} — cryptographic discovery scanner
 
 USAGE:
-    cryptoscope scan <path> [FLAGS]
-    cryptoscope mcp-serve [--allow-network]
+    cryptoscope init [PATH]                   Walk through setup, write .cryptoscope.toml
+    cryptoscope scan [PATH] [FLAGS]           Scan a file or directory
+    cryptoscope mcp-serve [--allow-network]   Start MCP server over stdio
+
+INIT:
+    init [PATH]               Detect languages, ask 5 setup questions, emit
+                              .cryptoscope.toml at PATH (default: current dir).
+                              Safe in CI — uses defaults when stdin is closed.
 
 MCP SERVER:
     mcp-serve                 Start JSON-RPC 2.0 MCP server over stdin/stdout
@@ -215,7 +232,25 @@ fn parse_scan_flags(tail: &[String]) -> ScanFlags {
     flags
 }
 
-fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
+fn run_scan(path: PathBuf, mut flags: ScanFlags) -> ExitCode {
+    // Load .cryptoscope.toml from the scan target directory (or current dir if
+    // it is a file) and apply it as defaults. Explicit CLI flags still win.
+    let config_dir = if path.is_dir() {
+        path.clone()
+    } else {
+        path.parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
+    };
+    if let Ok(Some(cfg)) = config::load_from_dir(&config_dir) {
+        if cfg.policy.include_safe {
+            flags.include_safe = true;
+        }
+        if cfg.diagnostics.show_errors {
+            flags.show_errors = true;
+        }
+    }
+
     let builtins = match load_builtins() {
         Ok(b) => b,
         Err(e) => {
