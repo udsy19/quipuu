@@ -16,7 +16,9 @@ use std::cmp::Reverse;
 
 use askama::Template;
 
-use cryptoscope_core::{AlgorithmTable, Finding, Policy, QuantumRiskScore, Severity};
+use cryptoscope_core::{
+    AlgorithmTable, Finding, Policy, QuantumRiskScore, ScanWarningKind, Severity,
+};
 
 use crate::{ReportError, ReportOptions};
 
@@ -28,6 +30,13 @@ struct HndlRow {
     algorithm: String,
     /// Pre-formatted "path:line" string.
     file_line: String,
+    message: String,
+}
+
+/// One row in the scan diagnostics table.
+struct DiagnosticRow {
+    kind: String,
+    path: String,
     message: String,
 }
 
@@ -82,6 +91,11 @@ struct ReportTemplate {
 
     // Risk register
     register_rows: Vec<RegisterRow>,
+
+    // Scan diagnostics (Phase 7 warnings)
+    diagnostic_rows: Vec<DiagnosticRow>,
+    /// Total warning count before the 20-row cap.
+    diagnostic_total: usize,
 }
 
 // ── Public API ──────────────────────────────────────────────────────────────
@@ -212,6 +226,23 @@ pub fn emit_html(
         })
         .collect();
 
+    // ── Scan diagnostics rows (cap at 20 visible) ─────────────────────────────
+    let diagnostic_total = opts.warnings.len();
+    let diagnostic_rows: Vec<DiagnosticRow> = opts
+        .warnings
+        .iter()
+        .take(20)
+        .map(|w| DiagnosticRow {
+            kind: warning_kind_label(&w.kind).to_string(),
+            path: w
+                .path
+                .as_ref()
+                .map(|p| p.display().to_string())
+                .unwrap_or_default(),
+            message: w.message.clone(),
+        })
+        .collect();
+
     // ── Render ────────────────────────────────────────────────────────────────
     let tmpl = ReportTemplate {
         tool_version: env!("CARGO_PKG_VERSION"),
@@ -234,6 +265,8 @@ pub fn emit_html(
         bar_safe_pct,
         hndl_rows,
         register_rows,
+        diagnostic_rows,
+        diagnostic_total,
     };
 
     Ok(tmpl.render()?)
@@ -271,6 +304,18 @@ fn severity_label(s: Severity) -> String {
         Severity::Safe => "Safe",
     }
     .to_string()
+}
+
+/// Human-readable label for a warning kind.
+fn warning_kind_label(kind: &ScanWarningKind) -> &'static str {
+    match kind {
+        ScanWarningKind::UnreadableFile => "UnreadableFile",
+        ScanWarningKind::ParseError => "ParseError",
+        ScanWarningKind::WalkError => "WalkError",
+        ScanWarningKind::DepManifestError => "DepManifestError",
+        ScanWarningKind::CertDecodeError => "CertDecodeError",
+        ScanWarningKind::Other => "Other",
+    }
 }
 
 /// Build the plain-English "why this matters" sentence for a finding.

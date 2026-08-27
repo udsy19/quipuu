@@ -12,7 +12,7 @@ use std::collections::BTreeMap;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
-use cryptoscope_core::{AlgorithmTable, Finding, Policy, QuantumRiskScore, Severity};
+use cryptoscope_core::{AlgorithmTable, Finding, Policy, QuantumRiskScore, ScanWarning, Severity};
 
 use crate::{ReportError, ReportOptions};
 
@@ -148,30 +148,71 @@ pub fn emit_sarif(
         results_json.push(result);
     }
 
+    // --- Build toolExecutionNotifications[] from warnings (SARIF §3.20.21) ----
+    // Emitted only when warnings are present; omit the field entirely otherwise.
+    let notifications_json: Vec<Value> = opts
+        .warnings
+        .iter()
+        .map(tool_execution_notification)
+        .collect();
+
     // --- Assemble the full SARIF document --------------------------------------
     let automation_id = format!("cryptoscope/{}", opts.timestamp);
+
+    let mut run = json!({
+        "tool": {
+            "driver": {
+                "name": "cryptoscope",
+                "version": env!("CARGO_PKG_VERSION"),
+                "semanticVersion": env!("CARGO_PKG_VERSION"),
+                "informationUri": TOOL_INFORMATION_URI,
+                "rules": rules_json
+            }
+        },
+        "runAutomationDetails": {
+            "id": automation_id
+        },
+        "results": results_json
+    });
+
+    if !notifications_json.is_empty() {
+        run["invocations"] = json!([{
+            "executionSuccessful": true,
+            "toolExecutionNotifications": notifications_json
+        }]);
+    }
 
     let sarif = json!({
         "$schema": SARIF_SCHEMA,
         "version": "2.1.0",
-        "runs": [{
-            "tool": {
-                "driver": {
-                    "name": "cryptoscope",
-                    "version": env!("CARGO_PKG_VERSION"),
-                    "semanticVersion": env!("CARGO_PKG_VERSION"),
-                    "informationUri": TOOL_INFORMATION_URI,
-                    "rules": rules_json
-                }
-            },
-            "runAutomationDetails": {
-                "id": automation_id
-            },
-            "results": results_json
-        }]
+        "runs": [run]
     });
 
     Ok(serde_json::to_string_pretty(&sarif)?)
+}
+
+/// Build one SARIF `toolExecutionNotification` object for a [`ScanWarning`].
+///
+/// Shape per SARIF 2.1.0 §3.58 (`notification` object). The `locations` array
+/// is present only when the warning carries a file path.
+fn tool_execution_notification(w: &ScanWarning) -> Value {
+    let mut notif = json!({
+        "level": "warning",
+        "message": { "text": w.message }
+    });
+
+    if let Some(path) = &w.path {
+        notif["locations"] = json!([{
+            "physicalLocation": {
+                "artifactLocation": {
+                    "uri": path.display().to_string(),
+                    "uriBaseId": "%SRCROOT%"
+                }
+            }
+        }]);
+    }
+
+    notif
 }
 
 /// Map a [`Severity`] to (`level`, `security-severity`) per D-11 / §8.1.

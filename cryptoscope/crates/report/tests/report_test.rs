@@ -5,7 +5,7 @@
 
 use std::path::PathBuf;
 
-use cryptoscope_core::load_builtins;
+use cryptoscope_core::{ScanWarning, ScanWarningKind, load_builtins};
 use cryptoscope_report::{ReportOptions, emit_html, emit_sarif, emit_summary_json};
 use cryptoscope_scan_source::Scanner;
 
@@ -32,6 +32,7 @@ fn default_opts() -> ReportOptions {
     ReportOptions {
         scan_target: "tests/fixtures/go/main.go".to_string(),
         timestamp: "2026-06-15T00:00:00Z".to_string(),
+        warnings: vec![],
     }
 }
 
@@ -534,4 +535,119 @@ fn phase5_why_matters_uses_verbatim_notes_from_table() {
          length {}",
         html.len()
     );
+}
+
+// ── Phase 7: warnings surfaced in HTML and SARIF ────────────────────────────
+
+fn two_warnings() -> Vec<ScanWarning> {
+    vec![
+        ScanWarning::new(
+            ScanWarningKind::UnreadableFile,
+            Some(PathBuf::from("src/secret.go")),
+            "permission denied".to_string(),
+        ),
+        ScanWarning::new(
+            ScanWarningKind::ParseError,
+            Some(PathBuf::from("pkg/crypto/util.go")),
+            "tree-sitter parse failed at line 42".to_string(),
+        ),
+    ]
+}
+
+#[test]
+fn phase7_html_omits_diagnostics_when_no_warnings() {
+    let (findings, algorithms, policy) = make_findings();
+    let html = emit_html(&findings, &algorithms, &policy, &default_opts())
+        .expect("emit_html should succeed");
+
+    assert!(
+        !html.contains("Scan Diagnostics"),
+        "HTML must not contain a diagnostics section when there are no warnings"
+    );
+}
+
+#[test]
+fn phase7_html_renders_diagnostics_section_with_warnings() {
+    let (findings, algorithms, policy) = make_findings();
+    let opts = ReportOptions {
+        scan_target: "tests/fixtures/go/main.go".to_string(),
+        timestamp: "2026-06-15T00:00:00Z".to_string(),
+        warnings: two_warnings(),
+    };
+    let html = emit_html(&findings, &algorithms, &policy, &opts).expect("emit_html should succeed");
+
+    assert!(
+        html.contains("Scan Diagnostics"),
+        "HTML must contain a 'Scan Diagnostics' heading when warnings are present"
+    );
+    assert!(
+        html.contains("permission denied"),
+        "HTML must render the first warning's message"
+    );
+    assert!(
+        html.contains("tree-sitter parse failed at line 42"),
+        "HTML must render the second warning's message"
+    );
+    assert!(
+        html.contains("src/secret.go"),
+        "HTML must render the first warning's path"
+    );
+    assert!(
+        html.contains("UnreadableFile"),
+        "HTML must render the warning kind label"
+    );
+}
+
+#[test]
+fn phase7_sarif_omits_invocations_when_no_warnings() {
+    let (findings, algorithms, policy) = make_findings();
+    let json_str = emit_sarif(&findings, &algorithms, &policy, &default_opts())
+        .expect("emit_sarif should succeed");
+    let val: serde_json::Value = serde_json::from_str(&json_str).unwrap();
+
+    assert!(
+        val["runs"][0]["invocations"].is_null(),
+        "SARIF must not include an 'invocations' field when there are no warnings"
+    );
+}
+
+#[test]
+fn phase7_sarif_emits_tool_execution_notifications_per_warning() {
+    let (findings, algorithms, policy) = make_findings();
+    let opts = ReportOptions {
+        scan_target: "tests/fixtures/go/main.go".to_string(),
+        timestamp: "2026-06-15T00:00:00Z".to_string(),
+        warnings: two_warnings(),
+    };
+    let json_str =
+        emit_sarif(&findings, &algorithms, &policy, &opts).expect("emit_sarif should succeed");
+    let val: serde_json::Value = serde_json::from_str(&json_str).unwrap();
+
+    let invocations = val["runs"][0]["invocations"]
+        .as_array()
+        .expect("runs[0].invocations must be an array when warnings are present");
+    assert!(!invocations.is_empty(), "invocations must not be empty");
+
+    let notifications = invocations[0]["toolExecutionNotifications"]
+        .as_array()
+        .expect("invocations[0].toolExecutionNotifications must be an array");
+    assert_eq!(
+        notifications.len(),
+        2,
+        "expected one notification per warning, got {}",
+        notifications.len()
+    );
+
+    for (i, notif) in notifications.iter().enumerate() {
+        assert_eq!(
+            notif["level"].as_str().unwrap_or(""),
+            "warning",
+            "notification[{i}] must have level=warning"
+        );
+        let text = notif["message"]["text"].as_str().unwrap_or("");
+        assert!(
+            !text.is_empty(),
+            "notification[{i}] must have a non-empty message.text"
+        );
+    }
 }

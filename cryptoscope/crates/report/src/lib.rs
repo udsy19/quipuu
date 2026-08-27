@@ -17,7 +17,7 @@ pub use html::emit_html;
 pub use sarif::emit_sarif;
 pub use summary::emit_summary_json;
 
-use cryptoscope_core::{AlgorithmTable, Finding};
+use cryptoscope_core::{AlgorithmTable, Finding, ScanWarning};
 
 /// Partition findings into (audible, suppressed) sets.
 ///
@@ -53,12 +53,15 @@ use thiserror::Error;
 ///
 /// The `timestamp` field is supplied by the caller so that CI pipelines can
 /// produce byte-for-byte identical reports given the same inputs.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ReportOptions {
     /// Human-readable scan target (path, host, or description).
     pub scan_target: String,
     /// RFC-3339 timestamp string, e.g. `"2026-06-15T12:00:00Z"`.
     pub timestamp: String,
+    /// Non-fatal warnings collected during the scan (Phase 6).
+    /// Empty by default; the HTML and SARIF emitters surface these when present.
+    pub warnings: Vec<ScanWarning>,
 }
 
 /// Errors that can occur during report generation.

@@ -381,6 +381,7 @@ fn run_scan(path: PathBuf, flags: ScanFlags) -> ExitCode {
     let report_opts = ReportOptions {
         scan_target: scan_target.clone(),
         timestamp: timestamp.clone(),
+        warnings: warnings.clone(),
     };
 
     if let Some(out_path) = &flags.html_out {

@@ -34,6 +34,7 @@ pub fn handle(params: Option<Value>, session: &SessionStore) -> Result<Value, (i
     let report_opts = ReportOptions {
         scan_target,
         timestamp: current_timestamp(),
+        warnings: vec![],
     };
 
     let sarif_json = emit_sarif(
