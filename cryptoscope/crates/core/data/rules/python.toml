@@ -52,6 +52,17 @@ algorithm_id = "rsa-3072"
 severity_hint = "auto"
 message = "RSA-{key_size} — quantum-vulnerable to Shor regardless of key size."
 
+# paramiko-style call site: key_size is a runtime variable, not a literal.
+# We can't tell the key size statically, so the safest classification is to
+# flag it under the floor (RSA-1024 algorithm-id captures the worst case).
+[[classify]]
+id = "CRYPTO-104"
+when.api = "^cryptography\\.hazmat\\.rsa\\.generate_private_key$"
+when.args.key_size_symbol = { regex = ".+" }
+algorithm_id = "rsa-2048"
+severity_hint = "auto"
+message = "RSA key size is runtime-variable ({key_size_symbol}); cannot statically verify it meets the 2048-bit floor. Quantum-vulnerable in any case."
+
 # ec — Elliptic curve key generation
 
 [[extract]]
@@ -113,6 +124,17 @@ when.args.curve_name = { regex = "^SECP256K1$" }
 algorithm_id = "ecdsa-secp256k1"
 severity_hint = "auto"
 message = "ECDSA secp256k1 — Bitcoin/Ethereum curve, quantum-vulnerable."
+
+# paramiko-style call site: curve is passed as a runtime identifier rather
+# than a curve constructor (e.g. ec.generate_private_key(curve, ...)).
+# Default to ecdsa-p256 as the typical curve when we can't tell statically.
+[[classify]]
+id = "CRYPTO-115"
+when.api = "^cryptography\\.hazmat\\.ec\\.generate_private_key$"
+when.args.curve_symbol = { regex = ".+" }
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "EC curve is runtime-variable ({curve_symbol}); cannot statically identify the curve. ECDSA in general is quantum-vulnerable — replace with ML-DSA."
 
 # ed25519 / ed448 / x25519 / x448
 

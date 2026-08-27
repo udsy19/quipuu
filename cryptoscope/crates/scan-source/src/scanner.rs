@@ -605,7 +605,9 @@ fn match_java_ctor(class_name: &str) -> Option<(String, HashMap<String, ArgValue
 }
 
 fn match_js_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
-    // JS/TS member expression callees: "object.method"
+    // JS/TS member expression callees. tree-sitter renders nested member
+    // expressions as their full source text, so two-level chains like
+    // `CryptoJS.AES.encrypt` come through as a single &str here.
     let api = match callee {
         "crypto.createCipheriv" => "node:crypto.createCipheriv",
         "crypto.createHash" => "node:crypto.createHash",
@@ -614,6 +616,21 @@ fn match_js_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> 
         "subtle.generateKey" => "webcrypto.subtle.generateKey",
         "subtle.sign" => "webcrypto.subtle.sign",
         "jwt.sign" => "jsonwebtoken.jwt.sign",
+        // crypto-js namespace. Two-level member expressions
+        // (CryptoJS.<Algo>.<method>) plus single-level helpers
+        // (CryptoJS.MD5(msg)). Every algorithm covered here is on the
+        // "broken classically" tier — DES, 3DES, RC4, MD5, SHA-1 — so
+        // they map to existing rules without needing new algorithm-ids.
+        "CryptoJS.AES.encrypt" | "CryptoJS.AES.decrypt" => "crypto-js.AES.encrypt",
+        "CryptoJS.DES.encrypt" | "CryptoJS.DES.decrypt" => "crypto-js.DES.encrypt",
+        "CryptoJS.TripleDES.encrypt" | "CryptoJS.TripleDES.decrypt" => {
+            "crypto-js.TripleDES.encrypt"
+        }
+        "CryptoJS.RC4.encrypt" | "CryptoJS.RC4.decrypt" => "crypto-js.RC4.encrypt",
+        "CryptoJS.MD5" => "crypto-js.MD5",
+        "CryptoJS.SHA1" => "crypto-js.SHA1",
+        "CryptoJS.HmacMD5" => "crypto-js.HmacMD5",
+        "CryptoJS.HmacSHA1" => "crypto-js.HmacSHA1",
         _ => return None,
     };
     Some((api.into(), HashMap::new()))
@@ -706,15 +723,19 @@ fn populate_args(
             }
         }
         (Language::Python, "cryptography.hazmat.rsa.generate_private_key") => {
-            // keyword arg `key_size=<int>`
+            // keyword arg `key_size=<int>`; paramiko passes a variable here.
             if let Some(n) = python_keyword_int(args_node, "key_size", source) {
                 out.insert("key_size".into(), ArgValue::Int(n));
+            } else if let Some(name) = python_keyword_identifier(args_node, "key_size", source) {
+                out.insert("key_size_symbol".into(), ArgValue::Str(name));
             }
         }
         (Language::Python, "cryptography.hazmat.ec.generate_private_key") => {
-            // positional arg ec.SECP256R1()
+            // positional arg ec.SECP256R1(); paramiko passes a bare identifier.
             if let Some(curve) = python_first_arg_call_method(args_node, source) {
                 out.insert("curve_name".into(), ArgValue::Str(curve));
+            } else if let Some(curve) = python_first_arg_identifier(args_node, source) {
+                out.insert("curve_symbol".into(), ArgValue::Str(curve));
             }
         }
         (Language::C | Language::Cpp, "openssl.RSA_generate_key_ex") => {
@@ -884,6 +905,27 @@ fn python_keyword_int(args: Node<'_>, name: &str, source: &[u8]) -> Option<i64> 
     None
 }
 
+/// Look up a keyword argument by name and, when its value isn't an integer
+/// literal, return the identifier's text instead. Used to capture cases like
+/// `rsa.generate_private_key(..., key_size=bits)` where the size is a runtime
+/// variable — paramiko hits this exact shape (rsakey.py:184).
+fn python_keyword_identifier(args: Node<'_>, name: &str, source: &[u8]) -> Option<String> {
+    let mut cursor = args.walk();
+    for child in args.children(&mut cursor) {
+        if child.kind() == "keyword_argument" {
+            let kw_name = child.child_by_field_name("name")?;
+            if node_text(kw_name, source) == name {
+                let kw_val = child.child_by_field_name("value")?;
+                if kw_val.kind() == "identifier" {
+                    return Some(node_text(kw_val, source));
+                }
+                return None;
+            }
+        }
+    }
+    None
+}
+
 fn python_first_arg_call_method(args: Node<'_>, source: &[u8]) -> Option<String> {
     let mut cursor = args.walk();
     for child in args.children(&mut cursor) {
@@ -893,6 +935,25 @@ fn python_first_arg_call_method(args: Node<'_>, source: &[u8]) -> Option<String>
             let attribute = function.child_by_field_name("attribute")?;
             return Some(node_text(attribute, source));
         }
+    }
+    None
+}
+
+/// Like [`python_first_arg_call_method`] but returns the identifier text when
+/// the first positional argument is a bare identifier instead of a call.
+/// paramiko's ecdsakey.py:268 passes `curve` as a variable rather than a call
+/// like `ec.SECP256R1()`.
+fn python_first_arg_identifier(args: Node<'_>, source: &[u8]) -> Option<String> {
+    let mut cursor = args.walk();
+    for child in args.children(&mut cursor) {
+        if !is_real_arg(child) {
+            continue;
+        }
+        if child.kind() == "identifier" {
+            return Some(node_text(child, source));
+        }
+        // Stop at the first real argument; we only care about position 0.
+        return None;
     }
     None
 }

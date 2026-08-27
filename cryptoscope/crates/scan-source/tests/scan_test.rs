@@ -978,3 +978,136 @@ fn phase6_clean_scan_produces_no_warnings() {
         "clean scan should produce no warnings, got: {warnings:?}"
     );
 }
+
+// ── Phase 8: paramiko-style runtime-variable args ───────────────────────────
+
+#[test]
+fn phase8_paramiko_variable_rsa_key_size_produces_finding() {
+    // pre-fix: rsa.generate_private_key(key_size=bits) produced zero findings
+    // because python_keyword_int rejected the identifier. Phase 8 captures it
+    // symbolically and fires CRYPTO-104.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("python/paramiko_style.py"))
+        .expect("scan succeeds");
+
+    let cr104 = findings.iter().find(|f| f.rule_id == "CRYPTO-104");
+    assert!(
+        cr104.is_some(),
+        "expected CRYPTO-104 for rsa.generate_private_key(key_size=bits), got: {:?}",
+        findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
+    );
+    let f = cr104.unwrap();
+    assert_eq!(f.algorithm_id, "rsa-2048");
+    assert!(
+        f.message.contains("bits"),
+        "message should name the variable: {}",
+        f.message
+    );
+}
+
+#[test]
+fn phase8_paramiko_variable_ec_curve_produces_finding() {
+    // pre-fix: ec.generate_private_key(curve) produced zero findings because
+    // python_first_arg_call_method required a call expression. Phase 8
+    // captures bare identifiers and fires CRYPTO-115.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("python/paramiko_style.py"))
+        .expect("scan succeeds");
+
+    let cr115 = findings.iter().find(|f| f.rule_id == "CRYPTO-115");
+    assert!(
+        cr115.is_some(),
+        "expected CRYPTO-115 for ec.generate_private_key(curve), got: {:?}",
+        findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
+    );
+    let f = cr115.unwrap();
+    assert_eq!(f.algorithm_id, "ecdsa-p256");
+    assert!(
+        f.message.contains("curve"),
+        "message should name the variable: {}",
+        f.message
+    );
+}
+
+#[test]
+fn phase8_cryptojs_two_level_member_expression_detected() {
+    // pre-fix: CryptoJS.AES.encrypt etc. produced zero findings because
+    // match_js_callee() had no entries for the crypto-js namespace.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/crypto_js_consumer.js"))
+        .expect("scan succeeds");
+
+    // Every rule in the CRYPTO-370..377 band must fire.
+    for expected in [
+        "CRYPTO-370",
+        "CRYPTO-371",
+        "CRYPTO-372",
+        "CRYPTO-373",
+        "CRYPTO-374",
+        "CRYPTO-375",
+        "CRYPTO-376",
+        "CRYPTO-377",
+    ] {
+        assert!(
+            findings.iter().any(|f| f.rule_id == expected),
+            "expected {} in findings, got: {:?}",
+            expected,
+            findings
+                .iter()
+                .map(|f| &f.rule_id)
+                .collect::<std::collections::BTreeSet<_>>()
+        );
+    }
+    assert_eq!(findings.len(), 8, "expected exactly 8 findings");
+}
+
+#[test]
+fn phase8_cryptojs_des_marked_critical() {
+    // The crypto-js DES path must surface as a critical finding (DES is
+    // classically broken).
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/crypto_js_consumer.js"))
+        .expect("scan succeeds");
+
+    let des = findings
+        .iter()
+        .find(|f| f.rule_id == "CRYPTO-371")
+        .expect("CRYPTO-371 must fire");
+    assert_eq!(des.algorithm_id, "des");
+}
+
+#[test]
+fn phase8_app_py_findings_unchanged() {
+    // Regression guard: the original Python fixture's findings must not
+    // change after the Phase 8 helper additions.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("python/app.py"))
+        .expect("scan succeeds");
+
+    for expected in ["CRYPTO-101", "CRYPTO-102", "CRYPTO-103", "CRYPTO-111"] {
+        assert!(
+            findings.iter().any(|f| f.rule_id == expected),
+            "regression: app.py must still produce {} after Phase 8 changes",
+            expected
+        );
+    }
+    // The literal-int paths must still NOT fire the symbolic rules.
+    assert!(
+        !findings.iter().any(|f| f.rule_id == "CRYPTO-104"),
+        "literal key_size must not trigger the symbolic rule"
+    );
+    assert!(
+        !findings.iter().any(|f| f.rule_id == "CRYPTO-115"),
+        "literal curve must not trigger the symbolic rule"
+    );
+}
