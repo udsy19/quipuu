@@ -30,3 +30,4 @@ __pycache__/
 *.egg-info/
 .coverage
 htmlcov/
+.venv/
