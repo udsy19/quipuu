@@ -137,7 +137,9 @@ cryptoscope detects uses of the following algorithm families across all supporte
 | Avg per project | ~150ms |
 | Languages covered | 7 (Go, Python, Java, JavaScript/TypeScript, C/C++, Rust, C#) |
 
-Audit-validated precision: **75.5%** on a stratified 101-finding sample (Wilson 95% CI: 66.0%–83.1%), up from 73.3% in Phase 12. Full methodology and per-finding verdicts are in `PRECISION_AUDIT_V2.md`. Known false-positive patterns (F, G, H, I in the audit) are documented with minimal-fix specs; Phases 16/17 address them.
+Audit-validated precision: **84.5%** on a stratified 196-finding sample (Wilson 95% CI: 78.5%–89.1%), up from 75.5% in Phase 14a — the largest single-phase gain recorded. Full methodology and per-finding verdicts are in `PRECISION_AUDIT_V3.md`.
+
+Being precise about what that does and does not claim: the point estimate is 84.5%, but the **lower CI bound is 78.5%**, so the scanner does not yet clear an 85% precision floor at 95% confidence. The confidence interval is tighter than prior audits (±5.3 pp vs ±8.6 pp) because the sample is larger. Treat it as defensible for pilot deployments with human triage, not as a claim of 85%.
 
 The benchmark corpus and reproduce script live in `benchmarks/corpus-b-realworld/`. Clone it, run `python3 scan_corpus.py`, and verify the numbers yourself.
 
@@ -189,7 +191,7 @@ cryptoscope scan .
 | MCP server | Yes | No | No | No | No |
 | Auditable open rule format | Yes (TOML) | No (binary) | Yes (QL) | No | Yes (YAML) |
 | Languages (crypto-specific) | 7 | 7+ | 7+ | Java only | Any |
-| Published precision (crypto findings) | 75.5% (101-sample audit) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
+| Published precision (crypto findings) | 84.5% (196-sample audit) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
 | Scan speed (150 projects) | ~22s | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
 
 **Where CodeQL wins:** CodeQL has full inter-procedural data-flow. It can trace a key from generation through storage to use and flag misuse that a pattern-based scanner cannot see. If you need that depth and can absorb the scan time, CodeQL delivers it. cryptoscope does not attempt to replicate data-flow analysis — it trades that capability for speed, locality, and PQC specificity.
@@ -225,7 +227,7 @@ All primary sources — NIST IR 8547 IPD, FIPS 203/204/205, CycloneDX 1.7 schema
 
 ## Roadmap
 
-- **Phase 16/17 (next):** SiteContext precision improvements — structural guards on HMAC/RSA rules to eliminate the false-positive patterns documented in `PRECISION_AUDIT_V2.md`. Target: >85% precision on the next 101-sample audit.
+- **Clear 85% at the lower CI bound.** Phase 18 reached an 84.5% point estimate but a 78.5% lower bound. Closing that gap means both raising the point estimate and shrinking the interval with a larger audited sample.
 - **Broader language coverage:** C# and C/C++ rule packs are skeletal today; Go and Java are the most complete. Expanding C# and C/C++ classify rules is the highest-leverage near-term coverage move.
 - **Community rule packs:** the TOML rule format is public and stable. The path to community contributions is a contributed-rules directory and a CI gate that runs new rules against the benchmark corpus before merge.
 - **Agentic remediation:** a companion engine that consumes the MCP output and proposes verified migration patches, gated on ACVP known-answer tests, oqs-provider interop, and semantic-preservation differential testing.
