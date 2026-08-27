@@ -248,12 +248,140 @@ captures = { jwt = "ident", fn = "ident" }
 api = "jsonwebtoken.jwt.sign"
 description = "jsonwebtoken jwt.sign(payload, secret, {algorithm: ...})."
 
+# jwt.sign — Phase 17 argument-value disambiguation. The original blanket
+# rule was rewritten as per-variant rules below; the catch-all CRYPTO-360
+# stays at the END so the more-specific rules win (first match wins in
+# the apply_classify loop).
+
+# Explicit HMAC: { algorithm: 'HS256' / HS384 / HS512 }
+[[classify]]
+id = "CRYPTO-361"
+when.api = "^jsonwebtoken\\.jwt\\.sign$"
+when.args.algorithm = { regex = "^HS256$" }
+algorithm_id = "sha-256"
+severity_hint = "low"
+message = "jsonwebtoken jwt.sign({algorithm:'HS256'}) — HMAC-SHA256. Confirm signing key entropy."
+
+[[classify]]
+id = "CRYPTO-362"
+when.api = "^jsonwebtoken\\.jwt\\.sign$"
+when.args.algorithm = { regex = "^HS384$" }
+algorithm_id = "sha-384"
+severity_hint = "low"
+message = "jsonwebtoken jwt.sign({algorithm:'HS384'}) — HMAC-SHA384. Confirm signing key entropy."
+
+[[classify]]
+id = "CRYPTO-363"
+when.api = "^jsonwebtoken\\.jwt\\.sign$"
+when.args.algorithm = { regex = "^HS512$" }
+algorithm_id = "sha-512"
+severity_hint = "low"
+message = "jsonwebtoken jwt.sign({algorithm:'HS512'}) — HMAC-SHA512. Confirm signing key entropy."
+
+# Explicit RSA-PKCS1
+[[classify]]
+id = "CRYPTO-364"
+when.api = "^jsonwebtoken\\.jwt\\.sign$"
+when.args.algorithm = { regex = "^RS256$" }
+algorithm_id = "rsa-pkcs1-sha256-2048"
+severity_hint = "auto"
+message = "jsonwebtoken jwt.sign({algorithm:'RS256'}) — RSA-PKCS1-SHA256. Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-365"
+when.api = "^jsonwebtoken\\.jwt\\.sign$"
+when.args.algorithm = { regex = "^RS384$" }
+algorithm_id = "rsa-pkcs1-sha384-3072"
+severity_hint = "auto"
+message = "jsonwebtoken jwt.sign({algorithm:'RS384'}) — RSA-PKCS1-SHA384. Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-366"
+when.api = "^jsonwebtoken\\.jwt\\.sign$"
+when.args.algorithm = { regex = "^RS512$" }
+algorithm_id = "rsa-pkcs1-sha512-4096"
+severity_hint = "auto"
+message = "jsonwebtoken jwt.sign({algorithm:'RS512'}) — RSA-PKCS1-SHA512. Quantum-vulnerable."
+
+# Explicit RSA-PSS
+[[classify]]
+id = "CRYPTO-367"
+when.api = "^jsonwebtoken\\.jwt\\.sign$"
+when.args.algorithm = { regex = "^PS256$" }
+algorithm_id = "rsa-pss-sha256-2048"
+severity_hint = "auto"
+message = "jsonwebtoken jwt.sign({algorithm:'PS256'}) — RSA-PSS-SHA256. Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-368"
+when.api = "^jsonwebtoken\\.jwt\\.sign$"
+when.args.algorithm = { regex = "^PS384$" }
+algorithm_id = "rsa-pss-sha384-3072"
+severity_hint = "auto"
+message = "jsonwebtoken jwt.sign({algorithm:'PS384'}) — RSA-PSS-SHA384. Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-369"
+when.api = "^jsonwebtoken\\.jwt\\.sign$"
+when.args.algorithm = { regex = "^PS512$" }
+algorithm_id = "rsa-pss-sha512-4096"
+severity_hint = "auto"
+message = "jsonwebtoken jwt.sign({algorithm:'PS512'}) — RSA-PSS-SHA512. Quantum-vulnerable."
+
+# Explicit ECDSA
+[[classify]]
+id = "CRYPTO-378"
+when.api = "^jsonwebtoken\\.jwt\\.sign$"
+when.args.algorithm = { regex = "^ES256$" }
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "jsonwebtoken jwt.sign({algorithm:'ES256'}) — ECDSA P-256. Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-379"
+when.api = "^jsonwebtoken\\.jwt\\.sign$"
+when.args.algorithm = { regex = "^ES384$" }
+algorithm_id = "ecdsa-p384"
+severity_hint = "auto"
+message = "jsonwebtoken jwt.sign({algorithm:'ES384'}) — ECDSA P-384. Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-380"
+when.api = "^jsonwebtoken\\.jwt\\.sign$"
+when.args.algorithm = { regex = "^ES512$" }
+algorithm_id = "ecdsa-p521"
+severity_hint = "auto"
+message = "jsonwebtoken jwt.sign({algorithm:'ES512'}) — ECDSA P-521. Quantum-vulnerable."
+
+# alg=none (CWE-347)
+[[classify]]
+id = "CRYPTO-381"
+when.api = "^jsonwebtoken\\.jwt\\.sign$"
+when.args.algorithm = { regex = "^none$" }
+algorithm_id = "jwt-alg-none"
+severity_hint = "critical"
+message = "jsonwebtoken jwt.sign({algorithm:'none'}) — signature verification disabled. CVE-2015-9235 class."
+cwe = "CWE-347"
+
+# No explicit algorithm AND key is a string literal → HMAC default
+# (jsonwebtoken's default is HS256 when the key is a string).
+[[classify]]
+id = "CRYPTO-382"
+when.api = "^jsonwebtoken\\.jwt\\.sign$"
+when.args.key_kind = "string"
+algorithm_id = "sha-256"
+severity_hint = "low"
+message = "jsonwebtoken jwt.sign(payload, <string secret>) — HMAC-SHA256 by default. Confirm key entropy."
+
+# Fallback: jwt.sign call we couldn't disambiguate (non-string key, no
+# explicit algorithm option visible). Medium because the algorithm isn't
+# statically determinable — auditor needs to check the call site.
 [[classify]]
 id = "CRYPTO-360"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 algorithm_id = "rsa-pkcs1-sha256-2048"
-severity_hint = "auto"
-message = "jsonwebtoken jwt.sign() called. Confirm algorithm option and quantum exposure of signing key."
+severity_hint = "medium"
+message = "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key — algorithm not statically determinable. Confirm algorithm at runtime."
 
 # ============================================================================
 # crypto-js — pure-JS crypto library used by ~12M downloads/week.

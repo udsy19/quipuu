@@ -100,12 +100,15 @@ pub fn finding_with_risk_to_json(
     policy: &Policy,
 ) -> Value {
     let mut value = serde_json::to_value(finding).unwrap_or(Value::Null);
-    if let Some(obj) = value.as_object_mut() {
-        if let Some(algo) = algorithms.get(&finding.algorithm_id) {
-            let score = QuantumRiskScore::compute(finding, algo, policy);
-            obj.insert("risk_score".into(), Value::from(score.total));
-            obj.insert("severity".into(), Value::from(format!("{:?}", score.severity)));
-        }
+    if let Some(obj) = value.as_object_mut()
+        && let Some(algo) = algorithms.get(&finding.algorithm_id)
+    {
+        let score = QuantumRiskScore::compute(finding, algo, policy);
+        obj.insert("risk_score".into(), Value::from(score.total));
+        obj.insert(
+            "severity".into(),
+            Value::from(format!("{:?}", score.severity)),
+        );
     }
     value
 }

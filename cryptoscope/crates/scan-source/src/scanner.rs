@@ -1103,8 +1103,90 @@ fn populate_args(
                 out.insert("algo".into(), ArgValue::Str(s));
             }
         }
+        (Language::JavaScript | Language::TypeScript, "jsonwebtoken.jwt.sign") => {
+            // Phase 17 — jwt.sign(payload, key, options?) disambiguation.
+            //   - key (arg 1): if a string literal → HMAC default.
+            //                  otherwise → non-string (RSA/EC/HMAC-from-Buffer).
+            //   - options (arg 2): if present and carries `algorithm: 'XX'`,
+            //                      the explicit algorithm wins.
+            let key_kind = match nth_real_arg_kind(args_node, 1) {
+                Some("string") => "string",
+                Some(_) => "non-string",
+                None => "unknown",
+            };
+            out.insert("key_kind".into(), ArgValue::Str(key_kind.into()));
+            if let Some(alg) = js_options_algorithm(args_node, 2, source) {
+                out.insert("algorithm".into(), ArgValue::Str(alg));
+            }
+        }
         _ => {}
     }
+}
+
+/// Phase 17 — return the tree-sitter kind of the Nth real argument in an
+/// `arguments` node, normalised to one of: "string", "identifier", "object",
+/// "call", "other". Used by `jwt.sign` to distinguish a string-secret HMAC
+/// call from a Buffer/KeyObject RSA call.
+fn nth_real_arg_kind(args: Node<'_>, n: usize) -> Option<&'static str> {
+    let mut cursor = args.walk();
+    let mut idx = 0;
+    for child in args.children(&mut cursor) {
+        if !is_real_arg(child) {
+            continue;
+        }
+        if idx == n {
+            return Some(match child.kind() {
+                "string" | "string_fragment" | "template_string" => "string",
+                "identifier" => "identifier",
+                "object" | "object_expression" => "object",
+                "call_expression" => "call",
+                _ => "other",
+            });
+        }
+        idx += 1;
+    }
+    None
+}
+
+/// Phase 17 — look for an object literal at position `n` of the arguments
+/// list and return the value of its `algorithm:` property as a string.
+/// Strips surrounding quote characters. Returns None if the position isn't
+/// an object literal or doesn't carry an `algorithm` key.
+fn js_options_algorithm(args: Node<'_>, n: usize, source: &[u8]) -> Option<String> {
+    let mut cursor = args.walk();
+    let mut idx = 0;
+    for child in args.children(&mut cursor) {
+        if !is_real_arg(child) {
+            continue;
+        }
+        if idx == n {
+            if !matches!(child.kind(), "object" | "object_expression") {
+                return None;
+            }
+            let mut prop_cursor = child.walk();
+            for prop in child.children(&mut prop_cursor) {
+                if !matches!(prop.kind(), "pair" | "property") {
+                    continue;
+                }
+                let key = prop
+                    .child_by_field_name("key")
+                    .map(|k| node_text(k, source));
+                if key.as_deref() == Some("algorithm")
+                    && let Some(v) = prop.child_by_field_name("value")
+                    && matches!(v.kind(), "string" | "string_fragment" | "template_string")
+                {
+                    let raw = node_text(v, source);
+                    return Some(
+                        raw.trim_matches(|c| c == '"' || c == '\'' || c == '`')
+                            .to_string(),
+                    );
+                }
+            }
+            return None;
+        }
+        idx += 1;
+    }
+    None
 }
 
 /// Java-specific argument extraction for method invocations.

@@ -1866,3 +1866,73 @@ fn phase16_total_count_matches_design() {
             .collect::<Vec<_>>()
     );
 }
+
+// ── Phase 17: jwt.sign argument-value disambiguation ──────────────────────
+
+#[test]
+fn phase17_jwt_sign_routes_by_explicit_algorithm() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/jwt_sign_phase17.js"))
+        .expect("scan succeeds");
+
+    let expected = [
+        (17, "CRYPTO-382", "sha-256"),
+        (20, "CRYPTO-361", "sha-256"),
+        (21, "CRYPTO-362", "sha-384"),
+        (22, "CRYPTO-363", "sha-512"),
+        (25, "CRYPTO-364", "rsa-pkcs1-sha256-2048"),
+        (26, "CRYPTO-365", "rsa-pkcs1-sha384-3072"),
+        (27, "CRYPTO-366", "rsa-pkcs1-sha512-4096"),
+        (30, "CRYPTO-367", "rsa-pss-sha256-2048"),
+        (31, "CRYPTO-368", "rsa-pss-sha384-3072"),
+        (32, "CRYPTO-369", "rsa-pss-sha512-4096"),
+        (35, "CRYPTO-378", "ecdsa-p256"),
+        (36, "CRYPTO-379", "ecdsa-p384"),
+        (37, "CRYPTO-380", "ecdsa-p521"),
+        (40, "CRYPTO-381", "jwt-alg-none"),
+        (43, "CRYPTO-360", "rsa-pkcs1-sha256-2048"),
+    ];
+    for (line, rule, algo) in expected {
+        let f = findings
+            .iter()
+            .find(|f| f.location.line == Some(line))
+            .unwrap_or_else(|| panic!("expected finding on line {line}"));
+        assert_eq!(f.rule_id, rule, "wrong rule on line {line}");
+        assert_eq!(f.algorithm_id, algo, "wrong algorithm_id on line {line}");
+    }
+    assert_eq!(findings.len(), 15);
+}
+
+#[test]
+fn phase17_jwt_sign_string_secret_routes_to_hmac() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/jwt_sign_phase17.js"))
+        .expect("scan succeeds");
+    let line17 = findings
+        .iter()
+        .find(|f| f.location.line == Some(17))
+        .expect("expected finding on line 17");
+    assert_eq!(line17.rule_id, "CRYPTO-382");
+    assert_eq!(line17.algorithm_id, "sha-256");
+    assert!(line17.message.contains("HMAC-SHA256"));
+}
+
+#[test]
+fn phase17_jwt_sign_alg_none_routes_to_sentinel() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/jwt_sign_phase17.js"))
+        .expect("scan succeeds");
+    let line40 = findings
+        .iter()
+        .find(|f| f.location.line == Some(40))
+        .expect("expected finding on line 40");
+    assert_eq!(line40.rule_id, "CRYPTO-381");
+    assert_eq!(line40.algorithm_id, "jwt-alg-none");
+    assert!(line40.message.contains("CVE-2015-9235"));
+}
