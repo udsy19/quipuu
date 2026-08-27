@@ -6,7 +6,7 @@
 
 use std::collections::HashMap;
 
-use cryptoscope_core::Finding;
+use cryptoscope_core::{Finding, ScanWarning};
 use serde::{Deserialize, Serialize};
 
 /// A completed scan result held in memory until the session ends.
@@ -16,6 +16,8 @@ pub struct ScanResult {
     /// Diagnostic statistics (errors, skipped files, …).
     pub stats: ScanStats,
     pub findings: Vec<Finding>,
+    /// Non-fatal per-file warnings (unreadable files, parse failures, …).
+    pub warnings: Vec<ScanWarning>,
     /// False for network scans (non-deterministic).
     pub deterministic: bool,
 }

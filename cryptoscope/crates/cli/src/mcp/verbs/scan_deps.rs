@@ -8,6 +8,7 @@
 
 use std::path::PathBuf;
 
+use cryptoscope_core::ScanWarning;
 use cryptoscope_scan_deps::DepScanner;
 use serde_json::{Value, json};
 
@@ -31,8 +32,9 @@ pub fn handle(params: Option<Value>, session: &mut SessionStore) -> Result<Value
 
     let scanner = DepScanner::with_builtins();
 
+    let mut warnings: Vec<ScanWarning> = Vec::new();
     let findings = scanner
-        .scan_path(&path)
+        .scan_path_collecting(&path, &mut warnings)
         .map_err(|e| (E_PATH_NOT_FOUND, e.to_string()))?;
 
     let scan_id = session.new_id();
@@ -44,6 +46,7 @@ pub fn handle(params: Option<Value>, session: &mut SessionStore) -> Result<Value
         scan_id: scan_id.clone(),
         stats,
         findings,
+        warnings,
         deterministic: true,
     };
     session.insert(result);
@@ -54,11 +57,17 @@ pub fn handle(params: Option<Value>, session: &mut SessionStore) -> Result<Value
         .iter()
         .map(|f| serde_json::to_value(f).unwrap_or(Value::Null))
         .collect();
+    let warnings_json: Vec<Value> = stored
+        .warnings
+        .iter()
+        .map(|w| serde_json::to_value(w).unwrap_or(Value::Null))
+        .collect();
 
     Ok(json!({
         "scanId": scan_id,
         "findings": findings_json,
         "stats": serde_json::to_value(&stored.stats).unwrap_or(Value::Null),
+        "warnings": warnings_json,
         "provenance": "deterministic",
     }))
 }

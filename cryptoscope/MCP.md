@@ -96,7 +96,7 @@ The MCP server exposes 11 tools. All tool names use `snake_case`. All inputs and
 | `exclude` | string[] | no | Glob patterns to skip (relative to `path`). |
 | `policy` | string | no | Policy preset name or path. Defaults to `nist-default`. |
 
-**Output.** `{ "session_id": string, "finding_count": int, "languages_scanned": string[] }`. Findings are retrievable via `get_scan_results`.
+**Output.** `{ "session_id": string, "finding_count": int, "languages_scanned": string[], "warnings": ScanWarning[] }`. Findings are retrievable via `get_scan_results`. `warnings` is always present (empty array on a clean scan); each entry is `{ "kind": string, "path": string | null, "message": string }`.
 
 **Streaming.** Progress notifications are emitted during scanning (see §5.2).
 
@@ -121,7 +121,7 @@ The MCP server exposes 11 tools. All tool names use `snake_case`. All inputs and
 
 Exactly one of `path` or `host` must be provided.
 
-**Output.** `{ "session_id": string, "certificate_count": int, "finding_count": int }`.
+**Output.** `{ "session_id": string, "certificate_count": int, "finding_count": int, "warnings": ScanWarning[] }`. `warnings` follows the same shape as `scan_source`.
 
 **Streaming.** Progress notifications for directory walks.
 
@@ -144,7 +144,7 @@ Exactly one of `path` or `host` must be provided.
 | `manifest_types` | string[] | no | Restrict to `["go.mod","Cargo.toml","requirements.txt","package.json","pom.xml"]`. Default: all. |
 | `policy` | string | no | |
 
-**Output.** `{ "session_id": string, "manifests_found": int, "finding_count": int }`.
+**Output.** `{ "session_id": string, "manifests_found": int, "finding_count": int, "warnings": ScanWarning[] }`. `warnings` follows the same shape as `scan_source`.
 
 **Streaming.** Progress notifications per manifest file parsed.
 

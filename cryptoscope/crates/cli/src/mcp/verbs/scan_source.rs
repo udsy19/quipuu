@@ -14,7 +14,7 @@
 
 use std::path::PathBuf;
 
-use cryptoscope_core::load_builtins;
+use cryptoscope_core::{ScanWarning, load_builtins};
 use cryptoscope_scan_source::Scanner;
 use serde_json::{Value, json};
 
@@ -46,8 +46,9 @@ pub fn handle(params: Option<Value>, session: &mut SessionStore) -> Result<Value
     let scanner = Scanner::with_builtins(builtins.algorithms.clone())
         .map_err(|e| (E_RULESET_INVALID, e.to_string()))?;
 
+    let mut warnings: Vec<ScanWarning> = Vec::new();
     let findings = scanner
-        .scan_path(&path)
+        .scan_path_collecting(&path, &mut warnings)
         .map_err(|e| (E_PATH_NOT_FOUND, e.to_string()))?;
 
     let scan_id = session.new_id();
@@ -59,6 +60,7 @@ pub fn handle(params: Option<Value>, session: &mut SessionStore) -> Result<Value
         scan_id: scan_id.clone(),
         stats,
         findings,
+        warnings,
         deterministic: true,
     };
     session.insert(result);
@@ -66,11 +68,18 @@ pub fn handle(params: Option<Value>, session: &mut SessionStore) -> Result<Value
     if session_mode == "streaming" {
         // Streaming: return scanId + initial cursor; client polls get_scan_results.
         // TODO(SEP-1686): real push notifications when the SEP lands.
+        let stored = session.get(&scan_id).expect("just inserted");
+        let warnings_json: Vec<Value> = stored
+            .warnings
+            .iter()
+            .map(|w| serde_json::to_value(w).unwrap_or(Value::Null))
+            .collect();
         let cursor = encode_cursor(&scan_id, 0);
         Ok(json!({
             "scanId": scan_id,
             "cursor": cursor,
             "mode": "streaming",
+            "warnings": warnings_json,
             "provenance": "deterministic",
         }))
     } else {
@@ -81,10 +90,16 @@ pub fn handle(params: Option<Value>, session: &mut SessionStore) -> Result<Value
             .iter()
             .map(|f| serde_json::to_value(f).unwrap_or(Value::Null))
             .collect();
+        let warnings_json: Vec<Value> = stored
+            .warnings
+            .iter()
+            .map(|w| serde_json::to_value(w).unwrap_or(Value::Null))
+            .collect();
         Ok(json!({
             "scanId": scan_id,
             "findings": findings_json,
             "stats": serde_json::to_value(&stored.stats).unwrap_or(Value::Null),
+            "warnings": warnings_json,
             "provenance": "deterministic",
         }))
     }

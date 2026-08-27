@@ -77,6 +77,7 @@ pub fn handle(
         scan_id: scan_id.clone(),
         stats,
         findings: all_findings,
+        warnings: vec![],
         deterministic: false, // TLS negotiation is non-deterministic
     };
     session.insert(result);
@@ -92,6 +93,7 @@ pub fn handle(
         "scanId": scan_id,
         "findings": findings_json,
         "stats": serde_json::to_value(&stored.stats).unwrap_or(Value::Null),
+        "warnings": [],
         "deterministic": false,
         "provenance": "deterministic",
     }))

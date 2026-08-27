@@ -9,6 +9,7 @@
 
 use std::path::PathBuf;
 
+use cryptoscope_core::ScanWarning;
 use cryptoscope_scan_certs::CertScanner;
 use serde_json::{Value, json};
 
@@ -44,10 +45,13 @@ pub fn handle(
                 ..Default::default()
             },
             findings: vec![],
+            warnings: vec![],
             deterministic: true,
         };
         session.insert(result);
-        return Ok(json!({ "scanId": scan_id, "findings": [], "provenance": "deterministic" }));
+        return Ok(
+            json!({ "scanId": scan_id, "findings": [], "warnings": [], "provenance": "deterministic" }),
+        );
     }
 
     let path_str = params.get("path").and_then(Value::as_str).ok_or_else(|| {
@@ -64,8 +68,9 @@ pub fn handle(
 
     let scanner = CertScanner::with_builtins().map_err(|e| (E_PATH_NOT_FOUND, e.to_string()))?;
 
+    let mut warnings: Vec<ScanWarning> = Vec::new();
     let findings = scanner
-        .scan_path(&path)
+        .scan_path_collecting(&path, &mut warnings)
         .map_err(|e| (E_PATH_NOT_FOUND, e.to_string()))?;
 
     let scan_id = session.new_id();
@@ -77,6 +82,7 @@ pub fn handle(
         scan_id: scan_id.clone(),
         stats,
         findings,
+        warnings,
         deterministic: true,
     };
     session.insert(result);
@@ -87,11 +93,17 @@ pub fn handle(
         .iter()
         .map(|f| serde_json::to_value(f).unwrap_or(Value::Null))
         .collect();
+    let warnings_json: Vec<Value> = stored
+        .warnings
+        .iter()
+        .map(|w| serde_json::to_value(w).unwrap_or(Value::Null))
+        .collect();
 
     Ok(json!({
         "scanId": scan_id,
         "findings": findings_json,
         "stats": serde_json::to_value(&stored.stats).unwrap_or(Value::Null),
+        "warnings": warnings_json,
         "provenance": "deterministic",
     }))
 }

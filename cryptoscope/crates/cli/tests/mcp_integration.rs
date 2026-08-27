@@ -196,6 +196,15 @@ fn test_scan_source_on_fixture() {
         count >= 1,
         "expected >= 1 finding from Go fixture, got {count}"
     );
+    assert!(
+        result["warnings"].is_array(),
+        "warnings field must be present"
+    );
+    assert_eq!(
+        result["warnings"].as_array().unwrap().len(),
+        0,
+        "clean fixture must produce no warnings"
+    );
     assert_eq!(result["provenance"], "deterministic");
 
     s.close();
@@ -430,6 +439,101 @@ fn test_run_acvp_kats_rejects_code_execution() {
 }
 
 // ── Test 14: list-tools ───────────────────────────────────────────────────────
+
+#[test]
+fn test_scan_source_warnings_field_present_on_clean_scan() {
+    // Mirrors test_scan_source_on_fixture but focuses on the warnings contract:
+    // a clean scan must return `warnings: []`, not an absent field.
+    let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../crates/scan-source/tests/fixtures/go/main.go");
+    assert!(fixture.exists(), "fixture not found: {}", fixture.display());
+
+    let mut s = McpSession::start(false);
+
+    let resp = s.request(
+        18,
+        "scan_source",
+        json!({ "path": fixture.to_str().unwrap() }),
+    );
+
+    assert!(resp["result"].is_object(), "expected result, got: {resp}");
+    let result = &resp["result"];
+    assert!(
+        result["warnings"].is_array(),
+        "warnings must be a JSON array, got: {result}"
+    );
+    assert_eq!(
+        result["warnings"].as_array().unwrap().len(),
+        0,
+        "clean scan must produce an empty warnings array"
+    );
+
+    s.close();
+}
+
+// ── Test 15: scan_source surfaces UnreadableFile warning ─────────────────────
+
+#[test]
+fn test_scan_source_returns_warnings_for_unreadable_file() {
+    use std::fs;
+    use std::os::unix::fs::PermissionsExt;
+
+    // Build a fresh per-test temp dir (no external tempfile crate dep).
+    let tmp = std::env::temp_dir().join(format!(
+        "cryptoscope-mcp-warn-{}-{}",
+        std::process::id(),
+        line!()
+    ));
+    let _ = fs::remove_dir_all(&tmp);
+    fs::create_dir_all(&tmp).unwrap();
+
+    let good = tmp.join("good.go");
+    fs::write(
+        &good,
+        b"package main\nimport \"crypto/rsa\"\nfunc main() {\n  rsa.GenerateKey(nil, 1024)\n}\n",
+    )
+    .unwrap();
+    let bad = tmp.join("bad.go");
+    fs::write(&bad, b"package main\n").unwrap();
+    fs::set_permissions(&bad, fs::Permissions::from_mode(0o000)).unwrap();
+
+    let mut s = McpSession::start(false);
+
+    let resp = s.request(19, "scan_source", json!({ "path": tmp.to_str().unwrap() }));
+
+    // Restore permissions before any assertion that might panic.
+    let _ = fs::set_permissions(&bad, fs::Permissions::from_mode(0o644));
+    let _ = fs::remove_dir_all(&tmp);
+
+    assert!(resp["result"].is_object(), "expected result, got: {resp}");
+    let result = &resp["result"];
+
+    // Findings from good.go must still arrive.
+    let findings = result["findings"]
+        .as_array()
+        .expect("findings must be array");
+    assert!(
+        !findings.is_empty(),
+        "good.go must produce findings even when bad.go is unreadable"
+    );
+
+    // Warnings must be non-empty and contain an UnreadableFile entry.
+    let warnings = result["warnings"]
+        .as_array()
+        .expect("warnings must be array");
+    assert!(
+        !warnings.is_empty(),
+        "expected at least one warning for the unreadable file, got none"
+    );
+    assert!(
+        warnings
+            .iter()
+            .any(|w| w["kind"].as_str() == Some("UnreadableFile")),
+        "expected a warning with kind=UnreadableFile, got: {warnings:?}"
+    );
+
+    s.close();
+}
 
 #[test]
 fn test_list_tools() {
