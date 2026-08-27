@@ -728,15 +728,19 @@ fn phase1_jjwt_ps384_rsapss() {
 
 #[test]
 fn phase1_nimbus_jwsalgorithm_rs384() {
+    // Phase 15 split CRYPTO-250 (blanket RS256/384/512 + PS*) into per-hash
+    // rules. RS384 now routes to CRYPTO-259 with algorithm_id
+    // rsa-pkcs1-sha384-3072 (was the blanket sha256-2048 in CRYPTO-250).
     let b = load_builtins().unwrap();
     let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
     let findings = scanner
         .scan_path(&fixtures_root().join("java/Jwt.java"))
         .expect("scan succeeds");
-    assert!(
-        findings.iter().any(|f| f.rule_id == "CRYPTO-250"),
-        "expected CRYPTO-250 for nimbus JWSAlgorithm.RS384"
-    );
+    let f = findings
+        .iter()
+        .find(|f| f.rule_id == "CRYPTO-259")
+        .expect("expected CRYPTO-259 for nimbus JWSAlgorithm.RS384");
+    assert_eq!(f.algorithm_id, "rsa-pkcs1-sha384-3072");
 }
 
 #[test]

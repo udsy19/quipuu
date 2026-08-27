@@ -56,6 +56,30 @@ oid = "1.2.840.113549.1.1.1"
 notes = "NIST IR 8547 IPD: deprecated after 2030, disallowed after 2035."
 
 [[algorithm]]
+id = "rsa-oaep"
+display_name = "RSA-OAEP (SHA-1 MGF)"
+family = "RSA"
+primitive = "pke"
+classical_security_bits = 112
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-768"
+oid = "1.2.840.113549.1.1.7"
+notes = "RSAES-OAEP with SHA-1 MGF (default). JWE RFC 7518 § A. Quantum-vulnerable."
+
+[[algorithm]]
+id = "rsa-oaep-256"
+display_name = "RSA-OAEP-256 (SHA-256 MGF)"
+family = "RSA"
+primitive = "pke"
+classical_security_bits = 112
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-768"
+oid = "1.2.840.113549.1.1.7"
+notes = "RSAES-OAEP with SHA-256 hash + MGF1-SHA256. JWE RFC 7518 § A.3. Same OID as rsa-oaep; algorithm parameters distinguish them. Quantum-vulnerable."
+
+[[algorithm]]
 id = "rsa-3072"
 display_name = "RSA-3072"
 family = "RSA"

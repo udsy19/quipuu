@@ -89,7 +89,12 @@ when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
 when.args.algo = { regex = "(?i)^\"?EC\"?$" }
 algorithm_id = "ecdsa-p256"
 severity_hint = "auto"
-message = "EC keypair generator. Quantum-vulnerable. Replace with ML-DSA-65."
+# Curve is determined by the subsequent .initialize(ECGenParameterSpec)
+# call; we can't see that statement from this matcher. Default to
+# ecdsa-p256 as the most common curve; auditors should check the
+# initialize() call for secp256k1 / P-384 / P-521 variants which
+# would change the algorithm_id (and for secp256k1, the threat model).
+message = "EC keypair generator — curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
 
 [[classify]]
 id = "CRYPTO-212"
@@ -203,13 +208,31 @@ severity_hint = "critical"
 message = "jjwt SignatureAlgorithm.NONE — signature verification disabled (CVE-2015-9235 class)."
 cwe = "CWE-347"
 
+# HMAC variants — split per-hash so the algorithm_id matches the variant
+# (Phase 15 fix; pre-fix all three routed to sha-256, breaking HS384/HS512).
 [[classify]]
 id = "CRYPTO-241"
 when.api = "^io\\.jsonwebtoken\\.SignatureAlgorithm$"
-when.args.member = { regex = "^HS(256|384|512)$" }
-algorithm_id = "sha-256"   # HMAC-SHA*; symmetric and quantum-safe at >=256
+when.args.member = { regex = "^HS256$" }
+algorithm_id = "sha-256"
 severity_hint = "low"
-message = "jjwt SignatureAlgorithm.{member} (HMAC). Symmetric; confirm signing key entropy."
+message = "jjwt SignatureAlgorithm.HS256 (HMAC-SHA256). Symmetric; confirm signing key entropy."
+
+[[classify]]
+id = "CRYPTO-245"
+when.api = "^io\\.jsonwebtoken\\.SignatureAlgorithm$"
+when.args.member = { regex = "^HS384$" }
+algorithm_id = "sha-384"
+severity_hint = "low"
+message = "jjwt SignatureAlgorithm.HS384 (HMAC-SHA384). Symmetric; confirm signing key entropy."
+
+[[classify]]
+id = "CRYPTO-246"
+when.api = "^io\\.jsonwebtoken\\.SignatureAlgorithm$"
+when.args.member = { regex = "^HS512$" }
+algorithm_id = "sha-512"
+severity_hint = "low"
+message = "jjwt SignatureAlgorithm.HS512 (HMAC-SHA512). Symmetric; confirm signing key entropy."
 
 [[classify]]
 id = "CRYPTO-242"
@@ -242,13 +265,56 @@ message = "jjwt SignatureAlgorithm.{member} — ECDSA signature, quantum-vulnera
 # for future static-method classify rules.
 
 # ---------- nimbus-jose-jwt (com.nimbusds.jose.JWSAlgorithm) ----------
+# RS / PS variants — split per-hash so the algorithm_id reflects both the
+# padding scheme (PKCS1 vs PSS) and the hash width (Phase 15 fix; pre-fix
+# all six variants routed to rsa-pkcs1-sha256-2048).
 [[classify]]
 id = "CRYPTO-250"
 when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
-when.args.member = { regex = "^(RS|PS)(256|384|512)$" }
+when.args.member = { regex = "^RS256$" }
 algorithm_id = "rsa-pkcs1-sha256-2048"
 severity_hint = "auto"
-message = "nimbus JWSAlgorithm.{member} — RSA signature, quantum-vulnerable."
+message = "nimbus JWSAlgorithm.RS256 — RSA-PKCS1-SHA256 signature, quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-259"
+when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
+when.args.member = { regex = "^RS384$" }
+algorithm_id = "rsa-pkcs1-sha384-3072"
+severity_hint = "auto"
+message = "nimbus JWSAlgorithm.RS384 — RSA-PKCS1-SHA384 signature, quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-280"
+when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
+when.args.member = { regex = "^RS512$" }
+algorithm_id = "rsa-pkcs1-sha512-4096"
+severity_hint = "auto"
+message = "nimbus JWSAlgorithm.RS512 — RSA-PKCS1-SHA512 signature, quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-281"
+when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
+when.args.member = { regex = "^PS256$" }
+algorithm_id = "rsa-pss-sha256-2048"
+severity_hint = "auto"
+message = "nimbus JWSAlgorithm.PS256 — RSA-PSS-SHA256 signature, quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-282"
+when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
+when.args.member = { regex = "^PS384$" }
+algorithm_id = "rsa-pss-sha384-3072"
+severity_hint = "auto"
+message = "nimbus JWSAlgorithm.PS384 — RSA-PSS-SHA384 signature, quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-283"
+when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
+when.args.member = { regex = "^PS512$" }
+algorithm_id = "rsa-pss-sha512-4096"
+severity_hint = "auto"
+message = "nimbus JWSAlgorithm.PS512 — RSA-PSS-SHA512 signature, quantum-vulnerable."
 
 # ECDSA variants — split per-curve so the algorithm_id matches.
 [[classify]]
@@ -308,13 +374,30 @@ algorithm_id = "ed25519"
 severity_hint = "auto"
 message = "nimbus JWSAlgorithm.EdDSA — Ed25519 signature, quantum-vulnerable."
 
+# JWE RSA key-wrap variants — split per OAEP variant (Phase 15 fix).
 [[classify]]
 id = "CRYPTO-254"
 when.api = "^com\\.nimbusds\\.jose\\.JWEAlgorithm$"
-when.args.member = { regex = "^RSA" }
+when.args.member = { regex = "^RSA_OAEP_256$" }
+algorithm_id = "rsa-oaep-256"
+severity_hint = "auto"
+message = "nimbus JWEAlgorithm.RSA_OAEP_256 — RSA-OAEP-256 key wrapping. Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-284"
+when.api = "^com\\.nimbusds\\.jose\\.JWEAlgorithm$"
+when.args.member = { regex = "^RSA_OAEP$" }
+algorithm_id = "rsa-oaep"
+severity_hint = "auto"
+message = "nimbus JWEAlgorithm.RSA_OAEP — RSA-OAEP (SHA-1) key wrapping. Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-285"
+when.api = "^com\\.nimbusds\\.jose\\.JWEAlgorithm$"
+when.args.member = { regex = "^RSA1_5$" }
 algorithm_id = "rsa-2048"
 severity_hint = "auto"
-message = "nimbus JWEAlgorithm.{member} — RSA key wrapping, quantum-vulnerable."
+message = "nimbus JWEAlgorithm.RSA1_5 — RSA-PKCS1-v1.5 key wrapping (legacy; consider RSA-OAEP-256). Quantum-vulnerable."
 
 # ---------- jose4j (org.jose4j.jws.AlgorithmIdentifiers) ----------
 [[classify]]
@@ -333,21 +416,56 @@ algorithm_id = "rsa-pss-sha256-2048"
 severity_hint = "auto"
 message = "jose4j AlgorithmIdentifiers.{member} — RSA-PSS, quantum-vulnerable."
 
+# ECDSA variants — split per curve (Phase 15 fix; the jose4j identifiers
+# embed the curve name: ECDSA_USING_P256_CURVE_AND_SHA256 etc.).
 [[classify]]
 id = "CRYPTO-262"
 when.api = "^org\\.jose4j\\.jws\\.AlgorithmIdentifiers$"
-when.args.member = { regex = "^ECDSA_USING" }
+when.args.member = { regex = "^ECDSA_USING_P256" }
 algorithm_id = "ecdsa-p256"
 severity_hint = "auto"
-message = "jose4j AlgorithmIdentifiers.{member} — ECDSA, quantum-vulnerable."
+message = "jose4j AlgorithmIdentifiers.{member} — ECDSA P-256, quantum-vulnerable."
 
+[[classify]]
+id = "CRYPTO-267"
+when.api = "^org\\.jose4j\\.jws\\.AlgorithmIdentifiers$"
+when.args.member = { regex = "^ECDSA_USING_P384" }
+algorithm_id = "ecdsa-p384"
+severity_hint = "auto"
+message = "jose4j AlgorithmIdentifiers.{member} — ECDSA P-384, quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-268"
+when.api = "^org\\.jose4j\\.jws\\.AlgorithmIdentifiers$"
+when.args.member = { regex = "^ECDSA_USING_P521" }
+algorithm_id = "ecdsa-p521"
+severity_hint = "auto"
+message = "jose4j AlgorithmIdentifiers.{member} — ECDSA P-521, quantum-vulnerable."
+
+# HMAC variants — split per-hash (Phase 15 fix).
 [[classify]]
 id = "CRYPTO-263"
 when.api = "^org\\.jose4j\\.jws\\.AlgorithmIdentifiers$"
-when.args.member = { regex = "^HMAC" }
+when.args.member = { regex = "^HMAC_SHA256$" }
 algorithm_id = "sha-256"
 severity_hint = "low"
-message = "jose4j AlgorithmIdentifiers.{member} (HMAC). Symmetric; confirm key entropy."
+message = "jose4j AlgorithmIdentifiers.HMAC_SHA256 (HMAC-SHA256). Symmetric; confirm key entropy."
+
+[[classify]]
+id = "CRYPTO-265"
+when.api = "^org\\.jose4j\\.jws\\.AlgorithmIdentifiers$"
+when.args.member = { regex = "^HMAC_SHA384$" }
+algorithm_id = "sha-384"
+severity_hint = "low"
+message = "jose4j AlgorithmIdentifiers.HMAC_SHA384 (HMAC-SHA384). Symmetric; confirm key entropy."
+
+[[classify]]
+id = "CRYPTO-266"
+when.api = "^org\\.jose4j\\.jws\\.AlgorithmIdentifiers$"
+when.args.member = { regex = "^HMAC_SHA512$" }
+algorithm_id = "sha-512"
+severity_hint = "low"
+message = "jose4j AlgorithmIdentifiers.HMAC_SHA512 (HMAC-SHA512). Symmetric; confirm key entropy."
 
 [[classify]]
 id = "CRYPTO-264"
