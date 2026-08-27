@@ -823,6 +823,96 @@ fn phase1_main_java_unchanged() {
     }
 }
 
+// ============================================================================
+// Phase 7: Go string-table dispatch — switch { case "RS256": ... }
+//
+// V3 corpus run: 22/25 Go projects produced zero findings because JWT/JOSE
+// libraries route algorithm choice through switch-on-string. These tests guard
+// against regression of that detection class.
+// ============================================================================
+
+#[test]
+fn phase7_go_switch_rs256_detected() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("go/jwt_switch.go"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-700" && f.algorithm_id == "rsa-pkcs1-sha256-2048"),
+        "expected CRYPTO-700 for Go switch case \"RS256\"; got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn phase7_go_switch_none_critical() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("go/jwt_switch.go"))
+        .expect("scan succeeds");
+
+    let none_finding = findings
+        .iter()
+        .find(|f| f.rule_id == "CRYPTO-740")
+        .expect("expected CRYPTO-740 for Go switch case \"none\" (CWE-347)");
+    assert_eq!(
+        none_finding.algorithm_id, "rsa-1024",
+        "CRYPTO-740 must use rsa-1024 placeholder (same as Java NONE sentinel)"
+    );
+}
+
+#[test]
+fn phase7_go_switch_hmac_low_severity() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("go/jwt_switch.go"))
+        .expect("scan succeeds");
+
+    // HS256, HS384, HS512 must all fire at low severity.
+    for rule_id in ["CRYPTO-730", "CRYPTO-731", "CRYPTO-732"] {
+        assert!(
+            findings.iter().any(|f| f.rule_id == rule_id),
+            "expected {} for Go switch HS* case",
+            rule_id
+        );
+    }
+}
+
+#[test]
+fn phase7_go_main_fixture_unchanged() {
+    // Sanity: Phase 7 changes must not alter findings on the original Go fixture.
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("go/main.go"))
+        .expect("scan succeeds");
+
+    for expected in [
+        "CRYPTO-001",
+        "CRYPTO-002",
+        "CRYPTO-004",
+        "CRYPTO-011",
+        "CRYPTO-012",
+        "CRYPTO-050",
+        "CRYPTO-051",
+    ] {
+        assert!(
+            findings.iter().any(|f| f.rule_id == expected),
+            "regression: go/main.go must still produce {} after Phase 7",
+            expected
+        );
+    }
+}
+
 // ── Phase 6: non-fatal warnings ─────────────────────────────────────────────
 
 #[test]

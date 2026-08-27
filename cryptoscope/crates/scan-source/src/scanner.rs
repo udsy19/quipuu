@@ -278,6 +278,18 @@ fn walk(node: Node<'_>, source: &[u8], language: Language, out: &mut Vec<RawMatc
     {
         out.push(m);
     }
+    // Go runtime string-table dispatch: `switch alg { case "RS256": ... }`.
+    // V3 corpus run: 22 of 25 Go projects produced zero findings because
+    // golang-jwt, go-jose, lestrrat-go/jwx and similar libraries route
+    // algorithm choice through switch-on-string, not direct API calls.
+    // The whitelist is intentional — matching every switch on a string would
+    // flood any Go codebase; we only fire on known JOSE/JWA algorithm names.
+    if language == Language::Go
+        && kind == "expression_switch_statement"
+        && let Some(ms) = match_go_alg_switch(node, source)
+    {
+        out.extend(ms);
+    }
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
         walk(child, source, language, out);
@@ -496,6 +508,89 @@ fn match_java_field_access(node: Node<'_>, source: &[u8]) -> Option<RawMatch> {
         snippet: node_text(node, source),
     })
 }
+
+/// Match Go `switch alg { case "RS256": ... }` patterns emitted by JWT/JOSE libraries.
+///
+/// Returns one [`RawMatch`] per `case` clause whose value is a recognized JOSE
+/// algorithm string. Walks the `expression_case` children of the switch, extracts
+/// the string literal from the `value` → `expression_list` → first child, and
+/// filters against `GO_ALG_SWITCH_WHITELIST`. Returns `None` when the switch
+/// contains no recognized literals — i.e. this function never produces noise on
+/// unrelated switches.
+fn match_go_alg_switch(switch: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch>> {
+    let mut results = Vec::new();
+    let mut cursor = switch.walk();
+    for child in switch.children(&mut cursor) {
+        if child.kind() != "expression_case" {
+            continue;
+        }
+        // expression_case field: value → expression_list → first element
+        let value_list = child.child_by_field_name("value")?;
+        let Some(expr) = value_list.named_child(0) else {
+            continue;
+        };
+        // Go string literals: "interpreted_string_literal" (double-quoted)
+        // or "raw_string_literal" (backtick). We only expect double-quoted
+        // here for JWT alg values, but handle both for completeness.
+        let kind = expr.kind();
+        if kind != "interpreted_string_literal" && kind != "raw_string_literal" {
+            continue;
+        }
+        let raw = node_text(expr, source);
+        let value = raw.trim_matches(|c| c == '"' || c == '`');
+        if !GO_ALG_SWITCH_WHITELIST.contains(&value) {
+            continue;
+        }
+        let api = format!("go.alg-switch.{}", value);
+        let mut args = HashMap::new();
+        args.insert("member".into(), ArgValue::Str(value.to_string()));
+        let start = child.start_position();
+        results.push(RawMatch {
+            api,
+            args,
+            line: (start.row + 1) as u32,
+            offset: child.start_byte() as u32,
+            symbol: value.to_string(),
+            snippet: node_text(child, source)
+                .lines()
+                .next()
+                .unwrap_or("")
+                .to_string(),
+        });
+    }
+    if results.is_empty() {
+        None
+    } else {
+        Some(results)
+    }
+}
+
+/// JOSE/JWA algorithm names that trigger `go.alg-switch.*` rules.
+///
+/// Narrow whitelist by design: matching every switch on a string literal would
+/// flood any Go codebase (config keys, HTTP method strings, etc.). Adding a new
+/// library's algorithm = add its string here + a classify rule in go.toml.
+const GO_ALG_SWITCH_WHITELIST: &[&str] = &[
+    "RS256",
+    "RS384",
+    "RS512",
+    "PS256",
+    "PS384",
+    "PS512",
+    "ES256",
+    "ES384",
+    "ES512",
+    "EdDSA",
+    "HS256",
+    "HS384",
+    "HS512",
+    "none",
+    "RSA-OAEP",
+    "RSA-OAEP-256",
+    "A256GCM",
+    "A192GCM",
+    "A128GCM",
+];
 
 fn match_java_ctor(class_name: &str) -> Option<(String, HashMap<String, ArgValue>)> {
     // BouncyCastle constructor detection
