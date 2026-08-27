@@ -2,25 +2,25 @@
   "corpus": "corpus-b-realworld",
   "include_safe": false,
   "total_projects_scanned": 150,
-  "total_elapsed_seconds": 19.04,
+  "total_elapsed_seconds": 21.52,
   "by_ecosystem": {
     "pypi": {
       "projects_scanned": 25,
-      "projects_with_findings": 11,
-      "projects_with_errors": 1,
-      "total_findings": 34,
-      "audible_findings": 34,
+      "projects_with_findings": 13,
+      "projects_with_errors": 0,
+      "total_findings": 38,
+      "audible_findings": 38,
       "suppressed_findings": 0,
-      "total_duration_seconds": 3.0100000000000002
+      "total_duration_seconds": 4.089999999999999
     },
     "npm": {
       "projects_scanned": 25,
-      "projects_with_findings": 5,
+      "projects_with_findings": 6,
       "projects_with_errors": 0,
-      "total_findings": 74,
-      "audible_findings": 70,
-      "suppressed_findings": 4,
-      "total_duration_seconds": 2.51
+      "total_findings": 117,
+      "audible_findings": 95,
+      "suppressed_findings": 22,
+      "total_duration_seconds": 2.69
     },
     "maven": {
       "projects_scanned": 25,
@@ -29,7 +29,7 @@
       "total_findings": 296,
       "audible_findings": 243,
       "suppressed_findings": 53,
-      "total_duration_seconds": 9.53
+      "total_duration_seconds": 10.440000000000001
     },
     "crates-io": {
       "projects_scanned": 25,
@@ -38,7 +38,7 @@
       "total_findings": 109,
       "audible_findings": 27,
       "suppressed_findings": 82,
-      "total_duration_seconds": 1.3600000000000005
+      "total_duration_seconds": 1.4000000000000006
     },
     "go-modules": {
       "projects_scanned": 25,
@@ -47,7 +47,7 @@
       "total_findings": 58,
       "audible_findings": 58,
       "suppressed_findings": 0,
-      "total_duration_seconds": 1.5600000000000005
+      "total_duration_seconds": 1.8300000000000005
     },
     "crypto-adjacent": {
       "projects_scanned": 25,
@@ -56,7 +56,7 @@
       "total_findings": 6,
       "audible_findings": 4,
       "suppressed_findings": 2,
-      "total_duration_seconds": 0.8200000000000001
+      "total_duration_seconds": 1.0600000000000003
     }
   },
   "top_10_by_findings": [
@@ -69,7 +69,7 @@
       "total_findings": 117,
       "audible_findings": 111,
       "suppressed_findings": 6,
-      "duration_seconds": 3.48,
+      "duration_seconds": 3.93,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -125,7 +125,7 @@
       "total_findings": 78,
       "audible_findings": 51,
       "suppressed_findings": 27,
-      "duration_seconds": 0.14,
+      "duration_seconds": 0.15,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -157,7 +157,7 @@
       "total_findings": 64,
       "audible_findings": 64,
       "suppressed_findings": 0,
-      "duration_seconds": 0.06,
+      "duration_seconds": 0.07,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -181,7 +181,7 @@
       "total_findings": 60,
       "audible_findings": 56,
       "suppressed_findings": 4,
-      "duration_seconds": 1.71,
+      "duration_seconds": 1.86,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -219,7 +219,7 @@
       "total_findings": 50,
       "audible_findings": 50,
       "suppressed_findings": 0,
-      "duration_seconds": 0.32,
+      "duration_seconds": 0.35,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -259,6 +259,26 @@
         {
           "algorithm_id": "ecdsa-p521",
           "count": 1
+        }
+      ]
+    },
+    {
+      "canonical_id": "npm:jsrsasign",
+      "ecosystem": "npm",
+      "scan_paths": [
+        "."
+      ],
+      "total_findings": 43,
+      "audible_findings": 25,
+      "suppressed_findings": 18,
+      "duration_seconds": 0.43,
+      "exit_code": 0,
+      "status": "ok",
+      "errors": [],
+      "sample_findings": [
+        {
+          "algorithm_id": "3des",
+          "count": 25
         }
       ]
     },
@@ -303,7 +323,7 @@
       "total_findings": 11,
       "audible_findings": 11,
       "suppressed_findings": 0,
-      "duration_seconds": 0.48,
+      "duration_seconds": 0.5,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -332,30 +352,6 @@
       "status": "ok",
       "errors": [],
       "sample_findings": []
-    },
-    {
-      "canonical_id": "maven:org.apache.httpcomponents.client5:httpclient5",
-      "ecosystem": "maven",
-      "scan_paths": [
-        "httpclient5/src/main/java"
-      ],
-      "total_findings": 8,
-      "audible_findings": 5,
-      "suppressed_findings": 3,
-      "duration_seconds": 0.17,
-      "exit_code": 0,
-      "status": "ok",
-      "errors": [],
-      "sample_findings": [
-        {
-          "algorithm_id": "des",
-          "count": 4
-        },
-        {
-          "algorithm_id": "md5",
-          "count": 1
-        }
-      ]
     }
   ],
   "projects_with_zero_findings": [
@@ -365,8 +361,6 @@
     "pypi:setuptools",
     "pypi:six",
     "pypi:python-dateutil",
-    "pypi:cryptography",
-    "pypi:paramiko",
     "pypi:pyjwt",
     "pypi:pyasn1",
     "pypi:rsa",
@@ -385,7 +379,6 @@
     "npm:glob",
     "npm:crypto-js",
     "npm:bcryptjs",
-    "npm:jsrsasign",
     "npm:node-rsa",
     "npm:ssh2",
     "npm:openpgp",
@@ -470,12 +463,6 @@
     "crypto-adjacent:github.com/rustpq/pqcrypto"
   ],
   "projects_with_errors": [
-    {
-      "canonical_id": "pypi:setuptools",
-      "errors": [
-        "clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/pypi/setuptools"
-      ]
-    },
     {
       "canonical_id": "maven:org.bouncycastle:bcpkix-jdk18on",
       "errors": [

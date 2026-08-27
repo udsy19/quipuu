@@ -74,7 +74,7 @@ def main() -> int:
     lines: list[str] = []
     w = lines.append
 
-    w("# cryptoscope V3 — 150-project corpus benchmark")
+    w("# cryptoscope V4 — 150-project corpus benchmark")
     w("")
     w(f"**Corpus:** {summary.get('corpus', 'corpus-b-realworld')}  ")
     w(f"**Projects scanned:** {summary['total_projects_scanned']}  ")
@@ -85,10 +85,13 @@ def main() -> int:
     )
     w("")
     w(
-        "This is the V3 corpus run after the Phase 1 (jjwt enum-constant detection) "
-        "and Phase 2 (signal-to-noise) commits. Numbers below are stratified by "
-        "ecosystem and reported without projected values — only what was actually "
-        "scanned."
+        "This is the V4 corpus run, layered on top of Phases 1-6 (jjwt enum "
+        "constants, signal-to-noise, ACVP refresh, why-this-matters, non-fatal "
+        "warnings) plus Phase 7 (Go switch-on-string detection; MCP and HTML/"
+        "SARIF warning surfacing) and Phase 8 (paramiko-style runtime-variable "
+        "args, crypto-js two-level member expressions). Numbers below are "
+        "stratified by ecosystem and reported without projected values — only "
+        "what was actually scanned."
     )
     w("")
 

@@ -1,18 +1,18 @@
-# cryptoscope V3 — 150-project corpus benchmark
+# cryptoscope V4 — 150-project corpus benchmark
 
 **Corpus:** corpus-b-realworld  
 **Projects scanned:** 150  
-**Elapsed:** 19.0s  
+**Elapsed:** 21.5s  
 **Default filter:** quantum-safe inventory hidden from alert output (Phase 2; pass --include-safe to unhide)  
 
-This is the V3 corpus run after the Phase 1 (jjwt enum-constant detection) and Phase 2 (signal-to-noise) commits. Numbers below are stratified by ecosystem and reported without projected values — only what was actually scanned.
+This is the V4 corpus run, layered on top of Phases 1-6 (jjwt enum constants, signal-to-noise, ACVP refresh, why-this-matters, non-fatal warnings) plus Phase 7 (Go switch-on-string detection; MCP and HTML/SARIF warning surfacing) and Phase 8 (paramiko-style runtime-variable args, crypto-js two-level member expressions). Numbers below are stratified by ecosystem and reported without projected values — only what was actually scanned.
 
 ## Headline numbers
 
-- **577 total findings** across 150 projects in 19.0s
-- **436 audible** (76%) surfaced for analyst review; **141 suppressed** (24%) as quantum-safe inventory
-- **41 / 150 projects** produced at least one finding; **10 / 150** had scan errors (mostly missing clones — see below)
-- **Avg scan time:** 0.13s per project (release build, single-threaded)
+- **624 total findings** across 150 projects in 21.5s
+- **465 audible** (75%) surfaced for analyst review; **159 suppressed** (25%) as quantum-safe inventory
+- **44 / 150 projects** produced at least one finding; **9 / 150** had scan errors (mostly missing clones — see below)
+- **Avg scan time:** 0.14s per project (release build, single-threaded)
 
 ### Phase 1 verification — Java JWT libraries now produce findings
 
@@ -29,27 +29,27 @@ Pre-Phase-1 (the V2 corpus run), these projects produced **zero** findings becau
 
 | Ecosystem | Projects | Total findings | Audible | Suppressed (safe) | Errored | Avg scan time |
 |---|---|---|---|---|---|---|
-| crates-io | 25 | 109 | 27 | 82 | 0 | 0.05s |
-| crypto-adjacent | 25 | 6 | 4 | 2 | 2 | 0.03s |
-| go-modules | 25 | 58 | 58 | 0 | 3 | 0.06s |
-| maven | 25 | 296 | 243 | 53 | 4 | 0.38s |
-| npm | 25 | 74 | 70 | 4 | 0 | 0.10s |
-| pypi | 25 | 34 | 34 | 0 | 1 | 0.12s |
+| crates-io | 25 | 109 | 27 | 82 | 0 | 0.06s |
+| crypto-adjacent | 25 | 6 | 4 | 2 | 2 | 0.04s |
+| go-modules | 25 | 58 | 58 | 0 | 3 | 0.07s |
+| maven | 25 | 296 | 243 | 53 | 4 | 0.42s |
+| npm | 25 | 117 | 95 | 22 | 0 | 0.11s |
+| pypi | 25 | 38 | 38 | 0 | 0 | 0.16s |
 
 ## Top 10 projects by total finding count
 
 | Project | Total | Audible | Suppressed | Scan time |
 |---|---|---|---|---|
-| `maven:org.eclipse.jetty:jetty-server` | 117 | 111 | 6 | 3.48s |
+| `maven:org.eclipse.jetty:jetty-server` | 117 | 111 | 6 | 3.93s |
 | `crates-io:rustls-pemfile` | 85 | 24 | 61 | 0.23s |
-| `maven:com.nimbusds:nimbus-jose-jwt` | 78 | 51 | 27 | 0.14s |
-| `npm:jsonwebtoken` | 64 | 64 | 0 | 0.06s |
-| `maven:com.google.crypto.tink:tink` | 60 | 56 | 4 | 1.71s |
-| `go-modules:github.com/hashicorp/vault` | 50 | 50 | 0 | 0.32s |
+| `maven:com.nimbusds:nimbus-jose-jwt` | 78 | 51 | 27 | 0.15s |
+| `npm:jsonwebtoken` | 64 | 64 | 0 | 0.07s |
+| `maven:com.google.crypto.tink:tink` | 60 | 56 | 4 | 1.86s |
+| `go-modules:github.com/hashicorp/vault` | 50 | 50 | 0 | 0.35s |
+| `npm:jsrsasign` | 43 | 25 | 18 | 0.43s |
 | `maven:org.bitbucket.b_c:jose4j` | 15 | 12 | 3 | 0.09s |
-| `pypi:pynacl` | 11 | 11 | 0 | 0.48s |
+| `pypi:pynacl` | 11 | 11 | 0 | 0.5s |
 | `crates-io:rustls` | 10 | 0 | 10 | 0.13s |
-| `maven:org.apache.httpcomponents.client5:httpclient5` | 8 | 5 | 3 | 0.17s |
 
 ## Coverage gaps — expected-non-zero projects with 0 findings
 
@@ -57,11 +57,9 @@ These are well-known crypto libraries / consumers where we expect to find *somet
 
 - `crates-io:ring`
 - `npm:crypto-js`
-- `pypi:cryptography`
-- `pypi:paramiko`
 - `pypi:pyjwt`
 
-### All zero-finding projects (109 / 150)
+### All zero-finding projects (106 / 150)
 
 Note: many of these are zero for legitimate reasons. The expected-non-zero list above is the actionable subset. The remaining categories are:
 
@@ -157,7 +155,6 @@ Note: many of these are zero for legitimate reasons. The expected-non-zero list 
 - `npm:express`
 - `npm:glob`
 - `npm:helmet`
-- `npm:jsrsasign`
 - `npm:lodash`
 - `npm:ms`
 - `npm:node-rsa`
@@ -171,9 +168,7 @@ Note: many of these are zero for legitimate reasons. The expected-non-zero list 
 - `pypi:certifi`
 - `pypi:cffi`
 - `pypi:charset-normalizer`
-- `pypi:cryptography`
 - `pypi:idna`
-- `pypi:paramiko`
 - `pypi:pyasn1`
 - `pypi:pycryptodome`
 - `pypi:pyjwt`
@@ -186,10 +181,8 @@ Note: many of these are zero for legitimate reasons. The expected-non-zero list 
 
 ## Scan errors
 
-10 project(s) produced non-empty error output:
+9 project(s) produced non-empty error output:
 
-- `pypi:setuptools`
-    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/pypi/setuptools
 - `maven:org.bouncycastle:bcpkix-jdk18on`
     - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/bcpkix-jdk18on
 - `maven:com.amazonaws:aws-java-sdk-kms`
