@@ -358,3 +358,94 @@ A build gate prevents the regression: `aes_key_size_is_never_asserted_without_ev
 (`crates/scan-source/src/rules.rs`) fails when any classify rule in any of the
 seven packs publishes an `aes-128*` / `aes-192*` / `aes-256*` id that its own
 `when` clause cannot observe.
+
+## Broken-classical recall: 22 stranded rules, 8 of 9 planted sites missed — measured 2026-08-27
+
+Tuple: **corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profiles `nist-default` and `nsa-cnsa2` · binary at the commit that added the
+reachability gate.**
+
+There is no query engine. The `[[extract]]` S-expressions in the rule packs are
+documentation; every recognised API comes from a hand-written matcher in
+`scan-source/src/scanner.rs`. Nothing checked that the two layers agreed, so a
+`[[classify]]` rule could name an `api` no matcher emits and simply never run.
+**22 of 257 classify rules were in that state** — 16 of the 28 Python rules and
+6 of the 44 Go rules — including `CRYPTO-130` (3DES) and `CRYPTO-131` (RC4),
+both Critical, neither of which had ever produced a finding.
+A silent zero is indistinguishable from a clean codebase, which is why 18
+phases of precision work never surfaced this: recall failures do not appear in
+a precision metric.
+
+Nine textbook broken-classical call sites across Java, Python and Go were
+planted as a fixture. **Before: 1 of 9 detected. After: 9 of 9.**
+
+| | Before | After |
+|---|---|---|
+| Stranded classify rules (can never fire) | 22 | **0** |
+| Planted broken-classical sites detected | 1 / 9 | **9 / 9** |
+| Corpus findings | 898 | **964** |
+| Call sites added / removed | — | 66 / 0 |
+| Existing call sites reclassified | — | 0 |
+
+The 66 new corpus findings, by rule:
+
+| Rule | Algorithm | n | What was unreachable |
+|---|---|---|---|
+| `CRYPTO-161` | `sha-256` | 24 | PyJWT `jwt.encode(…, algorithm="HS256")` |
+| `CRYPTO-040` | `aes-unattributed` | 14 | Go `aes.NewCipher` |
+| `CRYPTO-170/171` | `rsa-1024` / `rsa-2048` | 11 | pycryptodome `RSA.generate(bits)` |
+| `CRYPTO-298` | `ecdsa-unattributed` | 5 | Java `Signature.getInstance("…withECDSA")` |
+| `CRYPTO-293/295` | `rsa-pkcs1-sha*` | 6 | Java `Signature.getInstance("SHA*withRSA")` |
+| `CRYPTO-213` | `rc4` | 2 | Java `Cipher.getInstance("RC4")` |
+| `CRYPTO-122` | `x25519` | 2 | pyca `X25519PrivateKey.generate()` |
+| `CRYPTO-163` | `ecdsa-p256` | 2 | PyJWT `algorithm="ES256"` |
+
+All 66 were labelled by opening the cited `file:line`: **56 TP, 4 FP, 6 DEPENDS**
+(93.3 % on the delta alone, Wilson 84.1–97.4 %). The four FPs are three calls
+asserted to raise inside `pytest.raises` — no signature is produced, so P3 makes
+them false positives — and one `RSA.generate(1280)` published as `rsa-1024`.
+The six DEPENDS are `SHA256withRSA` / `SHA512withRSA` sites where the digest is
+stated and the modulus in the algorithm-id is not.
+
+**Precision, combined with the standing audited sample: 217 TP / 32 FP /
+23 DEPENDS on 272 → 87.1 % (Wilson 82.4–90.7 %), against 85.2 % before.**
+Read that as coverage added at precision held, not as a precision improvement:
+the Phase 18 sample was not re-drawn, the 66 new findings are sampled at 100 %
+where the rest of the corpus is sampled at about 20 %, and the interval overlaps
+the prior one. A real re-audit still has to overwrite it.
+
+Three algorithm-ids stopped asserting parameters their call site never states,
+following the pattern established for AES key sizes:
+
+- Go `MinVersion: tls.VersionTLS10` and Python `ssl.SSLContext(ssl.PROTOCOL_TLSv1)`
+  published `rsa-2048` as an admitted placeholder. Both now publish
+  `tls-legacy-protocol`. A protocol version names no cipher.
+- Java `Signature.getInstance("SHA256withECDSA")` published `ecdsa-p256`. The
+  curve comes from the key passed to `initSign()`, not from the string: jetty's
+  Ethereum credentials call `Signature.getInstance("NONEwithECDSA")` over
+  **secp256k1**. The new `ecdsa-unattributed` sentinel names the family and the
+  Shor verdict, which are exact, and no curve.
+- `Cipher.getInstance("DESede/…")`, `DES.Create()` and `EVP_des_ede3_cbc` were
+  each attributed to the wrong one of DES / 3DES. Split, with the specific arm
+  ordered first.
+- `hashlib.new(<anything>)` published `md5` for every call site. It now reads
+  the literal and fires only on `md5` / `sha1`; a runtime hash name produces no
+  finding.
+
+**Policy invariant held.** The same corpus under `--policy nsa-cnsa2` produces
+a **byte-identical finding set** — same rules, same algorithm-ids, same
+`file:line` — with **104 findings (10.8 %) in a different severity band**,
+against 80 (8.9 %) of 898 before. All 104 are `sha-256` moving Medium → High,
+and the 24 added ones are the newly-reachable PyJWT `HS256` sites. A policy
+reweights findings; it still never creates or suppresses a detection.
+
+Speed held on an idle box: `npm/jose` 0.09–0.14 s over four runs,
+`maven/nimbus-jose-jwt` 0.33–0.34 s. The extra matchers are exact-string
+lookups in `const` tables on callee text the walker already computed.
+
+**Gate.** `every_classify_rule_targets_an_api_the_extractor_can_emit`
+(`crates/scan-source/src/rules.rs`) fails the build when a classify rule's
+`when.api` matches nothing in `scanner::api_surface()`. The api surface is
+derived from the same `const` tables the matchers dispatch on, so it cannot
+drift from them. Confirmed the gate fails by adding a rule for a nonexistent
+api and re-running, per the "a gate that cannot fail is not a gate" rule.

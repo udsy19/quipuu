@@ -144,7 +144,7 @@ Walk a directory (respect `.gitignore`, `--exclude`), parse each file with the r
 
 Parallelize across files with rayon. Stream results to the TUI as they're found.
 
-**Rule format (D-07):** declarative TOML, two-layer. Layer 1 (`extract`) names a tree-sitter S-expression query, capture groups, and primitive value-extractors (literal-int, literal-string, parse-split, ident-resolve). Layer 2 (`classify`) maps `(algo, keysize, curve, mode, padding, …)` tuples to canonical algorithm-ids. The classify layer is **schema-compatible with CBOMkit's published YAML** (`knowledge/sources/cryptobom-forge-cryptocheck_schema.json`) so we round-trip with their algorithm taxonomy.
+**Rule format (D-07):** declarative TOML, two-layer. Layer 1 (`extract`) records the intended tree-sitter S-expression query, capture groups, and primitive value-extractors (literal-int, literal-string, parse-split, ident-resolve) for each call shape. The queries are documentation: they are not executed, and matching is performed by the hand-written walker in `scan-source/src/scanner.rs`. A build gate keeps the two layers consistent by failing when a `classify` rule names an `api` no matcher emits. Layer 2 (`classify`) maps `(algo, keysize, curve, mode, padding, …)` tuples to canonical algorithm-ids. The classify layer is **schema-compatible with CBOMkit's published YAML** (`knowledge/sources/cryptobom-forge-cryptocheck_schema.json`) so we round-trip with their algorithm taxonomy.
 
 ### scan-network (D-08)
 

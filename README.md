@@ -94,7 +94,13 @@ severity band**. The precision figure below therefore holds under both.
 
 ## What you will find
 
-cryptoscope detects uses of the following algorithm families across all supported languages:
+cryptoscope detects uses of the following algorithm families. Coverage is per rule
+pack, not uniform across languages — the RustCrypto `des`/`rc4` crates, for one, have
+no rules yet. What each language actually classifies is the `[[classify]]` list in
+`cryptoscope/crates/core/data/rules/<lang>.toml`, and a build gate
+(`every_classify_rule_targets_an_api_the_extractor_can_emit`) fails when a rule there
+names an API no extractor emits, so the file cannot list a detection the binary does
+not perform.
 
 **Quantum-vulnerable (NIST IR 8547 deprecation scheduled)**
 - RSA — key generation, PKCS1, PSS, OAEP; all key sizes
@@ -192,7 +198,7 @@ cryptoscope scan .
 
 **SiteContext (Phase 16)** is the current-generation context-aware filtering pass. Where earlier phases fired on any algorithm-identifier string, Phase 16 requires the match to appear in a cryptographic operation context — a signing call argument, a key constructor, a type parameter — rather than in a parser config array, a test assertion, or a generated protobuf enum table. This is the primary precision driver in the roadmap.
 
-**Rule format.** Rules live in `crates/core/data/rules/<lang>.toml` as two-layer extract-then-classify pairs. The extract layer is a tree-sitter S-expression query; the classify layer maps captured values to an `algorithm_id` from the algorithm table, a severity hint, and a SARIF message template. The format is intentionally schema-compatible with IBMResearch's cryptobom-forge rule files. ~270 rules across 7 files; every one is plain text, readable in under a minute.
+**Rule format.** Rules live in `crates/core/data/rules/<lang>.toml` as two-layer extract-then-classify pairs. The classify layer maps captured values to an `algorithm_id` from the algorithm table, a severity hint, and a SARIF message template; it is the live layer and the source of truth for classification. The extract layer records the intended tree-sitter S-expression for each call shape, but the queries are not executed — matching is done by a hand-written walker in `scan-source/src/scanner.rs`, and a build gate fails when a classify rule names an API that walker cannot emit. The format is intentionally schema-compatible with IBMResearch's cryptobom-forge rule files. ~270 rules across 7 files; every one is plain text, readable in under a minute.
 
 ---
 
