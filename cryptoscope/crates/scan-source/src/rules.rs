@@ -258,8 +258,3 @@ when = { api = "^foo$", args = { bits = { lt = 2048 } } }
         assert!(!cs.classify.is_empty());
     }
 }
-
-// Re-export `WhenClause` as `WhenMatch` for backwards compat with the
-// scanner's earlier prototype. We keep it lightly aliased to make refactors
-// painless.
-pub type WhenMatch = WhenClause;
