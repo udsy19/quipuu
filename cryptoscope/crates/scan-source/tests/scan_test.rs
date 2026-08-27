@@ -1598,3 +1598,158 @@ fn phase13_ecdsa_curve_consistency() {
         violations.join("\n  ")
     );
 }
+
+// ── Phase 14b: schema invariants over every shipped rule pack ──────────────
+//
+// The Phase 12 / Phase 13 precision audit surfaced rule-authoring bugs that
+// would have been caught by simple schema invariants. These tests walk every
+// classify rule across every language and assert structural correctness so
+// future rule edits can't silently introduce the same class of bugs.
+
+const ALLOWED_SEVERITY_HINTS: &[&str] = &["critical", "high", "medium", "low", "auto"];
+
+#[test]
+fn phase14b_every_algorithm_id_resolves() {
+    // Every classify rule's algorithm_id must be a real entry in the
+    // algorithm-table. Catches typos, stale references after a rename,
+    // and copy-paste of non-existent ids.
+    let b = load_builtins().expect("builtins");
+    let rules = all_classify_rules();
+    let mut missing = Vec::new();
+    for (lang, r) in &rules {
+        if b.algorithms.get(&r.algorithm_id).is_none() {
+            missing.push(format!(
+                "[{lang}] {}: algorithm_id={} is not in the algorithm table",
+                r.id, r.algorithm_id
+            ));
+        }
+    }
+    assert!(
+        missing.is_empty(),
+        "{} classify rules reference unknown algorithm_ids:\n  {}",
+        missing.len(),
+        missing.join("\n  ")
+    );
+}
+
+#[test]
+fn phase14b_every_severity_hint_allowed() {
+    // severity_hint is a free-text TOML field. The risk engine matches it
+    // against a fixed enum. Typos like "criticla" silently degrade to "auto".
+    let rules = all_classify_rules();
+    let mut bad = Vec::new();
+    for (lang, r) in &rules {
+        if !ALLOWED_SEVERITY_HINTS.contains(&r.severity_hint.as_str()) {
+            bad.push(format!(
+                "[{lang}] {}: severity_hint={:?} not in {:?}",
+                r.id, r.severity_hint, ALLOWED_SEVERITY_HINTS
+            ));
+        }
+    }
+    assert!(
+        bad.is_empty(),
+        "{} classify rules use unknown severity_hint:\n  {}",
+        bad.len(),
+        bad.join("\n  ")
+    );
+}
+
+#[test]
+fn phase14b_every_when_api_regex_compiles() {
+    use regex::Regex;
+    let rules = all_classify_rules();
+    let mut bad = Vec::new();
+    for (lang, r) in &rules {
+        if let Err(e) = Regex::new(&r.when.api) {
+            bad.push(format!("[{lang}] {}: when.api invalid: {}", r.id, e));
+        }
+    }
+    assert!(
+        bad.is_empty(),
+        "{} classify rules have invalid when.api regex:\n  {}",
+        bad.len(),
+        bad.join("\n  ")
+    );
+}
+
+#[test]
+fn phase14b_every_when_args_regex_compiles() {
+    use cryptoscope_scan_source::rules::ArgMatch;
+    use regex::Regex;
+    let rules = all_classify_rules();
+    let mut bad = Vec::new();
+    for (lang, r) in &rules {
+        for (cap, am) in &r.when.args {
+            if let ArgMatch::Regex(rx) = am
+                && let Err(e) = Regex::new(&rx.regex)
+            {
+                bad.push(format!(
+                    "[{lang}] {}: when.args.{} regex invalid: {}",
+                    r.id, cap, e
+                ));
+            }
+        }
+    }
+    assert!(
+        bad.is_empty(),
+        "{} classify rules have invalid when.args regex:\n  {}",
+        bad.len(),
+        bad.join("\n  ")
+    );
+}
+
+#[test]
+fn phase14b_every_cwe_id_well_formed() {
+    use regex::Regex;
+    let cwe_pattern = Regex::new(r"^CWE-\d+$").unwrap();
+    let rules = all_classify_rules();
+    let mut bad = Vec::new();
+    for (lang, r) in &rules {
+        if let Some(cwe) = &r.cwe
+            && !cwe_pattern.is_match(cwe)
+        {
+            bad.push(format!(
+                "[{lang}] {}: cwe={:?} doesn't match ^CWE-\\d+$",
+                r.id, cwe
+            ));
+        }
+    }
+    assert!(
+        bad.is_empty(),
+        "{} classify rules have malformed cwe ids:\n  {}",
+        bad.len(),
+        bad.join("\n  ")
+    );
+}
+
+#[test]
+fn phase14b_classify_rule_ids_unique_within_language() {
+    // Each language's rule pack should have unique rule ids within its TOML.
+    // Cross-language duplication is permitted; within-file is a bug.
+    use cryptoscope_scan_source::RulePack;
+    use std::collections::HashSet;
+    let packs: &[(&str, RulePack)] = &[
+        ("go", RulePack::builtin_go().unwrap()),
+        ("python", RulePack::builtin_python().unwrap()),
+        ("java", RulePack::builtin_java().unwrap()),
+        ("javascript", RulePack::builtin_javascript().unwrap()),
+        ("cpp", RulePack::builtin_cpp().unwrap()),
+        ("rust", RulePack::builtin_rust().unwrap()),
+        ("csharp", RulePack::builtin_csharp().unwrap()),
+    ];
+    let mut dupes = Vec::new();
+    for (lang, pack) in packs {
+        let mut seen: HashSet<&str> = HashSet::new();
+        for r in &pack.classify {
+            if !seen.insert(r.id.as_str()) {
+                dupes.push(format!("[{lang}] duplicate classify rule id {}", r.id));
+            }
+        }
+    }
+    assert!(
+        dupes.is_empty(),
+        "{} duplicate rule ids:\n  {}",
+        dupes.len(),
+        dupes.join("\n  ")
+    );
+}

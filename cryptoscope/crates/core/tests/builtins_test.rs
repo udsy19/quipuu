@@ -228,3 +228,75 @@ fn hndl_flag_does_not_trigger_on_ephemeral_signature() {
         &finding, rsa, &b.policy
     ));
 }
+
+// ── Phase 14b: algorithm-table schema invariants ───────────────────────────
+//
+// Catch broken cross-references at test time rather than at corpus-run time.
+
+#[test]
+fn phase14b_every_replacement_resolves() {
+    // Every `replacement` field in algorithm-table.toml must point to another
+    // entry in the same table. The existing validate() in core enforces this
+    // at load time, but a regression test guards future edits if someone
+    // ever weakens the load-time check.
+    let b = load_builtins().unwrap();
+    let mut unresolved = Vec::new();
+    for rec in b.algorithms.iter() {
+        if let Some(repl) = &rec.replacement
+            && b.algorithms.get(repl).is_none()
+        {
+            unresolved.push(format!(
+                "{}: replacement={:?} not in algorithm table",
+                rec.id, repl
+            ));
+        }
+    }
+    assert!(
+        unresolved.is_empty(),
+        "{} unresolved replacement references:\n  {}",
+        unresolved.len(),
+        unresolved.join("\n  ")
+    );
+}
+
+#[test]
+fn phase14b_every_pqcfinal_has_fips_reference_or_is_hybrid() {
+    // Every PqcFinal entry must reference its FIPS standard, except hybrid
+    // TLS groups (which are protocol-level constructs). This is the same
+    // invariant the load-time validate() asserts; documenting it as an
+    // independent test makes the contract explicit.
+    let b = load_builtins().unwrap();
+    let mut bad = Vec::new();
+    for rec in b.algorithms.iter() {
+        if rec.quantum_status == QuantumStatus::PqcFinal
+            && rec.fips.is_none()
+            && rec.family != "Hybrid-KEM"
+        {
+            bad.push(format!("{}: PqcFinal but no fips reference", rec.id));
+        }
+    }
+    assert!(
+        bad.is_empty(),
+        "{} PqcFinal entries missing FIPS reference:\n  {}",
+        bad.len(),
+        bad.join("\n  ")
+    );
+}
+
+#[test]
+fn phase14b_no_duplicate_ids_after_load() {
+    // The load-time validate() rejects duplicates, but the test makes the
+    // contract explicit. If someone splits the table file into multiple
+    // chunks in the future, this test will catch any merge that introduces
+    // duplicate ids.
+    let b = load_builtins().unwrap();
+    use std::collections::HashSet;
+    let mut seen: HashSet<&str> = HashSet::new();
+    let mut dupes = Vec::new();
+    for rec in b.algorithms.iter() {
+        if !seen.insert(rec.id.as_str()) {
+            dupes.push(rec.id.clone());
+        }
+    }
+    assert!(dupes.is_empty(), "duplicate algorithm ids: {:?}", dupes);
+}
