@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# install.sh — curl | sh installer for seawall
+# install.sh — curl | sh installer for quipuu
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/seawall/seawall/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/quipuu/quipuu/main/install.sh | sh
 #
 # Environment variable overrides (set before piping or exporting):
 #   VERSION=v0.1.0      — pin to a specific release (default: latest)
@@ -26,10 +26,10 @@
 set -euo pipefail
 
 # ── Constants ─────────────────────────────────────────────────────────────────
-REPO="seawall/seawall"
+REPO="quipuu/quipuu"
 GITHUB_API="https://api.github.com/repos/${REPO}/releases/latest"
 GITHUB_RELEASES="https://github.com/${REPO}/releases/download"
-BIN_NAME="seawall"
+BIN_NAME="quipuu"
 
 # ── Colour helpers (suppressed when stdout is not a tty) ──────────────────────
 # These are intentionally simple so they work without tput.
@@ -56,10 +56,10 @@ heading() { printf '\n%s%s%s\n' "${BOLD}" "$*" "${RESET}"; }
 # ── --help ────────────────────────────────────────────────────────────────────
 usage() {
     cat <<EOF
-${BOLD}seawall installer${RESET}
+${BOLD}quipuu installer${RESET}
 
 Usage:
-  curl -fsSL https://raw.githubusercontent.com/seawall/seawall/main/install.sh | sh
+  curl -fsSL https://raw.githubusercontent.com/quipuu/quipuu/main/install.sh | sh
 
   # Pin a version:
   VERSION=v0.1.0 sh install.sh
@@ -127,9 +127,9 @@ detect_platform() {
 Windows is not supported by this shell installer.
 
 Please download the .zip archive from the GitHub Releases page:
-  https://github.com/udsy19/seawall/releases
+  https://github.com/udsy19/quipuu/releases
 
-Extract seawall.exe and place it somewhere on your PATH.
+Extract quipuu.exe and place it somewhere on your PATH.
 EOF
             exit 1
             ;;
@@ -215,7 +215,7 @@ resolve_version() {
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 main() {
-    heading "seawall installer"
+    heading "quipuu installer"
 
     check_deps
 
@@ -227,7 +227,7 @@ main() {
     install_dir="$(resolve_install_dir)"
 
     # Strip leading "v" from version for the filename (tag is "v0.1.0",
-    # archive is "seawall-0.1.0-<triple>.tar.gz").
+    # archive is "quipuu-0.1.0-<triple>.tar.gz").
     local ver_no_v="${version#v}"
 
     archive_name="${BIN_NAME}-${ver_no_v}-${target}.tar.gz"

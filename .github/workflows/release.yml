@@ -1,4 +1,4 @@
-# Release workflow for seawall
+# Release workflow for quipuu
 #
 # Triggered when a tag matching "v*" (e.g. v0.1.0) is pushed.
 # Builds fully-static / native binaries for every supported target,
@@ -26,7 +26,7 @@ env:
   RUST_TOOLCHAIN: stable
   CARGO_TERM_COLOR: always
   # The binary name must match the [[bin]] name in crates/cli/Cargo.toml.
-  BIN_NAME: seawall
+  BIN_NAME: quipuu
 
 jobs:
   # ─────────────────────────────────────────────────────────────────────────
@@ -87,7 +87,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: seawall
+        working-directory: quipuu
 
     steps:
       # ── 1. Checkout (full history so the tag ref is available) ────────────
@@ -133,11 +133,11 @@ jobs:
       - name: Cargo cache
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: "seawall -> target"
+          workspaces: "quipuu -> target"
 
       # ── 4. Build the release binary ───────────────────────────────────────
       #
-      # -p seawall targets only the cli crate (the binary).
+      # -p quipuu targets only the cli crate (the binary).
       # --locked ensures we use the exact dependency versions from Cargo.lock.
       - name: cargo build --release
         run: >
@@ -145,7 +145,7 @@ jobs:
           --release
           --target ${{ matrix.target }}
           --bin ${{ env.BIN_NAME }}
-          -p seawall
+          -p quipuu
           --locked
 
       # ── 5. Strip the binary (Linux + macOS) ──────────────────────────────

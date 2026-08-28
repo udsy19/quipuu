@@ -1,6 +1,6 @@
-# .pre-commit-hooks.yaml — seawall pre-commit framework hook definition
+# .pre-commit-hooks.yaml — quipuu pre-commit framework hook definition
 #
-# This file is the hook *definition* that lives in the seawall repo.
+# This file is the hook *definition* that lives in the quipuu repo.
 # It is read by pre-commit when users add this repo as a hook source.
 #
 # USAGE IN A DOWNSTREAM REPO:
@@ -8,24 +8,24 @@
 #   Add the following to your .pre-commit-config.yaml:
 #
 #     repos:
-#       - repo: https://github.com/<TBD>/seawall
+#       - repo: https://github.com/<TBD>/quipuu
 #         rev: v0.1.0          # pin to a release tag
 #         hooks:
-#           - id: seawall-scan
+#           - id: quipuu-scan
 #
 #   Then run:
 #     pre-commit install
 #
-#   seawall will now run on every `git commit`.
-#   It reads .seawall.toml from the repo root when present.
+#   quipuu will now run on every `git commit`.
+#   It reads .quipuu.toml from the repo root when present.
 
-- id: seawall-scan
-  name: seawall — cryptographic hygiene scan
+- id: quipuu-scan
+  name: quipuu — cryptographic hygiene scan
   language: system
 
-  # The hook runs `seawall scan` on the files that are staged for commit.
+  # The hook runs `quipuu scan` on the files that are staged for commit.
   # pre-commit passes the list of staged files as positional arguments;
-  # seawall accepts a path or list of paths to scan.
+  # quipuu accepts a path or list of paths to scan.
   #
   # --fail-on critical  exits 1 when a reported finding scores at severity
   #                     Critical, so medium/low findings don't block every
@@ -33,20 +33,20 @@
   #                     or 'policy' to gate at whatever the active policy's
   #                     [ci] fail_on says.  An unparseable value exits 2.
   #
-  # --config is optional; seawall auto-discovers .seawall.toml at the
+  # --config is optional; quipuu auto-discovers .quipuu.toml at the
   # repo root.  Uncomment and adjust the path if your config lives elsewhere.
-  entry: seawall scan
+  entry: quipuu scan
   args:
     - --fail-on
     - critical
     # - --config
-    # - .seawall.toml
+    # - .quipuu.toml
 
-  # Pass the list of staged file paths to seawall.
+  # Pass the list of staged file paths to quipuu.
   pass_filenames: true
 
   # File types to check.  Pre-commit filters to these before invoking the hook.
-  # seawall is file-type-agnostic; "files" here is a regex matched against
+  # quipuu is file-type-agnostic; "files" here is a regex matched against
   # the staged file path so you can narrow it (e.g. only Rust/Go/Python files).
   # Empty string means "all staged files".
   files: ""
@@ -68,6 +68,6 @@
   # Minimum pre-commit version required.
   minimum_pre_commit_version: "2.9.0"
 
-  # Verbose output is off by default; set verbose: true to see seawall's
+  # Verbose output is off by default; set verbose: true to see quipuu's
   # full output even when the hook passes.
   verbose: false

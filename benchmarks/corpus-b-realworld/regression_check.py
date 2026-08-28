@@ -64,7 +64,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--clones", default=CLONES_DIR, type=Path,
                     help="Root directory holding cloned projects")
-    ap.add_argument("--bin", default=None, help="Path to the seawall binary")
+    ap.add_argument("--bin", default=None, help="Path to the quipuu binary")
     ap.add_argument("--update", action="store_true")
     args = ap.parse_args()
 

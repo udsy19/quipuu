@@ -2,7 +2,7 @@
 
 ## The fastest useful contribution: a false positive
 
-seawall's precision is measured, published, and treated as a release gate. A reproducible false
+quipuu's precision is measured, published, and treated as a release gate. A reproducible false
 positive is therefore one of the most valuable things you can send.
 
 Open an issue with the file, the line, the rule ID (`CRYPTO-NNN`), and why the match is wrong.
@@ -12,7 +12,7 @@ promises every finding resolves to a real literal.
 ## Building
 
 ```bash
-cd seawall
+cd quipuu
 cargo build --release --workspace
 cargo test --workspace
 ```

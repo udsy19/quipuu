@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-seawall analysis-phase test suite.
+quipuu analysis-phase test suite.
 
 What this tests (no Rust yet — we test the knowledge base + data files):
 

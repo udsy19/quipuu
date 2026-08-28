@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>quipuu — {{ policy_name|e }} — {{ scan_target|e }}</title>
+<style>
+/* ── Reset & base ────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+  line-height: 1.6;
+  padding: 0 1rem 4rem;
+}
+a { color: #60a5fa; }
+code, .mono { font-family: "SF Mono", "Fira Code", "Cascadia Code",
+              Menlo, Consolas, monospace; font-size: 0.85em; }
+
+/* ── Layout ─────────────────────────────────────────────────────── */
+.container { max-width: 1200px; margin: 0 auto; padding: 2rem 0; }
+.section { margin-top: 2.5rem; }
+
+/* ── Header ─────────────────────────────────────────────────────── */
+.header {
+  border-bottom: 2px solid #1e293b;
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+}
+.header h1 { font-size: 1.8rem; font-weight: 700; color: #f1f5f9; }
+.header .meta { color: #94a3b8; font-size: 0.9rem; margin-top: 0.4rem; }
+.header .meta span { margin-right: 1.5rem; }
+
+/* ── Section headings ────────────────────────────────────────────── */
+h2 { font-size: 1.25rem; font-weight: 600; color: #f1f5f9;
+     border-left: 3px solid #3b82f6; padding-left: 0.75rem; margin-bottom: 1rem; }
+h3 { font-size: 1.05rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.5rem; }
+
+/* ── Summary cards ───────────────────────────────────────────────── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.card {
+  background: #1e293b;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+.card .label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase;
+               letter-spacing: 0.06em; margin-bottom: 0.25rem; }
+.card .value { font-size: 2rem; font-weight: 700; }
+.card.critical .value { color: #dc2626; }
+.card.high     .value { color: #ea580c; }
+.card.medium   .value { color: #ca8a04; }
+.card.low      .value { color: #2563eb; }
+.card.safe     .value { color: #16a34a; }
+.card.unscored .value { color: #94a3b8; }
+.card.total    .value { color: #f1f5f9; }
+.card.hndl     .value { color: #dc2626; }
+
+/* ── Severity bar ────────────────────────────────────────────────── */
+.risk-bar-container { margin: 1rem 0; }
+.risk-bar-label { font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.4rem; }
+.risk-bar {
+  display: flex;
+  height: 28px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #1e293b;
+}
+.risk-bar .seg { display: flex; align-items: center; justify-content: center;
+                 font-size: 0.75rem; font-weight: 600; color: #fff;
+                 overflow: hidden; white-space: nowrap; }
+.seg.critical { background: #dc2626; }
+.seg.high     { background: #ea580c; }
+.seg.medium   { background: #ca8a04; }
+.seg.low      { background: #2563eb; }
+.seg.safe     { background: #16a34a; }
+.seg.unscored { background: #475569; }
+.risk-legend  { display: flex; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap; }
+.risk-legend .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block;
+                    margin-right: 4px; vertical-align: middle; }
+
+/* ── HNDL callouts ───────────────────────────────────────────────── */
+.hndl-callout {
+  background: #450a0a;
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.hndl-callout .badge { background: #dc2626; color: #fff; padding: 2px 8px;
+                       border-radius: 4px; font-size: 0.75rem; font-weight: 700;
+                       margin-right: 0.5rem; }
+.hndl-callout .rule-id { color: #fca5a5; font-weight: 600; }
+.hndl-callout .location { color: #fca5a5; font-family: "SF Mono", monospace; font-size: 0.82rem; }
+
+/* ── Risk register table ──────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+thead th {
+  background: #1e293b;
+  color: #94a3b8;
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid #334155;
+}
+tbody tr { border-bottom: 1px solid #1e293b; }
+tbody tr:hover { background: #1e293b55; }
+tbody td { padding: 0.55rem 0.75rem; vertical-align: top; color: #cbd5e1; }
+.badge-sev {
+  display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem;
+  font-weight: 700; white-space: nowrap;
+}
+.badge-sev.critical { background: #dc2626; color: #fff; }
+.badge-sev.high     { background: #ea580c; color: #fff; }
+.badge-sev.medium   { background: #ca8a04; color: #fff; }
+.badge-sev.low      { background: #2563eb; color: #fff; }
+.badge-sev.safe     { background: #16a34a; color: #fff; }
+.badge-sev.unscored { background: #475569; color: #e2e8f0; }
+
+/* ── "Why this matters" disclosure ───────────────────────────────── */
+.why-matters {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+.why-matters summary {
+  cursor: pointer;
+  color: #60a5fa;
+  font-weight: 500;
+  user-select: none;
+}
+.why-matters summary:hover {
+  color: #93c5fd;
+}
+.why-matters p {
+  margin: 0.4rem 0 0;
+  padding: 0.5rem 0.75rem;
+  background: #0f172a;
+  border-left: 3px solid #3b82f6;
+  border-radius: 4px;
+  color: #cbd5e1;
+}
+
+/* ── Scan diagnostics ────────────────────────────────────────────── */
+.diag-table td { color: #94a3b8; }
+
+/* ── Compliance ──────────────────────────────────────────────────── */
+.compliance-note {
+  background: #172554;
+  border: 1px solid #1d4ed8;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  color: #93c5fd;
+  font-size: 0.9rem;
+}
+.compliance-note .draft-notice {
+  color: #fbbf24;
+  font-size: 0.82rem;
+  margin-top: 0.4rem;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────── */
+.footer {
+  margin-top: 3rem;
+  border-top: 1px solid #1e293b;
+  padding-top: 1.5rem;
+  color: #475569;
+  font-size: 0.8rem;
+}
+.footer .row { margin-bottom: 0.25rem; }
+
+/* ── Print styles ────────────────────────────────────────────────── */
+@media print {
+  body { background: #fff; color: #000; font-size: 11pt; padding: 0; }
+  .header { border-bottom: 2pt solid #000; }
+  .card { background: #f4f4f4; border: 1pt solid #ccc; break-inside: avoid; }
+  .hndl-callout { background: #fff0f0; border: 1pt solid #c00; break-inside: avoid; }
+  .compliance-note { background: #f0f4ff; border: 1pt solid #00c; }
+  thead th { background: #e8e8e8; color: #000; }
+  tbody tr { border-bottom: 0.5pt solid #ccc; }
+  a { color: #000; text-decoration: underline; }
+  .risk-bar .seg { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .badge-sev { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  h2 { page-break-after: avoid; }
+  table { page-break-inside: avoid; }
+  .table-wrap { overflow: visible; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ── Header ──────────────────────────────────────────────────── -->
+  <div class="header">
+    <h1>quipuu — Cryptographic Risk Report</h1>
+    <div class="meta">
+      <span><strong>Policy:</strong> {{ policy_name|e }}</span>
+      <span><strong>Target:</strong> {{ scan_target|e }}</span>
+      <span><strong>Generated:</strong> {{ timestamp|e }}</span>
+      <span><strong>Version:</strong> {{ tool_version|e }}</span>
+    </div>
+  </div>
+
+  <!-- ── Executive Summary ────────────────────────────────────────── -->
+  <div class="section">
+    <h2>Executive Summary</h2>
+    <div class="summary-grid">
+      <div class="card total">
+        <div class="label">Total Findings</div>
+        <div class="value">{{ total_findings }}</div>
+      </div>
+      <div class="card critical">
+        <div class="label">Critical</div>
+        <div class="value">{{ count_critical }}</div>
+      </div>
+      <div class="card high">
+        <div class="label">High</div>
+        <div class="value">{{ count_high }}</div>
+      </div>
+      <div class="card medium">
+        <div class="label">Medium</div>
+        <div class="value">{{ count_medium }}</div>
+      </div>
+      <div class="card low">
+        <div class="label">Low</div>
+        <div class="value">{{ count_low }}</div>
+      </div>
+      <div class="card safe">
+        <div class="label">Safe</div>
+        <div class="value">{{ count_safe }}</div>
+      </div>
+      <div class="card unscored">
+        <div class="label">Unscored</div>
+        <div class="value">{{ count_unscored }}</div>
+      </div>
+      <div class="card hndl">
+        <div class="label">HNDL-Critical</div>
+        <div class="value">{{ count_hndl }}</div>
+      </div>
+    </div>
+    <p style="color:#94a3b8;font-size:0.9rem;">
+      Quantum-vulnerable assets: <strong style="color:#f87171;">{{ pct_vulnerable }}%</strong>
+      of {{ total_findings }} findings are vulnerable to Shor's algorithm or classically broken.
+    </p>
+  </div>
+
+  <!-- ── Risk Distribution ────────────────────────────────────────── -->
+  <div class="section">
+    <h2>Risk Distribution</h2>
+    <div class="risk-bar-container">
+      <div class="risk-bar-label">Finding severity breakdown (horizontal stacked bar)</div>
+      <div class="risk-bar">
+        {% if bar_critical_pct > 0 %}<div class="seg critical" style="width:{{ bar_critical_pct }}%;"></div>{% endif %}
+        {% if bar_high_pct > 0 %}<div class="seg high" style="width:{{ bar_high_pct }}%;"></div>{% endif %}
+        {% if bar_medium_pct > 0 %}<div class="seg medium" style="width:{{ bar_medium_pct }}%;"></div>{% endif %}
+        {% if bar_low_pct > 0 %}<div class="seg low" style="width:{{ bar_low_pct }}%;"></div>{% endif %}
+        {% if bar_safe_pct > 0 %}<div class="seg safe" style="width:{{ bar_safe_pct }}%;"></div>{% endif %}
+        {% if bar_unscored_pct > 0 %}<div class="seg unscored" style="width:{{ bar_unscored_pct }}%;"></div>{% endif %}
+        {% if total_findings == 0 %}<div class="seg safe" style="width:100%;">No findings</div>{% endif %}
+      </div>
+      <div class="risk-legend">
+        <span><span class="dot" style="background:#dc2626;"></span>Critical</span>
+        <span><span class="dot" style="background:#ea580c;"></span>High</span>
+        <span><span class="dot" style="background:#ca8a04;"></span>Medium</span>
+        <span><span class="dot" style="background:#2563eb;"></span>Low</span>
+        <span><span class="dot" style="background:#16a34a;"></span>Safe</span>
+        <span><span class="dot" style="background:#475569;"></span>Unscored</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── HNDL-Critical Callouts ───────────────────────────────────── -->
+  {% if !hndl_rows.is_empty() %}
+  <div class="section">
+    <h2>HNDL-Critical Findings</h2>
+    <p style="color:#fca5a5;font-size:0.88rem;margin-bottom:1rem;">
+      These findings meet the Harvest-Now-Decrypt-Later (HNDL) threshold: Shor-vulnerable
+      key-establishment algorithms with long-lived data exposure. Migrate immediately.
+      The count is the one in the HNDL-Critical card above and in
+      <code>summary.json</code>&#8217;s <code>totals.hndl_critical</code> &#8212; a
+      high severity band does not put a finding in this section.
+    </p>
+    {% for row in hndl_rows %}
+    <div class="hndl-callout">
+      <span class="badge">HNDL-CRITICAL</span>
+      <span class="rule-id">{{ row.rule_id|e }}</span>
+      &nbsp;&#183;&nbsp;
+      <strong>{{ row.algorithm|e }}</strong>
+      &nbsp;&#183;&nbsp;
+      <span class="location mono">{{ row.file_line|e }}</span>
+      <div style="color:#fca5a5;font-size:0.85rem;margin-top:0.35rem;">{{ row.message|e }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── Risk Register Table ──────────────────────────────────────── -->
+  <div class="section">
+    <h2>Risk Register</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Severity</th>
+            <th>Rule ID</th>
+            <th>Algorithm</th>
+            <th>File : Line</th>
+            <th>Message</th>
+            <th>Recommended Replacement</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in register_rows %}
+          <tr>
+            <td><span class="badge-sev {{ row.severity_class|e }}">{{ row.severity_label|e }}</span></td>
+            <td class="mono">{{ row.rule_id|e }}</td>
+            <td>{{ row.algorithm|e }}</td>
+            <td class="mono" style="white-space:nowrap;">{{ row.file_line|e }}</td>
+            <td>
+              {{ row.message|e }}
+              <details class="why-matters">
+                <summary>Why this matters</summary>
+                <p>{{ row.why_this_matters|e }}</p>
+              </details>
+            </td>
+            <td>{{ row.replacement|e }}</td>
+          </tr>
+          {% endfor %}
+          {% if register_rows.is_empty() %}
+          <tr><td colspan="6" style="text-align:center;color:#475569;padding:2rem;">No findings recorded.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if !diagnostic_rows.is_empty() %}
+  <!-- ── Scan Diagnostics ─────────────────────────────────────────── -->
+  <div class="section">
+    <h2>Scan Diagnostics</h2>
+    <div class="table-wrap">
+      <table class="diag-table">
+        <thead>
+          <tr>
+            <th>Kind</th>
+            <th>Path</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in diagnostic_rows %}
+          <tr>
+            <td class="mono">{{ row.kind|e }}</td>
+            <td class="mono">{{ row.path|e }}</td>
+            <td>{{ row.message|e }}</td>
+          </tr>
+          {% endfor %}
+          {% if diagnostic_total > 20 %}
+          <tr>
+            <td colspan="3" style="text-align:center;color:#94a3b8;padding:0.75rem;">
+              and {{ diagnostic_total - 20 }} more — see CLI output for the full list
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── Compliance ───────────────────────────────────────────────── -->
+  <div class="section">
+    <h2>Compliance Reference</h2>
+    <div class="compliance-note">
+      <strong>Policy in force:</strong> {{ policy_display_name|e }}
+      <br>
+      Risk is classified per <strong>NIST IR 8547 IPD (November 2024)</strong>.
+      Deprecation dates: 112-bit asymmetric deprecated after 2030, disallowed after 2035.
+      AES-128 retained per NIST IR 8547 §4.1.3.
+      <div class="draft-notice">
+        ⚠ NIST IR 8547 is an Initial Public Draft as of mid-2026; final values may differ.
+        Report header names the exact policy preset used for reproducibility.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Footer ───────────────────────────────────────────────────── -->
+  <div class="footer">
+    <div class="row"><strong>Tool:</strong> quipuu {{ tool_version|e }}</div>
+    <div class="row"><strong>Timestamp:</strong> {{ timestamp|e }}</div>
+    <div class="row"><strong>Scan target:</strong> {{ scan_target|e }}</div>
+    <div class="row"><strong>Policy:</strong> {{ policy_name|e }}</div>
+    <div class="row" style="margin-top:0.5rem;">
+      Methodology: 5-axis additive QuantumRiskScore (AlgorithmVulnerability + UsageContext
+      + DataShelfLife + Exposure + DetectionConfidence, max 100). Severity bands: &#8805;75 Critical,
+      50&#8211;74 High, 25&#8211;49 Medium, 10&#8211;24 Low, &lt;10 Safe. Unscored findings carry an
+      algorithm identifier with no row in the algorithm table, so the algorithm-vulnerability axis
+      &#8212; 40 of the 100 points &#8212; cannot be evaluated and no band is assigned.
+      HNDL flagging per Mosca inequality.
+    </div>
+  </div>
+
+</div><!-- /container -->
+</body>
+</html>

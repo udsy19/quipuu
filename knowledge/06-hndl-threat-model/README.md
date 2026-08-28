@@ -1,6 +1,6 @@
 # HNDL Threat Model and Quantum Risk-Scoring Framework
 
-**Purpose:** Authoritative reference for the seawall project's "Harvest Now, Decrypt Later" threat model and the `QuantumRiskScore` algorithm. All claims cite primary-source documents. Where verbatim text could not be retrieved from a closed PDF, that is stated explicitly.
+**Purpose:** Authoritative reference for the quipuu project's "Harvest Now, Decrypt Later" threat model and the `QuantumRiskScore` algorithm. All claims cite primary-source documents. Where verbatim text could not be retrieved from a closed PDF, that is stated explicitly.
 
 ---
 
@@ -267,7 +267,7 @@ M-23-02 Section II.A, item 8, requires agencies to inventory:
 
 > "Lifecycle characteristics of the data contained in the system, including types of data (as described by national records management categories) and **how long the data and associated metadata need protection (i.e., 'time to live').**"
 
-This is the closest primary-source definition of what seawall should treat as "DataShelfLife" in its scoring.
+This is the closest primary-source definition of what quipuu should treat as "DataShelfLife" in its scoring.
 
 ---
 
@@ -298,7 +298,7 @@ Where H is the temporal hazard (probability that CRQC arrives within the data's 
 
 **Critical limitation stated in the paper:** "There is no dataset of confirmed HNDL exploitations. Absolute calibration of Eq. (5) is infeasible in the pre-CRQC regime."
 
-**Operational consequence for seawall:** The IEQ paper establishes that V and E must be multiplied, not summed, for structural correctness. The seawall QuantumRiskScore (Section 8) uses an additive structure for operational simplicity and tooling integration — this is a known theoretical tradeoff, acknowledged by the IEQ authors as acceptable for "operational prioritization indices" that are "locally consistent with P_HNDL within fixed (H, θ, M) regimes."
+**Operational consequence for quipuu:** The IEQ paper establishes that V and E must be multiplied, not summed, for structural correctness. The quipuu QuantumRiskScore (Section 8) uses an additive structure for operational simplicity and tooling integration — this is a known theoretical tradeoff, acknowledged by the IEQ authors as acceptable for "operational prioritization indices" that are "locally consistent with P_HNDL within fixed (H, θ, M) regimes."
 
 **Source:** arXiv:2605.22569. [https://arxiv.org/abs/2605.22569](https://arxiv.org/abs/2605.22569)
 
@@ -394,15 +394,15 @@ CISA's 2023 joint factsheet with NSA and NIST recommends targeting "systems and 
 
 ### 7.5 Summary: "Must be PQ-protected by X date" Matrix
 
-No single primary-source document publishes a sector-by-sector "data type must be PQ-protected by date" matrix. The closest primary-source construct is the M-23-02 priority criterion: **any data "expected to remain mission-sensitive in 2035" requires PQC protection for its key establishment layer now.** This is the operational definition used for seawall's `DataShelfLife` dimension.
+No single primary-source document publishes a sector-by-sector "data type must be PQ-protected by date" matrix. The closest primary-source construct is the M-23-02 priority criterion: **any data "expected to remain mission-sensitive in 2035" requires PQC protection for its key establishment layer now.** This is the operational definition used for quipuu's `DataShelfLife` dimension.
 
 ---
 
-## Section 8: Seawall QuantumRiskScore Algorithm
+## Section 8: Quipuu QuantumRiskScore Algorithm
 
 ### 8.1 Design Rationale
 
-The IEQ framework (§5.1) establishes that a multiplicative V×E structure is theoretically superior to additive scoring. Seawall uses additive scoring because:
+The IEQ framework (§5.1) establishes that a multiplicative V×E structure is theoretically superior to additive scoring. Quipuu uses additive scoring because:
 
 1. Tooling integration: SARIF, CBOM, and static analysis tools produce discrete per-finding severity scores, not probability distributions.
 2. Partial observability: Detection confidence (whether the algorithm was statically detected vs. inferred) is a tool-specific signal that has no place in the IEQ probabilistic model.

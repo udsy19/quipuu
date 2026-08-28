@@ -1,6 +1,6 @@
 # Decisions Register
 
-Every load-bearing build decision for seawall, in **Why → Evidence → Decision** form. Each entry links back to the knowledge folder that established the evidence. If new evidence later contradicts a decision, update it here first, then ripple through SPEC.md.
+Every load-bearing build decision for quipuu, in **Why → Evidence → Decision** form. Each entry links back to the knowledge folder that established the evidence. If new evidence later contradicts a decision, update it here first, then ripple through SPEC.md.
 
 > **How to read this:** "Why" is the question the decision answers. "Evidence" is what we learned in the research pass that forces the answer. "Decision" is what we'll do in v1. "Revisit when" is the trigger to re-open the decision.
 
@@ -32,7 +32,7 @@ Every load-bearing build decision for seawall, in **Why → Evidence → Decisio
 - The same definition also exposes `callstack.frames[]` with `package, module, function, parameters, line, column, fullFilename` — even richer than occurrences.
 - Schema is identical in 1.6 and 1.7 for this subtree.
 
-**Decision:** Every seawall finding emits:
+**Decision:** Every quipuu finding emits:
 - `occurrences[]` entry with `location` = relative path, `line` = 1-based, `offset` = byte offset, `symbol` = API name matched, `additionalContext` = 1–3-line snippet (sanitized).
 - When tree-sitter gives us full call-site context, also emit `callstack.frames[0]` with `package, module, function, line, column, fullFilename`.
 
@@ -182,9 +182,9 @@ Severity bands: ≥75 Critical, 50–74 High, 25–49 Medium, 10–24 Low, <10 S
 - Severity mapping: Critical → `level: error`, `security-severity: "9.0"`; High → `error` / `"8.0"`; Medium → `warning` / `"5.0"`; Low → `note` / `"3.0"`.
 - `partialFingerprints.primaryLocationLineHash` = SHA-256(`ruleId:snippet`)[:16].
 - Rule IDs: `CRYPTO-001`–`CRYPTO-999`, stable across releases.
-- Cross-ref CBOM via `properties.seawall/cbom-ref` on each result (set the convention).
+- Cross-ref CBOM via `properties.quipuu/cbom-ref` on each result (set the convention).
 - No `fix` objects in v1 (PQC migration is not a mechanical substitution).
-- Document GitLab 18.11+ requirement in the README; ship a converter sub-command (`seawall report --format gitlab-sast`) for older GitLab.
+- Document GitLab 18.11+ requirement in the README; ship a converter sub-command (`quipuu report --format gitlab-sast`) for older GitLab.
 
 ---
 
@@ -199,22 +199,22 @@ Severity bands: ≥75 Critical, 50–74 High, 25–49 Medium, 10–24 Low, <10 S
 - Meta has the most sophisticated internal monitoring (FBCrypto + Crypto Visibility) and *admits* it misses shadow dependencies.
 - Competitive landscape: foxguard (Rust, source + TLS config + CBOM) is the closest open-source threat. None of {IBM CBOMkit, cryptobom-forge, SandboxAQ, PANW, QSecure, QuantumXC, Qtonic, Zerberus, Acubed, CryptoScan/CSNP} ship the full {source + net + cert + dep + risk + binary} bundle in one tool.
 
-**Decision:** Reposition the headline. Old: *"the nmap of cryptography"* (still unclaimed, keep as tagline). New thesis: **"Browsers solved the easy half. The other half — your internal services, your dependency tree, your certificates, your forgotten cron jobs — is where the long tail lives. seawall finds it in one pass."** Lean on the NCCoE quote in marketing copy. Track foxguard.
+**Decision:** Reposition the headline. Old: *"the nmap of cryptography"* (still unclaimed, keep as tagline). New thesis: **"Browsers solved the easy half. The other half — your internal services, your dependency tree, your certificates, your forgotten cron jobs — is where the long tail lives. quipuu finds it in one pass."** Lean on the NCCoE quote in marketing copy. Track foxguard.
 
 ---
 
-## D-13 — Working name: **KEEP `seawall`** (resolved 2026-06-12, see `verify-resolution.md` V-05)
+## D-13 — Working name: **KEEP `quipuu`** (resolved 2026-06-12, see `verify-resolution.md` V-05)
 
 **Why:** Make sure the chosen name is clean across crates.io, GitHub, Homebrew, and doesn't collide with a real PQC/SBOM/scanner tool.
 
 **Evidence (resolved):**
-- crates.io API for `seawall` → **available**, no crate published.
-- GitHub: 119 repos search-match `seawall`, but the top by stars is a 1-star cryptocurrency trading bot. None are crypto-asset/CBOM scanners.
+- crates.io API for `quipuu` → **available**, no crate published.
+- GitHub: 119 repos search-match `quipuu`, but the top by stars is a 1-star cryptocurrency trading bot. None are crypto-asset/CBOM scanners.
 - The neighbour we worried about — `csnp/cryptoscan` (singular) — is a different name in a different repo, not a real collision.
 - Backup names checked and available on crates.io: `cbomx`, `qsight`, `pqfind`, `qbom`, `cryptotrace`, `pqsight`, `qx-scan`, `kx-scan`.
 - `pqaudit` is taken (35-download active TLS scanner, March 2026). Avoid.
 
-**Decision:** **Keep `seawall`.** Register the crates.io name and the GitHub org **before** any public code lands. Pinned backup name: **`cbomx`** (short, descriptive, distinctive) if `seawall` becomes contested at publication time.
+**Decision:** **Keep `quipuu`.** Register the crates.io name and the GitHub org **before** any public code lands. Pinned backup name: **`cbomx`** (short, descriptive, distinctive) if `quipuu` becomes contested at publication time.
 
 **Status:** RESOLVED. SPEC.md does not need to be renamed.
 
@@ -236,4 +236,4 @@ Severity bands: ≥75 Critical, 50–74 High, 25–49 Medium, 10–24 Low, <10 S
 | D-10 | 5-axis additive QuantumRiskScore | 06-hndl-threat-model |
 | D-11 | SARIF defaults + SHA-256 partial-fingerprints | 07-sarif |
 | D-12 | Reposition: "long tail", not "cliff" | 10-design-partners |
-| D-13 | Rename — "seawall" collides with existing tools | 08-competitors |
+| D-13 | Rename — "quipuu" collides with existing tools | 08-competitors |

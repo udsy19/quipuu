@@ -1,8 +1,8 @@
-# TLS PQC Reference for seawall
+# TLS PQC Reference for quipuu
 
 **Scope:** Live TLS endpoint scanning — cipher suite, key-exchange group, and signature algorithm enumeration.
 **Snapshot date:** June 2026.
-**Audience:** seawall/scan-network module authors.
+**Audience:** quipuu/scan-network module authors.
 
 Items marked **[DRAFT]** are not yet an RFC; codepoints may change before standardisation.
 Items marked **[VERIFY]** require a fresh registry lookup before shipping.
@@ -231,7 +231,7 @@ Source: [github.com/drwetter/testssl.sh](https://github.com/drwetter/testssl.sh)
 
 Sources: sslyze docs; testssl.sh source; nmap scripting engine source.
 
-### Recommended defaults for seawall
+### Recommended defaults for quipuu
 
 ```
 concurrent_connections_per_host = 5        # matches sslyze 3.x
@@ -340,7 +340,7 @@ No native PQC. PQC before 3.5 required oqs-provider exclusively.
 
 Source: [github.com/open-quantum-safe/oqs-provider](https://github.com/open-quantum-safe/oqs-provider)
 
-### Detection pattern implications for seawall
+### Detection pattern implications for quipuu
 
 A codebase using `EVP_KEM_*` or `EVP_PKEY_ML_KEM_*` APIs from OpenSSL headers indicates OpenSSL 3.5+ native PQC.
 A codebase loading `oqs-provider` via `OSSL_PROVIDER_load(ctx, "oqs")` indicates pre-3.5 or experimental PQC.
@@ -367,7 +367,7 @@ A codebase calling `EVP_PKEY_CTX_kem_set_name(ctx, "kyber768")` via oqs-provider
 
 ---
 
-## DECISIONS for seawall/scan-network
+## DECISIONS for quipuu/scan-network
 
 ### (a) Crate dependencies
 
@@ -433,7 +433,7 @@ All three TLS 1.3 mandatory suites; PQC does not add new cipher suite codepoints
 
 #### Signature algorithms to advertise in ClientHello
 
-Advertise the full classical list (see §2) plus the **[DRAFT]** PQC schemes as a lower-priority tail. Recording whether the server selects a PQC signature algorithm prepares seawall for imminent RFC publication.
+Advertise the full classical list (see §2) plus the **[DRAFT]** PQC schemes as a lower-priority tail. Recording whether the server selects a PQC signature algorithm prepares quipuu for imminent RFC publication.
 
 ---
 

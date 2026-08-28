@@ -32,7 +32,7 @@ except ImportError:
     import tomli as toml_lib
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_BINARY = SCRIPT_DIR.parent.parent / "seawall/target/release/seawall"
+DEFAULT_BINARY = SCRIPT_DIR.parent.parent / "quipuu/target/release/quipuu"
 DEFAULT_CLONES = SCRIPT_DIR / "clones"
 DEFAULT_OUT = SCRIPT_DIR / "results" / "all_findings.json"
 
@@ -144,7 +144,7 @@ def scan_one(project: dict, binary: Path, clones: Path) -> list[dict]:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--bin", default=DEFAULT_BINARY, type=Path,
-                    help="Path to the seawall binary")
+                    help="Path to the quipuu binary")
     ap.add_argument("--clones", default=DEFAULT_CLONES, type=Path,
                     help="Root directory holding cloned projects")
     ap.add_argument("--out", default=DEFAULT_OUT, type=Path,

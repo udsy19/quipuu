@@ -1,0 +1,25 @@
+[package]
+name = "quipuu"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "quipuu — open-source cryptographic discovery scanner."
+
+[[bin]]
+name = "quipuu"
+path = "src/main.rs"
+
+[dependencies]
+quipuu-core = { path = "../core" }
+quipuu-scan-source = { path = "../scan-source" }
+quipuu-scan-network = { path = "../scan-network" }
+quipuu-scan-certs = { path = "../scan-certs" }
+quipuu-scan-deps = { path = "../scan-deps" }
+quipuu-cbom = { path = "../cbom" }
+quipuu-report = { path = "../report" }
+quipuu-tui = { path = "../tui" }
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+tokio.workspace = true

@@ -1,6 +1,6 @@
-# SARIF 2.1.0 — Knowledge File for seawall
+# SARIF 2.1.0 — Knowledge File for quipuu
 
-**Purpose**: Reference for the seawall SARIF emitter (`report` package). Covers spec minimums, GitHub/GitLab ingestion quirks, CBOM cross-referencing, and fix objects.
+**Purpose**: Reference for the quipuu SARIF emitter (`report` package). Covers spec minimums, GitHub/GitLab ingestion quirks, CBOM cross-referencing, and fix objects.
 
 **Primary sources**:
 - OASIS SARIF v2.1.0 spec: https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html
@@ -63,7 +63,7 @@ JSON schema `required`: `["name"]`
 
 | Field | Required | Recommended | Notes |
 |---|---|---|---|
-| `name` | YES | — | E.g., `"seawall"` |
+| `name` | YES | — | E.g., `"quipuu"` |
 | `version` | NO | YES | Semver string, e.g., `"0.1.0"` |
 | `semanticVersion` | NO | YES | Same semver; GitHub uses this for rule versioning display |
 | `informationUri` | NO | YES | Project URL |
@@ -135,7 +135,7 @@ A property bag (object) where keys are fingerprint algorithm names, values are s
 
 If absent, the `upload-sarif` GitHub Action auto-computes it. For self-hosted or GitLab use, emit it explicitly.
 
-**Recommended algorithm for seawall**: SHA-256 of `(ruleId + ":" + normalized_snippet_text)`, truncated to 16 hex chars. This ensures stability across refactors that don't change the flagged line.
+**Recommended algorithm for quipuu**: SHA-256 of `(ruleId + ":" + normalized_snippet_text)`, truncated to 16 hex chars. This ensures stability across refactors that don't change the flagged line.
 
 ---
 
@@ -206,12 +206,12 @@ To use SARIF with GitLab ≤ 17: convert to `gl-sast-report.json` using a commun
 GitLab 18.11 introduced `artifacts:reports:sarif` artifact type under feature flag `sarif_ingestion`. Pipeline config:
 
 ```yaml
-seawall:
+quipuu:
   script:
-    - seawall scan --sarif --output seawall.sarif ./
+    - quipuu scan --sarif --output quipuu.sarif ./
   artifacts:
     reports:
-      sarif: seawall.sarif
+      sarif: quipuu.sarif
 ```
 
 > **Caveat**: The feature flag `sarif_ingestion` was disabled by default at 18.11 launch. Check your GitLab instance's feature flag status before relying on this. For GitLab.com SaaS, check the GitLab changelog for the version when it was enabled by default.
@@ -224,9 +224,9 @@ GitLab reads severity in priority order:
 
 `security-severity ≥ 9.0` → **Critical** in GitLab's model; `level: error` alone only maps to **High**.
 
-### 4.4 Practical recommendation for seawall
+### 4.4 Practical recommendation for quipuu
 
-Target GitLab 18.11+ with `artifacts:reports:sarif`. For users on older GitLab, document that they should use the `--format gl-sast` flag (if seawall adds one) or manually convert with `sarif-to-gl-sast`.
+Target GitLab 18.11+ with `artifacts:reports:sarif`. For users on older GitLab, document that they should use the `--format gl-sast` flag (if quipuu adds one) or manually convert with `sarif-to-gl-sast`.
 
 ---
 
@@ -234,7 +234,7 @@ Target GitLab 18.11+ with `artifacts:reports:sarif`. For users on older GitLab, 
 
 No established standard exists for cross-referencing SARIF results to an SBOM/CBOM. CodeQL's SARIF output does not reference any SBOM. Two mechanisms in the spec are suitable:
 
-### 5.1 Option A — `result.properties` bag (recommended for seawall)
+### 5.1 Option A — `result.properties` bag (recommended for quipuu)
 
 Store the CBOM `bom-ref` directly in the result's property bag:
 
@@ -276,7 +276,7 @@ Define a custom taxonomy named `"CBOM"` in `run.taxonomies[]`, add the component
 Pros: formally correct, enables tooling to understand the cross-reference relationship.  
 Cons: verbose; taxonomies must be reconstructed from the CBOM; no existing tooling consumes it.
 
-**Decision**: Use Option A (property bag) for v0. It's readable, debuggable, and survives all consumers. Add an `x-seawall` namespace prefix to avoid collisions: `"seawall/cbom-ref"`.
+**Decision**: Use Option A (property bag) for v0. It's readable, debuggable, and survives all consumers. Add an `x-quipuu` namespace prefix to avoid collisions: `"quipuu/cbom-ref"`.
 
 ---
 
@@ -304,7 +304,7 @@ Use `fix.description` with an empty `artifactChanges` array? — **No**: the sch
 "rule": {
   "id": "CRYPTO-001",
   "help": {
-    "text": "Replace RSA-2048 with ML-DSA-65 (FIPS 204) for post-quantum resistance. See https://seawall.io/rules/CRYPTO-001",
+    "text": "Replace RSA-2048 with ML-DSA-65 (FIPS 204) for post-quantum resistance. See https://quipuu.io/rules/CRYPTO-001",
     "markdown": "Replace RSA-2048 with **ML-DSA-65** (FIPS 204)..."
   }
 }
@@ -326,10 +326,10 @@ One finding: RSA-2048 key generation in `main.go` line 42.
     {
       "tool": {
         "driver": {
-          "name": "seawall",
+          "name": "quipuu",
           "version": "0.1.0",
           "semanticVersion": "0.1.0",
-          "informationUri": "https://github.com/your-org/seawall",
+          "informationUri": "https://github.com/your-org/quipuu",
           "rules": [
             {
               "id": "CRYPTO-001",
@@ -340,7 +340,7 @@ One finding: RSA-2048 key generation in `main.go` line 42.
               "fullDescription": {
                 "text": "RSA-2048 provides approximately 112 bits of classical security but is vulnerable to Shor's algorithm on a sufficiently powerful quantum computer. NIST recommends migrating to ML-DSA (FIPS 204) or ML-KEM (FIPS 203) for new deployments and planning migration for existing ones."
               },
-              "helpUri": "https://seawall.io/rules/CRYPTO-001",
+              "helpUri": "https://quipuu.io/rules/CRYPTO-001",
               "help": {
                 "text": "Replace RSA-2048 with ML-DSA-65 (FIPS 204) for signatures or ML-KEM-768 (FIPS 203) for key encapsulation. See NIST SP 800-208 and NIST IR 8547.",
                 "markdown": "Replace RSA-2048 with **ML-DSA-65** ([FIPS 204](https://csrc.nist.gov/pubs/fips/204/final)) for signatures or **ML-KEM-768** ([FIPS 203](https://csrc.nist.gov/pubs/fips/203/final)) for key encapsulation."
@@ -357,7 +357,7 @@ One finding: RSA-2048 key generation in `main.go` line 42.
         }
       },
       "automationDetails": {
-        "id": "seawall/2024-01-15T10:30:00Z"
+        "id": "quipuu/2024-01-15T10:30:00Z"
       },
       "results": [
         {
@@ -390,12 +390,12 @@ One finding: RSA-2048 key generation in `main.go` line 42.
             "primaryLocationLineHash": "a1b2c3d4e5f6a7b8"
           },
           "properties": {
-            "seawall/cbom-ref": "urn:cdx:f47ac10b-58cc-4372-a567-0e02b2c3d479",
-            "seawall/algorithm": "RSA",
-            "seawall/keySize": 2048,
-            "seawall/primitive": "signature",
-            "seawall/pqcStatus": "vulnerable",
-            "seawall/recommendedReplacement": "ML-DSA-65"
+            "quipuu/cbom-ref": "urn:cdx:f47ac10b-58cc-4372-a567-0e02b2c3d479",
+            "quipuu/algorithm": "RSA",
+            "quipuu/keySize": 2048,
+            "quipuu/primitive": "signature",
+            "quipuu/pqcStatus": "vulnerable",
+            "quipuu/recommendedReplacement": "ML-DSA-65"
           }
         }
       ]
@@ -408,11 +408,11 @@ One finding: RSA-2048 key generation in `main.go` line 42.
 
 ---
 
-## 8. DECISIONS for seawall/report SARIF Emitter
+## 8. DECISIONS for quipuu/report SARIF Emitter
 
 ### 8.1 Severity mapping by finding class
 
-| seawall finding class | `level` | `security-severity` | GitHub bucket | Rationale |
+| quipuu finding class | `level` | `security-severity` | GitHub bucket | Rationale |
 |---|---|---|---|---|
 | Algorithm broken (e.g., MD5, RC4, DES) | `error` | `"9.0"` | Critical | Exploitable today |
 | Algorithm quantum-vulnerable, large-scale (RSA, ECDH, ECDSA) | `error` | `"8.5"` | High | Harvest-now-decrypt-later risk |
@@ -435,7 +435,7 @@ hex(sha256(ruleId + ":" + strings.TrimSpace(snippet_text)))[:16]
 
 ### 8.3 CBOM cross-referencing
 
-Put CBOM `bom-ref` in `result.properties["seawall/cbom-ref"]`. Use `"urn:cdx:<uuid>"` format matching the CBOM component's `bom-ref`. Also include `seawall/algorithm`, `seawall/keySize`, `seawall/primitive`, `seawall/pqcStatus` as convenience fields.
+Put CBOM `bom-ref` in `result.properties["quipuu/cbom-ref"]`. Use `"urn:cdx:<uuid>"` format matching the CBOM component's `bom-ref`. Also include `quipuu/algorithm`, `quipuu/keySize`, `quipuu/primitive`, `quipuu/pqcStatus` as convenience fields.
 
 Do not use SARIF taxonomies for CBOM linking in v0 — complexity is not justified until there are consumers that understand it.
 
@@ -460,7 +460,7 @@ Do **not** emit `fix` objects for quantum-migration findings. Place remediation 
 ### 8.6 GitLab support
 
 - Target GitLab 18.11+ via `artifacts:reports:sarif`.
-- Document the 18.11 feature flag requirement in the seawall GitLab CI integration guide.
+- Document the 18.11 feature flag requirement in the quipuu GitLab CI integration guide.
 - Do not implement `gl-sast-report.json` output in v0.
 
 ### 8.7 `automationDetails.id`
@@ -475,7 +475,7 @@ name; correcting the code alone would have regrown the defect from these pages.
 Always emit:
 ```json
 "automationDetails": {
-  "id": "seawall/<ISO8601-timestamp>"
+  "id": "quipuu/<ISO8601-timestamp>"
 }
 ```
 Required for GitHub to correctly handle multiple SARIF uploads for the same commit (e.g., when running on multiple packages or languages in separate jobs).

@@ -1,14 +1,14 @@
-# PROJECT SPEC — seawall (working name; see Decision D-13)
+# PROJECT SPEC — quipuu (working name; see Decision D-13)
 
 > **Read first:** `knowledge/README.md` → `knowledge/11-decisions/README.md`. Every decision below has a `D-NN` reference. If you have to change one, update the decisions register in the same change.
 
-> **Invariants:** This codebase is governed by four trust invariants (P1–P4) defined in `seawall/MCP.md §0` and repeated in `README.md`. Any change to P1–P4 is a breaking contract change requiring a major version bump of `contractVersion` in the MCP wire contract.
+> **Invariants:** This codebase is governed by four trust invariants (P1–P4) defined in `quipuu/MCP.md §0` and repeated in `README.md`. Any change to P1–P4 is a breaking contract change requiring a major version bump of `contractVersion` in the MCP wire contract.
 
 ## 0. Mission
 
 Build the best open-source cryptographic discovery tool in existence. A single, fast, dependency-free binary that scans source code, running TLS services, X.509 certificates, and dependency manifests; identifies every cryptographic asset; scores each for quantum vulnerability against the NIST IR 8547 timeline; and produces (a) a standards-compliant CycloneDX 1.7 CBOM (with `--schema-version 1.6` opt-in), (b) a self-contained HTML report, and (c) machine outputs (JSON / SARIF 2.1.0). Ships with a sophisticated, lightweight TUI.
 
-**Positioning (D-12):** Browsers solved the easy half of the PQC migration. The other half — internal services, dependency trees, certificates, forgotten cron jobs — is the long tail. seawall finds it in one pass. (NIST NCCoE SP 1800-38B: *"no single product finds all vulnerable crypto."* That's the gap.)
+**Positioning (D-12):** Browsers solved the easy half of the PQC migration. The other half — internal services, dependency trees, certificates, forgotten cron jobs — is the long tail. quipuu finds it in one pass. (NIST NCCoE SP 1800-38B: *"no single product finds all vulnerable crypto."* That's the gap.)
 
 Design tenets, in priority order:
 
@@ -33,7 +33,7 @@ Design tenets, in priority order:
 ## 2. Architecture (workspace crates)
 
 ```
-seawall/
+quipuu/
 ├─ crates/
 │  ├─ core/         # domain types: CryptoAsset, Finding, RiskScore, Evidence, Location
 │  │                # + the static algorithm-id → nistQuantumSecurityLevel table (D-04)
@@ -54,13 +54,13 @@ seawall/
 **No separate `risk` crate.** The 5-axis QuantumRiskScore engine (D-10) lives at
 `core::risk`. The "separate scoring crate" pattern (Grype+Syft, Sentry) is the
 right call when scoring normalizes heterogeneous inputs from multiple scanner
-backends — CVSS, EPSS, KEV, RustSec metadata. seawall has one scoring
+backends — CVSS, EPSS, KEV, RustSec metadata. quipuu has one scoring
 formula defined in our own data (`default-policy.toml`), tightly coupled to
 types in `core` (`AlgorithmRecord`, `Policy`, `Finding`, `QuantumStatus`). A
 separate crate would force every dependent type to become `pub` at the `core`
 boundary for the sole purpose of being re-imported. Keep it inline.
 
-The **MCP wire contract** (`seawall/MCP.md`) is the architectural spine between this deterministic Rust workspace and any agent layer. It specifies the stdio JSON-RPC 2.0 transport, the full 11-tool surface, streaming semantics, failure modes, and versioning rules for the `seawall mcp` subcommand. JSON schemas for the core domain types (`Finding`, `CryptoAsset`, `RiskScore`) live in `crates/core/schema/` and are referenced by `$ref` from the wire contract. No schema definitions are duplicated between the workspace and the contract document.
+The **MCP wire contract** (`quipuu/MCP.md`) is the architectural spine between this deterministic Rust workspace and any agent layer. It specifies the stdio JSON-RPC 2.0 transport, the full 11-tool surface, streaming semantics, failure modes, and versioning rules for the `quipuu mcp` subcommand. JSON schemas for the core domain types (`Finding`, `CryptoAsset`, `RiskScore`) live in `crates/core/schema/` and are referenced by `$ref` from the wire contract. No schema definitions are duplicated between the workspace and the contract document.
 
 ## 3. The crypto knowledge base (D-04)
 
@@ -134,7 +134,7 @@ internal_service = 4
 local_only = 1
 ```
 
-Built-in presets selectable via `--policy nist-default | nsa-cnsa2`; `--policy <file.toml>` takes a profile of your own. `seawall policy list` is the authoritative list — `core::policy::PRESETS` is the single source of truth and `documented_preset_names_match_the_shipped_ones` fails the build if this line drifts from it. Report header always names the policy in force.
+Built-in presets selectable via `--policy nist-default | nsa-cnsa2`; `--policy <file.toml>` takes a profile of your own. `quipuu policy list` is the authoritative list — `core::policy::PRESETS` is the single source of truth and `documented_preset_names_match_the_shipped_ones` fails the build if this line drifts from it. Report header always names the policy in force.
 
 ## 6. Scanners — required behavior
 
@@ -180,15 +180,15 @@ Use `evidence.occurrences[]` + `evidence.callstack.frames[]` (D-02) for file/lin
 
 ## 8. SARIF output (D-11)
 
-`seawall scan ... --format sarif` emits a single SARIF 2.1.0 file:
+`quipuu scan ... --format sarif` emits a single SARIF 2.1.0 file:
 
 - Always emit `automationDetails.id` (unique per run).
 - Rule IDs `CRYPTO-001` … `CRYPTO-999`, stable across releases. Rule metadata includes `name`, `shortDescription`, `fullDescription`, `helpUri` (link to our docs), `defaultConfiguration.level`, `properties.security-severity` (on the rule, not the result).
 - Severity mapping: Critical → `level: error`, `security-severity: "9.0"`; High → `error`, `"8.0"`; Medium → `warning`, `"5.0"`; Low → `note`, `"3.0"`; Safe → `note`, `"3.0"`. A finding whose `algorithm_id` has no algorithm-table row is **unscored** and maps to `level: none` — SARIF's "the concept of severity does not apply to this result" — with `security-severity` **omitted rather than zeroed**, since GitHub bands on that number. It previously mapped to `warning` / `"5.0"`, which asserted a mid-band severity the risk engine never computed.
 - `partialFingerprints.primaryLocationLineHash` = SHA-256(`ruleId:snippet`)[:16].
-- Cross-ref CBOM: each result has `properties."seawall/cbom-ref": "<bom-ref>"`.
+- Cross-ref CBOM: each result has `properties."quipuu/cbom-ref": "<bom-ref>"`.
 - No `fix` objects in v1.
-- GitLab 18.11+ ingests SARIF natively; for older GitLab, `seawall report --format gitlab-sast` produces `gl-sast-report.json`.
+- GitLab 18.11+ ingests SARIF natively; for older GitLab, `quipuu report --format gitlab-sast` produces `gl-sast-report.json`.
 
 ## 9. The TUI (`tui/`)
 
@@ -220,22 +220,22 @@ Also emits: `cbom.json` (CycloneDX 1.7 or 1.6), `findings.sarif`, `summary.json`
 ## 11. CLI design (`cli/`)
 
 ```
-seawall scan <path>                          # source scan, opens TUI
-seawall scan <path> --no-tui --format json   # headless
-seawall scan --net 10.0.0.0/24 --ports 443,8443
-seawall scan --certs ./certs/                # or --certs-host example.com:443
-seawall scan <path> --all                    # source + deps + (opt) net/certs
-seawall report --in cbom.json --out report.html
-seawall report --in cbom.json --format gitlab-sast
-seawall validate cbom.json                   # CBOM schema validation
-seawall policy list                          # nist-default | nsa-cnsa2
+quipuu scan <path>                          # source scan, opens TUI
+quipuu scan <path> --no-tui --format json   # headless
+quipuu scan --net 10.0.0.0/24 --ports 443,8443
+quipuu scan --certs ./certs/                # or --certs-host example.com:443
+quipuu scan <path> --all                    # source + deps + (opt) net/certs
+quipuu report --in cbom.json --out report.html
+quipuu report --in cbom.json --format gitlab-sast
+quipuu validate cbom.json                   # CBOM schema validation
+quipuu policy list                          # nist-default | nsa-cnsa2
 ```
 
 Flags: `--rules <dir>`, `--exclude <glob>`, `--format {tui,json,sarif,html,cbom,gitlab-sast}`, `--schema-version {1.7,1.6}`, `--policy <file-or-preset>`, `--fail-on {critical,high,medium,low,safe,policy,none}` (CI gate), `--config <file>`, `--no-color`, `-v`.
 
 `scan` takes one or more paths, interleaved with flags in any order, because the pre-commit hook appends the staged file list after its configured `args`.
 
-Exit codes: `0` scan completed and no `--fail-on` threshold was met; `1` the threshold was met (a reported finding is at or above it), or an output file could not be written; `2` seawall refused to run — unparseable `--fail-on` value, missing path, or `--net` without `--allow-network`. `--fail-on policy` resolves to the active policy's `[ci] fail_on`.
+Exit codes: `0` scan completed and no `--fail-on` threshold was met; `1` the threshold was met (a reported finding is at or above it), or an output file could not be written; `2` quipuu refused to run — unparseable `--fail-on` value, missing path, or `--net` without `--allow-network`. `--fail-on policy` resolves to the active policy's `[ci] fail_on`.
 
 ## 12. Build order (sequential milestones; keep `main` green)
 

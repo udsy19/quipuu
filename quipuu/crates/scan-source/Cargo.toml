@@ -1,0 +1,28 @@
+[package]
+name = "quipuu-scan-source"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Tree-sitter-based source scanner for quipuu."
+
+[dependencies]
+quipuu-core = { path = "../core" }
+serde.workspace = true
+thiserror.workspace = true
+tree-sitter.workspace = true
+tree-sitter-go.workspace = true
+tree-sitter-python.workspace = true
+tree-sitter-java.workspace = true
+tree-sitter-javascript.workspace = true
+tree-sitter-typescript.workspace = true
+tree-sitter-c.workspace = true
+tree-sitter-cpp.workspace = true
+tree-sitter-rust.workspace = true
+tree-sitter-c-sharp.workspace = true
+ignore.workspace = true
+regex.workspace = true
+toml.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

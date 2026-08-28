@@ -5,12 +5,12 @@
 **Do not open a public issue for a security vulnerability.**
 
 Report privately through
-[GitHub Security Advisories](https://github.com/udsy19/seawall/security/advisories/new).
+[GitHub Security Advisories](https://github.com/udsy19/quipuu/security/advisories/new).
 You should get an acknowledgement within 72 hours and an assessment within 7 days.
 
 ## Scope — what counts as a vulnerability here
 
-seawall is a security tool that runs against untrusted source trees, so its own threat model
+quipuu is a security tool that runs against untrusted source trees, so its own threat model
 matters. The following are in scope:
 
 - **Any violation of the four trust invariants.** These are contractual:
@@ -20,10 +20,10 @@ matters. The following are in scope:
   - **P4** — the scanned project's code is never executed.
   A reproducible breach of any of these is a security bug, not a feature request.
 - **Code execution triggered by scanning a hostile input** — a crafted source file, certificate,
-  or dependency manifest that causes seawall to execute code, escape the target directory,
+  or dependency manifest that causes quipuu to execute code, escape the target directory,
   or write outside its declared output paths.
 - **Denial of service from untrusted input** — a parser that hangs or exhausts memory on a crafted
-  file. seawall is expected to run in CI against arbitrary repositories.
+  file. quipuu is expected to run in CI against arbitrary repositories.
 - **Leakage of scanned source** into any outbound request.
 
 ## Not in scope
@@ -32,7 +32,7 @@ matters. The following are in scope:
   them as normal issues, with the file and line, so they can be measured against the audit corpus.
   They are tracked openly; see `PRECISION_AUDIT_V3.md`.
 - Vulnerabilities in the *scanned* project. That is the tool working correctly.
-- Missing hardening in a dependency with no demonstrated exploit path through seawall.
+- Missing hardening in a dependency with no demonstrated exploit path through quipuu.
 
 ## Disclosure
 

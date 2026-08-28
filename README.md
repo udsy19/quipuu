@@ -1,28 +1,30 @@
-# seawall
+# quipuu
 
 **A single Rust binary that finds the cryptography in your codebase, classifies each finding against NIST's post-quantum migration timeline, and tells you exactly which ones a quantum adversary can harvest today.** It detects constructors and key-generation sites precisely rather than every call site exhaustively — [measured recall is below](#benchmark-numbers).
 
 ```bash
-cargo install seawall
-seawall scan .
-open reports/seawall.html
+cargo install quipuu
+quipuu scan .
+open reports/quipuu.html
 ```
 
 <!-- TODO: add screenshot or asciinema recording -->
 
 Seven languages. Four output formats. No account. No cloud. No LLM. Median project scans in 285ms.
 
-> **Formerly `cryptoscope`.** The project was renamed to `seawall` in August 2026, before its first
-> release. A seawall is built *before* the tide arrives — which is the Harvest-Now-Decrypt-Later
-> argument exactly: the harvesting is happening now, the decryption comes later. The old name
-> collided with an unrelated post-quantum crate already published on crates.io, so nothing was ever
-> released under it. There is no migration to do.
+> **Formerly `cryptoscope`, briefly `seawall`.** Renamed to `quipuu` in August 2026, before any
+> release. A quipu is the Incan knotted-cord record system — an entire civilisation's inventory
+> encoded as knots on cords, centuries before writing. That is what this tool produces: your
+> codebase is the cords, the cryptographic call sites are the knots, and the scan reads them into a
+> ledger. The original spelling was unavailable on crates.io, held by an unrelated post-quantum
+> library, so the name carries a second `u`. Nothing was ever published under the earlier names and
+> there is no migration to do.
 
 ---
 
-## Why seawall instead of the other tools
+## Why quipuu instead of the other tools
 
-Every other scanner is general SAST with a crypto subset bolted on. seawall is crypto-only, built around the NIST post-quantum taxonomy (FIPS 203/204/205, NIST IR 8547), with explicit Harvest-Now-Decrypt-Later (HNDL) flagging baked in from day one. The threat model drives the tool, not the other way around.
+Every other scanner is general SAST with a crypto subset bolted on. quipuu is crypto-only, built around the NIST post-quantum taxonomy (FIPS 203/204/205, NIST IR 8547), with explicit Harvest-Now-Decrypt-Later (HNDL) flagging baked in from day one. The threat model drives the tool, not the other way around.
 
 That means:
 
@@ -44,7 +46,7 @@ These four invariants are contractual. They are not configuration options. Any c
 
 **P3 — every finding traces to a specific literal.** No "we think you have crypto somewhere." Every finding carries a file path, line number, and the exact code fragment that triggered it. If you cannot find that line in your editor, it is a false positive — file it.
 
-**P4 — never executes your code.** seawall parses with tree-sitter; it never runs your tests, your build scripts, or your binaries. Your untrusted-code sandbox is yours.
+**P4 — never executes your code.** quipuu parses with tree-sitter; it never runs your tests, your build scripts, or your binaries. Your untrusted-code sandbox is yours.
 
 The trust invariants are tested directly in `crates/cli/tests/mcp_integration.rs`. The test `test_run_acvp_kats_rejects_code_execution` asserts P4; `test_network_disabled_error` asserts P2.
 
@@ -54,34 +56,34 @@ The trust invariants are tested directly in `crates/cli/tests/mcp_integration.rs
 
 ```bash
 # Install (Rust 1.96+)
-cargo install seawall
+cargo install quipuu
 
 # Initialise a project config
-seawall init
+quipuu init
 
 # Scan source, certs, and dependency manifests
-seawall scan .
+quipuu scan .
 
 # Open the HTML report
-open reports/seawall.html
+open reports/quipuu.html
 
 # Also emit SARIF for GitHub Advanced Security, a CycloneDX CBOM, and a JSON summary
-seawall scan . \
+quipuu scan . \
   --sarif  reports/findings.sarif \
   --cbom   reports/cbom.json \
-  --html   reports/seawall.html \
+  --html   reports/quipuu.html \
   --summary-json reports/summary.json
 
 # Probe a live TLS endpoint (network mode — see Responsible Use below)
-seawall scan . --allow-network example.com:443
+quipuu scan . --allow-network example.com:443
 
 # Score against a policy profile other than the NIST IR 8547 default
-seawall policy list
-seawall scan . --policy nsa-cnsa2
+quipuu policy list
+quipuu scan . --policy nsa-cnsa2
 ```
 
 **Policy profiles.** `--policy` takes a built-in preset name or a path to a
-policy TOML file; `seawall policy list` prints what is built in. Two presets
+policy TOML file; `quipuu policy list` prints what is built in. Two presets
 ship today:
 
 | Preset | Profile | What changes |
@@ -94,16 +96,16 @@ detection. Measured on the 150-project benchmark corpus: the two profiles
 produce the **same 898 findings**, of which **80 (8.9 %) land in a different
 severity band**. The precision figure below therefore holds under both.
 
-**Pre-built binaries** are available on the [Releases page](https://github.com/udsy19/seawall/releases). The binary is fully static on Linux (musl), single-file on macOS and Windows. No JVM, no Node, no Python runtime, no Docker.
+**Pre-built binaries** are available on the [Releases page](https://github.com/udsy19/quipuu/releases). The binary is fully static on Linux (musl), single-file on macOS and Windows. No JVM, no Node, no Python runtime, no Docker.
 
 ---
 
 ## What you will find
 
-seawall detects uses of the following algorithm families. Coverage is per rule
+quipuu detects uses of the following algorithm families. Coverage is per rule
 pack, not uniform across languages — the RustCrypto `des`/`rc4` crates, for one, have
 no rules yet. What each language actually classifies is the `[[classify]]` list in
-`seawall/crates/core/data/rules/<lang>.toml`, and a build gate
+`quipuu/crates/core/data/rules/<lang>.toml`, and a build gate
 (`every_classify_rule_targets_an_api_the_extractor_can_emit`) fails when a rule there
 names an API no extractor emits, so the file cannot list a detection the binary does
 not perform.
@@ -157,9 +159,9 @@ not perform.
 
 **JSON summary** — machine-readable finding counts by severity, ecosystem, and algorithm family. Pipe it into your CI dashboard, Slack alerts, or compliance reports.
 
-*What is verified:* a finding whose `algorithm_id` has no algorithm-table row is reported as **`unscored`**, in every artifact, and is not folded into a band. `algorithm_vulnerability` is 40 of the 100 points the risk engine assigns and is read entirely from that row, so there is nothing to band. Until 2026-08-28 each surface decided this privately and they disagreed: on one `openssl = "0.10"` line in a `Cargo.toml` — which `scan-deps` reports with its `unknown` sentinel — stdout printed `?`, `summary.json` and the HTML report said **Medium**, SARIF said `warning` with `security-severity: 5.0`, and the TUI said **Safe**. Four answers, one finding, and the loudest of them asserted a mid-band CVSS to GitHub Advanced Security for a finding we decline to score. `totals.unscored` is a new field; `totals.medium` no longer counts these rows, SARIF emits level `none` and omits `security-severity`, and `--fail-on` still skips them and says how many it skipped. Over the 150-project benchmark corpus this is **131 of 1570 findings (8.3 %)**, all `DEP-001`. Gated by `an_unscored_finding_is_unscored_in_every_artifact` and by a source-text check that fails when a new surface derives its own band instead of calling `seawall_core::score_of`.
+*What is verified:* a finding whose `algorithm_id` has no algorithm-table row is reported as **`unscored`**, in every artifact, and is not folded into a band. `algorithm_vulnerability` is 40 of the 100 points the risk engine assigns and is read entirely from that row, so there is nothing to band. Until 2026-08-28 each surface decided this privately and they disagreed: on one `openssl = "0.10"` line in a `Cargo.toml` — which `scan-deps` reports with its `unknown` sentinel — stdout printed `?`, `summary.json` and the HTML report said **Medium**, SARIF said `warning` with `security-severity: 5.0`, and the TUI said **Safe**. Four answers, one finding, and the loudest of them asserted a mid-band CVSS to GitHub Advanced Security for a finding we decline to score. `totals.unscored` is a new field; `totals.medium` no longer counts these rows, SARIF emits level `none` and omits `security-severity`, and `--fail-on` still skips them and says how many it skipped. Over the 150-project benchmark corpus this is **131 of 1570 findings (8.3 %)**, all `DEP-001`. Gated by `an_unscored_finding_is_unscored_in_every_artifact` and by a source-text check that fails when a new surface derives its own band instead of calling `quipuu_core::score_of`.
 
-**MCP server** — `seawall mcp-serve` exposes every scan verb over newline-delimited JSON-RPC on stdio, following the Model Context Protocol. Agentic clients use this interface to drive the scanner programmatically. The JSON schemas for `Finding`, `CryptoAsset`, and `RiskScore` live in `crates/core/schema/`.
+**MCP server** — `quipuu mcp-serve` exposes every scan verb over newline-delimited JSON-RPC on stdio, following the Model Context Protocol. Agentic clients use this interface to drive the scanner programmatically. The JSON schemas for `Finding`, `CryptoAsset`, and `RiskScore` live in `crates/core/schema/`.
 
 ---
 
@@ -239,7 +241,7 @@ The benchmark corpus and reproduce scripts live in `benchmarks/corpus-b-realworl
 ## How it works
 
 ```
-seawall scan .
+quipuu scan .
        │
        ├── scan-source   tree-sitter parses 7 languages
        │                 TOML rules: extract → classify
@@ -271,7 +273,7 @@ seawall scan .
 
 ## Comparison
 
-| | seawall | Snyk Code | GitHub CodeQL | IBM CBOMkit | Semgrep |
+| | quipuu | Snyk Code | GitHub CodeQL | IBM CBOMkit | Semgrep |
 |---|---|---|---|---|---|
 | PQC-first, NIST IR 8547 taxonomy | Yes | No | No | Partial | No |
 | HNDL flagging | Yes (certificate key establishment; scope stated under Output formats) | No | No | No | No |
@@ -286,17 +288,17 @@ seawall scan .
 | Published recall | 74.4% (Go stdlib, 303/407 in-scope sites) | Not published | Not published | Not published | Not published |
 | Scan speed | 285ms median project; 367s for the 150-project corpus (2 cores) | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
 
-**Where CodeQL wins:** CodeQL has full inter-procedural data-flow. It can trace a key from generation through storage to use and flag misuse that a pattern-based scanner cannot see. If you need that depth and can absorb the scan time, CodeQL delivers it. seawall does not attempt to replicate data-flow analysis — it trades that capability for speed, locality, and PQC specificity.
+**Where CodeQL wins:** CodeQL has full inter-procedural data-flow. It can trace a key from generation through storage to use and flag misuse that a pattern-based scanner cannot see. If you need that depth and can absorb the scan time, CodeQL delivers it. quipuu does not attempt to replicate data-flow analysis — it trades that capability for speed, locality, and PQC specificity.
 
 **Where Snyk Code wins:** Snyk has a larger ecosystem of language integrations and a mature CI integration story. If your team already runs Snyk, adding `--crypto` coverage through their platform is lower friction than adopting a new tool. The cost: your code leaves your machine.
 
-**Where seawall wins:** seawall never leaves your machine, ships the NIST taxonomy as auditable data, produces a standards-compliant CBOM, and scans a typical project in under a third of a second. It is the right starting point for a PQC inventory exercise that needs to stay inside your security boundary.
+**Where quipuu wins:** quipuu never leaves your machine, ships the NIST taxonomy as auditable data, produces a standards-compliant CBOM, and scans a typical project in under a third of a second. It is the right starting point for a PQC inventory exercise that needs to stay inside your security boundary.
 
 ---
 
 ## Architecture
 
-The Rust workspace (`seawall/`) has nine crates, each with one responsibility:
+The Rust workspace (`quipuu/`) has nine crates, each with one responsibility:
 
 ```
 crates/
@@ -330,7 +332,7 @@ All primary sources — NIST IR 8547 IPD, FIPS 203/204/205, CycloneDX 1.7 schema
 
 ## Responsible use
 
-Network probes (`--allow-network`) open real TCP connections. seawall performs only normal TLS handshakes — no fuzzing, no malformed messages, no exploit attempts. A consent banner prints before any network probe runs.
+Network probes (`--allow-network`) open real TCP connections. quipuu performs only normal TLS handshakes — no fuzzing, no malformed messages, no exploit attempts. A consent banner prints before any network probe runs.
 
 Source, certificate, and dependency scans are entirely local. They open files for reading; they make no network calls.
 
@@ -356,7 +358,7 @@ A `CONTRIBUTING.md` with the full patch workflow, snapshot update instructions, 
 
 ## Standards
 
-seawall's outputs and risk model are anchored on primary sources, all saved locally under `knowledge/sources/`:
+quipuu's outputs and risk model are anchored on primary sources, all saved locally under `knowledge/sources/`:
 
 - **NIST IR 8547 IPD** (November 2024) — deprecation and disallow timeline for classical asymmetric crypto
 - **NIST FIPS 203 / 204 / 205** (August 2024) — ML-KEM, ML-DSA, SLH-DSA final standards
@@ -371,10 +373,10 @@ seawall's outputs and risk model are anchored on primary sources, all saved loca
 
 ```bash
 # Rust workspace — unit and integration tests
-cd seawall && cargo test --workspace
+cd quipuu && cargo test --workspace
 
 # Live-network tests (requires outbound TCP — skipped by default)
-cd seawall && cargo test -p seawall-scan-network -- --ignored
+cd quipuu && cargo test -p quipuu-scan-network -- --ignored
 
 # Knowledge-base consistency checks
 python3 tests/check.py
@@ -384,4 +386,4 @@ python3 tests/check.py
 
 ## License
 
-Apache-2.0. See `seawall/Cargo.toml`.
+Apache-2.0. See `quipuu/Cargo.toml`.

@@ -1,0 +1,18 @@
+[package]
+name = "quipuu-scan-certs"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "quipuu X.509 certificate scanner — classifies public-key and signature algorithms, emits Findings."
+
+[dependencies]
+quipuu-core = { path = "../core" }
+serde.workspace = true
+thiserror.workspace = true
+x509-parser.workspace = true
+pem.workspace = true
+ignore.workspace = true
+
+[dev-dependencies]
+# No extra test deps needed — fixtures are pre-generated PEM/DER files.

@@ -1,0 +1,19 @@
+[package]
+name = "quipuu-report"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "HTML, SARIF 2.1.0, and JSON report emitters for quipuu."
+
+[dependencies]
+quipuu-core = { path = "../core" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+# Add the `derive` feature on top of the workspace default (std only).
+askama = { workspace = true, features = ["derive"] }
+sha2.workspace = true
+
+[dev-dependencies]
+quipuu-scan-source = { path = "../scan-source" }

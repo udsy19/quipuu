@@ -1,4 +1,4 @@
-# Precision Audit — Seawall V7 Corpus-B Run
+# Precision Audit — Quipuu V7 Corpus-B Run
 
 **Audit date:** 2026-06-16
 **Sample size:** 31 findings (stratified, deterministic)

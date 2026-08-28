@@ -1,4 +1,4 @@
-# seawall
+# quipuu
 
 > A single static binary that finds cryptography in your
 > codebase, dependencies, X.509 certs, and TLS endpoints — then classifies
@@ -10,13 +10,13 @@
 
 - [README.md](README.md): project overview, positioning, quickstart, trust invariants
 - [SPEC.md](SPEC.md): build spec; every section traces to a D-NN decision in knowledge/11-decisions/
-- [seawall/MCP.md](seawall/MCP.md): MCP wire contract — the spine between the deterministic scanner and any agent layer
+- [quipuu/MCP.md](quipuu/MCP.md): MCP wire contract — the spine between the deterministic scanner and any agent layer
 - [knowledge/README.md](knowledge/README.md): research and decisions index
 
 ## Wire contract
 
-- [seawall/crates/core/schema/](seawall/crates/core/schema/): JSON Schemas (Draft 2020-12)
-- 11 MCP verbs documented in seawall/MCP.md §3
+- [quipuu/crates/core/schema/](quipuu/crates/core/schema/): JSON Schemas (Draft 2020-12)
+- 11 MCP verbs documented in quipuu/MCP.md §3
 - P3 enforced: provenance enum = ["deterministic"] only in OSS
 
 ## Knowledge base
@@ -36,7 +36,7 @@
 
 ### Project overview
 
-seawall is a single static binary that scans source code (tree-sitter, Go + Python at v0.1), dependency manifests (go.mod, Cargo.toml, requirements.txt, package.json, pom.xml), X.509 certificates (PEM/DER), and TLS endpoints — then classifies every finding against the NIST IR 8547 IPD deprecation timeline. Output formats: CycloneDX 1.7 CBOM (primary), CycloneDX 1.6 (--schema-version 1.6), SARIF 2.1.0 (GitHub/GitLab), auditor-grade self-contained HTML, and summary JSON.
+quipuu is a single static binary that scans source code (tree-sitter, Go + Python at v0.1), dependency manifests (go.mod, Cargo.toml, requirements.txt, package.json, pom.xml), X.509 certificates (PEM/DER), and TLS endpoints — then classifies every finding against the NIST IR 8547 IPD deprecation timeline. Output formats: CycloneDX 1.7 CBOM (primary), CycloneDX 1.6 (--schema-version 1.6), SARIF 2.1.0 (GitHub/GitLab), auditor-grade self-contained HTML, and summary JSON.
 
 Status: v0.1 — walking skeleton. All four scanners, the risk engine, and every output format work end-to-end against real fixtures and live hosts.
 
@@ -51,7 +51,7 @@ These four invariants are contractual. Any change requires a major version bump.
 
 ### Positioning
 
-Browsers solved the easy half of the PQC migration. As of mid-2026, ~65% of human web traffic to Cloudflare is post-quantum-encrypted. Chrome/Firefox/iOS ship X25519MLKEM768 by default. OpenSSL 3.5 has native ML-KEM. The other half — internal services, dependency trees, X.509 certificates, forgotten cron jobs — is the long tail. The NIST NCCoE SP 1800-38B states: "no single product finds all vulnerable crypto." That is the gap seawall fills.
+Browsers solved the easy half of the PQC migration. As of mid-2026, ~65% of human web traffic to Cloudflare is post-quantum-encrypted. Chrome/Firefox/iOS ship X25519MLKEM768 by default. OpenSSL 3.5 has native ML-KEM. The other half — internal services, dependency trees, X.509 certificates, forgotten cron jobs — is the long tail. The NIST NCCoE SP 1800-38B states: "no single product finds all vulnerable crypto." That is the gap quipuu fills.
 
 ### Risk scoring (5-axis QuantumRiskScore, 0-100)
 
@@ -68,9 +68,9 @@ Severity bands: >=75 Critical, 50-74 High, 25-49 Medium, 10-24 Low, <10 Safe.
 ### Quickstart
 
 ```
-cd seawall
+cd quipuu
 cargo build --release
-./target/release/seawall scan ./my-project --certs --deps \
+./target/release/quipuu scan ./my-project --certs --deps \
   --cbom out.cbom.json --html out.html --sarif out.sarif
 ```
 
@@ -89,7 +89,7 @@ Tech stack (decided; do not deviate without flagging):
 
 Workspace crates: core, scan-source, scan-certs, scan-deps, scan-network, cbom, report, tui, cli.
 
-The MCP wire contract (seawall/MCP.md) is the architectural spine between the deterministic Rust workspace and any agent layer. JSON schemas for core domain types (Finding, CryptoAsset, RiskScore) live in crates/core/schema/.
+The MCP wire contract (quipuu/MCP.md) is the architectural spine between the deterministic Rust workspace and any agent layer. JSON schemas for core domain types (Finding, CryptoAsset, RiskScore) live in crates/core/schema/.
 
 ---
 

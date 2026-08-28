@@ -1,4 +1,4 @@
-# seawall — 150-project corpus benchmark
+# quipuu — 150-project corpus benchmark
 
 Sections are appended in date order. **The current run is the last dated section**
 (*The `--fail-on` CI gate: precision recomputed on the same finding set — 2026-08-28*); everything above it is the
@@ -280,9 +280,9 @@ The corpus is usually cloned outside the repo. Both scripts take `--clones`,
 and `dump_findings.py` also takes `--bin` and `--out`:
 
 ```
-python3 scan_corpus.py   --clones /path/to/clones --bin ../../seawall/target/release/seawall \
+python3 scan_corpus.py   --clones /path/to/clones --bin ../../quipuu/target/release/quipuu \
                          --out results/ --include-safe
-python3 dump_findings.py --clones /path/to/clones --bin ../../seawall/target/release/seawall \
+python3 dump_findings.py --clones /path/to/clones --bin ../../quipuu/target/release/quipuu \
                          --out results/all_findings.json
 ```
 
@@ -324,8 +324,8 @@ audited label set still applies unchanged.
 Reproduce:
 
 ```
-seawall scan <project> --source --deps --include-safe                      # nist-default
-seawall scan <project> --source --deps --include-safe --policy nsa-cnsa2   # CNSA 2.0
+quipuu scan <project> --source --deps --include-safe                      # nist-default
+quipuu scan <project> --source --deps --include-safe --policy nsa-cnsa2   # CNSA 2.0
 ```
 
 ---
@@ -492,7 +492,7 @@ api and re-running, per the "a gate that cannot fail is not a gate" rule.
 
 ---
 
-## Rename verification — 2026-08-27 (cryptoscope → seawall)
+## Rename verification — 2026-08-27 (cryptoscope → quipuu)
 
 The rename touched files inside the detection paths, so the precision gate demanded a measurement.
 No new measurement was taken, because none was warranted: the change was verified to be
@@ -1281,7 +1281,7 @@ library but no algorithm. **Every artifact used to answer this differently.** Re
 Four answers for one finding. The loudest asserted a mid-band CVSS to GitHub Advanced Security
 for a finding the product declines to score; the quietest painted an uncatalogued algorithm
 green. `--fail-on` was already right, and only because implementing that gate forced the question
-to be answered once. `seawall_core::score_of` is now where it is answered for everybody.
+to be answered once. `quipuu_core::score_of` is now where it is answered for everybody.
 
 Corpus-wide this moves **131 findings out of `summary.json`'s `medium` count** and into a new
 `totals.unscored` field, leaving `medium` agreeing with the stdout column it never agreed with
@@ -1345,3 +1345,15 @@ why a healthy RSA-2048/SHA-256 certificate scores Critical on both its key and i
 That is a calibration change, it moves bands across the whole corpus, and it has not been made.
 This change makes the artifacts agree on the band the engine computed; it does not change the
 band.
+
+---
+
+## Rename verification — 2026-08-28 (seawall → quipuu)
+
+Same check as the previous rename, and the same result. Every file under `crates/core/data/` — the
+algorithm table, OID table, default policy, and all seven rule packs — was normalised for the
+product name and compared against its pre-rename revision. **All eleven identical.** No rule, `when`
+clause, `algorithm_id`, severity mapping, or policy weight changed.
+
+Precision therefore stands at **86.5%**, carried forward rather than re-derived. The figure is
+traceable to the run recorded above it, not merely to a green gate.

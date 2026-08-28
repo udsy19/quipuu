@@ -1,6 +1,6 @@
 # CNSA 2.0 preset — NSA Commercial National Security Algorithm Suite 2.0.
 #
-# Select with `--policy nsa-cnsa2`, or `preset = "nsa-cnsa2"` in .seawall.toml.
+# Select with `--policy nsa-cnsa2`, or `preset = "nsa-cnsa2"` in .quipuu.toml.
 #
 # Scope: National Security Systems (NSS), DoD, the Intelligence Community and
 # NSS contractors. It is deliberately stricter than the `nist-default` profile

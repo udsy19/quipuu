@@ -1,4 +1,4 @@
-# Proving seawall: Evidence, Benchmarking, and Reproducibility
+# Proving quipuu: Evidence, Benchmarking, and Reproducibility
 
 > A scanner with no numbers is a marketing claim. This document specifies how we
 > generate the numbers that turn "as good as the incumbents" from a hope into a
@@ -144,7 +144,7 @@ For tools that don't emit CBOM/SARIF directly, we measure only the axes they exp
 
 For corpus A, every fixture file has an `expected.toml` we authored by hand. A **disagreement protocol**: if our scanner finds something the oracle doesn't claim, *we don't auto-call it a false positive*. We log it as a "disagreement" and route it to a human review. If on review the finding is in fact real and the oracle was wrong, we update the oracle. If it's a hallucination, we mark it FP.
 
-This is the only honest way to do this. Without the disagreement protocol, the team authoring the oracle has an obvious incentive to label every seawall finding as ground truth and every competitor finding as noise. The disagreement log is published as part of the benchmark output.
+This is the only honest way to do this. Without the disagreement protocol, the team authoring the oracle has an obvious incentive to label every quipuu finding as ground truth and every competitor finding as noise. The disagreement log is published as part of the benchmark output.
 
 ---
 
@@ -156,7 +156,7 @@ Mock results table — what the published artifact contains, with the actual num
 
 | Tool | TP | FP | FN | Precision | Recall | F1 | Disagreements |
 |---|---|---|---|---|---|---|---|
-| seawall | _ | _ | _ | _ | _ | _ | _ |
+| quipuu | _ | _ | _ | _ | _ | _ | _ |
 | CBOMkit | _ | _ | _ | _ | _ | _ | _ |
 | cryptobom-forge | _ | _ | _ | _ | _ | _ | _ |
 | foxguard | _ | _ | _ | _ | _ | _ | _ |
@@ -167,7 +167,7 @@ Mock results table — what the published artifact contains, with the actual num
 
 | Tool | Median LOC/sec | p95 LOC/sec | Peak memory (median) |
 |---|---|---|---|
-| seawall | _ | _ | _ |
+| quipuu | _ | _ | _ |
 | CBOMkit | _ | _ | _ |
 | foxguard | _ | _ | _ |
 | Semgrep crypto | _ | _ | _ |
@@ -176,7 +176,7 @@ Mock results table — what the published artifact contains, with the actual num
 
 | Tool | Emits CBOM? | CBOM schema-valid % | Emits SARIF? | SARIF schema-valid % |
 |---|---|---|---|---|
-| seawall | 1.7 | _ | 2.1.0 | _ |
+| quipuu | 1.7 | _ | 2.1.0 | _ |
 | CBOMkit | 1.6 | _ | n/a | n/a |
 | cryptobom-forge | 1.6 | _ | n/a | n/a |
 | foxguard | 1.6 | _ | n/a | n/a |
@@ -186,7 +186,7 @@ Mock results table — what the published artifact contains, with the actual num
 
 | Tool | Files with identical 3-run output | Crash rate | Disagreement rate within tool |
 |---|---|---|---|
-| seawall | _ | _ | _ |
+| quipuu | _ | _ | _ |
 | ... | _ | _ | _ |
 
 ---
@@ -210,7 +210,7 @@ Three artifacts make this defensible:
 
 ### A. Public corpus + benchmark repo
 
-`benchmarks/` ships in the seawall repository (or a sister repo if size becomes an issue). Anyone can clone it, run `./run_all.py`, and reproduce our published numbers within 5–10% variance. The 5–10% accounts for hardware/clock-speed differences; anything outside that range is a real divergence and we want to know about it.
+`benchmarks/` ships in the quipuu repository (or a sister repo if size becomes an issue). Anyone can clone it, run `./run_all.py`, and reproduce our published numbers within 5–10% variance. The 5–10% accounts for hardware/clock-speed differences; anything outside that range is a real divergence and we want to know about it.
 
 ### B. Published methodology document
 
@@ -232,7 +232,7 @@ The benchmarks generate three publishable artifacts. Each is designed to be scre
 
 ### Artifact 1: The leaderboard
 
-A single page (rendered HTML, hosted at seawall.dev/benchmarks) showing:
+A single page (rendered HTML, hosted at quipuu.dev/benchmarks) showing:
 - The 4 metric tables above
 - One sentence per row of "why does the metric look this way"
 - A "last updated" timestamp + commit SHA
@@ -259,14 +259,14 @@ This is also free distribution: the paper gets cited by anyone else who runs the
 | W2 | Corpus A complete: all 7 languages, ~200 fixtures, full ground-truth |
 | W3 | Corpus B clone scripts: 100 OSS projects pinned by SHA |
 | W4 | Corpus C: 50 adversarial fixtures + expected behavior |
-| W5 | `run_all.py` runner: seawall + foxguard + CBOMkit + Semgrep |
+| W5 | `run_all.py` runner: quipuu + foxguard + CBOMkit + Semgrep |
 | W6 | `run_all.py` finished: + CodeQL + cryptobom-forge + Snyk (limited) + SandboxAQ (limited) |
 | W7 | First full benchmark run; methodology doc; results JSON + report.md |
 | W8 | Leaderboard page; CI integration; reproducibility test on a clean machine |
 | W9 | "State of Q-V Crypto 2026" report published using same data |
 | W10 | Academic paper draft submitted |
 
-10 weeks to "we have public, reproducible, peer-reviewed numbers proving seawall is at least as good as incumbents on the axes that matter, and dramatically better on output validity, determinism, and deployment friction."
+10 weeks to "we have public, reproducible, peer-reviewed numbers proving quipuu is at least as good as incumbents on the axes that matter, and dramatically better on output validity, determinism, and deployment friction."
 
 ---
 
@@ -276,14 +276,14 @@ A few things I expect to find, with confidence levels:
 
 | Prediction | Confidence |
 |---|---|
-| seawall will lead on **output schema validity** (we ship a validator; competitors mostly don't) | High |
-| seawall will lead on **throughput** (Rust + parallelism vs JVM/Python stacks) | High |
-| seawall will lead on **determinism** (P3 invariant: literal-traceable findings) | High |
-| seawall will lead on **deployment friction** (single static binary, no JVM/server) | Very high |
-| seawall will be **competitive but not dominant** on raw precision/recall vs CBOMkit on Java/Python | Medium |
-| seawall will **lose** to specialized tools on language-specific edge cases (e.g., jjwt enum resolution per V2) | High |
-| seawall will lead on **CycloneDX 1.7 support** (we ship it; CBOMkit is still 1.6 per the research) | High |
-| seawall will lead on **HNDL prioritization and risk scoring** (no incumbent does this) | Very high |
+| quipuu will lead on **output schema validity** (we ship a validator; competitors mostly don't) | High |
+| quipuu will lead on **throughput** (Rust + parallelism vs JVM/Python stacks) | High |
+| quipuu will lead on **determinism** (P3 invariant: literal-traceable findings) | High |
+| quipuu will lead on **deployment friction** (single static binary, no JVM/server) | Very high |
+| quipuu will be **competitive but not dominant** on raw precision/recall vs CBOMkit on Java/Python | Medium |
+| quipuu will **lose** to specialized tools on language-specific edge cases (e.g., jjwt enum resolution per V2) | High |
+| quipuu will lead on **CycloneDX 1.7 support** (we ship it; CBOMkit is still 1.6 per the research) | High |
+| quipuu will lead on **HNDL prioritization and risk scoring** (no incumbent does this) | Very high |
 
 The benchmarking is designed so we don't have to win every axis. We have to **measure** every axis. The marketing falls out: "we win 7 of 10; we lose 2; we tie 1; here are the numbers; here's the data; reproduce it yourself."
 
@@ -313,6 +313,6 @@ Three things that could undermine the benchmarks:
 
 ## 13. The one-sentence summary
 
-**Build the corpus, build the runner, publish the numbers, defend them in peer review — and the question "is seawall as good as the incumbents" stops being a marketing claim and becomes a measurable, public, audit-grade fact.**
+**Build the corpus, build the runner, publish the numbers, defend them in peer review — and the question "is quipuu as good as the incumbents" stops being a marketing claim and becomes a measurable, public, audit-grade fact.**
 
 That's the credibility moat that turns the OSS scanner from "another security tool" into "the reference standard for cryptographic discovery."

@@ -16,10 +16,10 @@ Cargo.lock.bak
 *.tmp
 
 # Demo outputs
-/seawall-demo/
+/quipuu-demo/
 
 # Subagent scratch (per-spawn memory under engine/)
-seawall-pro/engine/.claude/
+quipuu-pro/engine/.claude/
 
 # Python build / cache leftovers
 __pycache__/

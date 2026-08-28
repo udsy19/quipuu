@@ -1,0 +1,15 @@
+[package]
+name = "quipuu-tui"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "quipuu tui crate (scaffold)."
+
+[dependencies]
+quipuu-core = { path = "../core" }
+quipuu-cbom = { path = "../cbom" }
+serde.workspace = true
+thiserror.workspace = true
+ratatui.workspace = true
+crossterm.workspace = true

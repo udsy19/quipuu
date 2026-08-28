@@ -1,6 +1,6 @@
-# seawall integrations
+# quipuu integrations
 
-seawall requires no account, no signup, and no paid plan.
+quipuu requires no account, no signup, and no paid plan.
 The only credential in play is the `GITHUB_TOKEN` that GitHub Actions
 auto-provisions on every run.
 
@@ -14,22 +14,22 @@ The fastest path: copy one file into your repo.
 
 ```sh
 curl -sSL \
-  https://raw.githubusercontent.com/<TBD>/seawall/main/.github/workflows/seawall-template.yml \
-  -o .github/workflows/seawall.yml
+  https://raw.githubusercontent.com/<TBD>/quipuu/main/.github/workflows/quipuu-template.yml \
+  -o .github/workflows/quipuu.yml
 ```
 
-Or copy it manually from `.github/workflows/seawall-template.yml` in the
-seawall repo.
+Or copy it manually from `.github/workflows/quipuu-template.yml` in the
+quipuu repo.
 
 ### 2. Commit and push
 
 ```sh
-git add .github/workflows/seawall.yml
-git commit -m "Add seawall scan"
+git add .github/workflows/quipuu.yml
+git commit -m "Add quipuu scan"
 git push
 ```
 
-That's it. seawall will now:
+That's it. quipuu will now:
 
 - Run on every push and pull request.
 - Post a findings summary as a PR comment (idempotent — updates on re-runs).
@@ -46,25 +46,25 @@ The most common ones:
 | Scan target path | `env.SCAN_TARGET` | `.` (whole repo) |
 | Fail on severity  | `--fail-on` arg   | not set (exit 0 on any finding) |
 | Artifact retention | `retention-days` | 30 days |
-| Scan category (Code Scanning UI) | `category:` | `seawall` |
+| Scan category (Code Scanning UI) | `category:` | `quipuu` |
 
 To fail the workflow on critical findings, add `--fail-on critical` to the
-`seawall scan` step args. The threshold is *at or above*: `--fail-on medium`
+`quipuu scan` step args. The threshold is *at or above*: `--fail-on medium`
 fails on Medium, High and Critical alike. `--fail-on policy` defers to the
 active policy's `[ci] fail_on` — `nist-default` says `critical`, `nsa-cnsa2`
 says `high` — so a policy switch moves the gate with it.
 
 Exit codes: **0** the scan ran and no threshold was met; **1** the threshold was
-met, or an output file could not be written; **2** seawall refused to run — a bad
+met, or an output file could not be written; **2** quipuu refused to run — a bad
 argument, a path that does not exist, or `--net` without `--allow-network`. A
-threshold seawall cannot parse is a refusal, not a warning, so a typo in the
+threshold quipuu cannot parse is a refusal, not a warning, so a typo in the
 gate never reads as a pass.
 
 ---
 
 ## Pre-commit
 
-seawall ships a [pre-commit framework](https://pre-commit.com) hook so
+quipuu ships a [pre-commit framework](https://pre-commit.com) hook so
 findings are caught before code ever leaves your machine.
 
 ### 1. Install pre-commit (if you haven't)
@@ -78,27 +78,27 @@ pre-commit install
 
 ```yaml
 repos:
-  - repo: https://github.com/<TBD>/seawall
+  - repo: https://github.com/<TBD>/quipuu
     rev: v0.1.0   # pin to a release tag
     hooks:
-      - id: seawall-scan
+      - id: quipuu-scan
 ```
 
 ### 3. Run against all files (first-time check)
 
 ```sh
-pre-commit run seawall-scan --all-files
+pre-commit run quipuu-scan --all-files
 ```
 
-Subsequent `git commit` invocations will run seawall on staged files only.
+Subsequent `git commit` invocations will run quipuu on staged files only.
 
 The hook exits non-zero only when a **critical** severity finding is present
 (configurable via `args: [--fail-on, high]` in your `.pre-commit-config.yaml`).
-pre-commit passes the staged files as positional arguments; seawall scans every
+pre-commit passes the staged files as positional arguments; quipuu scans every
 one of them, and refuses to run if any is unreadable rather than reporting a
 clean commit for a tree it never opened.
 
-Your `.seawall.toml` at the repo root is picked up automatically.
+Your `.quipuu.toml` at the repo root is picked up automatically.
 
 ---
 
@@ -108,30 +108,30 @@ For any CI system that can run shell commands (CircleCI, GitLab CI, Jenkins,
 Buildkite, etc.), the integration is a single command:
 
 ```sh
-seawall scan . --sarif out/seawall.sarif
+quipuu scan . --sarif out/quipuu.sarif
 ```
 
 ### Install in CI
 
 ```sh
 # Option A — from crates.io (once published)
-cargo install seawall --locked
+cargo install quipuu --locked
 
 # Option B — from git
-cargo install --git https://github.com/<TBD>/seawall --locked
+cargo install --git https://github.com/<TBD>/quipuu --locked
 ```
 
 ### Minimal GitLab CI example
 
 ```yaml
-seawall:
+quipuu:
   stage: test
   image: rust:latest
   before_script:
-    - cargo install seawall --locked
+    - cargo install quipuu --locked
   script:
     - mkdir -p reports
-    - seawall scan . --sarif reports/seawall.sarif --summary-json reports/seawall.summary.json
+    - quipuu scan . --sarif reports/quipuu.sarif --summary-json reports/quipuu.summary.json
   artifacts:
     paths:
       - reports/
@@ -142,19 +142,19 @@ seawall:
 
 ```yaml
 jobs:
-  seawall:
+  quipuu:
     docker:
       - image: cimg/rust:stable
     steps:
       - checkout
       - run:
-          name: Install seawall
-          command: cargo install seawall --locked
+          name: Install quipuu
+          command: cargo install quipuu --locked
       - run:
-          name: Run seawall scan
+          name: Run quipuu scan
           command: |
             mkdir -p reports
-            seawall scan . --sarif reports/seawall.sarif
+            quipuu scan . --sarif reports/quipuu.sarif
       - store_artifacts:
           path: reports
 ```
@@ -166,21 +166,21 @@ jobs:
 The following are planned but not yet available:
 
 - **GitLab CI** — a reusable component (`include:` style) with MR comment posting.
-- **CircleCI** — an orb (`seawall/scan@1`) wrapping the install + scan steps.
+- **CircleCI** — an orb (`quipuu/scan@1`) wrapping the install + scan steps.
 - **Bitbucket Pipelines** — a pipe definition.
 - **VS Code extension** — inline diagnostics from the JSON output.
 
-Contributions welcome — open a PR against the seawall repo.
+Contributions welcome — open a PR against the quipuu repo.
 
 ---
 
 ## Verifying SARIF output
 
-SARIF files produced by seawall conform to SARIF 2.1.0 and can be
+SARIF files produced by quipuu conform to SARIF 2.1.0 and can be
 validated locally with Microsoft's SARIF SDK or viewed with the SARIF Viewer
 extension for VS Code:
 
 ```sh
 # Validate with the SARIF multitool (requires Node.js)
-npx @microsoft/sarif-multitool validate out/seawall.sarif
+npx @microsoft/sarif-multitool validate out/quipuu.sarif
 ```

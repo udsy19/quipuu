@@ -1,10 +1,10 @@
-# CI workflow for seawall
+# CI workflow for quipuu
 #
 # Runs on every push and pull request.  The matrix covers the three platforms
 # the project ships on; format / clippy checks run on ubuntu only to avoid
 # paying for the same lint work three times.
 #
-# All cargo commands use `working-directory: seawall/` because that is the
+# All cargo commands use `working-directory: quipuu/` because that is the
 # root of the Rust workspace (the directory that contains Cargo.toml with
 # [workspace]).
 
@@ -40,7 +40,7 @@ jobs:
     defaults:
       run:
         # All cargo commands are rooted in the Rust workspace directory.
-        working-directory: seawall
+        working-directory: quipuu
 
     steps:
       # ── 1. Check out the full repository ──────────────────────────────────
@@ -66,7 +66,7 @@ jobs:
       - name: Cargo cache
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: "seawall -> target"
+          workspaces: "quipuu -> target"
 
       # ── 4. Format check (ubuntu only — no need to pay for it 3×) ──────────
       - name: cargo fmt --check
@@ -127,5 +127,5 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Contract is executable
-        working-directory: seawall
-        run: cargo test -p seawall-core --test schema_roundtrip --test schema_meta -- --nocapture
+        working-directory: quipuu
+        run: cargo test -p quipuu-core --test schema_roundtrip --test schema_meta -- --nocapture

@@ -1,6 +1,6 @@
-# Knowledge Base — seawall research pass
+# Knowledge Base — quipuu research pass
 
-This folder is the **single source of truth** for every load-bearing technical and strategic claim that the seawall build rests on. Every recommendation in `SPEC.md` and every line of code Claude Code writes should trace back to a "Why → Evidence" entry here.
+This folder is the **single source of truth** for every load-bearing technical and strategic claim that the quipuu build rests on. Every recommendation in `SPEC.md` and every line of code Claude Code writes should trace back to a "Why → Evidence" entry here.
 
 > **Reading order if you're new:** start with `11-decisions/` (the synthesis), then drill into the topic folders for the underlying evidence.
 
@@ -17,9 +17,9 @@ This folder is the **single source of truth** for every load-bearing technical a
 | `07-sarif/` | SARIF 2.1.0 minimum fields, GitHub/GitLab ingestion quirks, working example for a single finding. |
 | `08-competitors/` | IBM CBOMkit, cryptobom-forge, BF-CBOM, SandboxAQ, PANW, Qtonic, Zerberus, Acubed, CryptoScan/CSNP, foxguard. Wedge axes — confirmed vs. eroded. |
 | `09-regulatory/` | OMB M-23-02, NSM-10, CNSA 2.0, CISA, UK NCSC, EU CRA, NIS2, BSI, ANSSI, Australia ASD ISM-1917, India CERT-In BOM v2.0, PCI DSS, NYDFS — what's binding today. |
-| `10-design-partners/` | Cloudflare, Google, Apple PQ3 / iOS 26, AWS, Microsoft, Meta, IBM, Signal, JPMorgan PQC programs. Shortlist of who'd adopt seawall. |
-| `11-decisions/` | The **decisions register** — 13 Why → Evidence → Decision entries that the build should follow. Start here. Also contains `verify-resolution.md` (5 follow-ups closed) and `data/` (operational TOML files seawall ships with). |
-| `11-decisions/data/` | **The actual data files seawall ships with** — `algorithm-table.toml` (67 algorithms), `oid-table.toml` (57 OIDs), `default-policy.toml` (NIST IR 8547 IPD defaults), `rules/go.toml`, `rules/python.toml`. All parse, all cross-references resolve. |
+| `10-design-partners/` | Cloudflare, Google, Apple PQ3 / iOS 26, AWS, Microsoft, Meta, IBM, Signal, JPMorgan PQC programs. Shortlist of who'd adopt quipuu. |
+| `11-decisions/` | The **decisions register** — 13 Why → Evidence → Decision entries that the build should follow. Start here. Also contains `verify-resolution.md` (5 follow-ups closed) and `data/` (operational TOML files quipuu ships with). |
+| `11-decisions/data/` | **The actual data files quipuu ships with** — `algorithm-table.toml` (67 algorithms), `oid-table.toml` (57 OIDs), `default-policy.toml` (NIST IR 8547 IPD defaults), `rules/go.toml`, `rules/python.toml`. All parse, all cross-references resolve. |
 | `sources/` | Canonical primary sources downloaded locally: CycloneDX schemas, official CBOM example, NIST FIPS 203/204/205 PDFs, NIST IR 8547 IPD PDF, SP 800-131A Rev 3 IPD PDF, CBOMkit detection rules, IANA TLS registries. |
 
 ## How to amend this folder

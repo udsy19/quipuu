@@ -1967,7 +1967,7 @@
     "severity": "Medium",
     "file": "npm/jose/src/lib/content_encryption.ts",
     "line": 106,
-    "message": "WebCrypto call names algorithm 'HMAC', which has no row in the seawall algorithm table. Recorded as an unattributed call site \u2014 classify it by hand."
+    "message": "WebCrypto call names algorithm 'HMAC', which has no row in the quipuu algorithm table. Recorded as an unattributed call site \u2014 classify it by hand."
   },
   {
     "project": "npm:jose",

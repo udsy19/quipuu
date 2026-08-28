@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quipuu.dev/schema/0.1.0/error.schema.json",
+  "title": "Error",
+  "description": "MCP error envelope returned when a method invocation fails.",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "integer",
+      "description": "Numeric error code (JSON-RPC 2.0 error codes)."
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable error message.",
+      "minLength": 1
+    },
+    "data": {
+      "description": "Optional structured error detail.",
+      "oneOf": [
+        { "type": "object" },
+        { "type": "string" },
+        { "type": "null" }
+      ]
+    }
+  },
+  "required": ["code", "message"],
+  "additionalProperties": false
+}

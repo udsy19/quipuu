@@ -1,5 +1,5 @@
 # X.509 Certificates and Post-Quantum Cryptography
-## Knowledge Reference for seawall/scan-certs
+## Knowledge Reference for quipuu/scan-certs
 
 **Status:** Authoritative reference as of June 2026  
 **Scope:** OID classification, PQC cert landscape, Rust crate APIs, risk classification
@@ -16,15 +16,15 @@
 6. [Weak and Broken Signature Algorithms](#6-weak-and-broken-signature-algorithms)
 7. [Certificate Chain Analysis](#7-certificate-chain-analysis)
 8. [Extracting Algorithm, Key Size, and Curve](#8-extracting-algorithm-key-size-and-curve)
-9. [Comprehensive OID Table for seawall Risk Engine](#9-comprehensive-oid-table-for-seawall-risk-engine)
-10. [DECISIONS for seawall/scan-certs](#10-decisions-for-seawallscan-certs)
+9. [Comprehensive OID Table for quipuu Risk Engine](#9-comprehensive-oid-table-for-quipuu-risk-engine)
+10. [DECISIONS for quipuu/scan-certs](#10-decisions-for-quipuuscan-certs)
 
 ---
 
 ## 1. OID Reference: Classical Algorithms
 
 ### Why This Matters
-The `signatureAlgorithm` field (at the top of `Certificate` and mirrored inside `TbsCertificate.signature`) and `subjectPublicKeyInfo.algorithm.algorithm` are two distinct OID slots. The signature OID names the hash-plus-signature combination (e.g., `sha256WithRSAEncryption`); the SPKI OID names the key type (e.g., `rsaEncryption`). seawall must classify both independently and cross-check them.
+The `signatureAlgorithm` field (at the top of `Certificate` and mirrored inside `TbsCertificate.signature`) and `subjectPublicKeyInfo.algorithm.algorithm` are two distinct OID slots. The signature OID names the hash-plus-signature combination (e.g., `sha256WithRSAEncryption`); the SPKI OID names the key type (e.g., `rsaEncryption`). quipuu must classify both independently and cross-check them.
 
 ### 1.1 RSA
 
@@ -192,7 +192,7 @@ OID arc: `sigAlgs ::= { 2.16.840.1.101.3.4.3 }` (same arc as ML-DSA, different l
 
 **IETF drafts exist** (`draft-ietf-lamps-fn-dsa-certificates-00`, `draft-ietf-lamps-cms-fn-dsa-00`, both May 20, 2026) but use `XX` OID placeholders under `2.16.840.1.101.3.4.3`. No production OIDs are assigned.
 
-**Decision for seawall:** Do NOT hardcode Falcon/FN-DSA OIDs. Add a comment in the OID table noting that values in `2.16.840.1.101.3.4.3.{32..34}` (the gap after SLH-DSA) are likely candidates. Watch NIST CSOR for finalization.
+**Decision for quipuu:** Do NOT hardcode Falcon/FN-DSA OIDs. Add a comment in the OID table noting that values in `2.16.840.1.101.3.4.3.{32..34}` (the gap after SLH-DSA) are likely candidates. Watch NIST CSOR for finalization.
 
 Public key sizes for reference (so the scanner can emit "unknown PQC key" with helpful context): 897 bytes (FN-DSA-512/Falcon-512), 1793 bytes (FN-DSA-1024/Falcon-1024).
 
@@ -255,7 +255,7 @@ Combined shared secret: `SHA3-256(mlkemSS || tradSS || tradCT || tradPK || Label
 
 ### 3.1 State as of Mid-2026
 
-**Why:** seawall's live-host scanning mode (`--host`) will encounter these in the wild. Understanding what is deployed tells us which OIDs need to be recognized first.
+**Why:** quipuu's live-host scanning mode (`--host`) will encounter these in the wild. Understanding what is deployed tells us which OIDs need to be recognized first.
 
 ### 3.2 Let's Encrypt
 
@@ -290,7 +290,7 @@ DigiCert offers PQC pilot certificates under the DigiCert Labs umbrella:
 ### 3.6 IETF / Interop Infrastructure
 
 **Best public PQC TLS test server:** `https://test.openquantumsafe.org/`  
-Operated by the Open Quantum Safe project; supports all PQC algorithms from liboqs including ML-KEM, ML-DSA, SLH-DSA, Falcon hybrid combinations. This is the primary interop testing target for seawall's live-host mode.
+Operated by the Open Quantum Safe project; supports all PQC algorithms from liboqs including ML-KEM, ML-DSA, SLH-DSA, Falcon hybrid combinations. This is the primary interop testing target for quipuu's live-host mode.
 
 **testpqc.io:** No confirmed public presence as of mid-2026.
 
@@ -312,7 +312,7 @@ Azure Front Door hybrid TLS key exchange groups: `X25519_MLKEM768` (IANA group `
 
 **Backward compatibility:** A verifier that does not recognize the composite OID will reject the certificate entirely. There is no fallback to a classical-only path. This is a deliberate design choice — the composite approach requires explicit support.
 
-**seawall implication:** When a composite OID (1.3.6.1.5.5.7.6.37–66) is seen in `signatureAlgorithm`, report it as "HYBRID-COMPOSITE: PQC + Classical". Both component algorithms should be decoded and their classical component risk-classified independently.
+**quipuu implication:** When a composite OID (1.3.6.1.5.5.7.6.37–66) is seen in `signatureAlgorithm`, report it as "HYBRID-COMPOSITE: PQC + Classical". Both component algorithms should be decoded and their classical component risk-classified independently.
 
 ### 4.2 Chameleon Certificates
 
@@ -328,7 +328,7 @@ Authors: Corey Bonnell, John Gray (Entrust), D. Hook (Keyfactor), Tomofumi Okubo
 
 **Status:** Individual submission (not a WG document). Expired October 2025. Unlikely to advance to RFC in current form.
 
-**seawall implication:** If the scanner sees OID `2.16.840.1.114027.80.6.1` in extensions, report "CHAMELEON-CERT: delta certificate descriptor present; base key is classical, delta key likely PQC (or vice versa)".
+**quipuu implication:** If the scanner sees OID `2.16.840.1.114027.80.6.1` in extensions, report "CHAMELEON-CERT: delta certificate descriptor present; base key is classical, delta key likely PQC (or vice versa)".
 
 Known implementations: `chamcert` (Rust, github.com/carl-wallace/chamcert), `snakefoot` (Python, github.com/CBonnell/snakefoot), Bouncy Castle Java/Kotlin.
 
@@ -340,7 +340,7 @@ Known implementations: `chamcert` (Rust, github.com/carl-wallace/chamcert), `sna
 
 **Security concern:** Because the classical path is still independently valid, a quantum-capable attacker can simply forge the classical portion and ignore the PQC extension. This is a downgrade risk if the relying party does not enforce the PQC extension check.
 
-**seawall implication:** Look for non-standard extensions with PQC OIDs in the extension value. No standardized OID arc as of mid-2026.
+**quipuu implication:** Look for non-standard extensions with PQC OIDs in the extension value. No standardized OID arc as of mid-2026.
 
 ---
 
@@ -351,7 +351,7 @@ Known implementations: `chamcert` (Rust, github.com/carl-wallace/chamcert), `sna
 **Source:** https://docs.rs/x509-parser/latest/x509_parser/  
 **License:** MIT OR Apache-2.0  
 **MSRV:** Rust 1.67.1  
-**Recommendation for seawall:** PRIMARY parsing crate.
+**Recommendation for quipuu:** PRIMARY parsing crate.
 
 **What it does:** Pure Rust X.509 v3 (RFC 5280) parser using `nom`; zero-copy lifetime-tied design. Parses PEM and DER, file and stream. Supports extensions via `ParsedExtension` enum.
 
@@ -364,7 +364,7 @@ registry.insert(
 );
 ```
 
-**Feature flags relevant to seawall:**
+**Feature flags relevant to quipuu:**
 - `verify` — uses `ring` for signature verification (no PQC support in ring)
 - `validate` — structural validation without cryptographic verification (use this)
 - Default: parsing only, no verification
@@ -376,7 +376,7 @@ registry.insert(
 **Sources:** https://docs.rs/der/latest/der/, https://docs.rs/spki/latest/spki/  
 **MSRV:** Rust 1.85+  
 **License:** Apache-2.0 OR MIT  
-**Recommendation for seawall:** Use as SUPPORTING crates for re-encoding and type-level OID handling, not as the primary parser.
+**Recommendation for quipuu:** Use as SUPPORTING crates for re-encoding and type-level OID handling, not as the primary parser.
 
 `der` provides a pure-Rust, `#[no_std]`-compatible DER/ASN.1 codec with derive macros (`AsnType`, `Decode`, `Encode`). No heap allocation required. `ObjectIdentifier` type from this crate is the canonical representation used throughout the RustCrypto ecosystem.
 
@@ -396,7 +396,7 @@ Provides newtype wrappers for certificate bytes (`CertificateDer`, `SubjectPubli
 
 **PQC support:** None in v1.14.1. However, the `SignatureVerificationAlgorithm` trait is the intended extension point; a PQC implementation could implement this trait.
 
-**seawall use:** Not directly useful for scanning — it is a runtime verification crate, not a parsing crate.
+**quipuu use:** Not directly useful for scanning — it is a runtime verification crate, not a parsing crate.
 
 ### 5.4 `webpki` (via `webpki` or `rustls-webpki`)
 
@@ -406,7 +406,7 @@ Pure-Rust X.509 chain validator. Supported algorithms: `ECDSA_P256_SHA256`, `ECD
 
 **Chain validation:** `EndEntityCert::verify_is_valid_tls_server_cert(supported_sig_algs, trust_anchors, intermediate_certs, time)` returns `Ok(())` or a detailed `Error` enum. The error variants include `UnsupportedSignatureAlgorithm` (returned for any unknown OID), `UnknownIssuer`, `CertExpired`, `InvalidSignatureForPublicKey`, `PathLenConstraintViolated`, and `NameConstraintViolation` among others.
 
-**seawall use:** Useful for classical chain validation to confirm a chain is structurally valid. Will return `UnsupportedSignatureAlgorithm` for any PQC cert — which is itself informative signal for the scanner.
+**quipuu use:** Useful for classical chain validation to confirm a chain is structurally valid. Will return `UnsupportedSignatureAlgorithm` for any PQC cert — which is itself informative signal for the scanner.
 
 ### 5.5 `picky` (v6.3.0)
 
@@ -416,7 +416,7 @@ Full RFC 5280 Rust implementation with modules: `x509` (Cert, Csr, extensions), 
 
 **PQC support:** None. `SignatureAlgorithm` enum covers only `RsaPkcs1v15(HashAlgorithm)` variants with SHA-1/SHA-2/SHA-3. Marked `#[non_exhaustive]` for future extension.
 
-**seawall use:** Lower priority. x509-parser is more actively maintained and more widely used.
+**quipuu use:** Lower priority. x509-parser is more actively maintained and more widely used.
 
 ### 5.6 `rasn` + `rasn-pkix`
 
@@ -428,7 +428,7 @@ Safe `#[no_std]` ASN.1 codec framework (BER, CER, DER, APER, UPER, JER, OER, COE
 
 **PQC support:** None in `rasn-pkix::algorithms`. However, because `AlgorithmIdentifier` is generic over any `ObjectIdentifier`, adding PQC OID constants is straightforward.
 
-**seawall use:** An alternative to x509-parser if `#[no_std]` support is needed (e.g., WASM target). Not the primary recommendation.
+**quipuu use:** An alternative to x509-parser if `#[no_std]` support is needed (e.g., WASM target). Not the primary recommendation.
 
 ### 5.7 `oid-registry` (v0.8.1)
 
@@ -436,7 +436,7 @@ Safe `#[no_std]` ASN.1 codec framework (BER, CER, DER, APER, UPER, JER, OER, COE
 
 Registry for naming OIDs. No PQC OIDs are included. Classical OID constants available: `OID_PKCS1_RSAENCRYPTION`, `OID_SIG_ECDSA_WITH_SHA256`, `OID_SIG_ED25519`, `OID_EC_P256`, `OID_NIST_EC_P384`, etc.
 
-Custom PQC OIDs can be inserted at runtime with `registry.insert(oid, OidEntry::new("ML-DSA-65", "FIPS 204"))`. This is the correct approach for seawall — build the PQC OID table in Rust code and register at startup.
+Custom PQC OIDs can be inserted at runtime with `registry.insert(oid, OidEntry::new("ML-DSA-65", "FIPS 204"))`. This is the correct approach for quipuu — build the PQC OID table in Rust code and register at startup.
 
 ---
 
@@ -485,7 +485,7 @@ These are not broken today but will be broken by a cryptographically-relevant qu
 
 ### 7.1 Walking the Chain
 
-A full X.509 chain consists of: end-entity certificate, zero or more intermediate CA certificates, and a trust anchor (root CA). Each level has its own `signatureAlgorithm` and `subjectPublicKeyInfo`. For a complete risk picture, seawall must report all three independently.
+A full X.509 chain consists of: end-entity certificate, zero or more intermediate CA certificates, and a trust anchor (root CA). Each level has its own `signatureAlgorithm` and `subjectPublicKeyInfo`. For a complete risk picture, quipuu must report all three independently.
 
 **Why walking matters:**
 - A quantum-resistant leaf cert signed by a classical intermediate = quantum-vulnerable chain
@@ -613,9 +613,9 @@ let ml_dsa_44: Oid = Oid::from_str("2.16.840.1.101.3.4.3.17").unwrap();
 
 ---
 
-## 9. Comprehensive OID Table for seawall Risk Engine
+## 9. Comprehensive OID Table for quipuu Risk Engine
 
-This is the authoritative lookup table seawall should hardcode. Classification levels:
+This is the authoritative lookup table quipuu should hardcode. Classification levels:
 - `BROKEN` — actively exploitable today
 - `WEAK` — deprecated, flagged by browsers/CAs
 - `CLASSICAL` — secure classically, quantum-vulnerable
@@ -746,7 +746,7 @@ OID                           Name                                  Class       
 
 ---
 
-## 10. DECISIONS for seawall/scan-certs
+## 10. DECISIONS for quipuu/scan-certs
 
 ### D1: Primary Parsing Crate
 

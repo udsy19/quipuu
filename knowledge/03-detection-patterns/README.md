@@ -1,6 +1,6 @@
-# Detection Patterns for seawall
+# Detection Patterns for quipuu
 
-> **Purpose**: Authoritative reference for rule design in the seawall Rust/tree-sitter crypto scanner. Covers existing rule formats we can borrow, high-value API targets per language, parameter extraction patterns, and the competitive landscape.
+> **Purpose**: Authoritative reference for rule design in the quipuu Rust/tree-sitter crypto scanner. Covers existing rule formats we can borrow, high-value API targets per language, parameter extraction patterns, and the competitive landscape.
 
 ---
 
@@ -12,7 +12,7 @@
 4. [Cross-Language Considerations](#4-cross-language-considerations)
 5. [State of Crypto Detection Beyond CBOMkit](#5-state-of-crypto-detection-beyond-cbomkit)
 6. [Confidence Scoring](#6-confidence-scoring)
-7. [Proposed seawall Rule Schema](#7-proposed-seawall-rule-schema)
+7. [Proposed quipuu Rule Schema](#7-proposed-quipuu-rule-schema)
 
 ---
 
@@ -96,7 +96,7 @@ Algorithm enrichers (post-detection) map detected nodes to CycloneDX OIDs. Examp
 - `GoCryptoTLS.java`: Detects `tls.Dial`, `tls.Listen`, etc., chains to CONFIG rule for `cipher_suites`, `MinVersion`, `MaxVersion`
 - `GoCryptoMLKEM.java`: Detects 12 `crypto/mlkem` functions for FIPS 203 (ML-KEM-768, ML-KEM-1024)
 
-**Takeaway**: The Java DSL is expressive but not portable. Key ideas worth capturing in seawall's YAML schema: context types (cipher/key/sign/tls/kem), recursive parameter dependencies, factory-based value extraction, library attribution.
+**Takeaway**: The Java DSL is expressive but not portable. Key ideas worth capturing in quipuu's YAML schema: context types (cipher/key/sign/tls/kem), recursive parameter dependencies, factory-based value extraction, library attribution.
 
 ---
 
@@ -183,7 +183,7 @@ Canonical lists (not detection rules — these are normalisation vocabularies):
 - `padding_schemes`: OAEP, PKCS1V15, PKCS7, NoPadding
 - `primitive_mappings`: algorithm → CycloneDX primitive type (block_cipher, stream_cipher, hash, aead, signature, elliptic_curve, kdf, kem)
 
-**Takeaway**: Adopt the `(field, operator, value)` pattern language for seawall's classification layer. Extend the field set beyond the four cryptobom-forge fields to add `language`, `library`, `confidence`, `curve`, `iv_source`.
+**Takeaway**: Adopt the `(field, operator, value)` pattern language for quipuu's classification layer. Extend the field set beyond the four cryptobom-forge fields to add `language`, `library`, `confidence`, `curve`, `iv_source`.
 
 ---
 
@@ -201,7 +201,7 @@ Canonical lists (not detection rules — these are normalisation vocabularies):
 
 Key finding: the three tools almost never agree lexically on the same finding in the same repository. Runtimes range from seconds (CBOMKit) to minutes (CryptobomForge due to CodeQL dependency). CryptobomForge failed on several repos due to fragile toolchain setup.
 
-**Takeaway**: Confirms the fragmentation problem seawall addresses. No new schema to adopt.
+**Takeaway**: Confirms the fragmentation problem quipuu addresses. No new schema to adopt.
 
 ---
 
@@ -782,7 +782,7 @@ Key signal: `subcategory: audit` with `confidence: LOW` = flag for manual review
 
 `@precision` is the operative gate for GitHub Advanced Security default scans (only `high`/`very-high` appear).
 
-### 5.3 What Semgrep and CodeQL Miss (seawall's Opportunity Space)
+### 5.3 What Semgrep and CodeQL Miss (quipuu's Opportunity Space)
 
 1. **Post-Quantum Cryptography migration readiness**: Both tools have zero coverage of CNSA 2.0. Code using X25519, ECDH, or ECDSA passes clean despite quantum vulnerability. No checks for ML-KEM, ML-DSA, SLH-DSA adoption or absence.
 
@@ -827,7 +827,7 @@ Semgrep uses three separate orthogonal fields in `metadata`:
 
 The `subcategory: audit` value signals lower-confidence findings that require human review.
 
-### 6.4 Proposed seawall Confidence Encoding
+### 6.4 Proposed quipuu Confidence Encoding
 
 ```yaml
 confidence: high    # literal-argument detection
@@ -835,7 +835,7 @@ confidence: medium  # constant/same-scope variable, requires light value propaga
 confidence: low     # runtime variable, external config, taint sink only
 ```
 
-Store in the SARIF `result.properties` map as `"confidence": "high"` alongside `"seawall/keylen": "2048"` and `"seawall/algo": "RSA"`.
+Store in the SARIF `result.properties` map as `"confidence": "high"` alongside `"quipuu/keylen": "2048"` and `"quipuu/algo": "RSA"`.
 
 Map confidence to SARIF `level`:
 - `high` → `level: warning` (actionable)
@@ -844,7 +844,7 @@ Map confidence to SARIF `level`:
 
 ---
 
-## 7. Proposed seawall Rule Schema
+## 7. Proposed quipuu Rule Schema
 
 Based on the above research, the recommended rule format combines:
 - **Detection layer** (tree-sitter): which call to match and how to extract values — not declarative in cryptobom-forge (it uses CodeQL for this), so we define our own
@@ -973,7 +973,7 @@ classify:
 ### 7.3 Rule Library Organisation
 
 ```
-seawall/rules/
+quipuu/rules/
   go/
     crypto-rsa.yaml
     crypto-ecdsa-ecdh.yaml
@@ -1035,4 +1035,4 @@ seawall/rules/
 | BF-CBOM paper (Boegli 2026) | `romanboegli.ch/assets/pdf/Boegli_2026_BFCBOM_ICPC.pdf` | Framework paper; no new rule format |
 | semgrep-rules crypto | `github.com/semgrep/semgrep-rules` | 30+ rules Java/Python/Go; sparse JS |
 | CodeQL queries | `github.com/github/codeql` | 5–8 queries per language; `@precision` gating |
-| CycloneDX CBOM 1.6 | `bom-1.6.schema.json` (local) | Output schema for seawall CBOM |
+| CycloneDX CBOM 1.6 | `bom-1.6.schema.json` (local) | Output schema for quipuu CBOM |
