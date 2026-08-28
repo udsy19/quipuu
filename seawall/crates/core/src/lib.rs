@@ -25,7 +25,7 @@ pub use algorithm::{AlgorithmRecord, AlgorithmTable, Primitive, QuantumStatus};
 pub use finding::{Confidence, Exposure, Finding, Location, Severity, SiteContext, UsageContext};
 pub use oid::{Determines, OidMapping, OidTable};
 pub use policy::Policy;
-pub use risk::QuantumRiskScore;
+pub use risk::{QuantumRiskScore, score_of, severity_of};
 pub use warnings::{ScanWarning, ScanWarningKind};
 
 use thiserror::Error;

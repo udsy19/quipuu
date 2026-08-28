@@ -19,6 +19,20 @@ pub use summary::emit_summary_json;
 
 use seawall_core::{AlgorithmTable, Finding, Policy, ScanWarning};
 
+/// How every emitter names a finding whose `algorithm_id` has no algorithm-table
+/// row, and which therefore has no severity band.
+///
+/// One constant because the three emitters previously disagreed about what such
+/// a finding was — `Medium` in `summary.json` and the HTML report, `warning` in
+/// SARIF. See [`seawall_core::score_of`] for why `None` is not a band.
+pub const UNSCORED_LABEL: &str = "Unscored";
+
+/// Machine spelling of [`UNSCORED_LABEL`] — the HTML report's CSS class.
+///
+/// Deliberately not a [`seawall_core::Severity`] slug: `--fail-on` parses those,
+/// and `--fail-on unscored` is not a threshold anyone can mean.
+pub const UNSCORED_SLUG: &str = "unscored";
+
 /// Partition findings into (audible, suppressed) sets.
 ///
 /// "Suppressed" = findings whose algorithm has `quantum_status.is_inventory_only()`

@@ -126,6 +126,47 @@ fn map_severity(score: u8, policy: &Policy) -> Severity {
     }
 }
 
+/// The risk score of one finding, or `None` when its `algorithm_id` has no row
+/// in the algorithm table.
+///
+/// **`None` means *unscored*. It does not mean Safe and it does not mean
+/// Medium.** `algorithm_vulnerability` is 40 of the 100 available points — the
+/// largest single axis — and it is read entirely from the algorithm record, so
+/// a finding with no record cannot be banded at all. Substituting a band for
+/// the missing one is the same defect as naming a parameter the input never
+/// stated: an assertion the evidence does not carry.
+///
+/// This exists because every surface used to make that substitution privately,
+/// and they did not agree. One `openssl = "0.10"` line in a `Cargo.toml`
+/// produces `DEP-001` carrying the `unknown` sentinel — what `scan-deps` sets
+/// its algorithm id to for a manifest that names a crypto library but no
+/// algorithm — and the same scan reported it as `?` on stdout, `Medium` in
+/// `summary.json` and the HTML report, `warning` with
+/// `security-severity: 5.0` in SARIF, and `Safe` in the TUI. `--fail-on`
+/// alone got it right, and only because R27 had to reason about it to write
+/// the gate. Callers now share that reasoning instead of each re-deriving it.
+///
+/// Render `None` as unscored and say so; do not fold it into a band.
+pub fn score_of(
+    finding: &Finding,
+    algorithms: &AlgorithmTable,
+    policy: &Policy,
+) -> Option<QuantumRiskScore> {
+    algorithms
+        .get(&finding.algorithm_id)
+        .map(|algorithm| QuantumRiskScore::compute(finding, algorithm, policy))
+}
+
+/// [`score_of`], keeping only the band. `None` is unscored — read that doc
+/// before choosing what to do with it.
+pub fn severity_of(
+    finding: &Finding,
+    algorithms: &AlgorithmTable,
+    policy: &Policy,
+) -> Option<Severity> {
+    score_of(finding, algorithms, policy).map(|s| s.severity)
+}
+
 /// Decide whether a finding should carry the HNDL-CRITICAL tag.
 ///
 /// All three conditions in `policy.hndl_flag` must be met.
