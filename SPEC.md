@@ -184,7 +184,7 @@ Use `evidence.occurrences[]` + `evidence.callstack.frames[]` (D-02) for file/lin
 
 - Always emit `automationDetails.id` (unique per run).
 - Rule IDs `CRYPTO-001` … `CRYPTO-999`, stable across releases. Rule metadata includes `name`, `shortDescription`, `fullDescription`, `helpUri` (link to our docs), `defaultConfiguration.level`, `properties.security-severity` (on the rule, not the result).
-- Severity mapping: Critical → `level: error`, `security-severity: "9.0"`; High → `error`, `"8.0"`; Medium → `warning`, `"5.0"`; Low → `note`, `"3.0"`.
+- Severity mapping: Critical → `level: error`, `security-severity: "9.0"`; High → `error`, `"8.0"`; Medium → `warning`, `"5.0"`; Low → `note`, `"3.0"`; Safe → `note`, `"3.0"`. A finding whose `algorithm_id` has no algorithm-table row is **unscored** and maps to `level: none` — SARIF's "the concept of severity does not apply to this result" — with `security-severity` **omitted rather than zeroed**, since GitHub bands on that number. It previously mapped to `warning` / `"5.0"`, which asserted a mid-band severity the risk engine never computed.
 - `partialFingerprints.primaryLocationLineHash` = SHA-256(`ruleId:snippet`)[:16].
 - Cross-ref CBOM: each result has `properties."seawall/cbom-ref": "<bom-ref>"`.
 - No `fix` objects in v1.

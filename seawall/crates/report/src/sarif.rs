@@ -12,7 +12,7 @@ use std::collections::BTreeMap;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
-use seawall_core::{AlgorithmTable, Finding, Policy, QuantumRiskScore, ScanWarning, Severity};
+use seawall_core::{AlgorithmTable, Finding, Policy, ScanWarning, Severity, score_of};
 
 use crate::{ReportError, ReportOptions};
 
@@ -51,16 +51,27 @@ pub fn emit_sarif(
             .unwrap_or_default();
         let algo_id = finding.algorithm_id.clone();
 
-        // Compute severity for this rule via the risk engine.
-        let (level, security_severity) = if let Some(algo_rec) = algo {
-            let score = QuantumRiskScore::compute(finding, algo_rec, policy);
-            severity_to_sarif(score.severity)
-        } else {
-            ("warning", "5.0")
-        };
+        // Compute severity for this rule via the risk engine. An unscored
+        // finding gets SARIF `none` and no `security-severity`, which is what
+        // those two fields mean; it used to get `warning` and `5.0`, asserting
+        // a mid-band CVSS to GitHub for a finding we decline to score.
+        let severity = score_of(finding, algorithms, policy).map(|s| s.severity);
+        let (level, security_severity) = severity_to_sarif(severity);
 
         let short_desc = format!("{display_name} finding");
         let full_desc = finding.message.clone();
+
+        let mut properties = json!({
+            "seawall/algorithm-id": algo_id,
+            "seawall/quantum-status": quantum_status,
+            "tags": ["security", "cryptography", "pqc"]
+        });
+        // Omitted, not zeroed, when the finding is unscored: GitHub bands on
+        // this number, and both `0.0` and `null` read as a claim we are not
+        // making.
+        if let Some(security_severity) = security_severity {
+            properties["security-severity"] = json!(security_severity);
+        }
 
         let rule = json!({
             "id": finding.rule_id,
@@ -68,12 +79,7 @@ pub fn emit_sarif(
             "shortDescription": { "text": short_desc },
             "fullDescription": { "text": full_desc },
             "defaultConfiguration": { "level": level },
-            "properties": {
-                "security-severity": security_severity,
-                "seawall/algorithm-id": algo_id,
-                "seawall/quantum-status": quantum_status,
-                "tags": ["security", "cryptography", "pqc"]
-            }
+            "properties": properties
         });
         rules_json.push(rule);
     }
@@ -84,12 +90,8 @@ pub fn emit_sarif(
     for finding in findings {
         let algo = algorithms.get(&finding.algorithm_id);
 
-        let (level, _) = if let Some(algo_rec) = algo {
-            let score = QuantumRiskScore::compute(finding, algo_rec, policy);
-            severity_to_sarif(score.severity)
-        } else {
-            ("warning", "5.0")
-        };
+        let (level, _) =
+            severity_to_sarif(score_of(finding, algorithms, policy).map(|s| s.severity));
 
         let rule_index = rule_map.get(finding.rule_id.as_str()).copied().unwrap_or(0);
 
@@ -223,12 +225,18 @@ fn tool_execution_notification(w: &ScanWarning) -> Value {
 }
 
 /// Map a [`Severity`] to (`level`, `security-severity`) per D-11 / §8.1.
-fn severity_to_sarif(severity: Severity) -> (&'static str, &'static str) {
+///
+/// `None` is unscored and maps to SARIF `none`, which the 2.1.0 spec defines as
+/// "the concept of severity does not apply to this result" — the one level that
+/// states our position rather than guessing a band. Its `security-severity` is
+/// [`None`] so the property is omitted entirely; see [`seawall_core::score_of`].
+fn severity_to_sarif(severity: Option<Severity>) -> (&'static str, Option<&'static str>) {
     match severity {
-        Severity::Critical => ("error", "9.0"),
-        Severity::High => ("error", "8.0"),
-        Severity::Medium => ("warning", "5.0"),
-        Severity::Low => ("note", "3.0"),
-        Severity::Safe => ("note", "3.0"),
+        Some(Severity::Critical) => ("error", Some("9.0")),
+        Some(Severity::High) => ("error", Some("8.0")),
+        Some(Severity::Medium) => ("warning", Some("5.0")),
+        Some(Severity::Low) => ("note", Some("3.0")),
+        Some(Severity::Safe) => ("note", Some("3.0")),
+        None => ("none", None),
     }
 }

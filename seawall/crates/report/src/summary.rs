@@ -8,9 +8,9 @@ use std::collections::BTreeMap;
 
 use serde_json::{Value, json};
 
-use seawall_core::{AlgorithmTable, Finding, Policy, QuantumRiskScore, Severity};
+use seawall_core::{AlgorithmTable, Finding, Policy, Severity, severity_of};
 
-use crate::{ReportError, ReportOptions};
+use crate::{ReportError, ReportOptions, UNSCORED_LABEL};
 
 /// Emit the CI dashboard JSON summary.
 pub fn emit_summary_json(
@@ -24,26 +24,27 @@ pub fn emit_summary_json(
     let mut medium = 0u32;
     let mut low = 0u32;
     let mut safe = 0u32;
+    let mut unscored = 0u32;
     let mut hndl_critical = 0u32;
 
-    // Track per-algorithm { count, worst_severity }.
+    // Track per-algorithm { count, worst_severity }. `None` is an algorithm id
+    // no finding of which could be scored.
     // BTreeMap so the iteration order is deterministic before re-sorting.
-    let mut by_algo: BTreeMap<String, (u32, Severity)> = BTreeMap::new();
+    let mut by_algo: BTreeMap<String, (u32, Option<Severity>)> = BTreeMap::new();
 
     for finding in findings {
-        let severity = if let Some(algo) = algorithms.get(&finding.algorithm_id) {
-            let score = QuantumRiskScore::compute(finding, algo, policy);
-            score.severity
-        } else {
-            Severity::Medium
-        };
+        // `None` is counted as `unscored`, not folded into a band. It used to
+        // be counted as `medium`, which asserted a severity for a finding
+        // whose algorithm we cannot look up.
+        let severity = severity_of(finding, algorithms, policy);
 
         match severity {
-            Severity::Critical => critical += 1,
-            Severity::High => high += 1,
-            Severity::Medium => medium += 1,
-            Severity::Low => low += 1,
-            Severity::Safe => safe += 1,
+            Some(Severity::Critical) => critical += 1,
+            Some(Severity::High) => high += 1,
+            Some(Severity::Medium) => medium += 1,
+            Some(Severity::Low) => low += 1,
+            Some(Severity::Safe) => safe += 1,
+            None => unscored += 1,
         }
 
         if finding.hndl_critical {
@@ -52,16 +53,19 @@ pub fn emit_summary_json(
 
         let entry = by_algo
             .entry(finding.algorithm_id.clone())
-            .or_insert((0, Severity::Safe));
+            .or_insert((0, None));
         entry.0 += 1;
-        // Keep the worst severity seen for this algorithm.
-        if severity.rank() > entry.1.rank() {
-            entry.1 = severity;
+        // Keep the worst severity seen for this algorithm. An unscored finding
+        // never becomes the worst: it has no rank to compare.
+        if let Some(sev) = severity
+            && entry.1.is_none_or(|worst| sev.rank() > worst.rank())
+        {
+            entry.1 = Some(sev);
         }
     }
 
     // Sort by_algorithm: count descending, then algorithm_id ascending.
-    let mut by_algo_vec: Vec<(String, u32, Severity)> = by_algo
+    let mut by_algo_vec: Vec<(String, u32, Option<Severity>)> = by_algo
         .into_iter()
         .map(|(id, (count, sev))| (id, count, sev))
         .collect();
@@ -73,7 +77,7 @@ pub fn emit_summary_json(
             json!({
                 "algorithm_id": algo_id,
                 "count": count,
-                "severity": sev.label()
+                "severity": sev.map_or(UNSCORED_LABEL, Severity::label)
             })
         })
         .collect();
@@ -93,6 +97,7 @@ pub fn emit_summary_json(
             "medium": medium,
             "low": low,
             "safe": safe,
+            "unscored": unscored,
             "hndl_critical": hndl_critical
         },
         "by_algorithm": by_algorithm
