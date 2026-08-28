@@ -1,7 +1,7 @@
 # seawall — 150-project corpus benchmark
 
 Sections are appended in date order. **The current run is the last dated section**
-(*HNDL flag and SARIF property name — 2026-08-28*); everything above it is the
+(*The `--fail-on` CI gate: precision recomputed on the same finding set — 2026-08-28*); everything above it is the
 record of an earlier phase and is kept as history, not as a current claim.
 
 ---
@@ -948,3 +948,92 @@ constructor-only extractor earns its precision by declining exactly the ambiguou
 `cargo test --workspace`: **271 tests across 38 suites, all passing**. No finding was added or
 removed anywhere in the corpus, so no coverage was traded for either change, and no speed
 figure is restated here — nothing in this change is on the scanning path.
+
+---
+
+## The `--fail-on` CI gate: precision recomputed on the same finding set — 2026-08-28
+
+**Measurement tuple:** corpus B (150 projects, all populated) · scanner set
+`--source --deps --include-safe` · profile `nist-default` · binary `ee9e96d` · 2 cores of an
+AMD EPYC 9354P · 2026-08-28. Dump taken with the in-tree
+`benchmarks/corpus-b-realworld/dump_findings.py`.
+
+**Precision 85.3% (95% CI 81.3–89.3%), stratified — unchanged, and recomputed rather than
+quoted.** Findings 1570, unchanged.
+
+### Why a CLI change is measured at all
+
+No rule file and no tree-sitter matcher moved, so on the usual reading this is not a detection
+change. It is measured anyway because it edits the two things upstream of every rule: **which
+paths get scanned, and what happens when one of them is not there.**
+
+- Positional paths are now collected wherever they appear in argv and *all* of them are
+  scanned, instead of the scan target being read from a fixed argv slot.
+- Each scanner is constructed once and walked over every path, rather than once per path.
+- `scan` now **refuses** a path that does not exist with exit 2, where before it walked nothing
+  and printed `0 finding(s)`.
+
+The third is the one that could delete a project from a corpus dump. It cannot here:
+`dump_findings.py` filters `scan_hints.scan_paths` through `Path.exists()` before invoking the
+binary and falls back to the clone root when none resolve, so no corpus invocation reaches the
+refusal branch. That filter is load-bearing for this harness — 92 of 150 projects are scanned
+only inside subtree hints — and it is the reason this run is a recomputation and not a
+re-labelling. The first two cannot move anything either: the harness passes exactly one path per
+invocation, which is the argv shape that behaved identically before and after.
+
+That is the prediction. The check is what makes it a measurement:
+
+| | findings | distinct sites | added | removed | changed in place |
+|---|---|---|---|---|---|
+| `21e4478` (the dump the 85.3% baseline was audited on) | 1570 | 1552 | — | — | — |
+| `ee9e96d` (this tree) | 1570 | 1552 | **0** | **0** | **0** |
+
+Sites are keyed on `(project, rule_id, file, line)` and compared on `algorithm_id` and
+`message`; 18 rows legitimately share a site key, which is why the two columns differ.
+Because a whole project vanishing is the specific signature of the missing-path refusal firing,
+the estimator counts projects on both sides and names any that dropped rather than leaving it to
+be read out of a site diff: **86 projects with findings before, 86 after, none dropped.**
+Per-ecosystem counts are identical too: go-modules 576, maven 366, crates-io 226,
+crypto-adjacent 198, npm 127, pypi 77.
+
+### The estimator, its sample sizes and its verdicts
+
+An unchanged finding set cannot move a TP/FP ratio, so the audited label sets apply without
+re-labelling and precision is **recomputed, not re-estimated**. It is recomputed rather than
+quoted because a published figure that is never re-derived cannot notice when the tree drifts
+away from it; the estimator asserts it reproduces the recorded baseline from the labels before
+it prints anything, and it did — 85.30%.
+
+Same two strata, same weighting (population share) and same label sets as the 85.3% row in
+*Registry-lookup suppression* above, so the two are the same figure and not merely the same
+number.
+
+| | Population | Audited | TP | FP | DEPENDS | Precision |
+|---|---|---|---|---|---|---|
+| Stratum A | 964 | 272 | 217 | 32 | 23 | 87.1% (held) |
+| Stratum B | 606 | 90 | 70 | 15 | 5 | 82.4% (Wilson 72.9–89.0) |
+| **Weighted** | **1570** | **362** | | | | **85.3%** (95% CI 81.3–89.3) |
+
+Method, in full. Stratum B is the 606 findings from the 46 projects whose working trees were
+restored, sampled uniformly at seed 20260827 and labelled once by **opening every cited
+`file:line` and reading the code at it** — TP if a cryptographic operation or key of the named
+algorithm exists at that line, FP if it does not, DEPENDS if the line is real but its
+quantum-relevance turns on a runtime value the scanner cannot see. DEPENDS rows are excluded
+from both numerator and denominator, which is why the audited 362 yields 249 + 85 = 334 graded
+verdicts. Stratum A is held at the value its own 272-row audit produced; nothing in this change
+removes or reclassifies a stratum-A finding, and the site-set check above is what establishes
+that. The interval is the stratified normal approximation `Var = Σ wᵢ² pᵢ(1−pᵢ)/nᵢ` — **not**
+Wilson, which applies only to the single-stratum figures quoted per row.
+
+### Held
+
+`cargo test --workspace`: **284 tests across 39 suites, all passing** — 271 before, plus the
+13 that pin `--fail-on`, one of which reads the threshold out of the shipped
+`.pre-commit-hooks.yaml` and asserts this binary accepts it.
+
+`benchmarks/corpus-b-realworld/regression_check.py`: **13 of 13 floors met**, 6 per-ecosystem
+and 6 per-rule plus the total, at **1570 findings, 0 projects errored**. 150 projects scanned in
+**284.3 s** against 282.7 s on the previous pass over the same corpus with the same flag set, so
+no speed was traded either.
+
+No finding was added or removed anywhere in the corpus, so no coverage was traded for the gate.
