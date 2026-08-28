@@ -149,7 +149,7 @@ not perform.
 
 **CycloneDX 1.7 CBOM** — the canonical Crypto Bill of Materials format (ECMA-424 2nd Edition). Use it to track your cryptographic inventory over time and diff it across releases.
 
-*What is verified:* a build gate emits one component for every algorithm in the table and validates it against the schema the BOM declares — **0 errors at 1.7, 0 errors at 1.6** (`--schema-version 1.6`), against the schemas vendored in `crates/cbom/data/`. **1.7 output is not 1.6-compatible:** `algorithmFamily` is a 1.7-only field, and offering default output to a 1.6 validator produces **72 errors** — one for each of the 72 components (of 87) that carry a canonical family. A consumer pinned to 1.6 needs `--schema-version 1.6`. Measured 2026-08-28 by `every_algorithm_emits_a_bom_valid_at_the_version_it_declares`. We have not tested ingestion by any third-party consumer, and no longer claim to.
+*What is verified:* a build gate emits one component for every algorithm in the table and validates it against the schema the BOM declares — **0 errors at 1.7, 0 errors at 1.6** (`--schema-version 1.6`), against the schemas vendored in `crates/cbom/data/`. **1.7 output is not 1.6-compatible:** `algorithmFamily` is a 1.7-only field, and offering default output to a 1.6 validator produces **77 errors** — one for each of the 77 components (of 92) that carry a canonical family. A consumer pinned to 1.6 needs `--schema-version 1.6`. Measured 2026-08-28 by `every_algorithm_emits_a_bom_valid_at_the_version_it_declares`. We have not tested ingestion by any third-party consumer, and no longer claim to.
 
 **JSON summary** — machine-readable finding counts by severity, ecosystem, and algorithm family. Pipe it into your CI dashboard, Slack alerts, or compliance reports.
 
@@ -240,7 +240,7 @@ seawall scan .
 
 **SiteContext (Phase 16)** is the current-generation context-aware filtering pass. Where earlier phases fired on any algorithm-identifier string, Phase 16 requires the match to appear in a cryptographic operation context — a signing call argument, a key constructor, a type parameter — rather than in a parser config array, a test assertion, or a generated protobuf enum table. This is the primary precision driver in the roadmap.
 
-**Rule format.** Rules live in `crates/core/data/rules/<lang>.toml` as two-layer extract-then-classify pairs. The classify layer maps captured values to an `algorithm_id` from the algorithm table, a severity hint, and a SARIF message template; it is the live layer and the source of truth for classification. The extract layer records the intended tree-sitter S-expression for each call shape, but the queries are not executed — matching is done by a hand-written walker in `scan-source/src/scanner.rs`, and a build gate fails when a classify rule names an API that walker cannot emit. The format is intentionally schema-compatible with IBMResearch's cryptobom-forge rule files. ~270 rules across 7 files; every one is plain text, readable in under a minute.
+**Rule format.** Rules live in `crates/core/data/rules/<lang>.toml` as two-layer extract-then-classify pairs. The classify layer maps captured values to an `algorithm_id` from the algorithm table, a severity hint, and a SARIF message template; it is the live layer and the source of truth for classification. The extract layer records the intended tree-sitter S-expression for each call shape, but the queries are not executed — matching is done by a hand-written walker in `scan-source/src/scanner.rs`, and a build gate fails when a classify rule names an API that walker cannot emit. The format is intentionally schema-compatible with IBMResearch's cryptobom-forge rule files. 59 extract blocks and 280 classify arms across 7 files; every one is plain text, readable in under a minute.
 
 ---
 
@@ -274,7 +274,7 @@ The Rust workspace (`seawall/`) has nine crates, each with one responsibility:
 
 ```
 crates/
-├── core/           Domain types, algorithm table (~67 entries), OID table,
+├── core/           Domain types, algorithm table (92 entries), OID table,
 │                   QuantumRiskScore engine, policy presets (nist-default,
 │                   nsa-cnsa2)
 ├── scan-source/    tree-sitter scanning for 7 languages

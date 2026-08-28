@@ -757,7 +757,8 @@ executed (P4): every finding resolves to a file the scanner opened for reading.
 
 ### CBOM schema conformance — measured the same day
 
-Emitting one component for every one of the **87** algorithm-table rows and validating
+Emitting one component for every one of the **87** algorithm-table rows (92 as of `9e60ffe`;
+see the section below) and validating
 against the schemas vendored in `crates/cbom/data/`:
 
 | Emitted as | Validated against | Errors |
@@ -779,3 +780,60 @@ Gated by `every_algorithm_emits_a_bom_valid_at_the_version_it_declares`
 `emit_validates_for_v1_7_and_v1_6` covers only the fixture corpus. Confirmed it can fail,
 per the standing rule: removing the 1.6 suppression in `emit.rs` makes it fail with the 72
 errors above.
+
+## Go TLS hybrid groups, and a corpus that cannot exercise them — 2026-08-28
+
+`CRYPTO-044/045/046/048` classify the PQC half of a Go `tls.Config.CurvePreferences`
+list. Corpus B was re-dumped to measure them, and the honest result is that it cannot:
+
+**The finding set is byte-for-byte unchanged.** 1570 findings before and after, identical
+on project, rule id, algorithm id, severity, line and message on every row — 0 added,
+0 removed, 0 changed in place. (The two dumps write `file` differently, absolute against
+`<ecosystem>/<name>/<path>`, so the clone root is stripped before the comparison and
+nothing else about either side is touched.)
+
+**`CurvePreferences` fires zero times across all 150 projects** — not just the four new
+PQC arms but `CRYPTO-032..035`, the classical arms that have shipped for cycles. The rule
+shape has no site in this corpus at all, so the number to report for the new arms is
+**0 corpus findings, and it is reported rather than omitted**. Its coverage is the
+`tls_pqc_groups.go` fixture, where each arm is pinned to a literal `file:line`.
+
+Two reasons the corpus cannot speak to this, both worth stating rather than inferring:
+92 of 150 projects are scanned only inside `scan_hints.scan_paths` subtrees, and a
+`CurvePreferences` slice literal is a deployment shape more than a library shape — the
+corpus is 150 libraries.
+
+An unchanged finding set cannot move a TP/FP ratio, so the audited label sets apply
+without re-labelling. Precision was recomputed anyway rather than quoted, per the rule
+adopted in cycle 19 — the estimator reproduced the recorded **85.3%** baseline from the
+labels before anything was reported — and returns **85.3 % (95 % CI 81.3–89.3)**:
+stratum A 964 findings at 87.1 % (272 audited, held), stratum B 606 findings at 82.4 %
+(90 audited, Wilson 72.9–89.0), weights by population share.
+
+`regression_check.py` ran its floors on the new binary: **13 of 13 met**, 150 of 150
+projects scanned, 0 errored, 305.6 s.
+
+### The algorithm table is 92 rows, and 8 of them state why nothing can emit them
+
+Four rows were added for the stateful hash-based signatures (`lms`, `hss`, `xmss`,
+`xmss-mt`) that `policies/nsa-cnsa2.toml` already advertised, and one (`dh-unattributed`)
+for the two finite-field DH OIDs, which name the key type but not the group size — they
+had been resolving to `dh-2048`, asserting a prime length no emitter can observe.
+
+None of the five is reachable from a rule pack, so the count of ids nothing can emit went
+from 3 to 8. Rather than publish that count — the two published before it, 24 and then 2,
+were both wrong because the emitter set was assumed rather than enumerated — an
+unreachable row now carries an `undetectable` field saying why it is kept, and
+`crates/cli/tests/algorithm_reachability.rs` checks the set in three directions:
+unreachable implies a reason, the reason is retired as soon as something emits the row,
+and **no file outside the enumerated eleven emits an id at all**. All three were confirmed
+to fail by reintroducing each defect.
+
+CBOM conformance re-measured over the 92 rows: **1.7→1.7 = 0 errors, 1.6→1.6 = 0 errors,
+1.7→1.6 = 77 errors**, all `algorithmFamily` against 1.6's `additionalProperties: false`,
+one per component carrying a canonical family. The 77 is the 72 recorded above plus the
+five new rows, each of which carries one.
+
+Tuple for every figure in this section: corpus B, 150 projects all populated ·
+`--source --deps --include-safe` · profile `nist-default` · binary `9e60ffe` · 2 cores of
+an AMD EPYC 9354P · 2026-08-28.
