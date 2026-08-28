@@ -60,6 +60,7 @@ h3 { font-size: 1.05rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.5rem
 .card.medium   .value { color: #ca8a04; }
 .card.low      .value { color: #2563eb; }
 .card.safe     .value { color: #16a34a; }
+.card.unscored .value { color: #94a3b8; }
 .card.total    .value { color: #f1f5f9; }
 .card.hndl     .value { color: #dc2626; }
 
@@ -81,6 +82,7 @@ h3 { font-size: 1.05rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.5rem
 .seg.medium   { background: #ca8a04; }
 .seg.low      { background: #2563eb; }
 .seg.safe     { background: #16a34a; }
+.seg.unscored { background: #475569; }
 .risk-legend  { display: flex; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap; }
 .risk-legend .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block;
                     margin-right: 4px; vertical-align: middle; }
@@ -125,6 +127,7 @@ tbody td { padding: 0.55rem 0.75rem; vertical-align: top; color: #cbd5e1; }
 .badge-sev.medium   { background: #ca8a04; color: #fff; }
 .badge-sev.low      { background: #2563eb; color: #fff; }
 .badge-sev.safe     { background: #16a34a; color: #fff; }
+.badge-sev.unscored { background: #475569; color: #e2e8f0; }
 
 /* ── "Why this matters" disclosure ───────────────────────────────── */
 .why-matters {
@@ -237,6 +240,10 @@ tbody td { padding: 0.55rem 0.75rem; vertical-align: top; color: #cbd5e1; }
         <div class="label">Safe</div>
         <div class="value">{{ count_safe }}</div>
       </div>
+      <div class="card unscored">
+        <div class="label">Unscored</div>
+        <div class="value">{{ count_unscored }}</div>
+      </div>
       <div class="card hndl">
         <div class="label">HNDL-Critical</div>
         <div class="value">{{ count_hndl }}</div>
@@ -259,6 +266,7 @@ tbody td { padding: 0.55rem 0.75rem; vertical-align: top; color: #cbd5e1; }
         {% if bar_medium_pct > 0 %}<div class="seg medium" style="width:{{ bar_medium_pct }}%;"></div>{% endif %}
         {% if bar_low_pct > 0 %}<div class="seg low" style="width:{{ bar_low_pct }}%;"></div>{% endif %}
         {% if bar_safe_pct > 0 %}<div class="seg safe" style="width:{{ bar_safe_pct }}%;"></div>{% endif %}
+        {% if bar_unscored_pct > 0 %}<div class="seg unscored" style="width:{{ bar_unscored_pct }}%;"></div>{% endif %}
         {% if total_findings == 0 %}<div class="seg safe" style="width:100%;">No findings</div>{% endif %}
       </div>
       <div class="risk-legend">
@@ -267,6 +275,7 @@ tbody td { padding: 0.55rem 0.75rem; vertical-align: top; color: #cbd5e1; }
         <span><span class="dot" style="background:#ca8a04;"></span>Medium</span>
         <span><span class="dot" style="background:#2563eb;"></span>Low</span>
         <span><span class="dot" style="background:#16a34a;"></span>Safe</span>
+        <span><span class="dot" style="background:#475569;"></span>Unscored</span>
       </div>
     </div>
   </div>
@@ -278,6 +287,9 @@ tbody td { padding: 0.55rem 0.75rem; vertical-align: top; color: #cbd5e1; }
     <p style="color:#fca5a5;font-size:0.88rem;margin-bottom:1rem;">
       These findings meet the Harvest-Now-Decrypt-Later (HNDL) threshold: Shor-vulnerable
       key-establishment algorithms with long-lived data exposure. Migrate immediately.
+      The count is the one in the HNDL-Critical card above and in
+      <code>summary.json</code>&#8217;s <code>totals.hndl_critical</code> &#8212; a
+      high severity band does not put a finding in this section.
     </p>
     {% for row in hndl_rows %}
     <div class="hndl-callout">
@@ -392,7 +404,10 @@ tbody td { padding: 0.55rem 0.75rem; vertical-align: top; color: #cbd5e1; }
     <div class="row" style="margin-top:0.5rem;">
       Methodology: 5-axis additive QuantumRiskScore (AlgorithmVulnerability + UsageContext
       + DataShelfLife + Exposure + DetectionConfidence, max 100). Severity bands: &#8805;75 Critical,
-      50&#8211;74 High, 25&#8211;49 Medium, 10&#8211;24 Low, &lt;10 Safe. HNDL flagging per Mosca inequality.
+      50&#8211;74 High, 25&#8211;49 Medium, 10&#8211;24 Low, &lt;10 Safe. Unscored findings carry an
+      algorithm identifier with no row in the algorithm table, so the algorithm-vulnerability axis
+      &#8212; 40 of the 100 points &#8212; cannot be evaluated and no band is assigned.
+      HNDL flagging per Mosca inequality.
     </div>
   </div>
 

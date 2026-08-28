@@ -7,7 +7,11 @@
 //! 1. Header  — tool name/version, policy name, scan target, timestamp.
 //! 2. Executive summary — totals, severity breakdown, HNDL count, % vulnerable.
 //! 3. Risk distribution — CSS-only stacked horizontal bar.
-//! 4. HNDL-critical callouts — findings where severity == Critical.
+//! 4. HNDL-critical callouts — findings the active policy's `[hndl_flag]`
+//!    block marks HNDL-critical, and only those. This section used to also
+//!    admit `severity == Critical`, so it badged findings `HNDL-CRITICAL` that
+//!    `summary.json` counted as zero from the same scan — and contradicted the
+//!    `count_hndl` card three sections above it in its own document.
 //! 5. Risk register table — all findings sorted by score descending.
 //! 6. Compliance section — NIST IR 8547 IPD reference.
 //! 7. Footer — methodology, tool version, timestamp.
@@ -16,9 +20,9 @@ use std::cmp::Reverse;
 
 use askama::Template;
 
-use seawall_core::{AlgorithmTable, Finding, Policy, QuantumRiskScore, ScanWarningKind, Severity};
+use seawall_core::{AlgorithmTable, Finding, Policy, ScanWarningKind, Severity, score_of};
 
-use crate::{ReportError, ReportOptions};
+use crate::{ReportError, ReportOptions, UNSCORED_LABEL, UNSCORED_SLUG};
 
 // ── Template data rows ──────────────────────────────────────────────────────
 
@@ -74,15 +78,17 @@ struct ReportTemplate {
     count_medium: usize,
     count_low: usize,
     count_safe: usize,
+    count_unscored: usize,
     count_hndl: usize,
     pct_vulnerable: u32,
 
-    // Risk distribution bar (integer percentages 0–100; all five sum to ≤100)
+    // Risk distribution bar (integer percentages 0–100; all six sum to ≤100)
     bar_critical_pct: u32,
     bar_high_pct: u32,
     bar_medium_pct: u32,
     bar_low_pct: u32,
     bar_safe_pct: u32,
+    bar_unscored_pct: u32,
 
     // HNDL callout rows
     hndl_rows: Vec<HndlRow>,
@@ -108,8 +114,10 @@ pub fn emit_html(
     // ── Score every finding ──────────────────────────────────────────────────
     struct ScoredFinding<'a> {
         finding: &'a Finding,
-        score: u8,
-        severity: Severity,
+        /// `None` when the finding's algorithm has no table row — unscored,
+        /// which is not a band. See `seawall_core::score_of`.
+        score: Option<u8>,
+        severity: Option<Severity>,
         display_name: String,
         replacement: String,
     }
@@ -118,12 +126,8 @@ pub fn emit_html(
         .iter()
         .map(|f| {
             let algo = algorithms.get(&f.algorithm_id);
-            let (score, severity) = if let Some(a) = algo {
-                let s = QuantumRiskScore::compute(f, a, policy);
-                (s.total, s.severity)
-            } else {
-                (25, Severity::Medium)
-            };
+            let scored = score_of(f, algorithms, policy);
+            let (score, severity) = (scored.map(|s| s.total), scored.map(|s| s.severity));
             let display_name = algo
                 .map(|a| a.display_name.clone())
                 .unwrap_or_else(|| f.algorithm_id.clone());
@@ -144,29 +148,32 @@ pub fn emit_html(
         .collect();
 
     // Sort descending by score for the risk register.
-    scored.sort_by_key(|s| Reverse(s.score));
+    // Unscored findings have no score to sort by and land at the bottom, after
+    // every banded finding, rather than being given one.
+    scored.sort_by_key(|s| Reverse(s.score.unwrap_or(0)));
 
     // ── Counts ───────────────────────────────────────────────────────────────
     let count_critical = scored
         .iter()
-        .filter(|s| s.severity == Severity::Critical)
+        .filter(|s| s.severity == Some(Severity::Critical))
         .count();
     let count_high = scored
         .iter()
-        .filter(|s| s.severity == Severity::High)
+        .filter(|s| s.severity == Some(Severity::High))
         .count();
     let count_medium = scored
         .iter()
-        .filter(|s| s.severity == Severity::Medium)
+        .filter(|s| s.severity == Some(Severity::Medium))
         .count();
     let count_low = scored
         .iter()
-        .filter(|s| s.severity == Severity::Low)
+        .filter(|s| s.severity == Some(Severity::Low))
         .count();
     let count_safe = scored
         .iter()
-        .filter(|s| s.severity == Severity::Safe)
+        .filter(|s| s.severity == Some(Severity::Safe))
         .count();
+    let count_unscored = scored.iter().filter(|s| s.severity.is_none()).count();
     let count_hndl = findings.iter().filter(|f| f.hndl_critical).count();
 
     let total_findings = findings.len();
@@ -177,7 +184,14 @@ pub fn emit_html(
         .unwrap_or(0) as u32;
 
     // ── Bar percentages (integer, must sum ≤ 100) ────────────────────────────
-    let (bar_critical_pct, bar_high_pct, bar_medium_pct, bar_low_pct, bar_safe_pct) = {
+    let (
+        bar_critical_pct,
+        bar_high_pct,
+        bar_medium_pct,
+        bar_low_pct,
+        bar_safe_pct,
+        bar_unscored_pct,
+    ) = {
         let c = (count_critical * 100)
             .checked_div(total_findings)
             .unwrap_or(0) as u32;
@@ -186,15 +200,17 @@ pub fn emit_html(
             .checked_div(total_findings)
             .unwrap_or(0) as u32;
         let l = (count_low * 100).checked_div(total_findings).unwrap_or(0) as u32;
-        // Let safe take the remainder to avoid rounding gaps.
-        let s = 100u32.saturating_sub(c + h + m + l);
-        (c, h, m, l, s)
+        let s = (count_safe * 100).checked_div(total_findings).unwrap_or(0) as u32;
+        // Unscored takes the remainder. Safe took it before there was an
+        // unscored segment, which drew unscored findings as green.
+        let u = 100u32.saturating_sub(c + h + m + l + s);
+        (c, h, m, l, s, u)
     };
 
     // ── HNDL callout rows ─────────────────────────────────────────────────────
     let hndl_rows: Vec<HndlRow> = scored
         .iter()
-        .filter(|s| s.finding.hndl_critical || s.severity == Severity::Critical)
+        .filter(|s| s.finding.hndl_critical)
         .map(|s| HndlRow {
             rule_id: s.finding.rule_id.clone(),
             algorithm: s.display_name.clone(),
@@ -212,8 +228,11 @@ pub fn emit_html(
                 .and_then(|a| a.replacement.as_deref())
                 .and_then(|repl_id| algorithms.get(repl_id));
             RegisterRow {
-                severity_class: s.severity.slug().to_string(),
-                severity_label: s.severity.label().to_string(),
+                severity_class: s.severity.map_or(UNSCORED_SLUG, Severity::slug).to_string(),
+                severity_label: s
+                    .severity
+                    .map_or(UNSCORED_LABEL, Severity::label)
+                    .to_string(),
                 rule_id: s.finding.rule_id.clone(),
                 algorithm: s.display_name.clone(),
                 file_line: file_line_str(s.finding),
@@ -254,6 +273,7 @@ pub fn emit_html(
         count_medium,
         count_low,
         count_safe,
+        count_unscored,
         count_hndl,
         pct_vulnerable,
         bar_critical_pct,
@@ -261,6 +281,7 @@ pub fn emit_html(
         bar_medium_pct,
         bar_low_pct,
         bar_safe_pct,
+        bar_unscored_pct,
         hndl_rows,
         register_rows,
         diagnostic_rows,
