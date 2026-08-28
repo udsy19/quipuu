@@ -354,10 +354,13 @@ detection one, and is not made here.
 Speed held: `npm/jose` 0.11–0.23 s across three runs; `maven/nimbus-jose-jwt`
 0.31–0.56 s.
 
-A build gate prevents the regression: `aes_key_size_is_never_asserted_without_evidence`
-(`crates/scan-source/src/rules.rs`) fails when any classify rule in any of the
-seven packs publishes an `aes-128*` / `aes-192*` / `aes-256*` id that its own
-`when` clause cannot observe.
+A build gate prevents the regression: the test in `crates/scan-source/src/rules.rs`
+fails when any classify rule in any of the seven packs publishes an
+`aes-128*` / `aes-192*` / `aes-256*` id that its own `when` clause cannot
+observe. It was named `aes_key_size_is_never_asserted_without_evidence` when
+this was written; it has since been generalised in place to
+`classify_rules_never_publish_a_parameter_their_when_clause_contradicts`, which
+covers elliptic curves as well as AES widths.
 
 ## Broken-classical recall: 22 stranded rules, 8 of 9 planted sites missed — measured 2026-08-27
 
