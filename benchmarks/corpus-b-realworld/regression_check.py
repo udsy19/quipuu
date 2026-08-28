@@ -9,19 +9,25 @@ improvements always cause the test to pass; coverage regressions fail.
 Designed for CI. Skips if `clones/` is absent (so it doesn't run in plain
 unit-test contexts). Exits 1 on regression.
 
+The corpus is routinely cloned outside the repo, so `--clones` (and `--bin`)
+are passed straight through to scan_corpus.py. Without them this skips, and a
+gate that silently skips is not a gate.
+
 Usage:
+    python3 regression_check.py [--clones DIR] [--bin PATH]
     python3 regression_check.py [--update]    # update floors after intentional regression
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-SUMMARY_PATH = SCRIPT_DIR / "results" / "summary.json"
 CLONES_DIR = SCRIPT_DIR / "clones"
 
 # V8 floor (commit 89d35cb). A 5% margin below the observed V8 numbers gives
@@ -55,79 +61,94 @@ RULE_FLOORS = {
 
 
 def main() -> int:
-    if "--update" in sys.argv:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--clones", default=CLONES_DIR, type=Path,
+                    help="Root directory holding cloned projects")
+    ap.add_argument("--bin", default=None, help="Path to the seawall binary")
+    ap.add_argument("--update", action="store_true")
+    args = ap.parse_args()
+
+    if args.update:
         print("Use of --update is intentional; review floors in this file by hand.", file=sys.stderr)
         return 0
-    if not CLONES_DIR.exists():
-        print(f"SKIP: {CLONES_DIR} not present (corpus not cloned).")
+    if not args.clones.exists():
+        print(f"SKIP: {args.clones} not present (corpus not cloned).")
         return 0
 
-    # Re-run the scan to refresh summary.json.
-    print("Running scan_corpus.py...")
-    rc = subprocess.run(
-        [sys.executable, str(SCRIPT_DIR / "scan_corpus.py")],
-        cwd=SCRIPT_DIR,
-        timeout=600,
-    )
-    if rc.returncode != 0:
-        print(f"FAIL: scan_corpus.py exited with {rc.returncode}", file=sys.stderr)
-        return 1
+    # Re-run the scan into a scratch directory. The floors below were set at
+    # `include_safe:false`, while the committed results/ artifacts are the
+    # `--include-safe` run the README cites — so writing into results/ would
+    # silently replace a published artifact with a differently-flagged one.
+    with tempfile.TemporaryDirectory() as scratch:
+        print("Running scan_corpus.py...")
+        cmd = [
+            sys.executable, str(SCRIPT_DIR / "scan_corpus.py"),
+            "--clones", str(args.clones),
+            "--out", scratch,
+        ]
+        if args.bin:
+            cmd += ["--bin", args.bin]
+        rc = subprocess.run(cmd, cwd=SCRIPT_DIR, timeout=1800)
+        if rc.returncode != 0:
+            print(f"FAIL: scan_corpus.py exited with {rc.returncode}", file=sys.stderr)
+            return 1
 
-    if not SUMMARY_PATH.exists():
-        print(f"FAIL: {SUMMARY_PATH} not written", file=sys.stderr)
-        return 1
-    summary = json.loads(SUMMARY_PATH.read_text())
+        summary_path = Path(scratch) / "summary.json"
+        if not summary_path.exists():
+            print(f"FAIL: {summary_path} not written", file=sys.stderr)
+            return 1
+        summary = json.loads(summary_path.read_text())
 
-    failures: list[str] = []
+        failures: list[str] = []
 
-    # Per-ecosystem floors.
-    total = 0
-    for eco, agg in summary["by_ecosystem"].items():
-        actual = agg["total_findings"]
-        total += actual
-        floor = V8_FLOOR.get(eco, 0)
-        if actual < floor:
-            failures.append(
-                f"REGRESSION: {eco} produced {actual} findings, below V8 floor {floor}"
-            )
-        else:
-            print(f"OK: {eco:20} {actual:5} >= {floor:5}")
-
-    if total < V8_FLOOR["total"]:
-        failures.append(
-            f"REGRESSION: total {total} findings below V8 floor {V8_FLOOR['total']}"
-        )
-    else:
-        print(f"OK: total                {total:5} >= {V8_FLOOR['total']:5}")
-
-    # Per-rule floors — read all_findings.json. If dump_findings.py hasn't run
-    # in this CI cycle, skip per-rule checks (the ecosystem floors are
-    # sufficient for the main regression signal).
-    all_findings_path = SCRIPT_DIR / "results" / "all_findings.json"
-    if all_findings_path.exists():
-        all_findings = json.loads(all_findings_path.read_text())
-        from collections import Counter
-        rule_counts = Counter(f["rule_id"] for f in all_findings)
-        print()
-        for rule, floor in sorted(RULE_FLOORS.items()):
-            actual = rule_counts.get(rule, 0)
+        # Per-ecosystem floors.
+        total = 0
+        for eco, agg in summary["by_ecosystem"].items():
+            actual = agg["total_findings"]
+            total += actual
+            floor = V8_FLOOR.get(eco, 0)
             if actual < floor:
                 failures.append(
-                    f"REGRESSION: rule {rule} fired {actual} times, below floor {floor}"
+                    f"REGRESSION: {eco} produced {actual} findings, below V8 floor {floor}"
                 )
             else:
-                print(f"OK: rule {rule:12} {actual:4} >= {floor}")
-    else:
-        print(f"\nSKIP per-rule floors: {all_findings_path} not present")
-        print("    (run dump_findings.py to enable per-rule regression checks)")
+                print(f"OK: {eco:20} {actual:5} >= {floor:5}")
 
-    print()
-    if failures:
-        for f in failures:
-            print(f"  {f}", file=sys.stderr)
-        print(f"\n{len(failures)} regression(s)", file=sys.stderr)
-        return 1
-    print("All floors met. No regressions.")
+        if total < V8_FLOOR["total"]:
+            failures.append(
+                f"REGRESSION: total {total} findings below V8 floor {V8_FLOOR['total']}"
+            )
+        else:
+            print(f"OK: total                {total:5} >= {V8_FLOOR['total']:5}")
+
+        # Per-rule floors — read all_findings.json. If dump_findings.py hasn't run
+        # in this CI cycle, skip per-rule checks (the ecosystem floors are
+        # sufficient for the main regression signal).
+        all_findings_path = SCRIPT_DIR / "results" / "all_findings.json"
+        if all_findings_path.exists():
+            all_findings = json.loads(all_findings_path.read_text())
+            from collections import Counter
+            rule_counts = Counter(f["rule_id"] for f in all_findings)
+            print()
+            for rule, floor in sorted(RULE_FLOORS.items()):
+                actual = rule_counts.get(rule, 0)
+                if actual < floor:
+                    failures.append(
+                        f"REGRESSION: rule {rule} fired {actual} times, below floor {floor}"
+                    )
+                else:
+                    print(f"OK: rule {rule:12} {actual:4} >= {floor}")
+        else:
+            print(f"\nSKIP per-rule floors: {all_findings_path} not present")
+            print("    (run dump_findings.py to enable per-rule regression checks)")
+
+        print()
+        if failures:
+            for f in failures:
+                print(f"  {f}", file=sys.stderr)
+            print(f"\n{len(failures)} regression(s)", file=sys.stderr)
+            return 1
+        print("All floors met. No regressions.")
     return 0
 
 

@@ -69,6 +69,21 @@ def discover_seawall() -> Path:
     )
 
 
+def corpus_rel(target: Path, clone_path: Path, ecosystem: str, name: str) -> str:
+    """Name a scan target by its corpus position (`<ecosystem>/<name>/...`).
+
+    Everything written under results/ is committed, so it must not carry the
+    absolute path of whichever machine produced it. Ten clones are symlinks to
+    another clone, so resolve both sides before stripping; the prefix put back
+    is the logical `ecosystem/name` that was scanned, not the link target.
+    """
+    try:
+        rel = target.resolve().relative_to(clone_path.resolve())
+    except ValueError:
+        return f"{ecosystem}/{name}"
+    return str(Path(ecosystem) / name / rel)
+
+
 def scan_one(
     binary: Path,
     project: dict,
@@ -88,16 +103,20 @@ def scan_one(
 
     clone_path = clone_root / ecosystem / name
     if not clone_path.is_dir():
+        # Record the clone by its position in the corpus, not by its absolute
+        # path: the clone root moves between machines and an absolute path
+        # committed under results/ names an operator's home directory.
+        rel = f"{ecosystem}/{name}"
         return {
             "canonical_id": canonical_id,
             "ecosystem": ecosystem,
             "status": "missing_clone",
-            "clone_path": str(clone_path),
+            "clone_path": rel,
             "total_findings": 0,
             "audible_findings": 0,
             "suppressed_findings": 0,
             "duration_seconds": 0.0,
-            "errors": [f"clone path does not exist: {clone_path}"],
+            "errors": [f"clone path does not exist: {rel}"],
         }
 
     hints = project.get("scan_hints", {})
@@ -152,10 +171,16 @@ def scan_one(
                 exit_code = max(exit_code, proc.returncode)
             except subprocess.TimeoutExpired:
                 duration_total += time.monotonic() - start
-                errors.append(f"timeout (>600s) on {target}")
+                errors.append(
+                    f"timeout (>600s) on "
+                    f"{corpus_rel(target, clone_path, ecosystem, name)}"
+                )
                 continue
             except OSError as e:
-                errors.append(f"exec error on {target}: {e}")
+                errors.append(
+                    f"exec error on "
+                    f"{corpus_rel(target, clone_path, ecosystem, name)}: {e}"
+                )
                 continue
 
             # Parse the summary file the scanner wrote.

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -58,6 +59,11 @@ def main() -> int:
     p.add_argument("--results", default=str(SCRIPT_DIR / "results"))
     p.add_argument(
         "--out", default=str(SCRIPT_DIR.parent.parent / "BENCHMARKING_RESULTS.md")
+    )
+    p.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite --out even though it holds sections this script cannot regenerate",
     )
     args = p.parse_args()
 
@@ -432,11 +438,24 @@ def main() -> int:
     w("./clone_all.sh                          # ~30-60 min, 150 repos")
     w("./verify.sh                             # confirm SHA pins (optional)")
     w("python3 scan_corpus.py                  # ~5-15 min")
-    w("python3 render_results.py               # writes ../../BENCHMARKING_RESULTS.md")
+    w("python3 render_results.py --out /tmp/run.md   # renders THIS run only")
     w("```")
     w("")
 
     out_path = Path(args.out)
+    # This script renders one corpus run. BENCHMARKING_RESULTS.md has since
+    # accumulated hand-written sections — corpus-integrity root cause, the
+    # precision estimator, the measured-run records the README cites — none of
+    # which are derivable from summary.json. A plain overwrite deletes them, and
+    # the reproduce instructions used to tell people to do exactly that.
+    if out_path.exists() and not args.force:
+        print(
+            f"refusing to overwrite {out_path}: it contains hand-written sections\n"
+            f"that this script cannot regenerate from summary.json.\n"
+            f"Render elsewhere with --out <file>, or pass --force if you mean it.",
+            file=sys.stderr,
+        )
+        return 1
     out_path.write_text("\n".join(lines) + "\n")
     print(f"Wrote {out_path}")
     return 0
