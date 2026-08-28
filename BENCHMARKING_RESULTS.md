@@ -1208,3 +1208,140 @@ The gate above cannot see it: it checks bare-number segments, and `sha256` is no
 `PRECISION_AUDIT_V3` rows 111 and 118 have it filed as the sole remaining Pattern D-prime
 false positive; it is a stratum-A row, so fixing it would not move the figure published here
 and it is left for a cycle that can measure it.
+
+---
+
+## One scan, one answer per finding: precision recomputed on a finding set that did not move — 2026-08-28
+
+**Tuple.** Corpus B, 150 projects, all with a populated working tree · `--source --deps
+--include-safe` · profile `nist-default` · release build · dumps taken with the in-tree
+`benchmarks/corpus-b-realworld/dump_findings.py` · pre `8b42227`
+(`/opt/cryptoscope/work/r40_dump.json`, the dump the recorded 86.5 % was taken on) → post this
+cycle's tree (`/opt/cryptoscope/work/r41_dump.json`). Estimator
+`/opt/cryptoscope/work/r41_precision.py`, which reproduced the recorded 86.5 % from the labels
+(86.53 %) before printing anything.
+
+```
+  stratum A   964 findings  w=0.614  272 audited  217 TP / 32 FP / 23 DEPENDS  87.1 % (held)
+  stratum B   606 findings  w=0.386   90 audited   77 TP / 13 FP /  0 DEPENDS  85.6 % (Wilson 76.8–91.4)
+  WEIGHTED   1570 findings                                                     86.5 % (95 % CI 82.7–90.3)
+```
+
+### Why a reporting-layer change is measured at all, and the strictest prediction available
+
+Every edit is in the layer that *reads* findings — `crates/report`, `crates/tui`,
+`crates/cli/src/mcp`, the stdout loop, and one new function in `crates/core/src/risk.rs`. No rule
+file, no tree-sitter matcher, no algorithm id, no OID mapping and no message template is touched.
+So unlike the previous cycle, which renamed 283 ids in place, the prediction here is the strictest
+one the corpus can carry: **identical site set, identical ids, identical messages, identical
+stdout severities.** Checked rather than asserted:
+
+```
+pre 1570 findings / 1552 distinct sites    post 1570 / 1552
+  added 0   removed 0
+  algorithm_id changed in place: 0
+  message      changed in place: 0
+  severity     changed in place: 0
+  ecosystem    changed in place: 0
+per-ecosystem: go-modules 576, maven 366, crates-io 226, crypto-adjacent 198, npm 127, pypi 77
+projects carrying findings: pre 86, post 86 — none dropped
+```
+
+The one field that *could* have moved and did not: `dump_findings.py` reads the stdout severity
+column, and the stdout loop was rewritten to call the new shared `severity_of` instead of doing
+its own table lookup and score. That column is byte-identical on all 1570 rows, which is what
+makes the refactor faithful at the one call site the corpus can see.
+
+### The population this change is about: 131 of 1570 findings, 8.3 %
+
+A finding whose `algorithm_id` has no algorithm-table row cannot be scored —
+`algorithm_vulnerability` is 40 of the 100 points the risk engine assigns and is read entirely
+from that row. Measured on this dump:
+
+```
+unscored findings (stdout `?`):  131  (8.3 % of the corpus)
+  by rule:      {'DEP-001': 131}
+  by algorithm: {'unknown': 131}
+stdout severity distribution: {'High': 968, 'Medium': 471, '?': 131}
+```
+
+All 131 are `DEP-001` carrying `scan-deps`'s `unknown` sentinel: a manifest that names a crypto
+library but no algorithm. **Every artifact used to answer this differently.** Reproduced on one
+`openssl = "0.10"` line in a `Cargo.toml`, and again on the corpus project `crates-io/age`:
+
+| surface | before | after |
+|---|---|---|
+| stdout | `?` | `?` |
+| `summary.json` | `medium: 1` | `unscored: 1` |
+| HTML report | Medium card, score 25 | Unscored card |
+| SARIF | `warning`, `security-severity: 5.0` | `none`, property omitted |
+| TUI | `Safe` | `UNSC` |
+| `--fail-on` | unscored, skipped | unscored, skipped |
+
+Four answers for one finding. The loudest asserted a mid-band CVSS to GitHub Advanced Security
+for a finding the product declines to score; the quietest painted an uncatalogued algorithm
+green. `--fail-on` was already right, and only because implementing that gate forced the question
+to be answered once. `seawall_core::score_of` is now where it is answered for everybody.
+
+Corpus-wide this moves **131 findings out of `summary.json`'s `medium` count** and into a new
+`totals.unscored` field, leaving `medium` agreeing with the stdout column it never agreed with
+before. Verified per project on both binaries — `crates-io/age`, one finding: `8b42227` reports
+`medium: 1`, this tree reports `unscored: 1, medium: 0`. That is a shape change to a published
+artifact, recorded here rather than left for a consumer to discover.
+
+### The HNDL contradiction, which is the defect that started this
+
+`crates/report/src/html.rs` filtered its HNDL-critical section on
+`hndl_critical || severity == Critical`; `summary.json` counted only the first. On one
+RSA-2048/SHA-256 certificate that produced two artifacts of one scan that disagreed, and an HTML
+document that disagreed with itself:
+
+```
+before:  summary.json "hndl_critical": 0     HTML card 0     HTML badges 2
+after:   summary.json "hndl_critical": 0     HTML card 0     HTML badges 0
+```
+
+On the X25519 fixture — a key-agreement SPKI, the one shape the default policy's `[hndl_flag]`
+block describes — the flag, the card and the badge count are all **1**, and the same
+certificate's Ed25519 signature finding, which is Critical and not HNDL, is no longer badged.
+The corpus count is unchanged at **0 of 1570**: corpus B runs `--source --deps` and never
+exercises `scan-certs`, so it cannot speak to this path, which is why the fixture is the
+instrument. The section's own doc comment had recorded the wrong rule as if it were intended.
+
+### The gate, and the direction that catches the next surface
+
+`crates/cli/tests/artifact_agreement.rs`, five tests. Four compare the artifacts the binary
+actually writes — it is the first test in the repo that reads the HTML. The fifth is a
+source-text direction: no file outside `crates/core/src/risk.rs` may call
+`QuantumRiskScore::compute`, so a seventh surface cannot quietly re-derive what a missing
+algorithm row means. Each was confirmed to fail before it passes, by reverting each half in turn:
+restoring the HNDL filter fails two, restoring `None => medium` fails one, adding a direct
+`compute` call in the TUI fails the fifth.
+
+The same sweep found two instances nobody had filed. The TUI's `HNDL:` badge carried the
+identical `|| severity == Critical` conflation. And the MCP `query_findings` severity filter had
+no `else` arm, so an unscored finding matched **every** severity filter — `severity: "Critical"`
+returned findings the same session reported as having no severity.
+
+### Held
+
+`cargo build --release --workspace` clean; `cargo fmt --all --check` and
+`cargo clippy --workspace --all-targets` clean. `cargo test --workspace`: **294 tests across 41
+targets, all passing** (289 before; this cycle adds the five artifact-agreement tests).
+`tests/check.py` 69/69.
+
+`benchmarks/corpus-b-realworld/regression_check.py`: **13 of 13 floors met**, 6 per-ecosystem
+and 6 per-rule plus the total, at **1570 findings, 0 projects errored**. 150 projects scanned in
+**317.0 s** against 289.4 s on the previous pass over the same corpus with the same flag set —
+inside the ±10 % run-to-run variance this corpus has shown throughout, and no scanning code was
+touched, so no speed was traded.
+
+### What this does not fix, stated so it is not read as fixed
+
+Severity still encodes which scanner produced the finding. `scan-source` fixes four of the five
+risk axes at its single `Finding` construction site, so source findings occupy `{27, 32, 42, 67}`
+and never reach the Critical band at ≥75, while cert findings clear it structurally — which is
+why a healthy RSA-2048/SHA-256 certificate scores Critical on both its key and its signature.
+That is a calibration change, it moves bands across the whole corpus, and it has not been made.
+This change makes the artifacts agree on the band the engine computed; it does not change the
+band.
