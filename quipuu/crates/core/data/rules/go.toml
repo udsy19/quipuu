@@ -661,6 +661,11 @@ severity_hint = "low"
 message = "JWT alg=HS512 — HMAC-SHA512. Symmetric; not quantum-broken but inventory for key rotation planning."
 
 # alg=none — signature verification disabled; critical CWE-347
+#
+# The extract layer only emits this api when the name is declared beside
+# another JOSE name — see go_alg_name_is_corroborated() in scanner.rs. Without
+# that, an enum constant spelled "none" reaches an auditor as a disabled
+# signature check.
 [[classify]]
 id = "CRYPTO-740"
 when.api = "^go\\.alg-(switch|register)\\.none$"

@@ -744,6 +744,9 @@ fn match_go_alg_switch(switch: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch>>
         if !GO_ALG_SWITCH_WHITELIST.contains(&value) {
             continue;
         }
+        if value == GO_ALG_NONE && !go_alg_name_is_corroborated(child, source) {
+            continue;
+        }
         let api = format!("go.alg-switch.{}", value);
         let mut args = HashMap::new();
         args.insert("member".into(), ArgValue::Str(value.to_string()));
@@ -959,6 +962,11 @@ fn match_go_alg_string_literal(literal: Node<'_>, source: &[u8]) -> Option<RawMa
     if !ok {
         return None;
     }
+    // `"none"` is the one whitelisted value that is also an ordinary English
+    // word, so it needs a second witness before it counts as a registration.
+    if value == GO_ALG_NONE && !go_alg_name_is_corroborated(literal, source) {
+        return None;
+    }
     let api = format!("go.alg-register.{}", value);
     let mut args = HashMap::new();
     args.insert("member".into(), ArgValue::Str(value.to_string()));
@@ -974,6 +982,64 @@ fn match_go_alg_string_literal(literal: Node<'_>, source: &[u8]) -> Option<RawMa
         // can then opt out of MapEntry / TestAssertion via when.site_context.
         site_context: classify_site_context(literal, source, Language::Go),
     })
+}
+
+/// The JWA name for an unsigned token, and the only entry in
+/// [`GO_ALG_SWITCH_WHITELIST`] that is also an ordinary English word.
+const GO_ALG_NONE: &str = "none";
+
+/// Go syntax that bounds "these names are declared together".
+///
+/// A JOSE registry declares its algorithm names as a group: one `const` or
+/// `var` block, one composite literal, one `switch`, or one function body of
+/// `NewSignatureAlgorithm(...)` calls. That group is the window in which one
+/// name can vouch for another.
+const GO_ALG_SIBLING_SCOPES: &[&str] = &[
+    "const_declaration",
+    "var_declaration",
+    "composite_literal",
+    "expression_switch_statement",
+    "type_switch_statement",
+    "block",
+];
+
+/// Is this `"none"` literal declared alongside another JOSE algorithm name?
+///
+/// `"none"` matches `IpcModeNone = "none"`, `require_auth = "none"`, `ssh -F
+/// none` and every other place a program spells "absent" — 91 of the 92
+/// `CRYPTO-740` findings on the 150-project benchmark corpus were that, and
+/// the one that was real (`jwx/jwa/signature_gen.go`) sits three lines below
+/// `NewSignatureAlgorithm("HS512")`. So require the sibling rather than the
+/// import: the pinning fixture `go/jwt_register.go` imports only `crypto`,
+/// and 6 of the 92 false positives imported a JOSE package anyway.
+///
+/// Deliberately not a file-wide search: `x-crypto/ssh` names `"none"` for its
+/// null compression algorithm in a file whose neighbours mention JOSE names
+/// nowhere near it.
+fn go_alg_name_is_corroborated(node: Node<'_>, source: &[u8]) -> bool {
+    let mut scope = node;
+    while !GO_ALG_SIBLING_SCOPES.contains(&scope.kind()) {
+        match scope.parent() {
+            Some(parent) => scope = parent,
+            None => return false,
+        }
+    }
+    let mut stack = vec![scope];
+    while let Some(n) = stack.pop() {
+        if matches!(
+            n.kind(),
+            "interpreted_string_literal" | "raw_string_literal"
+        ) {
+            let raw = node_text(n, source);
+            let value = raw.trim_matches(|c| c == '"' || c == '`');
+            if value != GO_ALG_NONE && GO_ALG_SWITCH_WHITELIST.contains(&value) {
+                return true;
+            }
+        }
+        let mut cursor = n.walk();
+        stack.extend(n.named_children(&mut cursor));
+    }
+    false
 }
 
 /// JOSE/JWA algorithm names that trigger `go.alg-switch.*` rules.

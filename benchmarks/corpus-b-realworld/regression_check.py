@@ -52,7 +52,13 @@ V8_FLOOR = V11_FLOOR  # Backwards-compatible alias for existing references
 # downstream users depend on.
 RULE_FLOORS = {
     "CRYPTO-700": 10,   # Go JWT RS256 (V11: 13; SiteContext suppressed FPs)
-    "CRYPTO-740":  3,   # JWT alg=none  (V11: 5)
+    "CRYPTO-740":  1,   # JWT alg=none. 92 -> 1 on 2026-08-28, when `"none"`
+                        # began requiring a sibling JOSE name: 91 of the 92
+                        # were constants spelled "none" (`SSETypeNone`,
+                        # `compressionNone`, `require_auth`), and the one that
+                        # registers an algorithm is jwx's own signature table.
+                        # Floor is 1 because one real site is what the corpus
+                        # contains — see BENCHMARKING_RESULTS.md.
     "CRYPTO-704":  4,   # Go JWT PS384  (V11: 6)
     "CRYPTO-705":  4,   # Go JWT PS512  (V11: 6)
     "CRYPTO-560": 50,   # rustls::ClientConfig::builder

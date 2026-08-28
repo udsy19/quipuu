@@ -1563,6 +1563,43 @@ fn phase9_go_const_declaration_registers_none() {
 }
 
 #[test]
+fn go_alg_none_fires_only_beside_another_jose_name() {
+    // `"none"` is the one whitelisted JWA name that is also an English word.
+    // Corroborated: a run of constructor calls in one function body, and a
+    // dispatch switch — both real jwx shapes, both must still fire.
+    // Uncorroborated: enum constants, SSH protocol strings, a connection
+    // parameter — 91 of the 92 corpus findings, none of which may fire.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+
+    let good = scanner
+        .scan_path(&fixtures_root().join("go/alg_none_corroborated.go"))
+        .expect("scan succeeds");
+    let good_lines: Vec<_> = good
+        .iter()
+        .filter(|f| f.rule_id == "CRYPTO-740")
+        .map(|f| f.location.line)
+        .collect();
+    assert_eq!(
+        good_lines.len(),
+        2,
+        "both corroborated shapes must fire, got: {good_lines:?}"
+    );
+
+    let bad = scanner
+        .scan_path(&fixtures_root().join("go/alg_none_uncorroborated.go"))
+        .expect("scan succeeds");
+    assert!(
+        !bad.iter().any(|f| f.rule_id == "CRYPTO-740"),
+        "no shape in this fixture registers an algorithm, got: {:?}",
+        bad.iter()
+            .filter(|f| f.rule_id == "CRYPTO-740")
+            .map(|f| f.location.line)
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
 fn phase9_go_doc_string_with_embedded_jose_name_does_not_fire() {
     // A raw string containing "RS256" inside doc-style text is the FULL
     // string literal, not a separate JOSE-named literal — so the whitelist
