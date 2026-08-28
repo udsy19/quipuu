@@ -158,3 +158,82 @@ fn rsa_2048_emits_expected_crypto_properties() {
                 && o["line"].as_u64().is_some())
     );
 }
+
+/// A CBOM must validate against the schema version it declares in
+/// `specVersion` — for **every** algorithm in the table, not just the handful
+/// the fixture corpus happens to reach.
+///
+/// This is the gate behind the public round-trip claim. 1.7 added
+/// `algorithmFamily`, which 1.6 rejects under `additionalProperties: false`;
+/// `emit.rs` suppresses it for 1.6, and `canonicalize_family()` decides per
+/// family whether a value is emitted at all. Both are per-algorithm decisions,
+/// so a new algorithm-table row can produce a BOM that declares 1.6 and does
+/// not validate as 1.6 without any existing test noticing. That would break
+/// ingestion for every consumer pinned to 1.6.
+///
+/// `emit_validates_for_v1_7_and_v1_6` covers the fixture corpus; this covers
+/// the table.
+#[test]
+fn every_algorithm_emits_a_bom_valid_at_the_version_it_declares() {
+    use seawall_core::finding::{Confidence, Exposure, Finding, Location, UsageContext};
+
+    let b = load_builtins().unwrap();
+
+    // One synthetic finding per algorithm-table row, so every row reaches the
+    // emitter's family/primitive mapping.
+    let findings: Vec<Finding> = b
+        .algorithms
+        .iter()
+        .map(|rec| Finding {
+            rule_id: "CRYPTO-000".into(),
+            algorithm_id: rec.id.clone(),
+            location: Location {
+                location: "synthetic/table-coverage.rs".into(),
+                line: Some(1),
+                offset: None,
+                symbol: None,
+                snippet: None,
+            },
+            message: format!("synthetic occurrence for {}", rec.id),
+            confidence: Confidence::LiteralArg,
+            usage_context: UsageContext::Unknown,
+            exposure: Exposure::LocalOnly,
+            shelf_life_bucket: "short".into(),
+            hndl_critical: false,
+        })
+        .collect();
+    assert_eq!(findings.len(), b.algorithms.len());
+
+    for version in [SchemaVersion::V1_7, SchemaVersion::V1_6] {
+        let mut opts = default_opts();
+        opts.schema_version = version;
+
+        let json = emit_cbom_json(&findings, &b.algorithms, &opts).unwrap_or_else(|e| {
+            panic!(
+                "emitting every algorithm at CycloneDX {} failed: {e}",
+                version.as_str()
+            )
+        });
+
+        let parsed: Value = serde_json::from_str(&json).unwrap();
+        assert_eq!(
+            parsed["specVersion"],
+            version.as_str(),
+            "emitted BOM must declare the version it was asked for"
+        );
+        assert_eq!(
+            parsed["components"].as_array().unwrap().len(),
+            b.algorithms.len(),
+            "every algorithm-table row must survive into a component at {}",
+            version.as_str()
+        );
+
+        validate_str(&json, version).unwrap_or_else(|e| {
+            panic!(
+                "a BOM declaring CycloneDX {} does not validate against the {} schema: {e}",
+                version.as_str(),
+                version.as_str()
+            )
+        });
+    }
+}
