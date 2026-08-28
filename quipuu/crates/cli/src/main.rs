@@ -104,12 +104,15 @@ MCP SERVER:
     mcp-serve                 Start JSON-RPC 2.0 MCP server over stdin/stdout
     --allow-network           Enable scan_network verb and scan_certs host-mode
 
-SCAN MODES (default: --source --deps; --certs and --net are opt-in):
+SCAN MODES (default: --source --deps):
     --source                  Scan source code (tree-sitter: Go, Python, Java,
-                              JavaScript/TypeScript, C/C++, Rust, C#)
-    --certs                   Scan X.509 certificates (PEM/DER)
-    --deps                    Scan dependency manifests
-    --net <host:port>         Probe a TLS endpoint (requires --allow-network)
+                              JavaScript/TypeScript, C/C++, Rust, C#).
+                              Narrows the base set: `--source` alone skips deps.
+    --deps                    Scan dependency manifests. Narrows the base set.
+    --certs                   ALSO scan X.509 certificates (PEM/DER). Additive:
+                              it never suppresses the source/deps default.
+    --net <host:port>         ALSO probe a TLS endpoint (requires
+                              --allow-network). Additive, like --certs.
     --allow-network           Permit outbound sockets. Without it, --net refuses (P2).
     --all                     Enable every scan mode (--net still requires --net <host>)
 
@@ -193,7 +196,12 @@ struct ScanFlags {
     /// `--allow-network`. Without this the flag was silently ignored in scan
     /// mode and `--net` opened TCP connections regardless.
     allow_network: bool,
-    explicit_modes: bool,
+    /// Set only by the *base-set selectors* `--source`, `--deps` and `--all`.
+    /// `--certs` and `--net` are documented as opt-in **additions**, so they
+    /// must not clear the default base set: naming one used to silently
+    /// replace source+deps, which turned a failing `--fail-on` gate green on
+    /// a tree that had simply not been looked at.
+    explicit_base: bool,
     cbom_out: Option<PathBuf>,
     schema_version: Option<SchemaVersion>,
     html_out: Option<PathBuf>,
@@ -262,31 +270,35 @@ fn parse_scan_args(tail: &[String]) -> Result<ScanFlags, String> {
     let mut it = tail.iter();
     while let Some(arg) = it.next() {
         match arg.as_str() {
+            // `--source` and `--deps` select the base set: naming one
+            // narrows the scan, which is the whole point of naming it.
             "--source" => {
                 flags.scan_source = true;
-                flags.explicit_modes = true;
-            }
-            "--certs" => {
-                flags.scan_certs = true;
-                flags.explicit_modes = true;
+                flags.explicit_base = true;
             }
             "--deps" => {
                 flags.scan_deps = true;
-                flags.explicit_modes = true;
+                flags.explicit_base = true;
+            }
+            // `--certs` is additive. It says "also read certificates", not
+            // "read certificates instead of the code".
+            "--certs" => {
+                flags.scan_certs = true;
             }
             "--all" => {
                 flags.scan_source = true;
                 flags.scan_certs = true;
                 flags.scan_deps = true;
-                flags.explicit_modes = true;
+                flags.explicit_base = true;
             }
             "--allow-network" => {
                 flags.allow_network = true;
             }
             "--net" => {
                 if let Some(t) = it.next() {
+                    // Additive, like `--certs`: probing an endpoint is not a
+                    // reason to stop reading the tree that talks to it.
                     flags.net_targets.push(t.clone());
-                    flags.explicit_modes = true;
                 } else {
                     eprintln!("quipuu: --net requires a host:port argument");
                 }
@@ -359,10 +371,12 @@ fn parse_scan_args(tail: &[String]) -> Result<ScanFlags, String> {
         return Err(format!("no such file or directory: {}", missing.display()));
     }
 
-    // If no mode flag was passed, default to source + deps (the safe set —
-    // network/cert scans require explicit opt-in per the responsible-use
-    // principle in SPEC.md §6).
-    if !flags.explicit_modes {
+    // Unless a base-set selector narrowed it, scan source + deps (the safe
+    // set — network/cert scans require explicit opt-in per the
+    // responsible-use principle in SPEC.md §6). This runs *after* the
+    // additive flags, so `--certs` yields source + deps + certs rather than
+    // certs alone.
+    if !flags.explicit_base {
         flags.scan_source = true;
         flags.scan_deps = true;
     }

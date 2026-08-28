@@ -223,7 +223,7 @@ Also emits: `cbom.json` (CycloneDX 1.7 or 1.6), `findings.sarif`, `summary.json`
 quipuu scan <path>                          # source scan, opens TUI
 quipuu scan <path> --no-tui --format json   # headless
 quipuu scan --net 10.0.0.0/24 --ports 443,8443
-quipuu scan --certs ./certs/                # or --certs-host example.com:443
+quipuu scan ./certs/ --certs                # certs IN ADDITION to source + deps
 quipuu scan <path> --all                    # source + deps + (opt) net/certs
 quipuu report --in cbom.json --out report.html
 quipuu report --in cbom.json --format gitlab-sast

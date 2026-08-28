@@ -282,3 +282,111 @@ fn shipped_pre_commit_hook_threshold_is_accepted() {
         String::from_utf8_lossy(&out.stderr),
     );
 }
+
+// ── Mode composition: naming a mode must not un-scan the default set ─────────
+//
+// The same failure as `missing_path_is_fatal`, one layer up. `--certs` reads
+// as "also look at certificates" — the help text calls it opt-in — but any
+// mode flag used to set `explicit_modes`, which suppressed the source+deps
+// default. So `--certs` on a tree with no certificates scanned nothing and
+// reported "0 finding(s)", and a `--fail-on high` gate that failed without the
+// flag passed with it. Adding a mode made the tool report *safe*.
+
+/// A tree with one High source finding and one dependency finding, and no
+/// certificate anywhere. Anything that scans it and reports zero has not
+/// looked.
+fn source_and_deps_tree(suffix: &str) -> PathBuf {
+    let dir = high_finding_tree(suffix);
+    std::fs::write(dir.join("requirements.txt"), b"cryptography==41.0.0\n")
+        .expect("write manifest fixture");
+    dir
+}
+
+/// The falsification condition from the backlog item: `--certs` on a
+/// source-only tree still returns the source findings and still trips the gate.
+#[test]
+fn certs_is_additive_and_does_not_suppress_the_default_set() {
+    let dir = source_and_deps_tree("certs_additive");
+    let path = dir.to_str().unwrap();
+
+    let bare = scan(&["--fail-on", "high", path]);
+    let with_certs = scan(&["--certs", "--fail-on", "high", path]);
+
+    assert_eq!(
+        code(&bare),
+        1,
+        "the fixture must trip the gate without the flag, or this proves \
+         nothing; stdout was:\n{}",
+        stdout(&bare),
+    );
+    assert_eq!(
+        code(&with_certs),
+        1,
+        "adding --certs to a tree with no certificates turned a failing gate \
+         green; stdout was:\n{}",
+        stdout(&with_certs),
+    );
+    assert!(
+        stdout(&with_certs).contains("keys.py:4"),
+        "the source finding must survive --certs; stdout was:\n{}",
+        stdout(&with_certs),
+    );
+    assert_eq!(
+        stdout(&bare).matches("CRYPTO-").count(),
+        stdout(&with_certs).matches("CRYPTO-").count(),
+        "--certs added a mode; it must not have removed findings.\n\
+         without:\n{}\nwith:\n{}",
+        stdout(&bare),
+        stdout(&with_certs),
+    );
+}
+
+/// `--source` and `--deps` are the base-set *selectors*: naming one narrows
+/// the scan, which is the only reason to name it. This is the behaviour the
+/// additive fix must not swallow.
+#[test]
+fn base_selectors_still_narrow_the_scan() {
+    let dir = source_and_deps_tree("base_selectors");
+    let path = dir.to_str().unwrap();
+
+    let source_only = stdout(&scan(&["--source", path]));
+    assert!(
+        source_only.contains("keys.py:4"),
+        "--source must scan source; stdout was:\n{source_only}",
+    );
+    assert!(
+        !source_only.contains("requirements.txt"),
+        "--source must not scan manifests; stdout was:\n{source_only}",
+    );
+
+    let deps_only = stdout(&scan(&["--deps", "--include-safe", path]));
+    assert!(
+        deps_only.contains("requirements.txt"),
+        "--deps must scan manifests; stdout was:\n{deps_only}",
+    );
+    assert!(
+        !deps_only.contains("keys.py"),
+        "--deps must not scan source; stdout was:\n{deps_only}",
+    );
+}
+
+/// `--all` reaches both halves of the default set, and a base selector
+/// combined with an additive flag keeps the narrowing.
+#[test]
+fn all_covers_the_default_set_and_source_plus_certs_still_skips_deps() {
+    let dir = source_and_deps_tree("all_and_combined");
+    let path = dir.to_str().unwrap();
+
+    let all = stdout(&scan(&["--all", "--include-safe", path]));
+    assert!(
+        all.contains("keys.py:4") && all.contains("requirements.txt"),
+        "--all must reach source and deps; stdout was:\n{all}",
+    );
+
+    let combined = stdout(&scan(&["--source", "--certs", "--include-safe", path]));
+    assert!(combined.contains("keys.py:4"), "stdout was:\n{combined}",);
+    assert!(
+        !combined.contains("requirements.txt"),
+        "an explicit --source still selects the base set; stdout was:\n{combined}",
+    );
+}
