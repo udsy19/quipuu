@@ -276,3 +276,97 @@ labelled from the pre-change dump and drop out of the post figure.
 | 147 | `CRYPTO-440` | `x25519` | `pypi/pynacl/src/libsodium/test/default/box_easy2.c:46` | **TP** | — | crypto_box_keypair(bobpk, bobsk) — real X25519 |
 | 148 | `CRYPTO-441` | `ed25519` | `pypi/pynacl/src/libsodium/test/default/sign.c:1282` | **TP** | — | crypto_sign_keypair(pk, sk) in libsodium's own sign.c — genuinely Ed25519 here |
 | 149 | `CRYPTO-140` | `md5` | `pypi/requests/src/requests/auth.py:179` | **TP** | — | hashlib.md5(x, usedforsecurity=False).hexdigest() — real MD5 |
+
+---
+
+## 6. Follow-up, 2026-08-28 — the dispatch shape from § 2 is suppressed
+
+§ 2 named four false-positive shapes in the held stratum. This section records what happened when
+the second and largest of them — **Java JOSE dispatch, 13 of the 150 rows** — was removed from the
+scanner, measured on the same two label sets and with no row of either re-scored.
+
+**The decision § 2 recorded in advance is the one that shipped.** *"Both spellings are FP"* — the
+Go registry lookup, already suppressed in `PRECISION_AUDIT_V3.md § 0`, and the Java comparison /
+collection. Nothing was relabelled to make this change look better; the 13 rows were labelled FP
+before the change existed, and they simply stop resolving afterwards.
+
+### What moved on the corpus
+
+| | pre (`ea447cb`) | post |
+|---|---|---|
+| Findings, `nist-default` | 1479 | **1399** |
+| Call sites added / removed | — | **0 / 80** |
+| Existing call sites re-classified | — | **0** |
+| Java enum-constant findings | 94 | **14** |
+| — on a line that only compares or collects the name | 71 | **0** |
+| Ecosystems that moved | — | **`maven` only**, 366 → 286 |
+| Go line-exact recall | 74.4 % | **74.4 %**, re-measured |
+
+The 80 removed sites are 76 distinct lines: 44 `equals` / `==` comparisons, 18 `algs.add(…)`,
+9 `map.put(…)`, 6 findings on 2 `Arrays.asList(…)` lines, and 3 `return JWSAlgorithm.ESxxx;`.
+
+### The 13 rows, and the ones that were not in the sample
+
+All 13 rows tagged `dispatch` in § 5 — 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 86, 87, 88 — stop
+resolving on the post dump. Stratum A's surviving audited set goes **111 TP / 23 FP / 5 DEPENDS →
+111 TP / 10 FP / 5 DEPENDS**, i.e. 82.8 % → **91.7 %** (Wilson 85.5–95.4). No row moved from one
+verdict to another; 13 rows left the population.
+
+Three removed sites were **not** in any audited sample and are labelled here, by opening the file:
+`nimbus-jose-jwt/.../crypto/ECDSA.java:75, 77, 79` are the three arms of
+`public static JWSAlgorithm resolveAlgorithm(final Curve curve)`, which returns the JWS algorithm
+matching a curve. Returning an algorithm's name signs nothing — the caller that receives it is
+where the operation happens — so they are **FP**, the Java spelling of the `RegistryLookup` shape.
+They are removed because they fall outside the new allow-list, not because the scanner recognises
+a resolver return; that distinction is recorded rather than smoothed over.
+
+Row 89 of § 5 — `jose4j/.../RsaUsingShaAlgorithm.java:67`, `super(AlgorithmIdentifiers.
+RSA_PSS_USING_SHA384, …)` published as `rsa-pss-sha256` — **survives, and is still FP**. It is a
+different defect in the same file: `CRYPTO-261` matches `RSA_PSS_USING_SHA(256|384|512)` and
+publishes `rsa-pss-sha256` for all three. That is the ungrounded-identity class, not the dispatch
+class, and it is left open here rather than fixed in a cycle that is removing findings.
+
+### The figure, under both estimators
+
+| estimator | pre (1479) | post (1399) | delta |
+|---|---|---|---|
+| of record — stratum A held at `217/32/23` | 87.3 % (83.6–91.0) | **87.3 %** (83.5–91.1) | +0.0 pp |
+| corrected — stratum A read from § 5 | 84.7 % (80.0–89.4) | **89.9 %** (85.9–94.0) | **+5.2 pp** |
+
+**§ 0's second claim is now demonstrated rather than argued.** It said a held stratum cannot rise,
+and predicted that fixing its false positives would be invisible to the published number. Deleting
+80 stratum-A false positives moves the estimator of record by **+0.0 pp**: all it can see is the
+stratum's weight falling from 0.600 to 0.577 against a stratum B at 87.5 %. The same estimator
+gave `alg=none` +0.8 pp for removing 91.
+
+Sensitivity on the post dump, so no reading is hidden:
+
+| variation | figure |
+|---|---|
+| published (DEPENDS excluded) | **89.9 %** |
+| DEPENDS all scored FP | 87.8 % |
+| DEPENDS all scored TP | 90.1 % |
+
+§ 3's *"Java JOSE-dispatch rows scored TP instead of FP → 90.5 %"* row no longer has a subject:
+those rows are gone from the population, so the whole figure's sensitivity to reversing that call
+is now zero on the post dump. The call itself still has to stand behind the Go relabel in
+`PRECISION_AUDIT_V3.md § 0`, which is why § 2 put it in writing before either was acted on.
+
+### What § 2 leaves open
+
+Of the four shapes, `alg=none` (11 rows) and dispatch (13 rows) are now both suppressed. The
+remaining two are **a call the test requires to fail** (6 rows, cross-language — `jwt.encode(…)`
+inside `pytest.raises`, `jwt.sign(…)` inside `expect(…).to.throw`) and **`algorithm_id`
+contradicts the cited line** (4 rows, the ungrounded-identity class). They are 10 of the 150 and
+are the next two worth taking.
+
+Reproduce both rows: `/opt/cryptoscope/work/w2_precision.py`, which asserts that the pre dump is
+row-identical to the dump the recorded baseline was taken on, that the estimator of record
+reproduces its own 87.3 % and the corrected estimator its own 84.7 %, that no finding was added,
+that nothing outside the Java enum-constant rules lost a site, and that row 91 survives — all
+before it prints a figure.
+
+**The recommendation in § 4 is unchanged and is now worth more.** `state/precision.json` holds the
+estimator of record; two consecutive cycles have now removed a combined 171 false positives and
+been reported to the gate as +0.8 pp and +0.0 pp. Re-anchor the baseline to the figure whose
+verdicts are published here.

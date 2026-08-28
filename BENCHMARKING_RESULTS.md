@@ -1,7 +1,7 @@
 # quipuu — 150-project corpus benchmark
 
 Sections are appended in date order. **The current run is the last dated section**
-(*The `--fail-on` CI gate: precision recomputed on the same finding set — 2026-08-28*); everything above it is the
+(*A JOSE name compared is not a JOSE name used — 2026-08-28*); everything above it is the
 record of an earlier phase and is kept as history, not as a current claim.
 
 ---
@@ -1482,3 +1482,175 @@ positives**. The other two shapes it found — the Java JOSE-dispatch constant
 (`jwt.encode(...)` inside `pytest.raises`, 6 rows) — are untouched, and together they are twice
 the class removed here. Both are named in `PRECISION_AUDIT_V4.md § 2` with their file:line
 evidence; neither has a rule change behind it yet.
+
+---
+
+## A JOSE name compared is not a JOSE name used — 2026-08-28
+
+Tuple, per the reproducibility rule this file uses throughout: **corpus B, 150 projects, all with
+a populated working tree · scanner set `--source --deps --include-safe` · profile `nist-default` ·
+release build from this tree · dumps taken with `benchmarks/corpus-b-realworld/dump_findings.py`,
+`work/w2_pre.json` (1479) → `work/w2_post.json` (1399).**
+
+**80 findings removed, 0 added, 0 re-classified. Precision 87.3 % → 87.3 % under the estimator
+that produced the recorded baseline, and 84.7 % → 89.9 % under the estimator that reads stratum A's
+labels instead of holding it constant.** Both come from one script over the same two dumps. The
+flat reading is not evidence that nothing happened, and § *Why the two estimators disagree* says
+why it could not have moved.
+
+### What was firing
+
+`PRECISION_AUDIT_V4.md § 2` audited the held stratum for the first time and found its largest
+false-positive class was not `alg=none` but this: **a Java JOSE algorithm constant that is compared
+against, collected into a supported-algorithm set, or used as a lookup-table key**, reported as
+though the line signed, wrapped or hashed something. 13 of that audit's 150 sampled rows.
+
+Across the corpus the class is **94 Java enum-constant findings, of which 80 name an algorithm
+without performing it**:
+
+```
+Java enum-constant findings, pre-change:            94, in 4 of 150 projects
+  nimbus-jose-jwt              64   alg.equals(JWSAlgorithm.PS256), algs.add(JWSAlgorithm.HS512)
+  jose4j                       15   super(AlgorithmIdentifiers.RSA_USING_SHA256, "SHA256withRSA")
+  azure-security-keyvault-keys  9   defaultAlgorithms.put(SignatureAlgorithm.ES256, SHA_256)
+  jjwt-api                      6   Arrays.asList(HS512, HS384, HS256)
+
+the 80 removed, by the shape of the cited line — 76 distinct lines:
+  44   alg.equals(X) / X.equals(alg) / alg == X     a branch test
+  18   algs.add(X)                                  a SUPPORTED_ALGORITHMS set
+   9   map.put(X, hash)                             a resolver table
+   6   Arrays.asList(X, Y, Z)                       a preference list (2 lines)
+   3   return JWSAlgorithm.ES256;                   ECDSA.resolveAlgorithm(Curve)
+```
+
+This is the Java spelling of a class this repo has already ruled on twice. `PRECISION_AUDIT_V3.md
+§ 0` suppressed the Go registry lookup `jwa.LookupSignatureAlgorithm("PS256")` and booked
+81.8 % → 85.3 % for it; `PRECISION_AUDIT_V4.md § 2` recorded, in writing and before this change
+was written, that **both spellings are false positives** — because the labelling rule the two
+strata share already names "switch comparison operand" and "string constant" as FP, and
+`alg.equals(JWSAlgorithm.ES256)` is those two things in Java.
+
+### Why it had never been caught
+
+Two defects, one cause. `classify_site_context` reads a match's surrounding syntax, and every arm
+that needed to know the callee asked tree-sitter for the node's `function` field. Go, JavaScript
+and Rust have one. Java's `method_invocation` splits the callee into `object` + `name`, so
+**`function` is `None` at every Java call site** and the TestAssertion and RegistryLookup arms —
+including the Java branch of `is_test_assertion_callee`, written and shipped — had never once
+fired on Java. Separately, the arm that recognises a declaration knew `const_spec` and `var_spec`
+but not `local_variable_declaration` or `field_declaration`, so `JWSAlgorithm ns =
+JWSAlgorithm.RS384;` read as `Default` — indistinguishable from "we did not look".
+
+The result was that every Java enum reference landed in one of two contexts, `Call` or `Default`,
+and the 32 classify rules behind them named no `when.site_context` at all, so they fired in both.
+
+### The change
+
+`SiteContext` gains two variants, both stated as concepts rather than as library names:
+
+- **`Comparison`** — an operand of `.equals(…)` / `==` / `!=`. Naming an algorithm to test a value
+  against it selects a branch; the operation the branch guards cites its own line.
+- **`CollectionElement`** — an element handed to `add` / `addAll` / `asList` / `of` / `contains` /
+  `remove`, or an array initialiser. A supported-algorithm set declares a capability, not a use.
+
+`map.put(alg, …)` routes to the existing `MapEntry`, which already documented the keyed-literal
+form of the same table. The 32 Java enum classify rules then carry
+`when.site_context = ["Call", "StringConstant"]` — the same idiom the Go JOSE rules have carried
+since Phase 16.
+
+**What survives is the half that binds the algorithm to something that uses it**: 14 findings, all
+in jose4j, all `super(AlgorithmIdentifiers.RSA_USING_SHA256, "SHA256withRSA")`-shaped constructors
+or `setAlgorithmIdentifier(AlgorithmIdentifiers.NONE)`. **That survival was the falsification
+condition stated in advance** — row 91 of `PRECISION_AUDIT_V4.md § 5`, hand-labelled TP, must
+still be detected or the allow-list is too narrow and the change does not land. It is asserted in
+the estimator script, not checked by eye.
+
+```
+sites added 0   sites removed 80
+removed by project: nimbus-jose-jwt 64, azure-security-keyvault-keys 9, jjwt-api 6, jose4j 1
+Java enum-constant findings: 94 -> 14
+Java enum findings on a line that only compares or collects the name: 71 -> 0
+severity: High 877 -> 815, Medium 471 -> 453, unscored 131 -> 131
+by ecosystem: maven 366 -> 286; go-modules, crates-io, crypto-adjacent, npm, pypi all unchanged
+```
+
+### Why the two estimators disagree
+
+All four affected projects are `maven`, and all of `maven` was checked out before the 2026-08-27
+corpus restoration, so **every finding this change removes is in stratum A**. Under the estimator
+of record stratum A is the constant `217/32/23 = 87.1 %`. A constant cannot fall when 80 of its
+false positives are deleted; all that estimator can see is the stratum's weight going 0.600 →
+0.577, against a stratum B at 87.5 % — which is why it prints **87.3 % → 87.3 %, +0.0 pp**. The
+same arithmetic gave `alg=none` +0.8 pp last cycle for removing 91 false positives.
+
+Read from labels instead, stratum A goes **82.8 % → 91.7 %** on its 150-row sample: 13 of its 23
+surviving false positives are this class, and all 13 stop resolving. Weighted against an unchanged
+stratum B that is **84.7 % → 89.9 %** (95 % CI 85.9–94.0), **+5.2 pp**.
+
+The two movements must not be added, and neither is a correction of the other.
+
+### The coverage cost, stated rather than buried
+
+**`jjwt-api` goes from 6 findings to 0.** All 6 sit on the two `Arrays.asList(…)` preference-list
+lines, and `PRECISION_AUDIT_V4.md § 5` rows 86–88 label them false positives. The module is
+jjwt's interface half — the enum lives there and the signing lives in `jjwt-impl`, which is not in
+the corpus — so zero is the right answer for it, but it is a real loss of the only corpus evidence
+that the scanner reads jjwt at all.
+
+That evidence moves in-tree rather than disappearing. `regression_check.py` had a per-rule floor
+of 1 on `CRYPTO-241` labelled *"the canonical jjwt-api regression"*; the corpus contained exactly
+one `CRYPTO-241` site and it is one of the six false positives, so the floor demanded that a false
+positive be kept in perpetuity and 0 would be a floor that cannot fail. It is removed, with the
+count and the reason in its place, and the regression it guarded — the scanner going silent on
+jjwt — is now held by `phase1_jjwt_*` and the new `java_jose_operational_sites_still_fire` in
+`crates/scan-source/tests/scan_test.rs`, which is where a shape this narrow belongs.
+
+The three `return JWSAlgorithm.ES256;` rows were not in any audited sample and are labelled here,
+by reading the enclosing method: they are the three arms of
+`ECDSA.resolveAlgorithm(Curve curve)`, which returns the JWS algorithm matching a curve and signs
+nothing — the Java spelling of the `RegistryLookup` shape suppressed in Go. They are removed as
+`Default` rather than recognised as resolver returns; that is the allow-list doing it, and it is
+recorded as such rather than claimed as a diagnosis.
+
+### Gate
+
+`java_enum_classify_rules_declare_the_sites_they_fire_in` (`crates/scan-source/src/rules.rs`)
+fails the build when a classify rule reachable through `match_java_field_access` names no
+`when.site_context`. A bare enum reference carries no evidence about what is being done with the
+name — `JWSAlgorithm.PS256` is the same eleven characters in a signature, a branch test and a
+capability list — so a rule that stays silent about site context fires in all three. **Confirmed
+it fails** by deleting one allow-list and re-running: it named `CRYPTO-240`.
+
+### Held
+
+- `cargo build --release --workspace` clean; `cargo fmt --all --check` and `cargo clippy
+  --workspace --all-targets` clean.
+- `cargo test --workspace` **298 tests passing** (295 before): the three added are the gate above
+  and `java_jose_operational_sites_still_fire` / `java_jose_dispatch_sites_do_not_fire` over the
+  new `crates/scan-source/tests/fixtures/java/JoseDispatch.java`, whose two halves assert that the
+  operational shapes keep firing and the dispatch shapes do not. A change that silenced the bottom
+  half by silencing the top would fail the first test.
+- **Go line-exact recall 74.4 % (303/407), unchanged**, re-measured on the post dump with
+  `recall_check.py`. No removed finding is a Go site, so the figure had to hold; it is re-run
+  rather than assumed.
+- `w2_pre.json` reproduces `v1b_post.json` on all 1479 rows — project, rule, file, line,
+  `algorithm_id`, severity and message — so both carried label sets apply unaltered and the pre
+  column is a reproduction rather than a re-derivation. Asserted in the script before it prints.
+
+### Speed, re-run rather than carried
+
+`scan_corpus.py` over the same 150 projects on the same binary: **294.9 s**, 150 of 150 scanned,
+0 errored, **1399 findings — the same total `dump_findings.py` reached independently.**
+Per project **median 180 ms · mean 1964 ms · p90 1.6 s · max 132.9 s**, with **128 of 150 under a
+second**. The 10.9x mean/median gap is three repositories: `aws-sdk-go-v2` at 132.9 s,
+`aws-sdk-go` at 41.1 s and `wolfssl` at 17.3 s are 64.9 % of the total between them. Earlier
+passes over this corpus gave 281.1 s, 282.0 s, 329.0 s and 367.4 s, so read the whole-corpus
+figure as four to six minutes on two shared cores; the finding counts do not vary that way.
+
+### Not re-taken, said out loud
+
+The `--policy nsa-cnsa2` divergence is **not** re-measured on the 1399-finding corpus; it
+describes a 964-finding one. `scan-network` and `scan-certs` are untouched and corpus B does not
+exercise them. The published figure still disagrees with the `PRECISION:` line reported to the
+gate, for the reason `PRECISION_AUDIT_V4.md § 4` gives: `state/precision.json` holds the estimator
+of record, and re-anchoring it is a human's decision, not a cycle's.
