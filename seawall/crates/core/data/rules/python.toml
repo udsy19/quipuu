@@ -89,7 +89,7 @@ description = "EC key generation via ec.generate_private_key(ec.SECP256R1())."
 id = "CRYPTO-110"
 when.api = "^cryptography\\.hazmat\\.ec\\.generate_private_key$"
 when.args.curve_name = { regex = "^SECP224R1$" }
-algorithm_id = "ecdsa-p256"
+algorithm_id = "ecdsa-p224"
 severity_hint = "critical"
 message = "P-224 is below 128-bit security floor."
 

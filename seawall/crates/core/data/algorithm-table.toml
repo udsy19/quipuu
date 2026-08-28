@@ -197,6 +197,18 @@ oid = "1.2.840.113549.1.1.13"
 # ECDSA / ECDH on standard curves --------------------------------------------
 
 [[algorithm]]
+id = "ecdsa-p224"
+display_name = "ECDSA P-224 (secp224r1)"
+family = "ECDSA"
+primitive = "signature"
+classical_security_bits = 112
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-dsa-65"
+oid = "1.2.840.10045.4.3.1"
+notes = "Below the 128-bit classical floor (NIST SP 800-131A) before any quantum consideration."
+
+[[algorithm]]
 id = "ecdsa-p256"
 display_name = "ECDSA P-256 (secp256r1)"
 family = "ECDSA"

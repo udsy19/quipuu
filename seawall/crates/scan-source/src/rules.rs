@@ -197,6 +197,27 @@ impl RulePack {
     }
 }
 
+/// The curve a classify rule's `when` clause pins, if it pins one.
+///
+/// Reads the spellings the seven packs actually use: `P521` / `P-521`
+/// (`curve_fn`, `CurveP521`, `elliptic.P521`), `SECP521R1` / `secp521r1`
+/// (pyca, JCA `ECGenParameterSpec`), and `prime256v1` (OpenSSL's name for
+/// P-256). Returns `None` when the clause names no curve at all, which is
+/// the common and legitimate case — the curve then comes from a JOSE
+/// algorithm name or from off-site, and neither is this check's business.
+#[cfg(test)]
+fn curve_named_by(evidence: &str) -> Option<&'static str> {
+    let upper = evidence.to_ascii_uppercase();
+    if upper.contains("PRIME256V1") {
+        return Some("256");
+    }
+    ["224", "256", "384", "521"].into_iter().find(|bits| {
+        upper.contains(&format!("P{bits}"))
+            || upper.contains(&format!("P-{bits}"))
+            || upper.contains(&format!("SECP{bits}R1"))
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -240,19 +261,30 @@ when = { api = "^foo$", args = { bits = { lt = 2048 } } }
         }
     }
 
-    /// Every AES key size a classify rule publishes must be observable from
-    /// that rule's own `when` clause — either the api regex names the width
-    /// (`EVP_aes_256_gcm`, `Aes128Gcm`, `A256GCM`) or an arg predicate pins
-    /// it (`AES_128.*/GCM`, `length = 256`). A rule that names a width its
-    /// `when` never reads is publishing a guess, and that guess ships as an
-    /// asserted `parameterSetIdentifier` in the CBOM.
+    /// Every AES key size and every elliptic curve a classify rule publishes
+    /// must be observable from that rule's own `when` clause — either the api
+    /// regex names it (`EVP_aes_256_gcm`, `Aes128Gcm`, `A256GCM`) or an arg
+    /// predicate pins it (`AES_128.*/GCM`, `curve_fn = "P521"`). A rule that
+    /// names a parameter its `when` never reads is publishing a guess, and
+    /// that guess ships as an asserted `parameterSetIdentifier` in the CBOM.
     ///
-    /// Regression gate: `Cipher.getInstance("AES/GCM/NoPadding")`,
+    /// Regression gate, key sizes: `Cipher.getInstance("AES/GCM/NoPadding")`,
     /// `AESEngine`, `BouncyCastleProvider`, `Aes.Create()`, `aes.NewCipher`
     /// and `CryptoJS.AES.encrypt` were all published as `aes-256-gcm`. Use an
     /// `aes-unattributed*` sentinel when the source does not state the width.
+    ///
+    /// Regression gate, curves: `CRYPTO-035` / `CRYPTO-039` matched `P521`
+    /// and published `ecdh-p384`; `CRYPTO-010` / `CRYPTO-110` matched `P224`
+    /// and published `ecdsa-p256` with the comment "map to nearest baseline".
+    /// Mapping a curve to a neighbouring one is not a rounding error — it
+    /// reports a security level the code does not have, in both directions.
+    /// Use `ecdsa-unattributed` when the curve is genuinely off-site.
+    ///
+    /// RSA moduli are deliberately out of scope: a rule that reads `bits` as
+    /// a range (`{ lt = 2048 }`) cannot name the exact modulus in its `when`,
+    /// so the same check would reject every correct RSA rule.
     #[test]
-    fn aes_key_size_is_never_asserted_without_evidence() {
+    fn classify_rules_never_publish_a_parameter_their_when_clause_contradicts() {
         let packs = [
             ("go", RulePack::builtin_go().unwrap()),
             ("python", RulePack::builtin_python().unwrap()),
@@ -265,26 +297,45 @@ when = { api = "^foo$", args = { bits = { lt = 2048 } } }
         let mut offenders = Vec::new();
         for (lang, pack) in &packs {
             for rule in &pack.classify {
-                let Some(width) = rule
-                    .algorithm_id
-                    .strip_prefix("aes-")
-                    .and_then(|rest| ["128", "192", "256"].iter().find(|w| rest.starts_with(**w)))
-                else {
-                    continue;
-                };
                 // Everything the `when` clause can actually see.
                 let evidence = format!("{} {:?}", rule.when.api, rule.when.args);
-                if !evidence.contains(width) {
+                let width = rule
+                    .algorithm_id
+                    .strip_prefix("aes-")
+                    .and_then(|rest| ["128", "192", "256"].iter().find(|w| rest.starts_with(**w)));
+                if let Some(width) = width
+                    && !evidence.contains(width)
+                {
                     offenders.push(format!(
                         "{}/{} publishes `{}` but its `when` never reads {}",
                         lang, rule.id, rule.algorithm_id, width
+                    ));
+                }
+                // Curves, checked as a CONTRADICTION rather than as missing
+                // evidence. Plenty of rules legitimately derive the curve
+                // from something other than a curve name — RFC 7518 fixes
+                // ES256 to P-256, ES384 to P-384, ES512 to P-521 — and those
+                // are correct. What is never correct is a `when` that pins
+                // one curve while the id names another.
+                let published = rule
+                    .algorithm_id
+                    .strip_prefix("ecdsa-p")
+                    .or_else(|| rule.algorithm_id.strip_prefix("ecdh-p"))
+                    .filter(|rest| rest.chars().all(|c| c.is_ascii_digit()));
+                if let Some(published) = published
+                    && let Some(matched) = curve_named_by(&evidence)
+                    && matched != published
+                {
+                    offenders.push(format!(
+                        "{}/{} matches P-{} but publishes `{}`",
+                        lang, rule.id, matched, rule.algorithm_id
                     ));
                 }
             }
         }
         assert!(
             offenders.is_empty(),
-            "classify rules asserting an unread AES key size:\n  {}",
+            "classify rules asserting a parameter their `when` clause cannot observe:\n  {}",
             offenders.join("\n  ")
         );
     }

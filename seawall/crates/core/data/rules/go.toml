@@ -111,7 +111,7 @@ description = "ECDSA key generation via crypto/ecdsa.GenerateKey(elliptic.P256()
 id = "CRYPTO-010"
 when.api = "^crypto/ecdsa\\.GenerateKey$"
 when.args.curve_fn = "P224"
-algorithm_id = "ecdsa-p256"      # P-224 below 128-bit; map to nearest baseline
+algorithm_id = "ecdsa-p224"
 severity_hint = "critical"
 message = "ECDSA P-224 is below the 128-bit security floor (NIST SP 800-131A)."
 
@@ -263,7 +263,7 @@ message = "TLS curve P-384 ECDH — quantum-vulnerable. Add tls.X25519MLKEM768 /
 id = "CRYPTO-035"
 when.api = "^crypto/tls\\.Config\\.CurvePreferences$"
 when.args.curve = "CurveP521"
-algorithm_id = "ecdh-p384"
+algorithm_id = "ecdh-p521"
 severity_hint = "auto"
 message = "TLS curve P-521 ECDH — quantum-vulnerable. Migrate to ML-KEM hybrid groups."
 
@@ -310,7 +310,7 @@ message = "crypto/ecdh P-384 — quantum-vulnerable ECDH. Replace with ML-KEM-10
 id = "CRYPTO-039"
 when.api = "^crypto/ecdh\\.Curve$"
 when.args.curve_fn = "P521"
-algorithm_id = "ecdh-p384"
+algorithm_id = "ecdh-p521"
 severity_hint = "auto"
 message = "crypto/ecdh P-521 — quantum-vulnerable ECDH. Migrate to ML-KEM hybrid encap/decap."
 
