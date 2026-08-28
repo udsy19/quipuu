@@ -8,6 +8,46 @@
 
 ---
 
+## 0. Correction, 2026-08-28 — the registry-lookup shape is a false positive
+
+**This section overrides the per-finding table below wherever they disagree.**
+
+This audit labelled one syntactic shape four different ways. A JOSE
+algorithm-registry retrieval — `jwa.LookupSignatureAlgorithm("PS256")`, or
+`func ES384() SignatureAlgorithm { return lookupBuiltinSignatureAlgorithm("ES384") }` —
+appears in the table as TP twice, as DEPENDS once, and as FP once:
+
+| Row | Rule | Cited line | Verdict as published |
+|---|---|---|---|
+| 19 | CRYPTO-704 | `go-modules/jwx/jwa/signature_gen.go:91` | TP |
+| 20 | CRYPTO-720 | `go-modules/jwx/jwa/signature_gen_test.go:66` | TP |
+| 69 | CRYPTO-760 | `go-modules/jwx/jwa/content_encryption_gen_test.go:98` | DEPENDS |
+| 161 | CRYPTO-732 | `go-modules/jwx/jwa/signature_gen_test.go:130` | FP |
+
+**All four are false positives.** Trust invariant P3 decides it without a
+judgement call: a finding is a true positive only if the cited `file:line`
+performs the operation claimed. Naming an algorithm in order to fetch its
+descriptor from a table produces no signature, no key and no ciphertext. The
+operation, if one happens at all, happens wherever the descriptor is later
+used — which is a different line, and the one a reader would need.
+
+Row 69's DEPENDS is wrong for a second reason. DEPENDS is reserved for a real
+operation whose `algorithm_id` asserts a parameter the line does not state. A
+retrieval is not a weakly-parameterised operation; it is not an operation.
+
+Resolving the shape strictly as FP is what licenses the suppression shipped on
+2026-08-28, and it is stated here so the recorded baseline moves for one reason
+rather than two. All four rows above are in the set that change removes.
+
+**Effect on this audit's headline.** The 84.5% on line 22 is left as published,
+per the rule that an audit is a record of what was labelled on its date. It was
+measured on the Phase 16 V11 corpus (986 findings), which is neither the corpus
+nor the binary any current figure refers to; `BENCHMARKING_RESULTS.md` carries
+the current measurement. Applied to this sample the correction would move
+196 rows from 153 TP / 28 FP / 15 DEPENDS to 151 TP / 31 FP / 14 DEPENDS —
+**84.5% → 83.0%** — so the correction lowers the historical figure. It is
+recorded rather than quietly dropped for that reason.
+
 ## 1. Headline Numbers
 
 ### Overall

@@ -1845,7 +1845,8 @@ fn node_text(node: Node<'_>, source: &[u8]) -> String {
 /// - Walk parents up to a fixed depth (max 6 frames; deeper than that and
 ///   the relationship is too distant to be meaningful for classification).
 /// - First match wins in priority order:
-///   MapEntry > TestAssertion > StructLiteral > Call > StringConstant > Default
+///   MapEntry > TestAssertion > RegistryLookup > StructLiteral > Call >
+///   StringConstant > Default
 /// - Test detection is name-based on the call target (require.Equal,
 ///   assert.Equal, etc.) — language-specific lists.
 pub(crate) fn classify_site_context(
@@ -1910,7 +1911,33 @@ pub(crate) fn classify_site_context(
         }
     }
 
-    // Priority 3: StructLiteral, but ONLY when the composite_literal's type
+    // Priority 3: RegistryLookup. A lookup call names an algorithm in order
+    // to fetch its descriptor; it performs no cryptography. `ES384()` in
+    // jwx's `func ES384() SignatureAlgorithm { return
+    // lookupBuiltinSignatureAlgorithm("ES384") }` signs nothing, and neither
+    // does `v, ok := jwa.LookupSignatureAlgorithm("PS256")`.
+    //
+    // The result NOT being consumed by an enclosing call is what separates
+    // retrieval from configuration: `jwt.New(getMethod("RS256"))` does select
+    // RS256 for a token at that line, so it stays a Call. Only the immediate
+    // parent counts — climbing further would let the `t.Run(…, func(){…})`
+    // wrapper around a lookup in a test reinstate it.
+    for p in &chain {
+        if matches!(p.kind(), "argument_list" | "arguments")
+            && let Some(call) = p.parent()
+            && let Some(callee) = call.child_by_field_name("function")
+            && is_registry_lookup_callee(&node_text(callee, source))
+        {
+            let consumed_by_a_call = call
+                .parent()
+                .is_some_and(|q| matches!(q.kind(), "argument_list" | "arguments"));
+            if !consumed_by_a_call {
+                return SiteContext::RegistryLookup;
+            }
+        }
+    }
+
+    // Priority 4: StructLiteral, but ONLY when the composite_literal's type
     // is a struct (or a struct pointer), not a slice/array/map type. A Go
     // `[]string{"RS256", ...}` array is non-operational despite having a
     // `literal_element` parent — treat it as Default so default-allow
@@ -1939,8 +1966,8 @@ pub(crate) fn classify_site_context(
         }
     }
 
-    // Priority 4: Call. Any argument_list we didn't classify as
-    // TestAssertion is a regular call site — UNLESS the literal sits inside
+    // Priority 5: Call. Any argument_list we didn't classify as
+    // TestAssertion or RegistryLookup is a regular call site — UNLESS the literal sits inside
     // a slice / array / map composite literal that's then PASSED to a call
     // (e.g. `WithValidMethods([]string{"HS256"})`). The collection-literal
     // semantics dominate: the string is data, not an operational arg.
@@ -1969,7 +1996,7 @@ pub(crate) fn classify_site_context(
         // Fall through — collection-as-call-arg is non-operational.
     }
 
-    // Priority 5: StringConstant. const/var declarations — but ONLY when
+    // Priority 6: StringConstant. const/var declarations — but ONLY when
     // the literal is a DIRECT child (via expression_list / spec). If the
     // literal sits inside a composite_literal that's inside the var_spec
     // (e.g. `var x = []string{"RS256"}`), the array semantics dominate and
@@ -1987,6 +2014,29 @@ pub(crate) fn classify_site_context(
     }
 
     SiteContext::Default
+}
+
+/// Recognise registry-retrieval callees so SiteContext can mark their
+/// arguments as [`SiteContext::RegistryLookup`].
+///
+/// Deliberately one shape, not a table of library function names: a callee
+/// whose own name begins with `lookup` is announcing that it retrieves rather
+/// than computes, in any language and any library. That covers every instance
+/// in corpus B — jwx's `jwa.LookupSignatureAlgorithm`,
+/// `lookupBuiltinSignatureAlgorithm`, `LookupContentEncryptionAlgorithm`,
+/// `LookupKeyEncryptionAlgorithm` — without a list that goes stale.
+///
+/// Names like `Get*` and `Parse*` are deliberately NOT included. They are
+/// ambiguous by usage rather than by name: golang-jwt's
+/// `jwt.New(jwt.GetSigningMethod("RS256"))` selects the algorithm a token is
+/// signed with, and suppressing it would lose a real signing site.
+fn is_registry_lookup_callee(callee: &str) -> bool {
+    callee
+        .rsplit(['.', ':'])
+        .next()
+        .unwrap_or(callee)
+        .to_ascii_lowercase()
+        .starts_with("lookup")
 }
 
 /// Recognise test-framework assertion callees so SiteContext can mark

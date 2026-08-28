@@ -157,21 +157,23 @@ not perform.
 
 ## Benchmark numbers
 
-**V12 corpus run — 150 real-world OSS projects across 6 ecosystems:**
+**Corpus B — 150 real-world OSS projects across 6 ecosystems, all 150 with a populated working tree:**
 
 | Metric | Value |
 |---|---|
-| Total findings | 1036 |
+| Total findings | 1570 (`--source --deps --include-safe`, measured 2026-08-28) |
 | Projects scanned | 150 |
 | Wall-clock time | ~22 seconds |
 | Avg per project | ~150ms |
 | Languages covered | 7 (Go, Python, Java, JavaScript/TypeScript, C/C++, Rust, C#) |
 
-Audit-validated precision: **81.8%** (Wilson 95% CI: 77.4%–86.1%) on the 150-project corpus, measured 2026-08-27. Methodology and per-finding verdicts are in `PRECISION_AUDIT_V3.md` and `BENCHMARKING_RESULTS.md`.
+Audit-validated precision: **85.3%** (95% CI: 81.3%–89.3%) on the 150-project corpus, measured 2026-08-28. Methodology, the full label set and per-finding verdicts are in `BENCHMARKING_RESULTS.md` and `PRECISION_AUDIT_V3.md`.
 
-**Why this number is lower than the one previously published here.** Earlier figures — 84.5%, and later 85.2% and 87.1% — were measured against a corpus in which **46 of the 150 projects had empty working trees**. `clone_all.sh` clones `--no-checkout`, and the manifest's `commit_sha` pins had been shuffled across project files, so the checkout failed, printed a warning, and the project was still counted as cloned. Those numbers were taken on a biased two-thirds sample.
+**What that interval is.** A two-stratum weighted estimate over 372 findings audited by opening every cited `file:line`, with the interval from the stratified normal approximation — not a Wilson interval on a pooled sample, which is what earlier revisions of this line called it. The lower bound is 81.3%, so this is not a claim of 85%.
 
-81.8% is the first measurement on a fully populated corpus. **The scanner did not regress — the earlier numbers were inflated by a broken corpus.** We are publishing the lower, correct figure and the reason for it, because a benchmark you cannot reproduce is worth nothing.
+**Why this number moved, twice.** The figures published here before — 84.5%, then 85.2% and 87.1% — were measured against a corpus in which **46 of the 150 projects had empty working trees**. `clone_all.sh` clones `--no-checkout`, and the manifest's `commit_sha` pins had been shuffled across project files, so the checkout failed, printed a warning, and the project was still counted as cloned. Those numbers were taken on a biased two-thirds sample. Re-measured on the fully populated corpus the same scanner gave **81.8%** — lower, and published as such, because a benchmark you cannot reproduce is worth nothing.
+
+**85.3% is a real gain on top of that corrected baseline, not a return to the old number.** It comes from suppressing one false-positive shape: a JOSE algorithm-registry lookup such as `jwa.LookupSignatureAlgorithm("PS256")`, which retrieves a descriptor from a table and was being reported as a quantum-vulnerable signing operation. 34 findings were removed, every one of them labelled a false positive by hand, and no true positive was lost.
 
 The benchmark corpus and reproduce script live in `benchmarks/corpus-b-realworld/`. Clone it, run `python3 scan_corpus.py`, and verify the numbers yourself.
 
@@ -223,7 +225,7 @@ seawall scan .
 | MCP server | Yes | No | No | No | No |
 | Auditable open rule format | Yes (TOML) | No (binary) | Yes (QL) | No | Yes (YAML) |
 | Languages (crypto-specific) | 7 | 7+ | 7+ | Java only | Any |
-| Published precision (crypto findings) | 81.8% (full 150-project corpus) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
+| Published precision (crypto findings) | 85.3% (full 150-project corpus) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
 | Scan speed (150 projects) | ~22s | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
 
 **Where CodeQL wins:** CodeQL has full inter-procedural data-flow. It can trace a key from generation through storage to use and flag misuse that a pattern-based scanner cannot see. If you need that depth and can absorb the scan time, CodeQL delivers it. seawall does not attempt to replicate data-flow analysis — it trades that capability for speed, locality, and PQC specificity.

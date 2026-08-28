@@ -61,6 +61,12 @@ pub enum SiteContext {
     /// Match is an argument to a test-framework assertion or helper
     /// (e.g. `require.Equal(t, "HS256", got)`). Test scaffolding, not crypto.
     TestAssertion,
+    /// Match is the argument of a registry-retrieval call whose result is not
+    /// handed straight to another call — `jwa.LookupSignatureAlgorithm("PS256")`,
+    /// `return lookupBuiltinSignatureAlgorithm("ES384")`. Naming an algorithm
+    /// to fetch its descriptor produces no signature; the operation, if any,
+    /// happens wherever the descriptor is later used.
+    RegistryLookup,
     /// Anything else — default for matches that don't fit above. Treated
     /// as Default by classify rules unless the rule narrows on a specific
     /// context.

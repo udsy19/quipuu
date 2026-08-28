@@ -528,3 +528,88 @@ matched P-521 and published `ecdh-p384`; `CRYPTO-010`/`CRYPTO-110` matched P-224
 `ecdsa-p256` under a comment reading "map to nearest baseline". Corpus effect: **0 call sites added
 or removed, 0 severity changes, 25 `algorithm_id` values corrected.** Stratum B 70.5% → 73.7%,
 weighted 80.5% → **81.8%**.
+
+---
+
+## Registry-lookup suppression — 2026-08-28
+
+**Measurement tuple:** corpus B (150 projects, all populated) · scanner set
+`--source --deps --include-safe` · profile `nist-default` · three dumps taken this day with
+`benchmarks/corpus-b-realworld/dump_findings.py`.
+
+**Precision 81.8% → 85.3% (95% CI 81.3–89.3%), stratified.** Findings 1604 → 1570.
+
+### What changed
+
+`jwa.LookupSignatureAlgorithm("PS256")` retrieves a descriptor from a table.
+`func ES384() SignatureAlgorithm { return lookupBuiltinSignatureAlgorithm("ES384") }` retrieves one
+and returns it. No signature exists at either line, yet both were reported as a quantum-vulnerable
+signing operation with a migration instruction attached — the largest single false-positive cluster
+in the audited sample, 10 of its 25 FPs.
+
+A new `SiteContext::RegistryLookup` marks the argument of a callee whose own name begins with
+`lookup`, when the result is not handed straight to another call. The 19 `go.alg-*` rules already
+enumerate the contexts they accept, so they drop it with no rule change.
+
+Two limits are deliberate. Only the callee's immediate parent decides whether the result is
+consumed, so `sign(lookupAlg("RS256"), payload)` does select RS256 at that line and stays a finding.
+And the predicate is one shape rather than a table of library names — `Get*` and `Parse*` are
+excluded, because golang-jwt's `jwt.New(jwt.GetSigningMethod("RS256"))` is ambiguous by usage rather
+than by name, and suppressing it would lose a real signing site.
+
+### The suppressed set, labelled in full
+
+**34 findings removed, 0 added, 0 reclassified**, all 34 in `lestrrat-go/jwx`, which contributes 230
+of the corpus's 1604 findings. Every one was labelled by opening its cited `file:line`: **34 FP, 0
+TP.** 14 are `return lookupBuiltinSignatureAlgorithm("…")`, the one-line bodies of the generated
+accessors in `jwa/signature_gen.go`. 19 are `v, ok := jwa.Lookup*Algorithm("…")` in the generated
+tests beside them. The 34th assigns the retrieved descriptor to a variable that a later line uses.
+**No signing site was lost**, and none of the 34 lines produces a signature, a key or a ciphertext.
+
+### The estimator
+
+Same two strata and same weighting as the 81.8% figure above, so the two are comparable. Stratum A
+is held at its audited value; neither change removes a stratum-A finding.
+
+| | Stratum A | Stratum B | Weighted |
+|---|---|---|---|
+| Before (`f750c37`, as the tree stood) | 964 · 217/32/23 · 87.1% | 640 · 67/28/5 · 70.5% | 1604 · **80.5%** (76.1–84.9) |
+| + curve-id restoration | 964 · 217/32/23 · 87.1% | 640 · 70/25/5 · 73.7% | 1604 · **81.8%** (77.4–86.1) |
+| + registry-lookup suppression | 964 · 217/32/23 · 87.1% | 606 · 70/15/5 · 82.4% | 1570 · **85.3%** (81.3–89.3) |
+
+Cells read *population · TP/FP/DEPENDS · precision*. The interval is the stratified normal
+approximation `Var = Σ wᵢ² pᵢ(1−pᵢ)/nᵢ`; the middle row reproduces the previously published
+81.8% (77.4–86.1) to the decimal, which is what licenses reading the bottom row against it.
+
+Ten of the 100 audited stratum-B rows are dropped by the change and **all ten were labelled FP**.
+Stratum B's TP count is unchanged at 70; only its FP count moves, 25 → 15.
+
+**The middle row is a restoration, not a gain.** The curve-id fix is the code the 81.8% published
+here was measured on, and it had not reached the tree. As it stood, the tree measured 80.5% while
+advertising 81.8%. That is corrected in the same change.
+
+**Two reasons this figure is conservative.** Stratum A is held at 87.1% although the curve
+restoration corrects two of its `algorithm_id`s (`ecdsa-p256` → `ecdsa-p224` on `elliptic.P224()`
+calls), an effect that could only be favourable. And the four rows `PRECISION_AUDIT_V3.md` §0
+re-resolves as FP are all inside the suppressed set; if any sit in stratum A's 272 audited rows,
+correcting them lowers stratum A before the change and raises it after, widening the gain rather
+than narrowing it.
+
+### Cross-check
+
+An independent uniform 200-row sample of the whole corpus (seed 20260827) moves **75.1% → 77.3%**,
++2.1 pp, with TP unchanged at 136 and FP 45 → 40. Different sample and different estimator, so the
+level is not comparable to the stratified figure — it is quoted for the direction, and because it
+independently confirms that every sampled finding the change removed was a false positive. It
+understates the move because it does not relabel the curve corrections.
+
+### Held
+
+Scan speed: no change detectable above this box's noise floor. Measured as 7 interleaved
+repetitions per binary on `npm/jose` (109 ms → 114 ms best-of-7) and on `go-modules/jwx`, the
+project the change affects most (497 ms → 490 ms best-of-7). Medians move by more than that in
+both directions between runs, so the honest reading is "not distinguishable", not "identical" —
+this is a 2-core machine and the two figures bracket each other.
+
+`cargo test --workspace`: 259 tests across 36 suites, all passing. No finding was added anywhere in
+the corpus by either change, so no coverage was traded for this precision.

@@ -2128,3 +2128,57 @@ fn broken_classical_call_sites_are_all_detected() {
             .join("\n  ")
     );
 }
+
+// ── Registry lookups are not signing sites ─────────────────────────────────
+//
+// `jwa.LookupSignatureAlgorithm("PS256")` and
+// `return lookupBuiltinSignatureAlgorithm("ES384")` retrieve a descriptor
+// from a registry; no signature is produced. Ten of the 25 false positives in
+// the corpus-B stratum sample were this shape. A lookup whose result is
+// handed straight to another call is a different matter — that line does
+// select the algorithm — so it stays a finding.
+
+#[test]
+fn registry_lookups_do_not_report_a_signature() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("go/jwt_registry_lookup.go"))
+        .expect("scan succeeds");
+    for line in [18, 21] {
+        assert!(
+            !findings.iter().any(|f| f.location.line == Some(line)),
+            "line {} is a registry lookup and must not fire, got:\n  {}",
+            line,
+            findings
+                .iter()
+                .map(|f| format!("{} {} {:?}", f.rule_id, f.algorithm_id, f.location.line))
+                .collect::<Vec<_>>()
+                .join("\n  ")
+        );
+    }
+}
+
+#[test]
+fn algorithm_selection_survives_the_lookup_suppression() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("go/jwt_registry_lookup.go"))
+        .expect("scan succeeds");
+    for (line, rule) in [(28, "CRYPTO-720"), (33, "CRYPTO-700")] {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.location.line == Some(line) && f.rule_id == rule),
+            "expected {} on line {}, got:\n  {}",
+            rule,
+            line,
+            findings
+                .iter()
+                .map(|f| format!("{} {} {:?}", f.rule_id, f.algorithm_id, f.location.line))
+                .collect::<Vec<_>>()
+                .join("\n  ")
+        );
+    }
+}
