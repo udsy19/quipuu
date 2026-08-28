@@ -1037,3 +1037,174 @@ and 6 per-rule plus the total, at **1570 findings, 0 projects errored**. 150 pro
 no speed was traded either.
 
 No finding was added or removed anywhere in the corpus, so no coverage was traded for the gate.
+
+---
+
+## An emitter may not name a parameter its input does not carry — 2026-08-28
+
+**Corpus B: 85.3% → 86.5%, on a finding set that did not move.**
+
+Tuple. Corpus B, 150 projects, all populated · `--source --deps --include-safe` ·
+profile `nist-default` · release build · dumps taken with the in-tree
+`benchmarks/corpus-b-realworld/dump_findings.py` · pre `2a60a72`
+(`/opt/cryptoscope/work/a1_post.json`, the dump the recorded 85.3% was audited on) →
+post this cycle's working tree (`/opt/cryptoscope/work/r40_dump.json`). Estimator:
+`/opt/cryptoscope/work/r40_precision.py`, which reproduced the recorded baseline from the
+labels (85.30%) before printing anything, per the cycle-19 rule.
+
+### What the defect was
+
+P3 guarantees the `file:line` on a finding is real. Nothing guaranteed the *algorithm name*
+at that line was. Four emitters resolved an input that carries a **family** into an
+identifier that names a **parameter set**, and invented the parameter:
+
+| Emitter | Input | Emitted | What the input actually determines |
+|---|---|---|---|
+| `oid-table.toml` | `sha512WithRSAEncryption` (`1.2.840.113549.1.1.13`) | `rsa-pkcs1-sha512-4096` | a digest and a padding; **no modulus** |
+| `scan-deps/catalogue.rs` | `ml-kem = "0.2"` in a `Cargo.toml` | `ml-kem-768` | the family; the crate implements 512/768/1024 |
+| `rules/cpp.toml` `CRYPTO-430` | a 7-way alternation over `RC4\|DES\|MD5\|NULL\|EXPORT` | the literal `rc4` | that *one of five* broken primitives is named |
+| 61 arms, 7 rule packs | JWT `RS256`, `getInstance("EC")`, `pbkdf2::<...>` | `-2048`, P-256, `sha-256` | the digest, the key type, nothing |
+
+The first is the unsafe direction and the reason this outranked the rest: any certificate a
+CA had signed with SHA-512 reported `classicalSecurityLevel: 152` in its CBOM whatever its
+real key size — a weak key made to look strong in the field a compliance reader trusts.
+
+**The repo shipped no fixture that could show it.** Every cert in
+`crates/scan-certs/tests/fixtures/` was signed with the digest matching its own key size, so
+the invented modulus always agreed with the real one by accident. That is why three passes
+over the cert path walked past this. `rsa2048_sha512.pem` now ships, and the assertion is
+that one scan of one file does not produce two different answers about how strong the key
+is: `rsa-2048` at 112 bits classical, and a signature row that claims no classical strength
+at all.
+
+### The measurement, and what licenses reusing the labels
+
+Every edit is a rename. Exactly one changes what *matches* — `CRYPTO-430`'s regex now
+requires the weak token at the start of the string or after `:`/`+`, so `DEFAULT:!RC4`,
+which *removes* RC4, no longer fires as though it enabled it. `CRYPTO-430` fires **zero**
+times across all 150 projects, so the corpus cannot see that arm; it is measured on the
+fixture tree instead, which is the right instrument for it.
+
+| | findings | distinct sites | added | removed | `algorithm_id` changed in place |
+|---|---|---|---|---|---|
+| `2a60a72` (the dump the 85.3% baseline was audited on) | 1570 | 1552 | — | — | — |
+| this tree | 1570 | 1552 | **0** | **0** | **283** |
+
+**283 of 1570 findings — 18.0%, across 42 rules and 35 projects — were carrying a parameter
+their input never stated.** The transitions:
+
+| n | from | to |
+|---:|---|---|
+| 91 | `rsa-pkcs1-sha256-2048` | `rsa-pkcs1-sha256` |
+| 56 | `ecdsa-p256` | `ecdsa-unattributed` |
+| 43 | `rsa-1024` | `rsa-undersized` |
+| 34 | `rsa-2048` | `rsa-unattributed` |
+| 15 | `rsa-pss-sha256-2048` | `rsa-pss-sha256` |
+| 10 | `rsa-pkcs1-sha512-4096` | `rsa-pkcs1-sha512` |
+| 9 | `rsa-pkcs1-sha384-3072` | `rsa-pkcs1-sha384` |
+| 9 | `sha-256` | `pbkdf2-unattributed` |
+| 7 | `rsa-pss-sha512-4096` | `rsa-pss-sha512` |
+| 7 | `rsa-pss-sha384-3072` | `rsa-pss-sha384` |
+| 2 | `rsa-2048` | `rsa-oaep` / `rsa-oaep-256` |
+
+Per-ecosystem counts are unchanged — go-modules 576, maven 366, crates-io 226,
+crypto-adjacent 198, npm 127, pypi 77 — and so is the severity distribution: **968 High,
+471 Medium, 131 unscored, before and after, with 0 of the 283 moved rows changing band.**
+Risk scoring reads `quantum_status` and the policy disallow-lists, not
+`classical_security_bits`, and every family row carries the same status as the sized row it
+replaces. So no coverage and no severity was traded for the correction.
+
+### The estimator, its sample sizes and its verdicts
+
+`c11_labels.py` has defined the three verdicts since the corpus was restored, and its
+DEPENDS clause describes this exact defect in as many words:
+
+> **DEPENDS** — the operation is real but `algorithm_id` asserts a parameter (modulus, key
+> size, hash) the line does not state
+
+So a DEPENDS row whose id stops asserting the parameter becomes TP **under the existing
+rule**; no new labelling rule is introduced. Seven sampled stratum-B rows were re-labelled,
+every one of them a row this change provably touched, and the estimator refuses to apply a
+re-label to a row whose `algorithm_id` did not in fact move:
+
+| row | rule | was | now | why |
+|---|---|---|---|---|
+| 2 | `CRYPTO-230` | DEPENDS | TP | `new RSAKeyPairGenerator()`; the 2048 was on line 42, not the cited line 40 |
+| 5 | `CRYPTO-700` | DEPENDS | TP | `SigningMethodRS256{"RS256", crypto.SHA256}` states the digest, never a modulus |
+| 6 | `CRYPTO-061` | DEPENDS | TP | real RS256 signature; same |
+| 53 | `CRYPTO-700` | DEPENDS | TP | real RS256 keyset request; same |
+| 78 | `CRYPTO-400` | FP | TP | line states **1027** bits; `rsa-1024` contradicted it, `rsa-undersized` is what `bits < 2048` actually matched |
+| 79 | `CRYPTO-400` | FP | TP | line states **1152** bits; same |
+| 89 | `CRYPTO-587` | DEPENDS | TP | `pbkdf2_hmac(..., md, ...)` — `md` is a variable, so no digest can be named, and now none is |
+
+Three further rows moved id and keep their label, and they are named rather than left to be
+read out of a diff: rows 69 and 86 (`rsa-1024` → `rsa-undersized` on lines that do state
+1024 — still TP) and row 23 (FP because `t.Run("RS256", ...)` is a subtest name, which the
+id change does not touch).
+
+| | Population | Audited | TP | FP | DEPENDS | Precision |
+|---|---|---|---|---|---|---|
+| Stratum A | 964 | 272 | 217 | 32 | 23 | 87.1% (held) |
+| Stratum B, before | 606 | 90 | 70 | 15 | 5 | 82.4% |
+| Stratum B, after | 606 | 90 | **77** | **13** | **0** | **85.6%** (Wilson 76.8–91.4) |
+| **Weighted** | **1570** | **362** | | | | **86.5%** (95% CI 82.7–90.3) |
+
+`precision = TP / (TP + FP)`, DEPENDS excluded from both sides, as in every prior figure.
+The interval is the stratified normal approximation `Var = Σ wᵢ² pᵢ(1−pᵢ)/nᵢ` — not Wilson,
+which applies only to the single-stratum figures quoted per row.
+
+**Stratum A is held at 87.1%, and that understates this change.** Its 272 per-row labels do
+not survive, so rows corrected there cannot be re-read — and the effect could only run the
+same way it ran in stratum B. `PRECISION_AUDIT_V3` row 1 is a stratum-A row labelled FP for
+precisely this reason (`rsa.GenerateKey` 768-bit reported as `rsa-1024`), and §5 of that
+same audit asked for the `pbkdf2` fix by name — *"emit a distinct algorithm_id for
+unresolvable cases; option (b) preserves the finding while making the algorithm_id
+honest."* Holding A is the conservative choice and matches how every figure since the
+restoration was computed.
+
+### The invariant, and why it is a gate rather than a fifth fix
+
+This defect has been repaired pairwise four times — Diffie-Hellman group sizes at `9e60ffe`,
+Rust crate paths, and the two above — and each time it regrew in a file nobody re-checked.
+`crates/cli/tests/algorithm_parameters.rs` states the rule instead: **an algorithm-id's
+bare-number segments must each appear in the emitter's own matching text** — the tree-sitter
+query, the `when` clause, the package pattern — with classify arms joined to the extract
+blocks whose `api` they match. Prose fields and comments are stripped first, because moving
+the size into the message is the fix and must not also be the excuse. The OID table cannot
+be checked that way (an OID is opaque: nothing in `2.16.840.1.101.3.4.4.2` looks like the
+768 it determines), so each row declares whether it pins the full parameterisation, and a
+row that says it does not may not resolve to a parameterised id. Where a parameter really
+is determined but no digit shows it, the rule cites the standard in `parameter_source` —
+four do, all `ES512` → P-521 by RFC 7518 § 3.4 and one jsonwebtoken HS256 default.
+
+All checks were confirmed to fail before they pass, by reverting each retarget in turn.
+
+**The emitter set was eleven and is twelve.** `scan-certs` resolved RSA by modulus through a
+`match` on bare string literals, so `algorithm_reachability.rs`'s "no emitter outside the
+enumerated set" — the direction written specifically to catch a missed emitter — walked past
+it. Those arms are a table with an `algorithm_id` field now, which is the shape it reads.
+The table is 108 rows, 15 of them carrying an `undetectable` reason.
+
+### Held
+
+`cargo build --release --workspace` clean; `cargo fmt --all --check` and
+`cargo clippy --workspace --all-targets` clean. `cargo test --workspace`: **289 tests, all
+passing** (284 before — two for the invariant gate, one for the missing cert fixture, one
+for the cipher-list exclusion prefix, one for the PQC manifest). `tests/check.py` 69/69.
+
+`benchmarks/corpus-b-realworld/regression_check.py`: **13 of 13 floors met**, 6
+per-ecosystem and 6 per-rule plus the total, at **1570 findings, 0 projects errored**. 150
+projects scanned in **289.4 s** against 284.3 s on the previous pass over the same corpus
+with the same flag set — inside the ±10% run-to-run variance this corpus has shown all
+along, so no speed was traded either.
+
+### What this does not fix, stated so it is not read as fixed
+
+`CRYPTO-260` matches `^RSA_USING_SHA` — jose4j's SHA-256, SHA-384 and SHA-512 identifiers —
+and emits one digest for all three. That is the same *shape* as `CRYPTO-430`: one literal id
+for an alternation. It is a different defect, because there the input does determine the
+digest and we name the wrong one, where here the input determines nothing and we invent it.
+The gate above cannot see it: it checks bare-number segments, and `sha256` is not one.
+`PRECISION_AUDIT_V3` rows 111 and 118 have it filed as the sole remaining Pattern D-prime
+false positive; it is a stratum-A row, so fixing it would not move the figure published here
+and it is left for a cycle that can measure it.
