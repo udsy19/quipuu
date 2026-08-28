@@ -171,14 +171,14 @@ Severity bands: ≥75 Critical, 50–74 High, 25–49 Medium, 10–24 Low, <10 S
 **Why:** Reliable GitHub Advanced Security ingestion is the killer-app distribution channel for the open-source build. SARIF defaults that don't ingest = no signal.
 
 **Evidence (from `knowledge/07-sarif`):**
-- GitHub limits: 10 MB compressed file, 25,000 results accepted / 5,000 displayed. Multi-run uploads need unique `runAutomationDetails.id`.
+- GitHub limits: 10 MB compressed file, 25,000 results accepted / 5,000 displayed. Multi-run uploads need unique `automationDetails.id`.
 - `security-severity` lives on the **rule**, not the result. GitHub UI buckets: 9.0–10.0 Critical, 7.0–8.9 High, 4.0–6.9 Medium, 0.1–3.9 Low.
 - `partialFingerprints.primaryLocationLineHash` is the de-dup primitive GitHub uses. Recommended algorithm: SHA-256 of `ruleId:snippet`, first 16 hex chars.
 - GitLab ingests native SARIF only in 18.11+ behind the `sarif_ingestion` feature flag. For older GitLab, convert to `gl-sast-report.json`.
 - No existing tool (including CodeQL) cross-references CBOM bom-refs from SARIF. We get to set the convention.
 
 **Decision:**
-- Always emit `runAutomationDetails.id`.
+- Always emit `automationDetails.id`.
 - Severity mapping: Critical → `level: error`, `security-severity: "9.0"`; High → `error` / `"8.0"`; Medium → `warning` / `"5.0"`; Low → `note` / `"3.0"`.
 - `partialFingerprints.primaryLocationLineHash` = SHA-256(`ruleId:snippet`)[:16].
 - Rule IDs: `CRYPTO-001`–`CRYPTO-999`, stable across releases.

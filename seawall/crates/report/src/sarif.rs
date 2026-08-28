@@ -157,6 +157,13 @@ pub fn emit_sarif(
         .collect();
 
     // --- Assemble the full SARIF document --------------------------------------
+    //
+    // The property below is `automationDetails`, not `runAutomationDetails`.
+    // The latter is the *type* name in the schema's definitions block; `run`
+    // sets `additionalProperties: false`, so emitting the type name yields a
+    // document invalid against the schema it declares in `$schema`. The
+    // property/type confusion is easy to reintroduce — `sarif_run_object_uses_
+    // the_property_name_not_the_type_name` in the report tests pins it.
     let automation_id = format!("seawall/{}", opts.timestamp);
 
     let mut run = json!({
@@ -169,7 +176,7 @@ pub fn emit_sarif(
                 "rules": rules_json
             }
         },
-        "runAutomationDetails": {
+        "automationDetails": {
             "id": automation_id
         },
         "results": results_json

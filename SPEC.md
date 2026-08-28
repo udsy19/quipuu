@@ -182,7 +182,7 @@ Use `evidence.occurrences[]` + `evidence.callstack.frames[]` (D-02) for file/lin
 
 `seawall scan ... --format sarif` emits a single SARIF 2.1.0 file:
 
-- Always emit `runAutomationDetails.id` (unique per run).
+- Always emit `automationDetails.id` (unique per run).
 - Rule IDs `CRYPTO-001` … `CRYPTO-999`, stable across releases. Rule metadata includes `name`, `shortDescription`, `fullDescription`, `helpUri` (link to our docs), `defaultConfiguration.level`, `properties.security-severity` (on the rule, not the result).
 - Severity mapping: Critical → `level: error`, `security-severity: "9.0"`; High → `error`, `"8.0"`; Medium → `warning`, `"5.0"`; Low → `note`, `"3.0"`.
 - `partialFingerprints.primaryLocationLineHash` = SHA-256(`ruleId:snippet`)[:16].

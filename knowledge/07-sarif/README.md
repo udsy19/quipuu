@@ -55,7 +55,7 @@ Use the OASIS canonical URL in `$schema` for strict conformance. GitHub accepts 
 | `results` | NO | Array of `result`; omit entirely if zero findings |
 | `artifacts` | NO | Recommended for resolving `artifactLocation.index` |
 | `invocations` | NO | Execution metadata |
-| `runAutomationDetails.id` | NO | **Required by GitHub for multi-tool/multi-run uploads to the same commit**; must be unique per upload category |
+| `automationDetails.id` | NO | **Required by GitHub for multi-tool/multi-run uploads to the same commit**; must be unique per upload category |
 
 ### 2.3 `tool.driver` (toolComponent)
 
@@ -178,7 +178,7 @@ GitHub deduplicates alerts using the combination of `ruleId` + `partialFingerpri
 
 ### 3.4 Multi-upload (multiple SARIF files for the same commit)
 
-Each SARIF upload must set `run.runAutomationDetails.id` to a unique string **or** pass a unique `category` to the upload action. Without this, subsequent uploads for the same commit/tool overwrite prior uploads.
+Each SARIF upload must set `run.automationDetails.id` to a unique string **or** pass a unique `category` to the upload action. Without this, subsequent uploads for the same commit/tool overwrite prior uploads.
 
 ### 3.5 Common rejection causes
 
@@ -356,7 +356,7 @@ One finding: RSA-2048 key generation in `main.go` line 42.
           ]
         }
       },
-      "runAutomationDetails": {
+      "automationDetails": {
         "id": "seawall/2024-01-15T10:30:00Z"
       },
       "results": [
@@ -463,11 +463,18 @@ Do **not** emit `fix` objects for quantum-migration findings. Place remediation 
 - Document the 18.11 feature flag requirement in the seawall GitLab CI integration guide.
 - Do not implement `gl-sast-report.json` output in v0.
 
-### 8.7 `runAutomationDetails.id`
+### 8.7 `automationDetails.id`
+
+The property on `run` is **`automationDetails`**. `runAutomationDetails` is the *type* name
+in the schema's definitions block, not the property name, and `run` declares
+`additionalProperties: false` — so emitting the type name produces a document that fails
+validation against the schema the document itself declares. Every prior revision of this
+file, of `SPEC.md`, of the decision log and of `crates/report/src/sarif.rs` used the type
+name; correcting the code alone would have regrown the defect from these pages.
 
 Always emit:
 ```json
-"runAutomationDetails": {
+"automationDetails": {
   "id": "seawall/<ISO8601-timestamp>"
 }
 ```

@@ -688,3 +688,102 @@ fn phase7_sarif_emits_tool_execution_notifications_per_warning() {
         );
     }
 }
+
+/// The SARIF `run` object carries `automationDetails`, and the string
+/// `runAutomationDetails` appears nowhere in the published tree.
+///
+/// `runAutomationDetails` is the *type* name in the SARIF 2.1.0 schema's
+/// definitions block; the property on `run` is `automationDetails`, and `run`
+/// declares `additionalProperties: false`. We shipped the type name at nine
+/// sites — the emitter plus eight lines of `SPEC.md`, the decision log and the
+/// SARIF knowledge base. Eight of the nine were prose telling the next author
+/// to emit the wrong key, so a code-only fix regrows within a cycle.
+///
+/// Hence the second direction: the assertion is about the repository, not just
+/// about the emitted document. The knowledge base may still *discuss* the type
+/// name in §8.7, which it does inside a sentence — so the check is on the JSON
+/// property form (`"runAutomationDetails"` as a key, or `runAutomationDetails.`
+/// as a path) rather than on the bare token.
+#[test]
+fn sarif_run_object_uses_the_property_name_not_the_type_name() {
+    let (findings, algorithms, policy) = make_findings();
+    let json_str = emit_sarif(&findings, &algorithms, &policy, &default_opts())
+        .expect("SARIF emission succeeds");
+    let val: serde_json::Value = serde_json::from_str(&json_str).expect("valid JSON");
+    let run = &val["runs"][0];
+
+    assert!(
+        run.get("runAutomationDetails").is_none(),
+        "`run.runAutomationDetails` is a type name, not a property; `run` sets \
+         additionalProperties:false so this fails schema validation"
+    );
+    assert!(
+        run["automationDetails"]["id"]
+            .as_str()
+            .is_some_and(|s| !s.is_empty()),
+        "`run.automationDetails.id` must be a non-empty string"
+    );
+
+    // Direction two: no page in the tree teaches the wrong key.
+    let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../..")
+        .canonicalize()
+        .expect("repo root resolves");
+    // This file is the one place the wrong form is written on purpose — the
+    // assertion above has to name what it forbids. Excluded by path, not by
+    // some cleverness that would also hide a real second offender.
+    const GATE_SELF: &str = "seawall/crates/report/tests/report_test.rs";
+    let mut offenders: Vec<String> = Vec::new();
+    for (path, text) in walk_text_files(&repo_root) {
+        if path == GATE_SELF {
+            continue;
+        }
+        for (n, line) in text.lines().enumerate() {
+            if line.contains("\"runAutomationDetails\"") || line.contains("runAutomationDetails.") {
+                offenders.push(format!("{}:{}", path, n + 1));
+            }
+        }
+    }
+    assert!(
+        offenders.is_empty(),
+        "`runAutomationDetails` used as a JSON property or path at {} site(s):\n  {}",
+        offenders.len(),
+        offenders.join("\n  ")
+    );
+}
+
+/// Every tracked `.rs` / `.md` / `.json` / `.toml` file under `root`, as
+/// (repo-relative path, contents). Build outputs and VCS internals are skipped;
+/// unreadable files are skipped rather than silently treated as empty.
+fn walk_text_files(root: &std::path::Path) -> Vec<(String, String)> {
+    fn rec(dir: &std::path::Path, root: &std::path::Path, out: &mut Vec<(String, String)>) {
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            return;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let name = entry.file_name();
+            let name = name.to_string_lossy();
+            if name == "target" || name == ".git" || name == "corpus-clones" {
+                continue;
+            }
+            if path.is_dir() {
+                rec(&path, root, out);
+            } else if matches!(
+                path.extension().and_then(|e| e.to_str()),
+                Some("rs" | "md" | "json" | "toml" | "txt")
+            ) && let Ok(text) = std::fs::read_to_string(&path)
+            {
+                let rel = path
+                    .strip_prefix(root)
+                    .unwrap_or(&path)
+                    .to_string_lossy()
+                    .into_owned();
+                out.push((rel, text));
+            }
+        }
+    }
+    let mut out = Vec::new();
+    rec(root, root, &mut out);
+    out
+}
