@@ -1,6 +1,6 @@
 # seawall
 
-**A single Rust binary that finds every cryptographic operation in your codebase, classifies each against NIST's post-quantum migration timeline, and tells you exactly which ones a quantum adversary can harvest today.**
+**A single Rust binary that finds the cryptography in your codebase, classifies each finding against NIST's post-quantum migration timeline, and tells you exactly which ones a quantum adversary can harvest today.** It detects constructors and key-generation sites precisely rather than every call site exhaustively — [measured recall is below](#benchmark-numbers).
 
 ```bash
 cargo install seawall
@@ -145,7 +145,11 @@ not perform.
 
 **HTML report** — self-contained, auditor-grade. Every finding includes a "Why this matters" explanation tied to NIST IR 8547 policy, a severity rollup, and explicit HNDL flagging for findings that expose data to long-term harvest attacks. Open it in any browser; no server required.
 
+*What is verified:* the HNDL flag is **computed from the active policy's `[hndl_flag]` block**, not asserted. Until 2026-08-28 it was not computed at all: every scanner wrote a hard-coded `false` and `summary.json.totals.hndl_critical` was `0` for every input. Today an X.509 certificate whose public key is a key-agreement key — the fixture is X25519, OID `1.3.101.110` — is flagged, and the same certificate's long-lived *signature* is not. **The scope is certificate findings.** Source and dependency findings still report zero, because `scan-source` fixes two of the flag's three inputs (`usage_context`, `shelf_life_bucket`) at compile time; over the 150-project benchmark corpus the count is **0 of 1570** (all 150 scanned, none errored). Making it non-zero there means making those axes vary, which moves severity bands across the whole corpus, and that is a calibration change we have not made. Gated by `hndl_critical_is_reachable_end_to_end` and three sibling checks in `crates/cli/tests/hndl_flag.rs`.
+
 **SARIF 2.1.0** — drop into GitHub Advanced Security (`security-events: write`) or GitLab Advanced Security. Findings appear inline on PRs. Rule IDs (`CRYPTO-NNN`) are stable and documented.
+
+*What is verified:* the `run` object carries the SARIF 2.1.0 property `automationDetails`. We emitted `runAutomationDetails` — the schema's *type* name — until 2026-08-28, and because `run` declares `additionalProperties: false`, every SARIF file we produced was invalid against the schema it named in its own `$schema`. Corrected at all nine sites and gated by `sarif_run_object_uses_the_property_name_not_the_type_name`, which checks the emitted document *and* the tree, so a doc page cannot teach the wrong key back into the code. **The schema violation is what is measured.** The GitHub behaviour of overwriting prior uploads for the same commit is documented ingest semantics, not a reproduced upload — we have not run this against a repo with `security-events: write`.
 
 **CycloneDX 1.7 CBOM** — the canonical Crypto Bill of Materials format (ECMA-424 2nd Edition). Use it to track your cryptographic inventory over time and diff it across releases.
 
@@ -207,7 +211,24 @@ Audit-validated precision: **85.3%** (95% CI: 81.3%–89.3%) — measured 2026-0
 
 **85.3% is a real gain on top of that corrected baseline, not a return to the old number.** It comes from suppressing one false-positive shape: a JOSE algorithm-registry lookup such as `jwa.LookupSignatureAlgorithm("PS256")`, which retrieves a descriptor from a table and was being reported as a quantum-vulnerable signing operation. 34 findings were removed, every one of them labelled a false positive by hand, and no true positive was lost.
 
-The benchmark corpus and reproduce scripts live in `benchmarks/corpus-b-realworld/`. Run `./clone_all.sh`, then `python3 scan_corpus.py --include-safe` for the speed and finding counts and `python3 dump_findings.py` for the per-finding dump the precision audit samples; both take `--clones` if the corpus lives outside the repo. Verify the numbers yourself.
+### Recall, published beside precision
+
+**Go-only line-exact recall: 74.4%** — 303 of 407 in-scope `crypto/*` standard-library call sites, measured 2026-08-28 on the same corpus-B dump as the precision figure above. **This is a Go number and is not a recall figure for a seven-language tool**; no equivalent ground truth exists yet for the other six packs.
+
+Ground truth is built independently of our own rule files, by scanning the 25 Go corpus projects for 33 quantum-relevant stdlib APIs and requiring the matching `crypto/*` import, so it cannot inherit our blind spots. Reproduce with `python3 recall_check.py --clones DIR --dump results/all_findings.json`, which scores against a `dump_findings.py` artifact so recall is measured on exactly the finding set the precision audit samples.
+
+**The shape is the finding, not the headline.** Recall by API kind splits cleanly:
+
+| API kind | in-scope sites | found | recall |
+|---|---|---|---|
+| Generators and constructors (`rsa.GenerateKey`, `ecdsa.GenerateKey`, `ed25519.GenerateKey`, `ecdh.*`, `md5.New`, `sha1.New`, `des.NewTripleDESCipher`, `rc4.NewCipher`) | 325 | 301 | **92.6%** |
+| Operations (`ecdsa.Sign`, `ecdsa.Verify`, `rsa.SignPSS`, `rsa.VerifyPKCS1v15`, `ed25519.Sign`, `dsa.Sign`, `md5.Sum`, `sha1.Sum`, …) | 82 | 2 | **2.4%** |
+
+Every signer and every verifier is at **0.0%** across twelve families, and so is every one-shot digest (`md5.Sum`, `sha1.Sum`). The only two operation sites we find at all are one `rsa.EncryptOAEP` and one `rsa.DecryptOAEP`. That is the extract layer working as designed: it carries 59 `[[extract]]` blocks against 280 `[[classify]]` arms, and they are almost all constructors. **A constructor-only extractor earns precision by declining exactly the ambiguous shapes.** 85.3% precision and 74.4% recall are the same architectural fact reported twice — trust invariant P3 (every finding resolves to a real `file:line`) is what makes the trade deliberate rather than accidental.
+
+**A second denominator, which bounds the benchmark rather than the tool.** Those 407 sites are the ones inside the subtrees the harness actually hands to the scanner. Over the whole Go clone tree the ground truth is **1054 sites**, so **647 (61.4%) sit outside every scanned subtree and are never looked at**. The harness restricts 92 of 150 projects to `scan_hints.scan_paths`. Recall against the whole tree would read 28.7%, and neither number should be quoted without saying which denominator it uses.
+
+The benchmark corpus and reproduce scripts live in `benchmarks/corpus-b-realworld/`. Run `./clone_all.sh`, then `python3 scan_corpus.py --include-safe` for the speed and finding counts, `python3 dump_findings.py` for the per-finding dump the precision audit samples, and `python3 recall_check.py` for the recall figures; all three take `--clones` if the corpus lives outside the repo. Verify the numbers yourself.
 
 ---
 
@@ -249,7 +270,7 @@ seawall scan .
 | | seawall | Snyk Code | GitHub CodeQL | IBM CBOMkit | Semgrep |
 |---|---|---|---|---|---|
 | PQC-first, NIST IR 8547 taxonomy | Yes | No | No | Partial | No |
-| HNDL flagging | Yes | No | No | No | No |
+| HNDL flagging | Yes (certificate key establishment; scope stated under Output formats) | No | No | No | No |
 | Local-only, no account | Yes | No (SaaS) | No (SaaS) | Partial | Partial |
 | Single binary | Yes | No | No | No | No |
 | CycloneDX 1.7 CBOM | Yes | No | No | Yes | No |
@@ -258,6 +279,7 @@ seawall scan .
 | Auditable open rule format | Yes (TOML) | No (binary) | Yes (QL) | No | Yes (YAML) |
 | Languages (crypto-specific) | 7 | 7+ | 7+ | Java only | Any |
 | Published precision (crypto findings) | 85.3% (audited sample of 362, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
+| Published recall | 74.4% (Go stdlib, 303/407 in-scope sites) | Not published | Not published | Not published | Not published |
 | Scan speed | 285ms median project; 367s for the 150-project corpus (2 cores) | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
 
 **Where CodeQL wins:** CodeQL has full inter-procedural data-flow. It can trace a key from generation through storage to use and flag misuse that a pattern-based scanner cannot see. If you need that depth and can absorb the scan time, CodeQL delivers it. seawall does not attempt to replicate data-flow analysis — it trades that capability for speed, locality, and PQC specificity.

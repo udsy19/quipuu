@@ -1,6 +1,6 @@
 # seawall
 
-> A single static binary that finds every piece of cryptography in your
+> A single static binary that finds cryptography in your
 > codebase, dependencies, X.509 certs, and TLS endpoints — then classifies
 > against NIST's post-quantum migration timeline and emits standards-compliant
 > CycloneDX 1.7 CBOM, SARIF 2.1.0, and an auditor-grade HTML report.
