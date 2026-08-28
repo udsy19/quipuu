@@ -254,6 +254,10 @@ fn handle_findings(state: &mut AppState, key: KeyEvent) -> Action {
             state.show_safe = !state.show_safe;
             Action::Redraw
         }
+        KeyCode::Char('u') => {
+            state.show_unscored = !state.show_unscored;
+            Action::Redraw
+        }
         _ => {
             if state.status_message.is_some() {
                 state.status_message = None;

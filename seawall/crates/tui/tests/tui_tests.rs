@@ -258,11 +258,14 @@ fn score_bar_produces_correct_format() {
 
 #[test]
 fn severity_badge_maps_all_variants() {
-    assert_eq!(severity_badge(Severity::Critical), "CRIT");
-    assert_eq!(severity_badge(Severity::High), "HIGH");
-    assert_eq!(severity_badge(Severity::Medium), "MED ");
-    assert_eq!(severity_badge(Severity::Low), "LOW ");
-    assert_eq!(severity_badge(Severity::Safe), "SAFE");
+    assert_eq!(severity_badge(Some(Severity::Critical)), "CRIT");
+    assert_eq!(severity_badge(Some(Severity::High)), "HIGH");
+    assert_eq!(severity_badge(Some(Severity::Medium)), "MED ");
+    assert_eq!(severity_badge(Some(Severity::Low)), "LOW ");
+    assert_eq!(severity_badge(Some(Severity::Safe)), "SAFE");
+    // A finding with no algorithm-table row has no band. It was `SAFE`, which
+    // painted an uncatalogued algorithm green.
+    assert_eq!(severity_badge(None), "UNSC");
 }
 
 #[test]
@@ -274,6 +277,7 @@ fn kpi_line_shows_total_and_deadline() {
         medium: 2,
         low: 2,
         safe: 1,
+        unscored: 0,
         hndl_critical: 2,
         quantum_vulnerable: 5,
     };

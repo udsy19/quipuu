@@ -28,16 +28,19 @@ use crate::{
 // Colour palette
 // ---------------------------------------------------------------------------
 
-fn sev_color(sev: Severity) -> Color {
+/// `None` is unscored — grey, because green would say Safe about a finding we
+/// declined to band.
+fn sev_color(sev: Option<Severity>) -> Color {
     if !use_color() {
         return Color::Reset;
     }
     match sev {
-        Severity::Critical => Color::Red,
-        Severity::High => Color::LightRed,
-        Severity::Medium => Color::Yellow,
-        Severity::Low => Color::Cyan,
-        Severity::Safe => Color::Green,
+        Some(Severity::Critical) => Color::Red,
+        Some(Severity::High) => Color::LightRed,
+        Some(Severity::Medium) => Color::Yellow,
+        Some(Severity::Low) => Color::Cyan,
+        Some(Severity::Safe) => Color::Green,
+        None => Color::DarkGray,
     }
 }
 
@@ -191,6 +194,8 @@ pub fn render_kpi<'a>(kpi: &'a Kpi, policy: &'a Policy) -> Paragraph<'a> {
         kpi_badge("LOW", kpi.low, Color::Cyan),
         Span::raw(" "),
         kpi_badge("SAFE", kpi.safe, Color::Green),
+        Span::raw(" "),
+        kpi_badge("UNSC", kpi.unscored, Color::DarkGray),
         Span::raw("  "),
         Span::styled(
             format!("HNDL:{}", kpi.hndl_critical),
@@ -290,6 +295,7 @@ pub fn render_summary_tab<'a>(
         ("Medium  ", kpi.medium, Color::Yellow),
         ("Low     ", kpi.low, Color::Cyan),
         ("Safe    ", kpi.safe, Color::Green),
+        ("Unscored", kpi.unscored, Color::DarkGray),
     ] {
         let pct = (count * 100).checked_div(kpi.total).unwrap_or(0);
         let c = if use_color() { color } else { Color::Reset };
@@ -692,10 +698,19 @@ pub fn render_findings_detail(detail: &FindingDetail) -> Paragraph<'_> {
                 score.severity.label()
             ),
             Style::default()
-                .fg(sev_color(score.severity))
+                .fg(sev_color(Some(score.severity)))
                 .add_modifier(Modifier::BOLD),
         )));
         lines.extend(score_lines(score));
+    } else {
+        // Saying nothing here read as "no risk"; say why there is no score.
+        lines.push(Line::from(""));
+        lines.push(Line::from(Span::styled(
+            "  Risk score: unscored — no algorithm-table row for this identifier",
+            Style::default()
+                .fg(sev_color(None))
+                .add_modifier(Modifier::BOLD),
+        )));
     }
 
     Paragraph::new(lines)
@@ -938,6 +953,7 @@ pub fn render_help_overlay(_area: Rect) -> Paragraph<'static> {
         Line::from("    m               Toggle Medium severity"),
         Line::from("    w               Toggle Low severity"),
         Line::from("    s               Toggle Safe severity"),
+        Line::from("    u               Toggle Unscored findings"),
         Line::from(""),
         Line::from("  CBOM tab:"),
         Line::from("    e               Export CBOM to cbom.json"),

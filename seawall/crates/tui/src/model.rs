@@ -4,7 +4,8 @@
 use std::collections::BTreeMap;
 
 use seawall_core::{
-    AlgorithmRecord, AlgorithmTable, Finding, Policy, QuantumRiskScore, QuantumStatus, Severity,
+    AlgorithmRecord, AlgorithmTable, Finding, Policy, QuantumStatus, Severity, score_of,
+    severity_of,
 };
 
 use crate::state::{AppState, Kpi, no_color};
@@ -13,14 +14,16 @@ use crate::state::{AppState, Kpi, no_color};
 // Severity helpers
 // ---------------------------------------------------------------------------
 
-/// Short badge text for a severity level.
-pub fn severity_badge(sev: Severity) -> &'static str {
+/// Short badge text for a severity level. `None` is unscored — a finding whose
+/// algorithm has no table row, which has no band and is not `SAFE`.
+pub fn severity_badge(sev: Option<Severity>) -> &'static str {
     match sev {
-        Severity::Critical => "CRIT",
-        Severity::High => "HIGH",
-        Severity::Medium => "MED ",
-        Severity::Low => "LOW ",
-        Severity::Safe => "SAFE",
+        Some(Severity::Critical) => "CRIT",
+        Some(Severity::High) => "HIGH",
+        Some(Severity::Medium) => "MED ",
+        Some(Severity::Low) => "LOW ",
+        Some(Severity::Safe) => "SAFE",
+        None => "UNSC",
     }
 }
 
@@ -32,7 +35,8 @@ pub fn severity_badge(sev: Severity) -> &'static str {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FindingRow {
     pub index: usize,
-    pub severity: Severity,
+    /// `None` when the finding is unscored. See `seawall_core::score_of`.
+    pub severity: Option<Severity>,
     pub badge: &'static str,
     pub rule_id: String,
     pub location: String,
@@ -53,11 +57,9 @@ pub fn build_finding_rows(
         .copied()
         .map(|idx| {
             let f = &findings[idx];
-            let severity = if let Some(alg) = algorithms.get(&f.algorithm_id) {
-                QuantumRiskScore::compute(f, alg, policy).severity
-            } else {
-                Severity::Safe
-            };
+            // `None` is unscored, not Safe — the badge says so rather than
+            // painting an uncatalogued algorithm green.
+            let severity = severity_of(f, algorithms, policy);
             let algorithm_display = algorithms
                 .get(&f.algorithm_id)
                 .map(|a| a.display_name.clone())
@@ -131,22 +133,19 @@ pub fn build_finding_detail(
 
     let why_this_matters = build_why_this_matters(algo, replacement_algo);
 
-    let score = algo.map(|alg| {
-        let s = QuantumRiskScore::compute(finding, alg, policy);
-        ScoreBreakdown {
-            total: s.total,
-            severity: s.severity,
-            algorithm_vulnerability: s.algorithm_vulnerability,
-            usage_context: s.usage_context,
-            data_shelf_life: s.data_shelf_life,
-            exposure: s.exposure,
-            detection_confidence: s.detection_confidence,
-            av_max: policy.risk_weights.algorithm_vulnerability,
-            uc_max: policy.risk_weights.usage_context,
-            ds_max: policy.risk_weights.data_shelf_life,
-            ex_max: policy.risk_weights.exposure,
-            dc_max: policy.risk_weights.detection_confidence,
-        }
+    let score = score_of(finding, algorithms, policy).map(|s| ScoreBreakdown {
+        total: s.total,
+        severity: s.severity,
+        algorithm_vulnerability: s.algorithm_vulnerability,
+        usage_context: s.usage_context,
+        data_shelf_life: s.data_shelf_life,
+        exposure: s.exposure,
+        detection_confidence: s.detection_confidence,
+        av_max: policy.risk_weights.algorithm_vulnerability,
+        uc_max: policy.risk_weights.usage_context,
+        ds_max: policy.risk_weights.data_shelf_life,
+        ex_max: policy.risk_weights.exposure,
+        dc_max: policy.risk_weights.detection_confidence,
     });
 
     FindingDetail {
@@ -506,7 +505,8 @@ mod tests {
 
     #[test]
     fn severity_badge_values() {
-        assert_eq!(severity_badge(Severity::Critical), "CRIT");
-        assert_eq!(severity_badge(Severity::Safe), "SAFE");
+        assert_eq!(severity_badge(Some(Severity::Critical)), "CRIT");
+        assert_eq!(severity_badge(Some(Severity::Safe)), "SAFE");
+        assert_eq!(severity_badge(None), "UNSC");
     }
 }

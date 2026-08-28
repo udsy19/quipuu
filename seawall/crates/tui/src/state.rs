@@ -2,7 +2,7 @@
 //!
 //! All methods are pure (no terminal I/O). Test-friendly.
 
-use seawall_core::{Finding, Policy, QuantumRiskScore, QuantumStatus, Severity};
+use seawall_core::{Finding, Policy, QuantumStatus, Severity, severity_of};
 
 /// The active tab in the TUI.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -172,6 +172,8 @@ pub struct AppState {
     pub show_medium: bool,
     pub show_low: bool,
     pub show_safe: bool,
+    /// Findings whose algorithm has no table row and therefore no band.
+    pub show_unscored: bool,
 
     /// Number of raw findings (cached).
     total: usize,
@@ -200,6 +202,7 @@ impl AppState {
             show_medium: true,
             show_low: true,
             show_safe: true,
+            show_unscored: true,
             total,
         }
     }
@@ -312,18 +315,16 @@ impl AppState {
                 if !text_ok {
                     return false;
                 }
-                // Severity toggle.
-                let sev = if let Some(alg) = algorithms.get(&f.algorithm_id) {
-                    QuantumRiskScore::compute(f, alg, policy).severity
-                } else {
-                    Severity::Safe
-                };
-                match sev {
-                    Severity::Critical => self.show_critical,
-                    Severity::High => self.show_high,
-                    Severity::Medium => self.show_medium,
-                    Severity::Low => self.show_low,
-                    Severity::Safe => self.show_safe,
+                // Severity toggle. An unscored finding gets its own toggle
+                // rather than riding on `show_safe`, which is what hiding it
+                // under a band it does not belong to amounted to.
+                match severity_of(f, algorithms, policy) {
+                    Some(Severity::Critical) => self.show_critical,
+                    Some(Severity::High) => self.show_high,
+                    Some(Severity::Medium) => self.show_medium,
+                    Some(Severity::Low) => self.show_low,
+                    Some(Severity::Safe) => self.show_safe,
+                    None => self.show_unscored,
                 }
             })
             .map(|(i, _)| i)
@@ -400,7 +401,14 @@ pub struct Kpi {
     pub medium: usize,
     pub low: usize,
     pub safe: usize,
-    /// Findings marked HNDL-critical OR whose computed severity == Critical.
+    /// Findings with no algorithm-table row, and so no band. Not `safe`.
+    pub unscored: usize,
+    /// Findings the active policy's `[hndl_flag]` block marks HNDL-critical.
+    ///
+    /// This used to be `hndl_critical || severity == Critical`, which made the
+    /// TUI's `HNDL:` badge disagree with `summary.json` from the same scan.
+    /// `seawall_core::risk::apply_hndl_flags` is the one place the flag is
+    /// decided; this counts what it decided.
     pub hndl_critical: usize,
     pub quantum_vulnerable: usize,
 }
@@ -416,24 +424,20 @@ pub fn kpi_total(
     let mut medium = 0usize;
     let mut low = 0usize;
     let mut safe = 0usize;
+    let mut unscored = 0usize;
     let mut hndl_critical = 0usize;
     let mut quantum_vulnerable = 0usize;
 
     for f in findings {
-        let severity = if let Some(alg) = algorithms.get(&f.algorithm_id) {
-            let score = QuantumRiskScore::compute(f, alg, policy);
-            score.severity
-        } else {
-            Severity::Safe
-        };
-        match severity {
-            Severity::Critical => critical += 1,
-            Severity::High => high += 1,
-            Severity::Medium => medium += 1,
-            Severity::Low => low += 1,
-            Severity::Safe => safe += 1,
+        match severity_of(f, algorithms, policy) {
+            Some(Severity::Critical) => critical += 1,
+            Some(Severity::High) => high += 1,
+            Some(Severity::Medium) => medium += 1,
+            Some(Severity::Low) => low += 1,
+            Some(Severity::Safe) => safe += 1,
+            None => unscored += 1,
         }
-        if f.hndl_critical || severity == Severity::Critical {
+        if f.hndl_critical {
             hndl_critical += 1;
         }
         // Quantum-vulnerable = BrokenByShor or BrokenClassically
@@ -454,6 +458,7 @@ pub fn kpi_total(
         medium,
         low,
         safe,
+        unscored,
         hndl_critical,
         quantum_vulnerable,
     }
