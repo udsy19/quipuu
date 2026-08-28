@@ -1654,3 +1654,128 @@ describes a 964-finding one. `scan-network` and `scan-certs` are untouched and c
 exercise them. The published figure still disagrees with the `PRECISION:` line reported to the
 gate, for the reason `PRECISION_AUDIT_V4.md § 4` gives: `state/precision.json` holds the estimator
 of record, and re-anchoring it is a human's decision, not a cycle's.
+
+## `--certs` adds a scan mode, it does not replace the ones you had — 2026-08-28
+
+Tuple, per the reproducibility rule this file uses throughout: **corpus B, 150 projects, all with
+a populated working tree · scanner set `--source --deps --include-safe` · profile `nist-default` ·
+release build from this tree · dumps taken with `benchmarks/corpus-b-realworld/dump_findings.py`,
+`work/w2_post.json` (1399) → `work/y1_post.json` (1399).**
+
+**0 findings added, 0 removed, 0 re-classified — the post dump is row-identical to the pre dump on
+all 1399 rows. Precision 87.3 % → 87.3 % under the estimator that produced the recorded baseline,
+and 89.9 % → 89.9 % under the estimator that reads stratum A's labels instead of holding it
+constant.** Both come from one script over the same two dumps, and no row of either label set was
+re-scored.
+
+This section exists because the change had been measured once and the measurement was not written
+down. It is not a quotation of that run: the dump was re-taken from scratch on a binary rebuilt
+from the committed tree, and the two dumps are asserted equal before any figure is printed.
+
+### What was firing
+
+Every scan-mode flag set one `explicit_modes` bit, and the source+deps default was applied only
+when that bit was clear. So naming *any* mode suppressed the default rather than adding to it —
+including `--certs`, which the help text calls "opt-in", a word that reads as additive. On a tree
+containing no certificates, asking for certificates scanned nothing:
+
+```
+npm/elliptic, no certificate anywhere in the tree
+
+                                     before              after
+  scan <path> --fail-on high         exit 1, 2 findings  exit 1, 2 findings
+  scan <path> --certs --fail-on high exit 0, 0 findings  exit 1, 2 findings
+```
+
+**Adding a mode made the tool report safe on a tree it had not opened**, and a CI gate that failed
+without the flag passed with it. That is the same class as a missing path silently scanning
+nothing, one layer up: the exit code says "clean" when the honest answer is "not looked at".
+
+Mode composition on the same project, `--include-safe`, counting reported findings. Only the
+`--certs` row moves, which is what an additive opt-in has to look like:
+
+| flags | before | after |
+|---|---|---|
+| *(none)* | 4 | 4 |
+| `--source` | 4 | 4 |
+| `--deps` | 0 | 0 |
+| `--certs` | **0** | **4** |
+| `--all` | 4 | 4 |
+
+`--deps` returning 0 in both columns is the check that the fix does not over-reach: a base-set
+selector must still narrow, or "additive" has been applied to the wrong flags.
+
+### The change
+
+The flags are split by what they mean. `--source`, `--deps` and `--all` are **base-set selectors**
+— naming one narrows the scan, which is the only reason to name it — and they set the renamed
+`explicit_base`. `--certs` and `--net` are **additive opt-ins** and set nothing, so the default is
+applied after them and a cert scan is a cert scan *plus* the code.
+
+`SPEC.md § 11` illustrated the old semantics with `scan --certs ./certs/`, annotated
+"or `--certs-host example.com:443`". That idiom meant "certificates only" — the behaviour being
+removed — and `--certs-host` is not a flag: it appears nowhere in `crates/`. The example was
+corrected in the same change.
+
+### Why corpus B cannot see this, stated before the run rather than after
+
+`dump_findings.py` invokes the binary with a fixed `--source --deps --include-safe`. Both of those
+are base-set selectors, so `explicit_base` is true on every corpus invocation exactly as
+`explicit_modes` was, and the mode set the corpus is scanned with does not move. The diff can only
+change what happens when `--certs`/`--net` appear **alone**, which corpus B never does.
+
+The run is therefore a **falsification, not a re-derivation**: the prediction is row-identity, and
+the script exits non-zero and refuses to print a figure if the post dump differs from the pre dump
+by so much as one `message` string. It did not.
+
+### The measurement — sample size, verdicts, method
+
+Method: two uniform samples, labelled once by opening every cited `file:line`, carried unchanged
+from the audits that took them. Findings are stratified by project and each stratum is weighted by
+its share of the 1399-finding population; `DEPENDS` rows are excluded from the ratio and their
+sensitivity is reported separately. Wilson intervals per stratum, normal-approximation interval on
+the weighted total.
+
+| | findings | weight | audited | TP | FP | DEPENDS | precision |
+|---|---|---|---|---|---|---|---|
+| **estimator of record** | | | | | | | |
+| stratum A — held at its carried constant | 807 | 0.577 | 272 | 217 | 32 | 23 | 87.1 % (82.4–90.7) |
+| stratum B — `c11_sample.json`, n=100 | 592 | 0.423 | 88 *(12 no longer resolve)* | 77 | 11 | 0 | 87.5 % (79.0–92.9) |
+| **weighted** | **1399** | | **360** | | | | **87.3 % (83.5–91.1)** |
+| **corrected estimator** | | | | | | | |
+| stratum A — `v1_sampleA.json`, n=150 | 807 | 0.577 | 126 *(24 no longer resolve)* | 111 | 10 | 5 | 91.7 % (85.5–95.4) |
+| stratum B — as above | 592 | 0.423 | 88 | 77 | 11 | 0 | 87.5 % (79.0–92.9) |
+| **weighted** | **1399** | | **214** | | | | **89.9 % (85.9–94.0)** |
+
+Both columns are identical pre and post, because the population is. The script asserts that the
+estimator of record reproduces its own recorded 87.3 % and that the corrected estimator reproduces
+the published 89.9 % **before** it prints anything, so the figures above are reproductions rather
+than fresh claims.
+
+### Held
+
+- `cargo build --release --workspace` clean; `cargo fmt --all --check` and `cargo clippy
+  --workspace --all-targets -- -D warnings` clean.
+- `cargo test --workspace` **301 tests passing** (298 before). The three added are in
+  `crates/cli/tests/fail_on_gate.rs`, whose subject is already a gate that cannot fail:
+  `certs_is_additive_and_does_not_suppress_the_default_set` fails against the previous parser, and
+  two others pass in both directions and exist to stop the fix over-reaching — an explicit
+  `--source` must still skip deps.
+- The release binary rebuilt from the committed tree is **byte-identical** to the one this change
+  was first measured on, so `y1_post.json` is also a reproduction check on that earlier dump; the
+  script asserts that equality too.
+- Recall is untouched: no finding was added or removed, so no Go line-exact figure can have moved.
+
+### Not re-taken, said out loud
+
+Speed is **not** re-measured here. The finding set did not move and the parser change is one
+boolean's worth of work in argument handling, so the corpus wall-clock figure from the previous
+section stands; a fresh timing pass on two shared cores varies by more than this change could.
+
+`scan-certs` and `scan-network` are **not** exercised by corpus B, so the additive behaviour of
+`--certs` and `--net` is measured on `npm/elliptic` and in the fixture tests above, not on the
+corpus. The corpus run's job here is only to prove the change did not reach further than claimed.
+
+**There is now no way to say "certificates only."** That was previously expressed by the same
+behaviour that made this unsafe. Restoring it needs a negation flag, not replace-semantics, and no
+demand for it is recorded.

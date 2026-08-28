@@ -370,3 +370,23 @@ before it prints a figure.
 estimator of record; two consecutive cycles have now removed a combined 171 false positives and
 been reported to the gate as +0.8 pp and +0.0 pp. Re-anchor the baseline to the figure whose
 verdicts are published here.
+
+## 7. Re-derivation, 2026-08-28 — both label sets carried, no row re-scored
+
+A CLI change to scan-mode composition (`--certs` made additive) was measured against corpus B on
+the same two dumps this audit uses. **It moved nothing: 1399 findings before, 1399 after, row-
+identical on project, rule, file, line, `algorithm_id`, severity and message.** Both estimators
+therefore return their own baselines exactly — 87.3 % of record, 89.9 % corrected — and this
+section re-scores no verdict in § 5 or § 6.
+
+It is recorded because a figure was reported for that change, and a reported figure with no
+written sample behind it is the thing this document exists to prevent. The run is in
+`BENCHMARKING_RESULTS.md § "--certs adds a scan mode"`, with the sample sizes and verdicts.
+
+**§ 4's recommendation now has a third consecutive data point.** `state/precision.json` holds the
+estimator of record, and the three most recent changes to reach it were reported as **+0.8 pp**
+(91 false positives removed), **+0.0 pp** (80 removed) and **+0.0 pp** (a correctness fix the
+corpus is structurally unable to see). The estimator of record has not been able to register a
+real improvement in three attempts, because the stratum being improved is the one held constant.
+Re-anchoring the baseline to the figure whose verdicts are published here remains a human's
+decision, and remains the right one.
