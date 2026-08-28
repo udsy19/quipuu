@@ -153,8 +153,8 @@ pub static CATALOGUE: &[CatalogueEntry] = &[
     CatalogueEntry {
         ecosystem: Ecosystem::Rust,
         package_pattern: r"^rsa$",
-        algorithm_id: "rsa-2048",
-        note: "rsa crate — pure-Rust RSA implementation",
+        algorithm_id: "rsa-unattributed",
+        note: "rsa crate — pure-Rust RSA; the modulus is chosen at key generation, not in the manifest",
     },
     CatalogueEntry {
         ecosystem: Ecosystem::Rust,
@@ -201,20 +201,20 @@ pub static CATALOGUE: &[CatalogueEntry] = &[
     CatalogueEntry {
         ecosystem: Ecosystem::Rust,
         package_pattern: r"^ml-kem$",
-        algorithm_id: "ml-kem-768",
-        note: "ml-kem crate — ML-KEM (FIPS 203) pure-Rust implementation",
+        algorithm_id: "ml-kem-unattributed",
+        note: "ml-kem crate — ML-KEM (FIPS 203); the crate implements 512/768/1024 and the manifest names no parameter set",
     },
     CatalogueEntry {
         ecosystem: Ecosystem::Rust,
         package_pattern: r"^ml-dsa$",
-        algorithm_id: "ml-dsa-65",
-        note: "ml-dsa crate — ML-DSA (FIPS 204) pure-Rust implementation",
+        algorithm_id: "ml-dsa-unattributed",
+        note: "ml-dsa crate — ML-DSA (FIPS 204); the crate implements 44/65/87 and the manifest names no parameter set",
     },
     CatalogueEntry {
         ecosystem: Ecosystem::Rust,
         package_pattern: r"^slh-dsa$",
-        algorithm_id: "slh-dsa-sha2-128s",
-        note: "slh-dsa crate — SLH-DSA (FIPS 205) pure-Rust implementation",
+        algorithm_id: "slh-dsa-unattributed",
+        note: "slh-dsa crate — SLH-DSA (FIPS 205); the crate implements twelve parameter sets and the manifest names none of them",
     },
     // =========================================================================
     // Python (requirements.txt)

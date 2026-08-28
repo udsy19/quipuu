@@ -32,7 +32,7 @@ description = "RSA key generation via cryptography.hazmat.primitives.asymmetric.
 id = "CRYPTO-101"
 when.api = "^cryptography\\.hazmat\\.rsa\\.generate_private_key$"
 when.args.key_size = { lt = 2048 }
-algorithm_id = "rsa-1024"
+algorithm_id = "rsa-undersized"
 severity_hint = "critical"
 message = "RSA key size {key_size} bits below 2048-bit floor. Classically insecure (CWE-326)."
 
@@ -59,7 +59,7 @@ message = "RSA-{key_size} — quantum-vulnerable to Shor regardless of key size.
 id = "CRYPTO-104"
 when.api = "^cryptography\\.hazmat\\.rsa\\.generate_private_key$"
 when.args.key_size_symbol = { regex = ".+" }
-algorithm_id = "rsa-2048"
+algorithm_id = "rsa-unattributed"
 severity_hint = "auto"
 message = "RSA key size is runtime-variable ({key_size_symbol}); cannot statically verify it meets the 2048-bit floor. Quantum-vulnerable in any case."
 
@@ -132,7 +132,7 @@ message = "ECDSA secp256k1 — Bitcoin/Ethereum curve, quantum-vulnerable."
 id = "CRYPTO-115"
 when.api = "^cryptography\\.hazmat\\.ec\\.generate_private_key$"
 when.args.curve_symbol = { regex = ".+" }
-algorithm_id = "ecdsa-p256"
+algorithm_id = "ecdsa-unattributed"
 severity_hint = "auto"
 message = "EC curve is runtime-variable ({curve_symbol}); cannot statically identify the curve. ECDSA in general is quantum-vulnerable — replace with ML-DSA."
 
@@ -350,7 +350,7 @@ message = "JWT HS256 (HMAC-SHA256) — confirm signing key has ≥256 bits of en
 id = "CRYPTO-162"
 when.api = "^jwt\\.encode$"
 when.args.alg = { regex = "^[\"']?RS256[\"']?$" }
-algorithm_id = "rsa-pkcs1-sha256-2048"
+algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "auto"
 message = "JWT RS256 — RSA-PKCS1 signature, quantum-vulnerable."
 
@@ -384,7 +384,7 @@ description = "pycryptodome RSA.generate(bits)."
 id = "CRYPTO-170"
 when.api = "^Crypto\\.PublicKey\\.RSA\\.generate$"
 when.args.bits = { lt = 2048 }
-algorithm_id = "rsa-1024"
+algorithm_id = "rsa-undersized"
 severity_hint = "critical"
 message = "pycryptodome RSA.generate({bits}) — below 2048-bit floor."
 

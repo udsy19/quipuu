@@ -77,10 +77,48 @@ fn aes_256_gcm_matches_official_cbom_example() {
     assert_eq!(aes.nist_quantum_security_level, Some(5));
 }
 
+/// The same defect as `dh_oids_do_not_assert_a_group_size`, one arc over.
+///
+/// `sha512WithRSAEncryption` encodes a digest and a padding. It encodes no
+/// modulus — and it resolved to `rsa-pkcs1-sha512-4096`, so every certificate
+/// a CA had signed with SHA-512 reported `classicalSecurityLevel: 152`
+/// whatever its real key size. That is the unsafe direction: it makes a weak
+/// key look strong in the CBOM field a compliance reader trusts.
+///
+/// `ecdsa-with-SHA256` names the digest and not the curve, and `id-dsa` names
+/// neither prime size, so those resolve to their family rows too.
 #[test]
-fn rsa_oid_resolves() {
+fn signature_oids_do_not_assert_a_key_size() {
     let b = load_builtins().unwrap();
-    assert_eq!(b.oids.lookup("1.2.840.113549.1.1.1"), Some("rsa-2048"));
+
+    // rsaEncryption — SPKI key type. scan-certs refines it from the parsed
+    // modulus; the table row cannot.
+    assert_eq!(
+        b.oids.lookup("1.2.840.113549.1.1.1"),
+        Some("rsa-unattributed")
+    );
+    for (oid, want) in [
+        ("1.2.840.113549.1.1.11", "rsa-pkcs1-sha256"),
+        ("1.2.840.113549.1.1.12", "rsa-pkcs1-sha384"),
+        ("1.2.840.113549.1.1.13", "rsa-pkcs1-sha512"),
+        // id-RSASSA-PSS carries hash, MGF and salt in parameters we do not
+        // parse, so it determines even less than the PKCS#1 OIDs do.
+        ("1.2.840.113549.1.1.10", "rsa-pss-unattributed"),
+        ("1.2.840.10045.4.3.2", "ecdsa-unattributed"),
+        ("1.2.840.10045.4.3.4", "ecdsa-unattributed"),
+        ("1.2.840.10040.4.1", "dsa-unattributed"),
+    ] {
+        assert_eq!(b.oids.lookup(oid), Some(want), "OID {oid}");
+    }
+
+    // The migration verdict stays exact — Shor breaks RSA at every modulus —
+    // so only the classical strength is withheld.
+    let rec = b
+        .algorithms
+        .get("rsa-pkcs1-sha512")
+        .expect("the unsized row must exist");
+    assert!(rec.classical_security_bits.is_none());
+    assert_eq!(rec.quantum_status, QuantumStatus::BrokenByShor);
 }
 
 /// The two finite-field DH OIDs name the key type and nothing else: the prime

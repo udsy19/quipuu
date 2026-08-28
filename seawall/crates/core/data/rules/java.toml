@@ -101,7 +101,7 @@ cwe = "CWE-327"
 id = "CRYPTO-202"
 when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
 when.args.spec = { regex = "(?i)RSA.*PKCS1Padding" }
-algorithm_id = "rsa-pkcs1-sha256-2048"
+algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "high"
 message = "RSA PKCS1v1.5 padding in Cipher.getInstance('{spec}'). Vulnerable to Bleichenbacher attacks; use OAEP."
 cwe = "CWE-327"
@@ -159,7 +159,7 @@ description = "Java KeyPairGenerator.getInstance(algo) — asymmetric keypair ge
 id = "CRYPTO-210"
 when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
 when.args.algo = { regex = "(?i)^\"?RSA\"?$" }
-algorithm_id = "rsa-2048"
+algorithm_id = "rsa-unattributed"
 severity_hint = "auto"
 message = "RSA keypair generator. Quantum-vulnerable: NIST IR 8547 deprecates after 2030."
 
@@ -167,20 +167,20 @@ message = "RSA keypair generator. Quantum-vulnerable: NIST IR 8547 deprecates af
 id = "CRYPTO-211"
 when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
 when.args.algo = { regex = "(?i)^\"?EC\"?$" }
-algorithm_id = "ecdsa-p256"
+algorithm_id = "ecdsa-unattributed"
 severity_hint = "auto"
-# Curve is determined by the subsequent .initialize(ECGenParameterSpec)
-# call; we can't see that statement from this matcher. Default to
-# ecdsa-p256 as the most common curve; auditors should check the
-# initialize() call for secp256k1 / P-384 / P-521 variants which
-# would change the algorithm_id (and for secp256k1, the threat model).
-message = "EC keypair generator — curve determined at .initialize(ECGenParameterSpec(...)); default ECDSA-P256. Quantum-vulnerable. Replace with ML-DSA-65."
+# The curve is determined by the subsequent .initialize(ECGenParameterSpec)
+# call, which this matcher cannot see — so the id names no curve. It used to
+# name P-256 "as the most common curve", which reported secp256k1 keys as
+# NIST P-256. Auditors should read the initialize() call; Shor breaks all of
+# them, so only the classical strength and the threat model differ.
+message = "EC keypair generator — the curve is chosen at .initialize(ECGenParameterSpec(...)) and is not stated here. Quantum-vulnerable at every curve. Replace with ML-DSA-65."
 
 [[classify]]
 id = "CRYPTO-212"
 when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
 when.args.algo = { regex = "(?i)^\"?DSA\"?$" }
-algorithm_id = "dsa-2048"
+algorithm_id = "dsa-unattributed"
 severity_hint = "high"
 message = "DSA keypair generator. Deprecated for new use (FIPS 186-5)."
 
@@ -245,7 +245,7 @@ description = "BouncyCastle crypto class instantiation."
 [[classify]]
 id = "CRYPTO-230"
 when.api = "^org\\.bouncycastle\\.RSAKeyPairGenerator$"
-algorithm_id = "rsa-2048"
+algorithm_id = "rsa-unattributed"
 severity_hint = "auto"
 message = "BouncyCastle RSAKeyPairGenerator instantiated. Quantum-vulnerable RSA."
 
@@ -318,7 +318,7 @@ message = "jjwt SignatureAlgorithm.HS512 (HMAC-SHA512). Symmetric; confirm signi
 id = "CRYPTO-242"
 when.api = "^io\\.jsonwebtoken\\.SignatureAlgorithm$"
 when.args.member = { regex = "^RS(256|384|512)$" }
-algorithm_id = "rsa-pkcs1-sha256-2048"
+algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "auto"
 message = "jjwt SignatureAlgorithm.{member} — RSA-PKCS1 signature, quantum-vulnerable. Replace with ML-DSA."
 
@@ -326,7 +326,7 @@ message = "jjwt SignatureAlgorithm.{member} — RSA-PKCS1 signature, quantum-vul
 id = "CRYPTO-243"
 when.api = "^io\\.jsonwebtoken\\.SignatureAlgorithm$"
 when.args.member = { regex = "^PS(256|384|512)$" }
-algorithm_id = "rsa-pss-sha256-2048"
+algorithm_id = "rsa-pss-sha256"
 severity_hint = "auto"
 message = "jjwt SignatureAlgorithm.{member} — RSA-PSS signature, quantum-vulnerable."
 
@@ -352,7 +352,7 @@ message = "jjwt SignatureAlgorithm.{member} — ECDSA signature, quantum-vulnera
 id = "CRYPTO-250"
 when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
 when.args.member = { regex = "^RS256$" }
-algorithm_id = "rsa-pkcs1-sha256-2048"
+algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "auto"
 message = "nimbus JWSAlgorithm.RS256 — RSA-PKCS1-SHA256 signature, quantum-vulnerable."
 
@@ -360,7 +360,7 @@ message = "nimbus JWSAlgorithm.RS256 — RSA-PKCS1-SHA256 signature, quantum-vul
 id = "CRYPTO-259"
 when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
 when.args.member = { regex = "^RS384$" }
-algorithm_id = "rsa-pkcs1-sha384-3072"
+algorithm_id = "rsa-pkcs1-sha384"
 severity_hint = "auto"
 message = "nimbus JWSAlgorithm.RS384 — RSA-PKCS1-SHA384 signature, quantum-vulnerable."
 
@@ -368,7 +368,7 @@ message = "nimbus JWSAlgorithm.RS384 — RSA-PKCS1-SHA384 signature, quantum-vul
 id = "CRYPTO-280"
 when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
 when.args.member = { regex = "^RS512$" }
-algorithm_id = "rsa-pkcs1-sha512-4096"
+algorithm_id = "rsa-pkcs1-sha512"
 severity_hint = "auto"
 message = "nimbus JWSAlgorithm.RS512 — RSA-PKCS1-SHA512 signature, quantum-vulnerable."
 
@@ -376,7 +376,7 @@ message = "nimbus JWSAlgorithm.RS512 — RSA-PKCS1-SHA512 signature, quantum-vul
 id = "CRYPTO-281"
 when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
 when.args.member = { regex = "^PS256$" }
-algorithm_id = "rsa-pss-sha256-2048"
+algorithm_id = "rsa-pss-sha256"
 severity_hint = "auto"
 message = "nimbus JWSAlgorithm.PS256 — RSA-PSS-SHA256 signature, quantum-vulnerable."
 
@@ -384,7 +384,7 @@ message = "nimbus JWSAlgorithm.PS256 — RSA-PSS-SHA256 signature, quantum-vulne
 id = "CRYPTO-282"
 when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
 when.args.member = { regex = "^PS384$" }
-algorithm_id = "rsa-pss-sha384-3072"
+algorithm_id = "rsa-pss-sha384"
 severity_hint = "auto"
 message = "nimbus JWSAlgorithm.PS384 — RSA-PSS-SHA384 signature, quantum-vulnerable."
 
@@ -392,7 +392,7 @@ message = "nimbus JWSAlgorithm.PS384 — RSA-PSS-SHA384 signature, quantum-vulne
 id = "CRYPTO-283"
 when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
 when.args.member = { regex = "^PS512$" }
-algorithm_id = "rsa-pss-sha512-4096"
+algorithm_id = "rsa-pss-sha512"
 severity_hint = "auto"
 message = "nimbus JWSAlgorithm.PS512 — RSA-PSS-SHA512 signature, quantum-vulnerable."
 
@@ -418,6 +418,7 @@ id = "CRYPTO-258"
 when.api = "^com\\.nimbusds\\.jose\\.JWSAlgorithm$"
 when.args.member = { regex = "^ES512$" }
 algorithm_id = "ecdsa-p521"
+parameter_source = "RFC 7518 § 3.4: ES512 is ECDSA using P-521 and SHA-512."
 severity_hint = "auto"
 message = "nimbus JWSAlgorithm.ES512 — ECDSA P-521 signature, quantum-vulnerable."
 
@@ -475,7 +476,7 @@ message = "nimbus JWEAlgorithm.RSA_OAEP — RSA-OAEP (SHA-1) key wrapping. Quant
 id = "CRYPTO-285"
 when.api = "^com\\.nimbusds\\.jose\\.JWEAlgorithm$"
 when.args.member = { regex = "^RSA1_5$" }
-algorithm_id = "rsa-2048"
+algorithm_id = "rsa-unattributed"
 severity_hint = "auto"
 message = "nimbus JWEAlgorithm.RSA1_5 — RSA-PKCS1-v1.5 key wrapping (legacy; consider RSA-OAEP-256). Quantum-vulnerable."
 
@@ -484,7 +485,7 @@ message = "nimbus JWEAlgorithm.RSA1_5 — RSA-PKCS1-v1.5 key wrapping (legacy; c
 id = "CRYPTO-260"
 when.api = "^org\\.jose4j\\.jws\\.AlgorithmIdentifiers$"
 when.args.member = { regex = "^RSA_USING_SHA" }
-algorithm_id = "rsa-pkcs1-sha256-2048"
+algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "auto"
 message = "jose4j AlgorithmIdentifiers.{member} — RSA-PKCS1, quantum-vulnerable."
 
@@ -492,7 +493,7 @@ message = "jose4j AlgorithmIdentifiers.{member} — RSA-PKCS1, quantum-vulnerabl
 id = "CRYPTO-261"
 when.api = "^org\\.jose4j\\.jws\\.AlgorithmIdentifiers$"
 when.args.member = { regex = "^RSA_PSS" }
-algorithm_id = "rsa-pss-sha256-2048"
+algorithm_id = "rsa-pss-sha256"
 severity_hint = "auto"
 message = "jose4j AlgorithmIdentifiers.{member} — RSA-PSS, quantum-vulnerable."
 
@@ -615,7 +616,7 @@ cwe = "CWE-327"
 id = "CRYPTO-293"
 when.api = "^java\\.security\\.Signature\\.getInstance$"
 when.args.algo = { regex = "(?i)^\"?SHA-?256with(RSA|RSAandMGF1)\"?$" }
-algorithm_id = "rsa-pkcs1-sha256-2048"
+algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "auto"
 message = "Signature.getInstance('{algo}') — RSA PKCS#1 v1.5 signature, broken by Shor. Replace with ML-DSA-65."
 
@@ -623,7 +624,7 @@ message = "Signature.getInstance('{algo}') — RSA PKCS#1 v1.5 signature, broken
 id = "CRYPTO-294"
 when.api = "^java\\.security\\.Signature\\.getInstance$"
 when.args.algo = { regex = "(?i)^\"?SHA-?384with(RSA|RSAandMGF1)\"?$" }
-algorithm_id = "rsa-pkcs1-sha384-3072"
+algorithm_id = "rsa-pkcs1-sha384"
 severity_hint = "auto"
 message = "Signature.getInstance('{algo}') — RSA PKCS#1 v1.5 signature, broken by Shor. Replace with ML-DSA-65."
 
@@ -631,7 +632,7 @@ message = "Signature.getInstance('{algo}') — RSA PKCS#1 v1.5 signature, broken
 id = "CRYPTO-295"
 when.api = "^java\\.security\\.Signature\\.getInstance$"
 when.args.algo = { regex = "(?i)^\"?SHA-?512with(RSA|RSAandMGF1)\"?$" }
-algorithm_id = "rsa-pkcs1-sha512-4096"
+algorithm_id = "rsa-pkcs1-sha512"
 severity_hint = "auto"
 message = "Signature.getInstance('{algo}') — RSA PKCS#1 v1.5 signature, broken by Shor. Replace with ML-DSA-87."
 
@@ -639,7 +640,7 @@ message = "Signature.getInstance('{algo}') — RSA PKCS#1 v1.5 signature, broken
 id = "CRYPTO-296"
 when.api = "^java\\.security\\.Signature\\.getInstance$"
 when.args.algo = { regex = "(?i)^\"?(RSASSA-PSS|SHA-?256withRSA/PSS)\"?$" }
-algorithm_id = "rsa-pss-sha256-2048"
+algorithm_id = "rsa-pss-sha256"
 severity_hint = "auto"
 message = "Signature.getInstance('{algo}') — RSA-PSS signature, broken by Shor. Replace with ML-DSA-65."
 
@@ -676,6 +677,6 @@ message = "Signature.getInstance('{algo}') — Ed448, broken by Shor. Replace wi
 id = "CRYPTO-287"
 when.api = "^java\\.security\\.Signature\\.getInstance$"
 when.args.algo = { regex = "(?i)with(DSA|DSAinP1363Format)\"?$" }
-algorithm_id = "dsa-2048"
+algorithm_id = "dsa-unattributed"
 severity_hint = "auto"
 message = "Signature.getInstance('{algo}') — DSA, broken by Shor and already discouraged classically. Replace with ML-DSA-65."

@@ -54,7 +54,7 @@ description = "RSA key generation via crypto/rsa.GenerateKey(rand.Reader, bits).
 id = "CRYPTO-001"
 when.api = "^crypto/rsa\\.GenerateKey$"
 when.args.bits = { lt = 2048 }
-algorithm_id = "rsa-1024"
+algorithm_id = "rsa-undersized"
 severity_hint = "critical"
 message = "RSA key generation with key size {bits} bits is below the 2048-bit minimum and classically insecure."
 cwe = "CWE-326"
@@ -521,7 +521,7 @@ cwe = "CWE-347"
 id = "CRYPTO-061"
 when.api = "^jwt\\.NewWithClaims$"
 when.args.alg = { regex = "^(SigningMethodRS|RS)256$" }
-algorithm_id = "rsa-pkcs1-sha256-2048"
+algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "auto"
 message = "JWT signed with RS256 — RSA-PKCS1 signature, quantum-vulnerable."
 
@@ -555,7 +555,7 @@ message = "JWT signed with EdDSA (Ed25519) — quantum-vulnerable."
 id = "CRYPTO-700"
 when.api = "^go\\.alg-(switch|register)\\.RS256$"
 when.site_context = ["Call", "StructLiteral", "StringConstant"]
-algorithm_id = "rsa-pkcs1-sha256-2048"
+algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "auto"
 message = "JWT alg=RS256 — RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algorithm."
 
@@ -563,7 +563,7 @@ message = "JWT alg=RS256 — RSA-PKCS1-SHA256. Quantum-vulnerable to Shor's algo
 id = "CRYPTO-701"
 when.api = "^go\\.alg-(switch|register)\\.RS384$"
 when.site_context = ["Call", "StructLiteral", "StringConstant"]
-algorithm_id = "rsa-pkcs1-sha384-3072"
+algorithm_id = "rsa-pkcs1-sha384"
 severity_hint = "auto"
 message = "JWT alg=RS384 — RSA-PKCS1-SHA384. Quantum-vulnerable to Shor's algorithm."
 
@@ -571,7 +571,7 @@ message = "JWT alg=RS384 — RSA-PKCS1-SHA384. Quantum-vulnerable to Shor's algo
 id = "CRYPTO-702"
 when.api = "^go\\.alg-(switch|register)\\.RS512$"
 when.site_context = ["Call", "StructLiteral", "StringConstant"]
-algorithm_id = "rsa-pkcs1-sha512-4096"
+algorithm_id = "rsa-pkcs1-sha512"
 severity_hint = "auto"
 message = "JWT alg=RS512 — RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algorithm."
 
@@ -580,7 +580,7 @@ message = "JWT alg=RS512 — RSA-PKCS1-SHA512. Quantum-vulnerable to Shor's algo
 id = "CRYPTO-703"
 when.api = "^go\\.alg-(switch|register)\\.PS256$"
 when.site_context = ["Call", "StructLiteral", "StringConstant"]
-algorithm_id = "rsa-pss-sha256-2048"
+algorithm_id = "rsa-pss-sha256"
 severity_hint = "auto"
 message = "JWT alg=PS256 — RSA-PSS-SHA256. Quantum-vulnerable to Shor's algorithm."
 
@@ -588,7 +588,7 @@ message = "JWT alg=PS256 — RSA-PSS-SHA256. Quantum-vulnerable to Shor's algori
 id = "CRYPTO-704"
 when.api = "^go\\.alg-(switch|register)\\.PS384$"
 when.site_context = ["Call", "StructLiteral", "StringConstant"]
-algorithm_id = "rsa-pss-sha384-3072"
+algorithm_id = "rsa-pss-sha384"
 severity_hint = "auto"
 message = "JWT alg=PS384 — RSA-PSS-SHA384. Quantum-vulnerable to Shor's algorithm."
 
@@ -596,7 +596,7 @@ message = "JWT alg=PS384 — RSA-PSS-SHA384. Quantum-vulnerable to Shor's algori
 id = "CRYPTO-705"
 when.api = "^go\\.alg-(switch|register)\\.PS512$"
 when.site_context = ["Call", "StructLiteral", "StringConstant"]
-algorithm_id = "rsa-pss-sha512-4096"
+algorithm_id = "rsa-pss-sha512"
 severity_hint = "auto"
 message = "JWT alg=PS512 — RSA-PSS-SHA512. Quantum-vulnerable to Shor's algorithm."
 
@@ -622,6 +622,7 @@ id = "CRYPTO-712"
 when.api = "^go\\.alg-(switch|register)\\.ES512$"
 when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "ecdsa-p521"
+parameter_source = "RFC 7518 § 3.4: ES512 is ECDSA using P-521 and SHA-512. The curve is in the registered name, not in a digit that matches it."
 severity_hint = "auto"
 message = "JWT alg=ES512 — ECDSA P-521. Quantum-vulnerable to Shor's algorithm."
 
@@ -674,7 +675,7 @@ cwe = "CWE-347"
 id = "CRYPTO-750"
 when.api = "^go\\.alg-(switch|register)\\.RSA-OAEP$"
 when.site_context = ["Call", "StructLiteral", "StringConstant"]
-algorithm_id = "rsa-2048"
+algorithm_id = "rsa-oaep"
 severity_hint = "auto"
 message = "JWE alg=RSA-OAEP — RSA-OAEP key encryption. Quantum-vulnerable to Shor's algorithm."
 
@@ -682,7 +683,7 @@ message = "JWE alg=RSA-OAEP — RSA-OAEP key encryption. Quantum-vulnerable to S
 id = "CRYPTO-751"
 when.api = "^go\\.alg-(switch|register)\\.RSA-OAEP-256$"
 when.site_context = ["Call", "StructLiteral", "StringConstant"]
-algorithm_id = "rsa-2048"
+algorithm_id = "rsa-oaep-256"
 severity_hint = "auto"
 message = "JWE alg=RSA-OAEP-256 — RSA-OAEP-SHA256 key encryption. Quantum-vulnerable."
 

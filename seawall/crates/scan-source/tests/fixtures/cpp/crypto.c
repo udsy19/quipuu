@@ -54,6 +54,13 @@ void openssl_cipher_list_weak(void) {
     SSL_CTX_set_cipher_list(ctx, "RC4-MD5:DES-CBC-SHA");
 }
 
+/* CPP-030 / CRYPTO-431 — the `!` prefix EXCLUDES RC4; this hardens the
+   context and must not be reported as enabling it. */
+void openssl_cipher_list_excludes_rc4(void) {
+    SSL_CTX *ctx = SSL_CTX_new(TLS_method());
+    SSL_CTX_set_cipher_list(ctx, "DEFAULT:!RC4:!MD5:!EXPORT");
+}
+
 /* CPP-040 / CRYPTO-440 — libsodium box keypair */
 void sodium_box_kp(void) {
     unsigned char pk[crypto_box_PUBLICKEYBYTES];

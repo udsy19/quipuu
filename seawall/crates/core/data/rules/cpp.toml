@@ -29,7 +29,7 @@ description = "OpenSSL RSA_generate_key_ex(rsa, bits, e, cb) — RSA key generat
 id = "CRYPTO-400"
 when.api = "^openssl\\.RSA_generate_key_ex$"
 when.args.bits = { lt = 2048 }
-algorithm_id = "rsa-1024"
+algorithm_id = "rsa-undersized"
 severity_hint = "critical"
 message = "RSA_generate_key_ex with {bits} bits — below 2048-bit floor."
 cwe = "CWE-326"
@@ -206,13 +206,17 @@ captures = { fn = "ident", cipher_str = "literal_string" }
 api = "openssl.SSL_CTX_set_cipher_list"
 description = "OpenSSL SSL_CTX_set_cipher_list(ctx, str) — TLS cipher suite string."
 
+# The cipher-list grammar (openssl-ciphers(1)) gives `!` permanent-exclude and
+# `-` delete, so `DEFAULT:!RC4` *removes* RC4 and must not fire. A weak token
+# is enabled only at the start of the string or after `:` or `+`. `aNULL` and
+# `eNULL` are covered by `NULL`; listing them separately matched nothing extra.
 [[classify]]
 id = "CRYPTO-430"
 when.api = "^openssl\\.SSL_CTX_set_cipher_list$"
-when.args.cipher_str = { regex = "(?i)(RC4|DES|MD5|NULL|EXPORT|aNULL|eNULL)" }
-algorithm_id = "rc4"
+when.args.cipher_str = { regex = "(?i)(^|[\"':+])(RC4|DES|MD5|NULL|EXPORT)" }
+algorithm_id = "weak-cipher-suite"
 severity_hint = "high"
-message = "Weak cipher in SSL_CTX_set_cipher_list('{cipher_str}'). Remove RC4/DES/NULL/EXPORT ciphers."
+message = "Weak cipher enabled in SSL_CTX_set_cipher_list('{cipher_str}'). Remove RC4/DES/MD5/NULL/EXPORT ciphers."
 cwe = "CWE-326"
 
 [[classify]]
@@ -284,7 +288,7 @@ description = "mbedTLS mbedtls_rsa_init(ctx, padding, hash) — RSA context init
 [[classify]]
 id = "CRYPTO-450"
 when.api = "^mbedtls\\.mbedtls_rsa_init$"
-algorithm_id = "rsa-2048"
+algorithm_id = "rsa-unattributed"
 severity_hint = "auto"
 message = "mbedTLS mbedtls_rsa_init — RSA context initialized. Confirm key size ≥2048."
 
@@ -306,6 +310,6 @@ description = "mbedTLS mbedtls_pk_setup(ctx, info) — PK context setup."
 [[classify]]
 id = "CRYPTO-451"
 when.api = "^mbedtls\\.mbedtls_pk_setup$"
-algorithm_id = "rsa-2048"
+algorithm_id = "rsa-unattributed"
 severity_hint = "auto"
 message = "mbedTLS mbedtls_pk_setup called. Quantum-vulnerable if RSA or EC key type."

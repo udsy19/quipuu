@@ -45,6 +45,50 @@ const OID_RSA_ENCRYPTION: &str = "1.2.840.113549.1.1.1";
 /// OID for EC public key type.
 const OID_EC_PUBLIC_KEY: &str = "1.2.840.10045.2.1";
 
+/// One RSA modulus length and the algorithm-id it resolves to.
+struct ModulusRow {
+    bits: usize,
+    algorithm_id: &'static str,
+}
+
+/// Modulus length → algorithm-id, matched **exactly**.
+///
+/// A bucket cannot name a modulus. The previous mapping sent everything below
+/// 2048 bits to `rsa-1024`, so a 512-bit key was reported as RSA-1024 — twice
+/// the strength it has, in the direction that makes a weak key look strong.
+const RSA_BY_MODULUS: &[ModulusRow] = &[
+    ModulusRow {
+        bits: 1024,
+        algorithm_id: "rsa-1024",
+    },
+    ModulusRow {
+        bits: 2048,
+        algorithm_id: "rsa-2048",
+    },
+    ModulusRow {
+        bits: 3072,
+        algorithm_id: "rsa-3072",
+    },
+    ModulusRow {
+        bits: 4096,
+        algorithm_id: "rsa-4096",
+    },
+];
+
+/// Where a modulus that matches no row above lands. `bits` is the exclusive
+/// upper bound of the range each row covers; the measured length is carried in
+/// the finding message either way, so nothing is lost by not naming it here.
+const RSA_UNSIZED: &[ModulusRow] = &[
+    ModulusRow {
+        bits: 2048,
+        algorithm_id: "rsa-undersized",
+    },
+    ModulusRow {
+        bits: usize::MAX,
+        algorithm_id: "rsa-unattributed",
+    },
+];
+
 /// OIDs for weak/broken signature algorithms that always get CERT-100.
 const WEAK_SIG_OIDS: &[(&str, &str)] = &[
     (
@@ -263,7 +307,7 @@ impl CertScanner {
         let spki = cert.tbs_certificate.public_key();
         let spki_oid_str = spki.algorithm.oid().to_id_string();
 
-        let pk_algo_id = self.resolve_spki_algo(cert, &spki_oid_str);
+        let (pk_algo_id, pk_detail) = self.resolve_spki_algo(cert, &spki_oid_str);
         let pk_record = self.algorithms.get(&pk_algo_id);
 
         let pk_usage = match pk_record.map(|r| r.primitive) {
@@ -277,7 +321,14 @@ impl CertScanner {
         let pk_msg = if pk_algo_id == "unknown" {
             format!("UNKNOWN public-key algorithm OID {spki_oid_str}")
         } else {
-            format!("Public-key algorithm: {pk_algo_id} (OID {spki_oid_str})")
+            // The measured parameter goes in the message, not into the id: the
+            // id may name only what the certificate states.
+            match &pk_detail {
+                Some(detail) => {
+                    format!("Public-key algorithm: {pk_algo_id} (OID {spki_oid_str}, {detail})")
+                }
+                None => format!("Public-key algorithm: {pk_algo_id} (OID {spki_oid_str})"),
+            }
         };
 
         findings.push(Finding {
@@ -387,27 +438,37 @@ impl CertScanner {
 
     /// Resolve the public-key algorithm-id, refining RSA by modulus length and
     /// EC by the named-curve OID in `algorithm.parameters`.
-    fn resolve_spki_algo(&self, cert: &X509Certificate<'_>, spki_oid_str: &str) -> String {
+    ///
+    /// Returns the id and, where one was measured, the parameter that justifies
+    /// it — so a key that lands on an unsized row still reports its size,
+    /// rather than the id inventing one.
+    fn resolve_spki_algo(
+        &self,
+        cert: &X509Certificate<'_>,
+        spki_oid_str: &str,
+    ) -> (String, Option<String>) {
         let spki = cert.tbs_certificate.public_key();
 
         if spki_oid_str == OID_RSA_ENCRYPTION {
             // Refine RSA by modulus bit length.
             if let Ok(PublicKey::RSA(rsa)) = spki.parsed() {
                 let bits = rsa.key_size();
-                return match bits {
-                    0..1024 => "rsa-1024".into(),
-                    1024..2048 => "rsa-1024".into(),
-                    2048..3072 => "rsa-2048".into(),
-                    3072..4096 => "rsa-3072".into(),
-                    _ => "rsa-4096".into(),
-                };
+                let id = RSA_BY_MODULUS
+                    .iter()
+                    .find(|row| row.bits == bits)
+                    .or_else(|| RSA_UNSIZED.iter().find(|row| bits < row.bits))
+                    .map(|row| row.algorithm_id)
+                    .unwrap_or("unknown");
+                return (id.to_owned(), Some(format!("modulus {bits} bits")));
             }
-            // Fallback: cannot parse modulus — return generic.
-            return self
-                .oids
-                .lookup(spki_oid_str)
-                .unwrap_or("rsa-2048")
-                .to_owned();
+            // Cannot parse the modulus — the OID names the key type only.
+            return (
+                self.oids
+                    .lookup(spki_oid_str)
+                    .unwrap_or("unknown")
+                    .to_owned(),
+                None,
+            );
         }
 
         if spki_oid_str == OID_EC_PUBLIC_KEY {
@@ -421,20 +482,26 @@ impl CertScanner {
             if let Some(curve_oid_str) = curve_oid
                 && let Some(algo_id) = self.oids.lookup(&curve_oid_str)
             {
-                return algo_id.to_owned();
+                return (algo_id.to_owned(), Some(format!("curve {curve_oid_str}")));
             }
-            // No named curve OID (explicit params) — fall back to generic.
-            return self
-                .oids
-                .lookup(spki_oid_str)
-                .unwrap_or("ecdsa-p256")
-                .to_owned();
+            // Explicit (unnamed) curve parameters — the key type OID is all we
+            // have, and it names no curve.
+            return (
+                self.oids
+                    .lookup(spki_oid_str)
+                    .unwrap_or("unknown")
+                    .to_owned(),
+                None,
+            );
         }
 
         // Everything else (EdDSA, PQC, …) — straight OID lookup.
-        self.oids
-            .lookup(spki_oid_str)
-            .unwrap_or("unknown")
-            .to_owned()
+        (
+            self.oids
+                .lookup(spki_oid_str)
+                .unwrap_or("unknown")
+                .to_owned(),
+            None,
+        )
     }
 }

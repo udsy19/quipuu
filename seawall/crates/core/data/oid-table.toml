@@ -15,8 +15,19 @@
 #   * NIST CSOR (csrc.nist.gov/csrc/media/Projects/Computer-Security-Objects-Register)
 #   * IANA TLS Parameters (knowledge/sources/iana-tls-*.csv) for TLS codepoints
 #
-# Format: each entry is [[oid]] with `oid`, `algorithm_id`, optional `also_signature`
-# flag meaning "this OID also appears as a signature algorithm OID."
+# Format: each entry is [[oid]] with `oid`, `algorithm_id`, `determines`, and an
+# optional `note`.
+#
+# `determines` states what the OID itself pins down, and it is not decoration:
+#   "algorithm" — the OID fixes every parameter its algorithm-id names (a curve
+#                 OID, a hash OID, id-alg-ml-kem-768).
+#   "family"    — the OID names a key type, or a padding and a digest, and the
+#                 remaining parameters live somewhere we do not parse (the SPKI
+#                 modulus, DomainParameters, RSASSA-PSS-params). Such an entry
+#                 must resolve to an algorithm-id that names no parameter.
+# Enforced by crates/cli/tests/algorithm_parameters.rs. sha512WithRSAEncryption
+# used to resolve to `rsa-pkcs1-sha512-4096`, reporting 152-bit classical
+# security for any certificate a CA had signed with SHA-512.
 
 # -----------------------------------------------------------------------------
 # RSA — key + signature OIDs
@@ -24,43 +35,51 @@
 
 [[oid]]
 oid = "1.2.840.113549.1.1.1"
-algorithm_id = "rsa-2048"   # generic; resolver picks rsa-1024/2048/3072/4096 by modulus length
-note = "rsaEncryption — SPKI key type. Modulus length determines variant."
+algorithm_id = "rsa-unattributed"
+determines = "family"
+note = "rsaEncryption — SPKI key type. Encodes no modulus size; scan-certs refines this to a sized id from the parsed modulus, and this row is what remains when the modulus cannot be read."
 
 [[oid]]
 oid = "1.2.840.113549.1.1.10"
-algorithm_id = "rsa-pss-sha256-2048"   # generic RSASSA-PSS
-note = "id-RSASSA-PSS — signature. Hash determined by parameters."
+algorithm_id = "rsa-pss-unattributed"
+determines = "family"
+note = "id-RSASSA-PSS — signature. Hash, MGF and salt length are in RSASSA-PSS-params, which we do not parse; the modulus is not here at all."
 
 [[oid]]
 oid = "1.2.840.113549.1.1.4"
 algorithm_id = "rsa-pkcs1-md5"
+determines = "family"
 note = "md5WithRSAEncryption — BROKEN."
 
 [[oid]]
 oid = "1.2.840.113549.1.1.5"
 algorithm_id = "rsa-pkcs1-sha1"
+determines = "family"
 note = "sha1WithRSAEncryption — BROKEN."
 
 [[oid]]
 oid = "1.2.840.113549.1.1.11"
-algorithm_id = "rsa-pkcs1-sha256-2048"
-note = "sha256WithRSAEncryption."
+algorithm_id = "rsa-pkcs1-sha256"
+determines = "family"
+note = "sha256WithRSAEncryption. Names the digest and the padding, not the modulus."
 
 [[oid]]
 oid = "1.2.840.113549.1.1.12"
-algorithm_id = "rsa-pkcs1-sha384-3072"
-note = "sha384WithRSAEncryption."
+algorithm_id = "rsa-pkcs1-sha384"
+determines = "family"
+note = "sha384WithRSAEncryption. Names the digest and the padding, not the modulus."
 
 [[oid]]
 oid = "1.2.840.113549.1.1.13"
-algorithm_id = "rsa-pkcs1-sha512-4096"
-note = "sha512WithRSAEncryption."
+algorithm_id = "rsa-pkcs1-sha512"
+determines = "family"
+note = "sha512WithRSAEncryption. Names the digest and the padding, not the modulus."
 
 [[oid]]
 oid = "1.2.840.113549.1.1.7"
-algorithm_id = "rsa-2048"
-note = "id-RSAES-OAEP — RSA-OAEP encryption."
+algorithm_id = "rsa-oaep"
+determines = "family"
+note = "id-RSAES-OAEP — RSA-OAEP encryption. The OAEP parameters default to MGF1-SHA1 when absent (RFC 8017 A.2.1); the modulus is not encoded here."
 
 # -----------------------------------------------------------------------------
 # ECDSA / EC public key
@@ -68,49 +87,58 @@ note = "id-RSAES-OAEP — RSA-OAEP encryption."
 
 [[oid]]
 oid = "1.2.840.10045.2.1"
-algorithm_id = "ecdsa-p256"   # generic; resolver picks curve by curve OID in params
-note = "id-ecPublicKey — SPKI key type. Curve OID in algorithm.parameters."
+algorithm_id = "ecdsa-unattributed"
+determines = "family"
+note = "id-ecPublicKey — SPKI key type. The curve OID is in algorithm.parameters; scan-certs refines this when it is a named curve, and this row is what remains for explicit parameters."
 
 [[oid]]
 oid = "1.2.840.10045.4.1"
 algorithm_id = "ecdsa-sha1"
+determines = "family"
 note = "ecdsa-with-SHA1 — BROKEN."
 
 [[oid]]
 oid = "1.2.840.10045.4.3.2"
-algorithm_id = "ecdsa-p256"
-note = "ecdsa-with-SHA256."
+algorithm_id = "ecdsa-unattributed"
+determines = "family"
+note = "ecdsa-with-SHA256 — names the digest. The curve comes from the key, not from this OID."
 
 [[oid]]
 oid = "1.2.840.10045.4.3.3"
-algorithm_id = "ecdsa-p384"
-note = "ecdsa-with-SHA384."
+algorithm_id = "ecdsa-unattributed"
+determines = "family"
+note = "ecdsa-with-SHA384 — names the digest, not the curve."
 
 [[oid]]
 oid = "1.2.840.10045.4.3.4"
-algorithm_id = "ecdsa-p521"
-note = "ecdsa-with-SHA512."
+algorithm_id = "ecdsa-unattributed"
+determines = "family"
+note = "ecdsa-with-SHA512 — names the digest, not the curve."
 
 # EC curve OIDs (in SubjectPublicKeyInfo.algorithm.parameters)
 
 [[oid]]
 oid = "1.2.840.10045.3.1.7"
 algorithm_id = "ecdsa-p256"
+determines = "algorithm"
 note = "secp256r1 / NIST P-256."
 
 [[oid]]
 oid = "1.3.132.0.34"
 algorithm_id = "ecdsa-p384"
+determines = "algorithm"
 note = "secp384r1 / NIST P-384."
 
 [[oid]]
 oid = "1.3.132.0.35"
 algorithm_id = "ecdsa-p521"
+determines = "algorithm"
 note = "secp521r1 / NIST P-521."
 
 [[oid]]
 oid = "1.3.132.0.10"
 algorithm_id = "ecdsa-secp256k1"
+determines = "algorithm"
 note = "secp256k1 — Bitcoin/Ethereum."
 
 # -----------------------------------------------------------------------------
@@ -120,21 +148,25 @@ note = "secp256k1 — Bitcoin/Ethereum."
 [[oid]]
 oid = "1.3.101.110"
 algorithm_id = "x25519"
+determines = "algorithm"
 note = "X25519 — RFC 8410."
 
 [[oid]]
 oid = "1.3.101.111"
 algorithm_id = "x448"
+determines = "algorithm"
 note = "X448 — RFC 8410."
 
 [[oid]]
 oid = "1.3.101.112"
 algorithm_id = "ed25519"
+determines = "algorithm"
 note = "Ed25519 — RFC 8410."
 
 [[oid]]
 oid = "1.3.101.113"
 algorithm_id = "ed448"
+determines = "algorithm"
 note = "Ed448 — RFC 8410."
 
 # -----------------------------------------------------------------------------
@@ -143,27 +175,32 @@ note = "Ed448 — RFC 8410."
 
 [[oid]]
 oid = "1.2.840.10040.4.1"
-algorithm_id = "dsa-2048"
-note = "id-dsa."
+algorithm_id = "dsa-unattributed"
+determines = "family"
+note = "id-dsa. The prime and subprime sizes are in Dss-Parms, which we do not parse."
 
 [[oid]]
 oid = "1.2.840.10040.4.3"
-algorithm_id = "dsa-2048"
-note = "id-dsa-with-sha1 — deprecated."
+algorithm_id = "dsa-unattributed"
+determines = "family"
+note = "id-dsa-with-sha1 — deprecated. Names the digest, not the parameter sizes."
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.3.2"
-algorithm_id = "dsa-2048"
-note = "id-dsa-with-sha256."
+algorithm_id = "dsa-unattributed"
+determines = "family"
+note = "id-dsa-with-sha256. Names the digest, not the parameter sizes."
 
 [[oid]]
 oid = "1.2.840.113549.1.3.1"
 algorithm_id = "dh-unattributed"
+determines = "family"
 note = "dhKeyAgreement — PKCS #3. Names the key type only; the prime size is in DomainParameters, which we do not parse, so this must not resolve to a sized id."
 
 [[oid]]
 oid = "1.2.840.10046.2.1"
 algorithm_id = "dh-unattributed"
+determines = "family"
 note = "dhpublicnumber — X9.42. Same: no group size at the OID."
 
 # -----------------------------------------------------------------------------
@@ -173,36 +210,44 @@ note = "dhpublicnumber — X9.42. Same: no group size at the OID."
 [[oid]]
 oid = "1.2.840.113549.2.5"
 algorithm_id = "md5"
+determines = "algorithm"
 note = "md5 — BROKEN."
 
 [[oid]]
 oid = "1.3.14.3.2.26"
 algorithm_id = "sha-1"
+determines = "algorithm"
 note = "sha1 — BROKEN."
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.2.4"
 algorithm_id = "sha-224"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.2.1"
 algorithm_id = "sha-256"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.2.2"
 algorithm_id = "sha-384"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.2.3"
 algorithm_id = "sha-512"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.2.8"
 algorithm_id = "sha3-256"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.2.10"
 algorithm_id = "sha3-512"
+determines = "algorithm"
 
 # -----------------------------------------------------------------------------
 # AES
@@ -211,22 +256,27 @@ algorithm_id = "sha3-512"
 [[oid]]
 oid = "2.16.840.1.101.3.4.1.2"
 algorithm_id = "aes-128-cbc"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.1.6"
 algorithm_id = "aes-128-gcm"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.1.22"
 algorithm_id = "aes-192-gcm"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.1.42"
 algorithm_id = "aes-256-cbc"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.1.46"
 algorithm_id = "aes-256-gcm"
+determines = "algorithm"
 
 # -----------------------------------------------------------------------------
 # PQC — ML-KEM (FIPS 203, RFC 9935)
@@ -236,16 +286,19 @@ algorithm_id = "aes-256-gcm"
 [[oid]]
 oid = "2.16.840.1.101.3.4.4.1"
 algorithm_id = "ml-kem-512"
+determines = "algorithm"
 note = "id-alg-ml-kem-512 — RFC 9935."
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.4.2"
 algorithm_id = "ml-kem-768"
+determines = "algorithm"
 note = "id-alg-ml-kem-768 — RFC 9935."
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.4.3"
 algorithm_id = "ml-kem-1024"
+determines = "algorithm"
 note = "id-alg-ml-kem-1024 — RFC 9935."
 
 # -----------------------------------------------------------------------------
@@ -256,16 +309,19 @@ note = "id-alg-ml-kem-1024 — RFC 9935."
 [[oid]]
 oid = "2.16.840.1.101.3.4.3.17"
 algorithm_id = "ml-dsa-44"
+determines = "algorithm"
 note = "id-ml-dsa-44 — RFC 9881."
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.3.18"
 algorithm_id = "ml-dsa-65"
+determines = "algorithm"
 note = "id-ml-dsa-65 — RFC 9881."
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.3.19"
 algorithm_id = "ml-dsa-87"
+determines = "algorithm"
 note = "id-ml-dsa-87 — RFC 9881."
 
 # -----------------------------------------------------------------------------
@@ -277,47 +333,59 @@ note = "id-ml-dsa-87 — RFC 9881."
 [[oid]]
 oid = "2.16.840.1.101.3.4.3.20"
 algorithm_id = "slh-dsa-sha2-128s"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.3.21"
 algorithm_id = "slh-dsa-sha2-128f"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.3.22"
 algorithm_id = "slh-dsa-sha2-192s"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.3.23"
 algorithm_id = "slh-dsa-sha2-192f"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.3.24"
 algorithm_id = "slh-dsa-sha2-256s"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.3.25"
 algorithm_id = "slh-dsa-sha2-256f"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.3.26"
 algorithm_id = "slh-dsa-shake-128s"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.3.27"
 algorithm_id = "slh-dsa-shake-128f"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.3.28"
 algorithm_id = "slh-dsa-shake-192s"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.3.29"
 algorithm_id = "slh-dsa-shake-192f"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.3.30"
 algorithm_id = "slh-dsa-shake-256s"
+determines = "algorithm"
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.3.31"
 algorithm_id = "slh-dsa-shake-256f"
+determines = "algorithm"

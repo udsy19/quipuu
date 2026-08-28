@@ -31,7 +31,7 @@ description = "ring::signature::EcdsaKeyPair::generate_pkcs8 — ECDSA keypair."
 [[classify]]
 id = "CRYPTO-500"
 when.api = "^ring\\.EcdsaKeyPair\\.generate_pkcs8$"
-algorithm_id = "ecdsa-p256"
+algorithm_id = "ecdsa-unattributed"
 severity_hint = "auto"
 message = "ring EcdsaKeyPair::generate_pkcs8 — ECDSA key, quantum-vulnerable. Replace with ML-DSA-65."
 
@@ -193,7 +193,7 @@ description = "rsa crate RsaPrivateKey::new(rng, bits) — RSA key generation."
 id = "CRYPTO-540"
 when.api = "^rsa\\.RsaPrivateKey\\.new$"
 when.args.bits = { lt = 2048 }
-algorithm_id = "rsa-1024"
+algorithm_id = "rsa-undersized"
 severity_hint = "critical"
 message = "rsa::RsaPrivateKey::new({bits} bits) — below 2048-bit floor."
 cwe = "CWE-326"
@@ -220,7 +220,7 @@ message = "rsa::RsaPrivateKey::new({bits} bits) — larger key does NOT protect 
 [[classify]]
 id = "CRYPTO-543"
 when.api = "^rsa\\.RsaPrivateKey\\.new$"
-algorithm_id = "rsa-2048"
+algorithm_id = "rsa-unattributed"
 severity_hint = "auto"
 message = "rsa::RsaPrivateKey::new(rng, bit_size) — bit size is a runtime variable; cannot statically verify it meets the 2048-bit floor. Quantum-vulnerable to Shor in any case."
 
@@ -235,7 +235,7 @@ message = "rsa::RsaPrivateKey::new(rng, bit_size) — bit size is a runtime vari
 id = "CRYPTO-544"
 when.api = "^rsa\\.SigningKey\\.new$"
 when.args.turbofish = { regex = "Sha256" }
-algorithm_id = "rsa-pkcs1-sha256-2048"
+algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "auto"
 message = "rsa::SigningKey::<Sha256>::new — RSA-PKCS1-SHA256 signing key. Quantum-vulnerable."
 
@@ -243,7 +243,7 @@ message = "rsa::SigningKey::<Sha256>::new — RSA-PKCS1-SHA256 signing key. Quan
 id = "CRYPTO-545"
 when.api = "^rsa\\.SigningKey\\.new$"
 when.args.turbofish = { regex = "Sha384" }
-algorithm_id = "rsa-pkcs1-sha384-3072"
+algorithm_id = "rsa-pkcs1-sha384"
 severity_hint = "auto"
 message = "rsa::SigningKey::<Sha384>::new — RSA-PKCS1-SHA384 signing key. Quantum-vulnerable."
 
@@ -251,14 +251,14 @@ message = "rsa::SigningKey::<Sha384>::new — RSA-PKCS1-SHA384 signing key. Quan
 id = "CRYPTO-546"
 when.api = "^rsa\\.SigningKey\\.new$"
 when.args.turbofish = { regex = "Sha512" }
-algorithm_id = "rsa-pkcs1-sha512-4096"
+algorithm_id = "rsa-pkcs1-sha512"
 severity_hint = "auto"
 message = "rsa::SigningKey::<Sha512>::new — RSA-PKCS1-SHA512 signing key. Quantum-vulnerable."
 
 [[classify]]
 id = "CRYPTO-547"
 when.api = "^rsa\\.SigningKey\\.new$"
-algorithm_id = "rsa-pkcs1-sha256-2048"
+algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "auto"
 message = "rsa::SigningKey::new — RSA signing key construction; hash algorithm not statically determinable. Quantum-vulnerable."
 
@@ -329,9 +329,9 @@ message = "rustls::ServerConfig::builder() — TLS server configured. Algorithm 
 [[classify]]
 id = "CRYPTO-570"
 when.api = "^rcgen\\.KeyPair\\.generate_for$"
-algorithm_id = "ecdsa-p256"
+algorithm_id = "ecdsa-unattributed"
 severity_hint = "auto"
-message = "rcgen::KeyPair::generate_for(SIG_ALG) — keypair generated. Default ECDSA P-256 is quantum-vulnerable."
+message = "rcgen::KeyPair::generate_for(SIG_ALG) — keypair generated; the algorithm is the argument, which this matcher does not capture. ECDSA is quantum-vulnerable at every curve."
 
 # ============================================================================
 # pbkdf2 crate — PBKDF2 with HMAC-SHA*
@@ -375,7 +375,7 @@ message = "pbkdf2::<Hmac<Sha512>> — PBKDF2-HMAC-SHA512 KDF. Quantum-safe at ad
 [[classify]]
 id = "CRYPTO-583"
 when.api = "^pbkdf2\\.pbkdf2$"
-algorithm_id = "sha-256"
+algorithm_id = "pbkdf2-unattributed"
 severity_hint = "low"
 message = "pbkdf2::<...>(...) — PBKDF2 with unrecognized hash. Confirm hash + iteration count meet NIST SP 800-132."
 
@@ -406,6 +406,6 @@ message = "pbkdf2_hmac::<Sha512> — PBKDF2-HMAC-SHA512 KDF. Quantum-safe at ade
 [[classify]]
 id = "CRYPTO-587"
 when.api = "^pbkdf2\\.pbkdf2_hmac$"
-algorithm_id = "sha-256"
+algorithm_id = "pbkdf2-unattributed"
 severity_hint = "low"
 message = "pbkdf2_hmac::<...> — PBKDF2 with unrecognized hash. Confirm hash + iteration count meet NIST SP 800-132."

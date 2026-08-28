@@ -557,18 +557,19 @@ fn phase5_why_matters_uses_verbatim_notes_from_table() {
     let html = emit_html(&findings, &algorithms, &policy, &default_opts())
         .expect("emit_html should succeed");
 
-    // The Go fixture contains RSA-1024. The algorithm-table `notes` field
-    // for rsa-1024 is "Classical security below NIST SP 800-131A minimum
-    // (112-bit); already disallowed for new use." — must appear verbatim
-    // in the report, demonstrating that the why-matters layer is reading
-    // straight from the table (P1 — no LLM rewording).
+    // The Go fixture generates an RSA key below the 2048-bit floor, which
+    // resolves to `rsa-undersized` — the rule matches `bits < 2048` and so
+    // knows the key is under the floor, not that it is 1024 bits. Its
+    // algorithm-table `notes` must appear verbatim in the report,
+    // demonstrating that the why-matters layer reads straight from the table
+    // (P1 — no LLM rewording).
     assert!(
-        findings.iter().any(|f| f.algorithm_id == "rsa-1024"),
-        "test prerequisite: fixture has RSA-1024"
+        findings.iter().any(|f| f.algorithm_id == "rsa-undersized"),
+        "test prerequisite: fixture has an undersized RSA key"
     );
     assert!(
-        html.contains("Classical security below NIST SP 800-131A minimum"),
-        "HTML must reproduce the rsa-1024 `notes` field verbatim, got HTML \
+        html.contains("Classically below the NIST SP 800-131A 112-bit minimum"),
+        "HTML must reproduce the rsa-undersized `notes` field verbatim, got HTML \
          length {}",
         html.len()
     );

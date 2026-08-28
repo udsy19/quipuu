@@ -194,3 +194,54 @@ fn every_finding_has_positive_line_number() {
         );
     }
 }
+
+// ============================================================================
+// A manifest names a PQC family, never a parameter set
+// ============================================================================
+
+/// `ml-kem = "0.2"` says which crate, not which of ML-KEM-512/768/1024 the
+/// code instantiates — that is a type parameter chosen at the call site.
+///
+/// It resolved to `ml-kem-768`, which `nsa-cnsa2` lists as disallowed, so a
+/// codebase that had migrated to ML-KEM-1024 — the only set CNSA 2.0 approves
+/// — was handed a non-compliant High and a red CI on the strength of a guess.
+/// `DEP-001` is the largest rule in the product, so the guess was not cheap.
+///
+/// SLH-DSA is the control: CNSA 2.0 excludes it at the family level, so the
+/// family id must *keep* a verdict the parameter set was never needed for.
+#[test]
+fn a_pqc_crate_name_does_not_pick_a_parameter_set() {
+    let scanner = DepScanner::with_builtins();
+    let findings = scanner.scan_path(&fixtures("rust")).expect("scan failed");
+    let id_for = |pkg: &str| -> String {
+        findings
+            .iter()
+            .find(|f| {
+                f.location
+                    .snippet
+                    .as_deref()
+                    .is_some_and(|s| s.contains(pkg))
+            })
+            .unwrap_or_else(|| panic!("expected a finding for `{pkg}`"))
+            .algorithm_id
+            .clone()
+    };
+
+    assert_eq!(id_for("ml-kem"), "ml-kem-unattributed");
+    assert_eq!(id_for("ml-dsa"), "ml-dsa-unattributed");
+    assert_eq!(id_for("slh-dsa"), "slh-dsa-unattributed");
+    assert_eq!(id_for("rsa"), "rsa-unattributed");
+
+    // The CNSA 2.0 verdict that survives, and the two that must not.
+    let cnsa = seawall_core::Policy::load("nsa-cnsa2").expect("cnsa2 preset loads");
+    assert!(
+        cnsa.disallows("slh-dsa-unattributed"),
+        "CNSA 2.0 excludes SLH-DSA whatever the parameter set"
+    );
+    for id in ["ml-kem-unattributed", "ml-dsa-unattributed"] {
+        assert!(
+            !cnsa.disallows(id),
+            "{id} may be the 1024/87 set CNSA 2.0 approves; it must not be failed on a guess"
+        );
+    }
+}

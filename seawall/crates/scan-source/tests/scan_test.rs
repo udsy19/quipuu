@@ -32,12 +32,14 @@ fn scans_go_fixture() {
             .collect::<Vec<_>>()
     );
 
-    // RSA-1024 should be flagged as CRYPTO-001 (below 2048-bit floor).
-    let rsa1024 = findings
+    // A key below the 2048-bit floor is flagged as CRYPTO-001. The rule
+    // matches `bits < 2048`, so it knows the key is under the floor and not
+    // that it is 1024 bits — the id says exactly that much.
+    let undersized = findings
         .iter()
         .find(|f| f.rule_id == "CRYPTO-001")
-        .expect("RSA-1024 must trigger CRYPTO-001");
-    assert_eq!(rsa1024.algorithm_id, "rsa-1024");
+        .expect("an undersized RSA key must trigger CRYPTO-001");
+    assert_eq!(undersized.algorithm_id, "rsa-undersized");
 
     // RSA-2048 → CRYPTO-002.
     let rsa2048 = findings
@@ -177,7 +179,7 @@ fn scans_python_fixture() {
     assert!(
         findings
             .iter()
-            .any(|f| f.rule_id == "CRYPTO-101" && f.algorithm_id == "rsa-1024")
+            .any(|f| f.rule_id == "CRYPTO-101" && f.algorithm_id == "rsa-undersized")
     );
     // RSA-2048 → CRYPTO-102.
     assert!(
@@ -359,7 +361,7 @@ fn scans_java_keypairgenerator_rsa() {
     assert!(
         findings
             .iter()
-            .any(|f| f.rule_id == "CRYPTO-210" && f.algorithm_id == "rsa-2048"),
+            .any(|f| f.rule_id == "CRYPTO-210" && f.algorithm_id == "rsa-unattributed"),
         "expected CRYPTO-210 (RSA keygen) in Java fixture"
     );
 }
@@ -435,7 +437,7 @@ fn scans_js_generatekeypair_rsa() {
     assert!(
         findings
             .iter()
-            .any(|f| f.rule_id == "CRYPTO-320" && f.algorithm_id == "rsa-2048"),
+            .any(|f| f.rule_id == "CRYPTO-320" && f.algorithm_id == "rsa-unattributed"),
         "expected CRYPTO-320 (RSA keygen) in JS fixture"
     );
 }
@@ -451,7 +453,7 @@ fn scans_js_generatekeypair_ec() {
     assert!(
         findings
             .iter()
-            .any(|f| f.rule_id == "CRYPTO-321" && f.algorithm_id == "ecdsa-p256"),
+            .any(|f| f.rule_id == "CRYPTO-321" && f.algorithm_id == "ecdsa-unattributed"),
         "expected CRYPTO-321 (EC keygen) in JS fixture"
     );
 }
@@ -475,12 +477,57 @@ fn scans_c_rsa_generate_key_ex_weak() {
     assert!(
         findings
             .iter()
-            .any(|f| f.rule_id == "CRYPTO-400" && f.algorithm_id == "rsa-1024"),
-        "expected CRYPTO-400 (RSA-1024) in C fixture; got: {:#?}",
+            .any(|f| f.rule_id == "CRYPTO-400" && f.algorithm_id == "rsa-undersized"),
+        "expected CRYPTO-400 (undersized RSA) in C fixture; got: {:#?}",
         findings
             .iter()
             .map(|f| (&f.rule_id, &f.algorithm_id))
             .collect::<Vec<_>>()
+    );
+}
+
+/// `CRYPTO-430` fires on a cipher-suite string that *enables* a broken
+/// primitive, and it may not name which one.
+///
+/// Two defects, one rule. It matched `RC4|DES|MD5|NULL|EXPORT` anywhere in the
+/// string, so `DEFAULT:!RC4` — which removes RC4 — was reported as a weak
+/// cipher; and it emitted the unconditional literal `rc4`, so a string
+/// selecting DES was reported as RC4 as well.
+#[test]
+fn cipher_list_reads_the_exclusion_prefix_and_names_no_single_cipher() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    let weak: Vec<_> = findings
+        .iter()
+        .filter(|f| f.rule_id == "CRYPTO-430")
+        .collect();
+    assert_eq!(
+        weak.len(),
+        1,
+        "only the string that enables a broken cipher may fire; got {:#?}",
+        weak.iter().map(|f| &f.message).collect::<Vec<_>>()
+    );
+    assert!(
+        weak[0].message.contains("RC4-MD5"),
+        "the firing site must be the enabling string, got {:?}",
+        weak[0].message
+    );
+    assert_eq!(
+        weak[0].algorithm_id, "weak-cipher-suite",
+        "the string names five alternatives; the id may not pick one"
+    );
+
+    // The hardened string still gets the inventory-tier CRYPTO-431 marker —
+    // suppressing the false positive must not lose the call site.
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-431" && f.message.contains("DEFAULT:!RC4")),
+        "the excluding string must still be recorded as a cipher-suite config"
     );
 }
 
@@ -567,7 +614,7 @@ fn scans_rust_rsa_weak() {
     assert!(
         findings
             .iter()
-            .any(|f| f.rule_id == "CRYPTO-540" && f.algorithm_id == "rsa-1024"),
+            .any(|f| f.rule_id == "CRYPTO-540" && f.algorithm_id == "rsa-undersized"),
         "expected CRYPTO-540 (RSA-1024) in Rust fixture; got: {:#?}",
         findings
             .iter()
@@ -619,7 +666,7 @@ fn scans_rust_ring_ecdsa() {
     assert!(
         findings
             .iter()
-            .any(|f| f.rule_id == "CRYPTO-500" && f.algorithm_id == "ecdsa-p256"),
+            .any(|f| f.rule_id == "CRYPTO-500" && f.algorithm_id == "ecdsa-unattributed"),
         "expected CRYPTO-500 (ring ECDSA) in Rust fixture"
     );
 }
@@ -659,7 +706,7 @@ fn scans_csharp_rsa_create() {
     assert!(
         findings
             .iter()
-            .any(|f| f.rule_id == "CRYPTO-600" && f.algorithm_id == "rsa-2048"),
+            .any(|f| f.rule_id == "CRYPTO-600" && f.algorithm_id == "rsa-unattributed"),
         "expected CRYPTO-600 (RSA.Create) in C# fixture; got: {:#?}",
         findings
             .iter()
@@ -786,7 +833,7 @@ fn phase1_jjwt_rs256_detected_as_field_access() {
     assert!(
         findings
             .iter()
-            .any(|f| f.rule_id == "CRYPTO-242" && f.algorithm_id == "rsa-pkcs1-sha256-2048"),
+            .any(|f| f.rule_id == "CRYPTO-242" && f.algorithm_id == "rsa-pkcs1-sha256"),
         "expected CRYPTO-242 for jjwt SignatureAlgorithm.RS256/RS512: {:?}",
         findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
     );
@@ -861,7 +908,7 @@ fn phase1_nimbus_jwsalgorithm_rs384() {
         .iter()
         .find(|f| f.rule_id == "CRYPTO-259")
         .expect("expected CRYPTO-259 for nimbus JWSAlgorithm.RS384");
-    assert_eq!(f.algorithm_id, "rsa-pkcs1-sha384-3072");
+    assert_eq!(f.algorithm_id, "rsa-pkcs1-sha384");
 }
 
 #[test]
@@ -971,7 +1018,7 @@ fn phase7_go_switch_rs256_detected() {
     assert!(
         findings
             .iter()
-            .any(|f| f.rule_id == "CRYPTO-700" && f.algorithm_id == "rsa-pkcs1-sha256-2048"),
+            .any(|f| f.rule_id == "CRYPTO-700" && f.algorithm_id == "rsa-pkcs1-sha256"),
         "expected CRYPTO-700 for Go switch case \"RS256\"; got: {:#?}",
         findings
             .iter()
@@ -1127,7 +1174,7 @@ fn phase8_paramiko_variable_rsa_key_size_produces_finding() {
         findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
     );
     let f = cr104.unwrap();
-    assert_eq!(f.algorithm_id, "rsa-2048");
+    assert_eq!(f.algorithm_id, "rsa-unattributed");
     assert!(
         f.message.contains("bits"),
         "message should name the variable: {}",
@@ -1153,7 +1200,7 @@ fn phase8_paramiko_variable_ec_curve_produces_finding() {
         findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
     );
     let f = cr115.unwrap();
-    assert_eq!(f.algorithm_id, "ecdsa-p256");
+    assert_eq!(f.algorithm_id, "ecdsa-unattributed");
     assert!(
         f.message.contains("curve"),
         "message should name the variable: {}",
@@ -1389,7 +1436,7 @@ fn phase10_rust_rsa_variable_bits_emits_catchall() {
         .iter()
         .find(|f| f.rule_id == "CRYPTO-543")
         .expect("CRYPTO-543 must fire for variable bits");
-    assert_eq!(cr543.algorithm_id, "rsa-2048");
+    assert_eq!(cr543.algorithm_id, "rsa-unattributed");
     assert!(
         cr543.message.contains("runtime variable"),
         "message should mention runtime variable: {}",
@@ -1410,7 +1457,7 @@ fn phase10_rust_rcgen_keypair_generate_for() {
         .iter()
         .find(|f| f.rule_id == "CRYPTO-570")
         .expect("CRYPTO-570 must fire for rcgen::KeyPair::generate_for");
-    assert_eq!(cr570.algorithm_id, "ecdsa-p256");
+    assert_eq!(cr570.algorithm_id, "ecdsa-unattributed");
 }
 
 #[test]
@@ -1423,9 +1470,9 @@ fn phase10_rust_signingkey_turbofish_routes_to_hash() {
         .scan_path(&fixtures_root().join("rust/rust_advanced.rs"))
         .expect("scan succeeds");
     for (rule, algo) in [
-        ("CRYPTO-544", "rsa-pkcs1-sha256-2048"),
-        ("CRYPTO-545", "rsa-pkcs1-sha384-3072"),
-        ("CRYPTO-546", "rsa-pkcs1-sha512-4096"),
+        ("CRYPTO-544", "rsa-pkcs1-sha256"),
+        ("CRYPTO-545", "rsa-pkcs1-sha384"),
+        ("CRYPTO-546", "rsa-pkcs1-sha512"),
     ] {
         let f = findings
             .iter()
@@ -1965,17 +2012,17 @@ fn phase17_jwt_sign_routes_by_explicit_algorithm() {
         (20, "CRYPTO-361", "sha-256"),
         (21, "CRYPTO-362", "sha-384"),
         (22, "CRYPTO-363", "sha-512"),
-        (25, "CRYPTO-364", "rsa-pkcs1-sha256-2048"),
-        (26, "CRYPTO-365", "rsa-pkcs1-sha384-3072"),
-        (27, "CRYPTO-366", "rsa-pkcs1-sha512-4096"),
-        (30, "CRYPTO-367", "rsa-pss-sha256-2048"),
-        (31, "CRYPTO-368", "rsa-pss-sha384-3072"),
-        (32, "CRYPTO-369", "rsa-pss-sha512-4096"),
+        (25, "CRYPTO-364", "rsa-pkcs1-sha256"),
+        (26, "CRYPTO-365", "rsa-pkcs1-sha384"),
+        (27, "CRYPTO-366", "rsa-pkcs1-sha512"),
+        (30, "CRYPTO-367", "rsa-pss-sha256"),
+        (31, "CRYPTO-368", "rsa-pss-sha384"),
+        (32, "CRYPTO-369", "rsa-pss-sha512"),
         (35, "CRYPTO-378", "ecdsa-p256"),
         (36, "CRYPTO-379", "ecdsa-p384"),
         (37, "CRYPTO-380", "ecdsa-p521"),
         (40, "CRYPTO-381", "jwt-alg-none"),
-        (43, "CRYPTO-360", "rsa-pkcs1-sha256-2048"),
+        (43, "CRYPTO-360", "rsa-pkcs1-sha256"),
     ];
     for (line, rule, algo) in expected {
         let f = findings
@@ -2034,9 +2081,9 @@ fn webcrypto_classifies_from_the_algorithm_argument() {
         (16, "CRYPTO-342", "ml-dsa-65"),
         (20, "CRYPTO-345", "ml-kem-768"),
         (26, "CRYPTO-348", "ecdsa-p384"),
-        (30, "CRYPTO-389", "rsa-pss-sha256-2048"),
+        (30, "CRYPTO-389", "rsa-pss-sha256"),
         (35, "CRYPTO-354", "ed25519"),
-        (40, "CRYPTO-395", "ecdsa-p256"),
+        (40, "CRYPTO-395", "ecdsa-unattributed"),
         (44, "CRYPTO-392", "aes-256-gcm"),
         (51, "CRYPTO-340", "webcrypto-unattributed"),
         (56, "CRYPTO-398", "webcrypto-unattributed"),

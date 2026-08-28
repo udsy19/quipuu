@@ -115,6 +115,7 @@ pub struct RegexMatch {
 
 /// Layer 2: classification.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ClassifyRule {
     pub id: String,
     pub when: WhenClause,
@@ -123,6 +124,17 @@ pub struct ClassifyRule {
     pub message: String,
     #[serde(default)]
     pub cwe: Option<String>,
+    /// Why this rule may name a parameter that does not appear in its own
+    /// match — `ES512` determines P-521 by RFC 7518 § 3.4, and no amount of
+    /// reading the string will show a `521`.
+    ///
+    /// Its reader is `crates/cli/tests/algorithm_parameters.rs`, which
+    /// otherwise rejects the rule. `deny_unknown_fields` is on this struct so
+    /// that a misspelled key is a load error rather than a waiver that
+    /// silently does not apply — the failure mode this whole field exists to
+    /// prevent is a claim nobody checked.
+    #[serde(default)]
+    pub parameter_source: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

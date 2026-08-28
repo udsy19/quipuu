@@ -21,6 +21,12 @@
 //! This test lives in `cli` because that is the only crate that can see every
 //! other one. It reads source text rather than calling APIs: direction 3 is a
 //! statement about the repository, not about any loaded value.
+//!
+//! `scan-certs` was a twelfth emitter the first eleven-emitter sweep could not
+//! see: it resolved RSA by modulus length through a `match` whose arms were
+//! bare string literals, so direction 3 walked past it. It is enumerated now
+//! because those arms became a table with an `algorithm_id` field — the shape
+//! this check can read.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
@@ -41,6 +47,7 @@ const EMITTERS: &[&str] = &[
     "crates/core/data/rules/javascript.toml",
     "crates/core/data/rules/python.toml",
     "crates/core/data/rules/rust.toml",
+    "crates/scan-certs/src/lib.rs",
     "crates/scan-deps/src/catalogue.rs",
     "crates/scan-network/src/groups.rs",
     "crates/scan-network/src/prober.rs",

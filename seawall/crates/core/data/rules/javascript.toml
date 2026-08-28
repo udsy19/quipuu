@@ -186,7 +186,7 @@ description = "node:crypto generateKeyPair(type, options) — asymmetric key gen
 id = "CRYPTO-320"
 when.api = "^node:crypto\\.generateKeyPair$"
 when.args.algo = { regex = "(?i)^['\"]?rsa['\"]?$" }
-algorithm_id = "rsa-2048"
+algorithm_id = "rsa-unattributed"
 severity_hint = "auto"
 message = "RSA keypair generated via generateKeyPair('{algo}'). Quantum-vulnerable."
 
@@ -194,7 +194,7 @@ message = "RSA keypair generated via generateKeyPair('{algo}'). Quantum-vulnerab
 id = "CRYPTO-321"
 when.api = "^node:crypto\\.generateKeyPair$"
 when.args.algo = { regex = "(?i)^['\"]?ec['\"]?$" }
-algorithm_id = "ecdsa-p256"
+algorithm_id = "ecdsa-unattributed"
 severity_hint = "auto"
 message = "EC keypair generated via generateKeyPair('{algo}'). Quantum-vulnerable."
 
@@ -228,7 +228,7 @@ description = "node:crypto createSign(algorithm) — signing algorithm string."
 id = "CRYPTO-330"
 when.api = "^node:crypto\\.createSign$"
 when.args.algo = { regex = "(?i)RSA-SHA256" }
-algorithm_id = "rsa-pkcs1-sha256-2048"
+algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "auto"
 message = "RSA-SHA256 signature via createSign('{algo}'). Quantum-vulnerable."
 
@@ -404,17 +404,17 @@ message = "WebCrypto ECDH on {curve}. Quantum-vulnerable key agreement — HNDL 
 id = "CRYPTO-395"
 when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
 when.args.alg = { regex = "(?i)^ECDSA$" }
-algorithm_id = "ecdsa-p256"
+algorithm_id = "ecdsa-unattributed"
 severity_hint = "auto"
-message = "WebCrypto ECDSA; the curve is not stated at this call site (it comes from the key), reported as P-256. Quantum-vulnerable — replace with ML-DSA."
+message = "WebCrypto ECDSA; the curve is not stated at this call site — it comes from the key. Quantum-vulnerable at every curve — replace with ML-DSA."
 
 [[classify]]
 id = "CRYPTO-396"
 when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
 when.args.alg = { regex = "(?i)^ECDH$" }
-algorithm_id = "ecdh-p256"
+algorithm_id = "ecdh-unattributed"
 severity_hint = "auto"
-message = "WebCrypto ECDH; the curve is not stated at this call site (it comes from the key), reported as P-256. Quantum-vulnerable key agreement — HNDL exposure."
+message = "WebCrypto ECDH; the curve is not stated at this call site — it comes from the key. Quantum-vulnerable key agreement at every curve — HNDL exposure."
 
 [[classify]]
 id = "CRYPTO-354"
@@ -486,7 +486,7 @@ id = "CRYPTO-384"
 when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
 when.args.alg = { regex = "(?i)^RSASSA-PKCS1-v1_5$" }
 when.args.hash = { regex = "(?i)^SHA-384$" }
-algorithm_id = "rsa-pkcs1-sha384-3072"
+algorithm_id = "rsa-pkcs1-sha384"
 severity_hint = "auto"
 message = "WebCrypto RSASSA-PKCS1-v1_5 with {hash}. Quantum-vulnerable — replace with ML-DSA-65."
 
@@ -495,7 +495,7 @@ id = "CRYPTO-385"
 when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
 when.args.alg = { regex = "(?i)^RSASSA-PKCS1-v1_5$" }
 when.args.hash = { regex = "(?i)^SHA-512$" }
-algorithm_id = "rsa-pkcs1-sha512-4096"
+algorithm_id = "rsa-pkcs1-sha512"
 severity_hint = "auto"
 message = "WebCrypto RSASSA-PKCS1-v1_5 with {hash}. Quantum-vulnerable — replace with ML-DSA-87."
 
@@ -504,7 +504,7 @@ id = "CRYPTO-386"
 when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
 when.args.alg = { regex = "(?i)^RSASSA-PKCS1-v1_5$" }
 when.args.hash = { regex = "(?i)^SHA-256$" }
-algorithm_id = "rsa-pkcs1-sha256-2048"
+algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "auto"
 message = "WebCrypto RSASSA-PKCS1-v1_5 with {hash}. Quantum-vulnerable — replace with ML-DSA-65."
 
@@ -513,7 +513,7 @@ id = "CRYPTO-387"
 when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
 when.args.alg = { regex = "(?i)^RSA-PSS$" }
 when.args.hash = { regex = "(?i)^SHA-384$" }
-algorithm_id = "rsa-pss-sha384-3072"
+algorithm_id = "rsa-pss-sha384"
 severity_hint = "auto"
 message = "WebCrypto RSA-PSS with {hash}. Quantum-vulnerable — replace with ML-DSA-87."
 
@@ -522,7 +522,7 @@ id = "CRYPTO-388"
 when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
 when.args.alg = { regex = "(?i)^RSA-PSS$" }
 when.args.hash = { regex = "(?i)^SHA-512$" }
-algorithm_id = "rsa-pss-sha512-4096"
+algorithm_id = "rsa-pss-sha512"
 severity_hint = "auto"
 message = "WebCrypto RSA-PSS with {hash}. Quantum-vulnerable — replace with ML-DSA-87."
 
@@ -531,7 +531,7 @@ id = "CRYPTO-389"
 when.api = "^webcrypto\\.subtle\\.(generateKey|sign)$"
 when.args.alg = { regex = "(?i)^RSA-PSS$" }
 when.args.hash = { regex = "(?i)^SHA-256$" }
-algorithm_id = "rsa-pss-sha256-2048"
+algorithm_id = "rsa-pss-sha256"
 severity_hint = "auto"
 message = "WebCrypto RSA-PSS with {hash}. Quantum-vulnerable — replace with ML-DSA-65."
 
@@ -664,7 +664,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'HS512'}) — HMAC-SHA512. Confirm s
 id = "CRYPTO-364"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^RS256$" }
-algorithm_id = "rsa-pkcs1-sha256-2048"
+algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "auto"
 message = "jsonwebtoken jwt.sign({algorithm:'RS256'}) — RSA-PKCS1-SHA256. Quantum-vulnerable."
 
@@ -672,7 +672,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'RS256'}) — RSA-PKCS1-SHA256. Quan
 id = "CRYPTO-365"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^RS384$" }
-algorithm_id = "rsa-pkcs1-sha384-3072"
+algorithm_id = "rsa-pkcs1-sha384"
 severity_hint = "auto"
 message = "jsonwebtoken jwt.sign({algorithm:'RS384'}) — RSA-PKCS1-SHA384. Quantum-vulnerable."
 
@@ -680,7 +680,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'RS384'}) — RSA-PKCS1-SHA384. Quan
 id = "CRYPTO-366"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^RS512$" }
-algorithm_id = "rsa-pkcs1-sha512-4096"
+algorithm_id = "rsa-pkcs1-sha512"
 severity_hint = "auto"
 message = "jsonwebtoken jwt.sign({algorithm:'RS512'}) — RSA-PKCS1-SHA512. Quantum-vulnerable."
 
@@ -689,7 +689,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'RS512'}) — RSA-PKCS1-SHA512. Quan
 id = "CRYPTO-367"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^PS256$" }
-algorithm_id = "rsa-pss-sha256-2048"
+algorithm_id = "rsa-pss-sha256"
 severity_hint = "auto"
 message = "jsonwebtoken jwt.sign({algorithm:'PS256'}) — RSA-PSS-SHA256. Quantum-vulnerable."
 
@@ -697,7 +697,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'PS256'}) — RSA-PSS-SHA256. Quantu
 id = "CRYPTO-368"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^PS384$" }
-algorithm_id = "rsa-pss-sha384-3072"
+algorithm_id = "rsa-pss-sha384"
 severity_hint = "auto"
 message = "jsonwebtoken jwt.sign({algorithm:'PS384'}) — RSA-PSS-SHA384. Quantum-vulnerable."
 
@@ -705,7 +705,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'PS384'}) — RSA-PSS-SHA384. Quantu
 id = "CRYPTO-369"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^PS512$" }
-algorithm_id = "rsa-pss-sha512-4096"
+algorithm_id = "rsa-pss-sha512"
 severity_hint = "auto"
 message = "jsonwebtoken jwt.sign({algorithm:'PS512'}) — RSA-PSS-SHA512. Quantum-vulnerable."
 
@@ -731,6 +731,7 @@ id = "CRYPTO-380"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^ES512$" }
 algorithm_id = "ecdsa-p521"
+parameter_source = "RFC 7518 § 3.4: ES512 is ECDSA using P-521 and SHA-512."
 severity_hint = "auto"
 message = "jsonwebtoken jwt.sign({algorithm:'ES512'}) — ECDSA P-521. Quantum-vulnerable."
 
@@ -751,6 +752,7 @@ id = "CRYPTO-382"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.key_kind = "string"
 algorithm_id = "sha-256"
+parameter_source = "jsonwebtoken signs with HS256 when no algorithm option is given, so a string secret determines HMAC-SHA256 (jsonwebtoken README, sign options)."
 severity_hint = "low"
 message = "jsonwebtoken jwt.sign(payload, <string secret>) — HMAC-SHA256 by default. Confirm key entropy."
 
@@ -760,7 +762,7 @@ message = "jsonwebtoken jwt.sign(payload, <string secret>) — HMAC-SHA256 by de
 [[classify]]
 id = "CRYPTO-360"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
-algorithm_id = "rsa-pkcs1-sha256-2048"
+algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "medium"
 message = "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key — algorithm not statically determinable. Confirm algorithm at runtime."
 

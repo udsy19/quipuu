@@ -34,7 +34,7 @@ description = "RSA.Create() — factory method for RSA key operations."
 [[classify]]
 id = "CRYPTO-600"
 when.api = "^System\\.Security\\.Cryptography\\.RSA\\.Create$"
-algorithm_id = "rsa-2048"
+algorithm_id = "rsa-unattributed"
 severity_hint = "auto"
 message = "RSA.Create() — RSA asymmetric key. Quantum-vulnerable: replace with ML-KEM-768 or ML-DSA-65."
 
@@ -58,7 +58,7 @@ description = "ECDsa.Create() — factory for EC key operations."
 [[classify]]
 id = "CRYPTO-610"
 when.api = "^System\\.Security\\.Cryptography\\.ECDsa\\.Create$"
-algorithm_id = "ecdsa-p256"
+algorithm_id = "ecdsa-unattributed"
 severity_hint = "auto"
 message = "ECDsa.Create() — ECDSA asymmetric key. Quantum-vulnerable. Replace with ML-DSA-65."
 

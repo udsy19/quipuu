@@ -10,11 +10,25 @@ use crate::{AlgorithmTable, LoadError};
 
 const BUILTIN_TOML: &str = include_str!("../data/oid-table.toml");
 
+/// What an OID pins down on its own.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Determines {
+    /// The OID fixes every parameter its algorithm-id names — a curve OID, a
+    /// hash OID, `id-alg-ml-kem-768`.
+    Algorithm,
+    /// The OID names a key type, or a padding and a digest, and the remaining
+    /// parameters live somewhere this table cannot see. Such a row must
+    /// resolve to an algorithm-id that names no parameter.
+    Family,
+}
+
 /// One row of the OID table.
 #[derive(Debug, Clone, Deserialize)]
 pub struct OidMapping {
     pub oid: String,
     pub algorithm_id: String,
+    pub determines: Determines,
     #[serde(default)]
     pub note: String,
 }

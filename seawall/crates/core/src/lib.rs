@@ -23,7 +23,7 @@ pub mod warnings;
 
 pub use algorithm::{AlgorithmRecord, AlgorithmTable, Primitive, QuantumStatus};
 pub use finding::{Confidence, Exposure, Finding, Location, Severity, SiteContext, UsageContext};
-pub use oid::{OidMapping, OidTable};
+pub use oid::{Determines, OidMapping, OidTable};
 pub use policy::Policy;
 pub use risk::QuantumRiskScore;
 pub use warnings::{ScanWarning, ScanWarningKind};

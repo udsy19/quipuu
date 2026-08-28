@@ -79,6 +79,11 @@ policy_disallowed = [
   "slh-dsa-shake-128s", "slh-dsa-shake-128f",
   "slh-dsa-shake-192s", "slh-dsa-shake-192f",
   "slh-dsa-shake-256s", "slh-dsa-shake-256f",
+  # The family-level id belongs here and the ML-KEM/ML-DSA ones do not: CNSA
+  # 2.0 excludes SLH-DSA whatever the parameter set, so the verdict holds
+  # without one, whereas `ml-kem-unattributed` may be ML-KEM-1024 — the only
+  # set this policy approves — and must not be failed on a guess.
+  "slh-dsa-unattributed",
   "fn-dsa-512", "fn-dsa-1024",
   # Stateful hash-based signatures: CNSA 2.0 takes LMS and single-tree XMSS
   # for software/firmware signing and PROHIBITS the multi-tree variants.
