@@ -69,7 +69,7 @@ jobs:
       # findings with their introducing commit.
       # ✎ Set fetch-depth: 1 if you don't need blame / history correlation.
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -137,7 +137,7 @@ jobs:
       # ✎ Remove this step if you don't want PR comments.
       - name: Post PR summary comment
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -230,7 +230,7 @@ jobs:
       #   is kept (max 90 days on GitHub; default here is 30).
       - name: Upload HTML report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: quipuu-html-report
           path: ${{ env.REPORTS_DIR }}/quipuu.html
@@ -239,7 +239,7 @@ jobs:
       # ── Upload CycloneDX CBOM as a build artifact ─────────────────────────
       - name: Upload CycloneDX CBOM
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: quipuu-cbom
           path: ${{ env.REPORTS_DIR }}/quipuu.cbom.json
