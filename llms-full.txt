@@ -144,7 +144,7 @@ Transport: stdio JSON-RPC 2.0 only. No HTTP, no WebSocket, no TCP listener. Stat
 
 ## Lite/Pro split
 
-- OSS (AGPL): the scanner binary, all four scan modes, all output formats, MCP server. No LLM calls. No phone-home. Fully offline.
+- OSS (Apache-2.0): the scanner binary, all four scan modes, all output formats, MCP server. No LLM calls. No phone-home. Fully offline.
 - Pro (commercial): orchestration layer (Python + Pydantic AI + LangGraph) wraps the OSS binary over stdio MCP. Adds: automated remediation PR generation, sandbox execution, drift monitoring, hosted service. LLM calls live exclusively in the Pro layer; all P1-P4 invariants are preserved end-to-end.
 
 The Pro engine never modifies the OSS binary's behavior; it only calls its MCP tools over stdio.

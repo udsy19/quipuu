@@ -10,7 +10,7 @@ open reports/seawall.html
 
 <!-- TODO: add screenshot or asciinema recording -->
 
-Seven languages. Four output formats. No account. No cloud. No LLM. Runs in ~150ms per project.
+Seven languages. Four output formats. No account. No cloud. No LLM. Median project scans in 285ms.
 
 > **Formerly `cryptoscope`.** The project was renamed to `seawall` in August 2026, before its first
 > release. A seawall is built *before* the tide arrives — which is the Harvest-Now-Decrypt-Later
@@ -147,7 +147,9 @@ not perform.
 
 **SARIF 2.1.0** — drop into GitHub Advanced Security (`security-events: write`) or GitLab Advanced Security. Findings appear inline on PRs. Rule IDs (`CRYPTO-NNN`) are stable and documented.
 
-**CycloneDX 1.7 CBOM** — the canonical Crypto Bill of Materials format (ECMA-424 2nd Edition). Round-trips with IBM CBOMkit, Dependency-Track, and every CycloneDX consumer. Use it to track your cryptographic inventory over time and diff it across releases.
+**CycloneDX 1.7 CBOM** — the canonical Crypto Bill of Materials format (ECMA-424 2nd Edition). Use it to track your cryptographic inventory over time and diff it across releases.
+
+*What is verified:* a build gate emits one component for every algorithm in the table and validates it against the schema the BOM declares — **0 errors at 1.7, 0 errors at 1.6** (`--schema-version 1.6`), against the schemas vendored in `crates/cbom/data/`. **1.7 output is not 1.6-compatible:** `algorithmFamily` is a 1.7-only field, and offering default output to a 1.6 validator produces **72 errors** — one for each of the 72 components (of 87) that carry a canonical family. A consumer pinned to 1.6 needs `--schema-version 1.6`. Measured 2026-08-28 by `every_algorithm_emits_a_bom_valid_at_the_version_it_declares`. We have not tested ingestion by any third-party consumer, and no longer claim to.
 
 **JSON summary** — machine-readable finding counts by severity, ecosystem, and algorithm family. Pipe it into your CI dashboard, Slack alerts, or compliance reports.
 
@@ -161,21 +163,51 @@ not perform.
 
 | Metric | Value |
 |---|---|
-| Total findings | 1570 (`--source --deps --include-safe`, measured 2026-08-28) |
-| Projects scanned | 150 |
-| Wall-clock time | ~22 seconds |
-| Avg per project | ~150ms |
+| Total findings | 1570 |
+| Projects scanned | 150 of 150, **0 errored** |
+| Wall-clock time | 367s (6m 08s) for all 150 |
+| Per project | median 285ms · mean 2448ms · p90 1.7s · max 144.5s |
 | Languages covered | 7 (Go, Python, Java, JavaScript/TypeScript, C/C++, Rust, C#) |
 
-Audit-validated precision: **85.3%** (95% CI: 81.3%–89.3%) on the 150-project corpus, measured 2026-08-28. Methodology, the full label set and per-finding verdicts are in `BENCHMARKING_RESULTS.md` and `PRECISION_AUDIT_V3.md`.
+Every row above comes from **one run**: `python3 scan_corpus.py --include-safe`, flags
+`--source --deps --include-safe`, profile `nist-default`, release build, single-threaded,
+on **2 cores of an AMD EPYC 9354P with 7 GB RAM**, 2026-08-28. It wrote
+`results/summary.json`. `results/all_findings.json` is the per-finding dump from
+`dump_findings.py` under the same binary, flags and corpus; the two agree at **1570** by
+independent count, and that population is what the precision figure below is sampled from.
 
-**What that interval is.** A two-stratum weighted estimate over 372 findings audited by opening every cited `file:line`, with the interval from the stratified normal approximation — not a Wilson interval on a pooled sample, which is what earlier revisions of this line called it. The lower bound is 81.3%, so this is not a claim of 85%.
+**Read the mean and the median as different facts.** The 8.6× gap between them is three
+repositories: `aws-sdk-go-v2` alone takes 144.5s, and with `aws-sdk-go` and `wolfssl` the
+top three account for 58% of the total wall-clock. **117 of 150 projects finish in under a
+second.** The mean describes a corpus deliberately stocked with vendored AWS SDKs; the
+median describes a project. Neither is the number to quote alone.
+
+**Wall-clock on this box moves between runs.** A second full pass the same day, under
+`regression_check.py`, came in at **329.0s** against the 367.4s above — same corpus, same
+binary, same finding count, ~10% apart on two shared cores. Read the whole-corpus figure as
+"about six minutes", not as three significant figures. The finding counts do not move: both
+runs produced exactly 1570.
+
+**These figures replace a published `~22s / ~150ms`, which was wrong.** That pair came from
+`results/summary.json` at `include_safe:false`, in a run where **9 of 150 clones were
+missing** — so it timed 141 projects and found 1036, while the 1570 printed beside it came
+from a different, complete run under different flags. It was also taken on unnamed hardware,
+not the machine named above, and `BENCHMARKING_RESULTS.md` reported the same run as
+*1194 findings in 23.3s*, so the two source documents never agreed either. We are not
+claiming the scanner got 16× slower; we are retracting a number that described 141 projects,
+under one flag set, on an unnamed machine, and presenting one that names all three.
+
+Audit-validated precision: **85.3%** (95% CI: 81.3%–89.3%) — measured 2026-08-28 on an **audited sample of 362 findings**, not on all 1570. Methodology, the full label set and per-finding verdicts are in `BENCHMARKING_RESULTS.md` and `PRECISION_AUDIT_V3.md`.
+
+**What that interval is.** A two-stratum weighted estimate over 362 findings audited by opening every cited `file:line` — 272 rows from the 964-finding stratum that has been scanned since the beginning, 90 from the 606-finding stratum restored in the 2026-08-27 corpus repair. The interval is the stratified normal approximation `Var = Σ wᵢ² pᵢ(1−pᵢ)/nᵢ`, not a Wilson interval on a pooled sample, which is what earlier revisions of this line called it. The lower bound is 81.3%, so this is not a claim of 85%.
+
+**What the denominator excludes.** `precision = TP / (TP + FP)`. The 362 audited rows are **287 TP, 47 FP and 28 DEPENDS**; the 28 DEPENDS rows — **7.7% of the sample** — are excluded from both sides rather than counted either way. A DEPENDS row is one whose operation is real but whose `algorithm_id` asserts a parameter the cited line does not state, typically an RSA modulus supplied by a caller. Scoring all 28 as false positives instead gives **79.0%** — which is where an independent audit of the same labels landed, and it is a convention difference, not a contradiction. Scoring them all as true positives gives **86.3%**. Every figure in the history table below uses the same exclusion, so they are comparable to each other — and any figure quoted against a scanner that uses a different convention is not.
 
 **Why this number moved, twice.** The figures published here before — 84.5%, then 85.2% and 87.1% — were measured against a corpus in which **46 of the 150 projects had empty working trees**. `clone_all.sh` clones `--no-checkout`, and the manifest's `commit_sha` pins had been shuffled across project files, so the checkout failed, printed a warning, and the project was still counted as cloned. Those numbers were taken on a biased two-thirds sample. Re-measured on the fully populated corpus the same scanner gave **81.8%** — lower, and published as such, because a benchmark you cannot reproduce is worth nothing.
 
 **85.3% is a real gain on top of that corrected baseline, not a return to the old number.** It comes from suppressing one false-positive shape: a JOSE algorithm-registry lookup such as `jwa.LookupSignatureAlgorithm("PS256")`, which retrieves a descriptor from a table and was being reported as a quantum-vulnerable signing operation. 34 findings were removed, every one of them labelled a false positive by hand, and no true positive was lost.
 
-The benchmark corpus and reproduce script live in `benchmarks/corpus-b-realworld/`. Clone it, run `python3 scan_corpus.py`, and verify the numbers yourself.
+The benchmark corpus and reproduce scripts live in `benchmarks/corpus-b-realworld/`. Run `./clone_all.sh`, then `python3 scan_corpus.py --include-safe` for the speed and finding counts and `python3 dump_findings.py` for the per-finding dump the precision audit samples; both take `--clones` if the corpus lives outside the repo. Verify the numbers yourself.
 
 ---
 
@@ -225,14 +257,14 @@ seawall scan .
 | MCP server | Yes | No | No | No | No |
 | Auditable open rule format | Yes (TOML) | No (binary) | Yes (QL) | No | Yes (YAML) |
 | Languages (crypto-specific) | 7 | 7+ | 7+ | Java only | Any |
-| Published precision (crypto findings) | 85.3% (full 150-project corpus) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
-| Scan speed (150 projects) | ~22s | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
+| Published precision (crypto findings) | 85.3% (audited sample of 362, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
+| Scan speed | 285ms median project; 367s for the 150-project corpus (2 cores) | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
 
 **Where CodeQL wins:** CodeQL has full inter-procedural data-flow. It can trace a key from generation through storage to use and flag misuse that a pattern-based scanner cannot see. If you need that depth and can absorb the scan time, CodeQL delivers it. seawall does not attempt to replicate data-flow analysis — it trades that capability for speed, locality, and PQC specificity.
 
 **Where Snyk Code wins:** Snyk has a larger ecosystem of language integrations and a mature CI integration story. If your team already runs Snyk, adding `--crypto` coverage through their platform is lower friction than adopting a new tool. The cost: your code leaves your machine.
 
-**Where seawall wins:** seawall never leaves your machine, ships the NIST taxonomy as auditable data, produces a standards-compliant CBOM, and scans 150 projects in 22 seconds. It is the right starting point for a PQC inventory exercise that needs to stay inside your security boundary.
+**Where seawall wins:** seawall never leaves your machine, ships the NIST taxonomy as auditable data, produces a standards-compliant CBOM, and scans a typical project in under a third of a second. It is the right starting point for a PQC inventory exercise that needs to stay inside your security boundary.
 
 ---
 

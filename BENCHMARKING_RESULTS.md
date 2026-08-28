@@ -1,15 +1,30 @@
-# seawall V8 — 150-project corpus benchmark
+# seawall — 150-project corpus benchmark
+
+Sections are appended in date order. **The current run is the last dated section**
+(*Corpus B, timed and dumped in one run — 2026-08-28*); everything above it is the
+record of an earlier phase and is kept as history, not as a current claim.
+
+---
+
+## V8 run (historical — superseded 2026-08-28)
 
 **Corpus:** corpus-b-realworld  
-**Projects scanned:** 150  
-**Elapsed:** 23.3s  
+**Projects scanned:** 150 listed, **141 actually scanned** — 9 clones were missing  
+**Elapsed:** 23.3s over those 141  
 **Default filter:** quantum-safe inventory hidden from alert output (Phase 2; pass --include-safe to unhide)  
+
+> **Do not quote this section's headline.** The 9 missing clones were the visible part of a
+> corpus defect that left **46 of 150 projects with empty working trees** (root cause under
+> *Corpus integrity* below). Its `23.3s` also disagrees with its own
+> `results/summary.json`, which records **22.43s and 1036 findings** for the same run at
+> `include_safe:false`. The README summarised the lower pair. Both are retracted; the
+> reproducible replacements are in the 2026-08-28 section.
 
 This is the V8 corpus run, layered on Phases 1-11 (jjwt enum constants, signal-to-noise, ACVP refresh, why-this-matters, non-fatal warnings, Go switch / registration, paramiko + crypto-js, Rust qualified paths + turbofish, pbkdf2 nested turbofish) plus Phase 12 (precision audit — measured 73.3% precision on a stratified 31-finding sample) and Phase 13 (closing the 8 audit-surfaced false-positive patterns: TLS-config topology markers, jwt-alg-none sentinel, per-variant PSS / HMAC / ECDSA / AES-ECB algorithm_ids, plus a CI consistency guard). Numbers below are stratified by ecosystem and reported without projected values — only what was actually scanned.
 
-## Headline numbers
+### Headline numbers (historical)
 
-- **1194 total findings** across 150 projects in 23.3s
+- **1194 total findings** reported across 150 projects in 23.3s — over 141 scanned
 - **864 audible** (72%) surfaced for analyst review; **330 suppressed** (28%) as quantum-safe inventory
 - **55 / 150 projects** produced at least one finding; **9 / 150** had scan errors (mostly missing clones — see below)
 - **Avg scan time:** 0.16s per project (release build, single-threaded)
@@ -211,26 +226,34 @@ Note: many of these are zero for legitimate reasons. The expected-non-zero list 
 
 ## Scan errors
 
-9 project(s) produced non-empty error output:
+9 project(s) produced non-empty error output. Clone paths below are given as
+`<ecosystem>/<name>` relative to the clone root; the run that produced this
+section recorded them as absolute paths under the operator's home directory,
+which named a machine rather than a corpus and has been normalised.
+
+**All nine were later found to be a corpus defect, not a scanner defect** — see
+*Corpus integrity and the corrected precision figure* below. The 150-project
+totals in this section's parent run were therefore taken over 141 scanned
+projects.
 
 - `maven:org.bouncycastle:bcpkix-jdk18on`
-    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/bcpkix-jdk18on
+    - clone path does not exist: maven/bcpkix-jdk18on
 - `maven:com.amazonaws:aws-java-sdk-kms`
-    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/aws-java-sdk-kms
+    - clone path does not exist: maven/aws-java-sdk-kms
 - `maven:com.azure:azure-security-keyvault-keys`
-    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/azure-security-keyvault-keys
+    - clone path does not exist: maven/azure-security-keyvault-keys
 - `maven:software.amazon.awssdk:s3`
-    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/maven/aws-sdk-java-v2-s3
+    - clone path does not exist: maven/aws-sdk-java-v2-s3
 - `go-modules:github.com/aws/aws-sdk-go`
-    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/aws-sdk-go
+    - clone path does not exist: go-modules/aws-sdk-go
 - `go-modules:github.com/aws/aws-sdk-go-v2`
-    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/aws-sdk-go-v2
+    - clone path does not exist: go-modules/aws-sdk-go-v2
 - `go-modules:github.com/grafana/grafana`
-    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/go-modules/grafana
+    - clone path does not exist: go-modules/grafana
 - `crypto-adjacent:github.com/wolfSSL/wolfssl`
-    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/crypto-adjacent/wolfssl
+    - clone path does not exist: crypto-adjacent/wolfssl
 - `crypto-adjacent:github.com/sphincsplus/sphincsplus`
-    - clone path does not exist: /Users/uvijayanand/Desktop/Projects/QuantumOSS-Analysis/benchmarks/corpus-b-realworld/clones/crypto-adjacent/sphincsplus
+    - clone path does not exist: crypto-adjacent/sphincsplus
 
 ## Trust invariants observed during this run
 
@@ -245,8 +268,22 @@ Note: many of these are zero for legitimate reasons. The expected-non-zero list 
 cd benchmarks/corpus-b-realworld
 ./clone_all.sh                          # ~30-60 min, 150 repos
 ./verify.sh                             # confirm SHA pins (optional)
-python3 scan_corpus.py                  # ~5-15 min
-python3 render_results.py               # writes ../../BENCHMARKING_RESULTS.md
+python3 scan_corpus.py                  # see the 2026-08-28 section for the flags
+python3 render_results.py --out /tmp/run.md   # renders THIS run only
+```
+
+`render_results.py` renders one run from `results/summary.json`. It will not
+overwrite this file, which carries hand-written sections it cannot regenerate;
+give it an `--out` path of its own.
+
+The corpus is usually cloned outside the repo. Both scripts take `--clones`,
+and `dump_findings.py` also takes `--bin` and `--out`:
+
+```
+python3 scan_corpus.py   --clones /path/to/clones --bin ../../seawall/target/release/seawall \
+                         --out results/ --include-safe
+python3 dump_findings.py --clones /path/to/clones --bin ../../seawall/target/release/seawall \
+                         --out results/all_findings.json
 ```
 
 
@@ -616,3 +653,129 @@ this is a 2-core machine and the two figures bracket each other.
 
 `cargo test --workspace`: 259 tests across 36 suites, all passing. No finding was added anywhere in
 the corpus by either change, so no coverage was traded for this precision.
+
+---
+
+## Corpus B, timed and dumped in one run — 2026-08-28
+
+**This is the section the README summarises.** Every timing figure below is from a single
+`scan_corpus.py` invocation, on named hardware, with the flag set and the error count stated
+beside it; the per-finding dump is a second `dump_findings.py` invocation under the same
+binary, flags and corpus. The two agree at 1570 findings by independent count. This section
+exists because the numbers it replaces could not be traced to one run.
+
+**Tuple.** Corpus B, 150 projects, all 150 with a populated working tree · scanner set
+`--source --deps --include-safe` · profile `nist-default` · release build, single-threaded
+· binary at `c08a890` · **2 cores of an AMD EPYC 9354P, 7 GB RAM** · 2026-08-28.
+
+| Metric | Value |
+|---|---|
+| Projects scanned | 150 of 150 |
+| Projects that errored | **0** |
+| Total findings | **1570** |
+| Wall-clock, whole corpus | **367.4s** (6m 08s) |
+| Per project — median | **285 ms** |
+| Per project — mean | 2448 ms |
+| Per project — p90 | 1.70s |
+| Per project — max | 144.51s (`go-modules:github.com/aws/aws-sdk-go-v2`) |
+| Projects finishing under 1s | **117 of 150** |
+
+| Ecosystem | Projects | Findings | Duration | Errored |
+|---|---|---|---|---|
+| pypi | 25 | 77 | 10.32s | 0 |
+| npm | 25 | 127 | 6.03s | 0 |
+| maven | 25 | 366 | 67.32s | 0 |
+| crates-io | 25 | 226 | 10.05s | 0 |
+| go-modules | 25 | 576 | 210.87s | 0 |
+| crypto-adjacent | 25 | 198 | 62.61s | 0 |
+
+### Run-to-run variance, stated rather than hidden
+
+A second full pass the same day — `regression_check.py`, which re-runs `scan_corpus.py`
+into a scratch directory — measured **329.0s** against the 367.4s above, with CPU contention
+differing between the two and **without** `--include-safe` (that flag changes what is
+displayed, not what is detected, so the totals are still comparable). Same corpus, same
+binary, **same 1570 findings and the same per-ecosystem counts**
+(77 / 127 / 366 / 226 / 576 / 198). So the finding counts are stable and the wall-clock is
+±10% on two shared cores; the corpus figure should be read as *about six minutes*, not to
+three significant figures.
+
+That second pass also exercised the floors in `regression_check.py` for the first time on
+this box — 6 ecosystem floors, the corpus total, and 6 per-rule floors, **13 of 13 met**.
+It had been skipping silently because its clone directory was hardcoded to a path inside
+the repo; it now takes `--clones` / `--bin`, and its 600s subprocess timeout has been raised
+to 1800s, since a 367s corpus scan under contention was close enough to the old limit to
+fail as a timeout rather than as a regression.
+
+### Why the mean is 8.6× the median
+
+Three repositories carry 213.4s of the 367.2s — **58% of the total**:
+`aws-sdk-go-v2` (144.51s), `aws-sdk-go` (49.15s), `wolfssl` (19.71s). The first two are
+vendored AWS SDKs; the corpus stocks them deliberately, because a PQC inventory tool that
+falls over on a vendored SDK is not useful. So the mean is a property of this corpus and
+the median is a property of a project. Quoting either alone misleads, in opposite
+directions, which is how `~150ms per project` was published in the first place.
+
+### What was retracted, and why it was wrong
+
+The previously published `~22 seconds / ~150ms per project` traces to
+`results/summary.json` from a run with **`include_safe:false`** in which **9 of 150 clone
+paths did not exist** — 22.43s and 1036 findings over 141 projects. The README paired that
+elapsed time with a **1570** finding count taken from a different run under different
+flags. `BENCHMARKING_RESULTS.md` reported the same underlying run as *1194 findings in
+23.3s*. Three numbers, three provenances, one table. Retracted in full.
+
+### Committed artifacts now reproduce
+
+`results/all_findings.json` and `results/summary.json` were regenerated by this run and no
+longer contain absolute paths. Both scripts were fixed first:
+
+* `dump_findings.py` records `file` as `<ecosystem>/<name>/<path>` relative to the clone
+  root, and **exits non-zero rather than write an artifact containing an absolute path**.
+  Its binary, clone root and output path are now `--bin` / `--clones` / `--out` instead of
+  three hardcoded constants, because the corpus is routinely cloned outside the repo and
+  every cycle was re-forking the script to say so.
+* `scan_corpus.py` records missing-clone and timeout errors by corpus position rather than
+  by absolute path.
+* Ten clones in this corpus are symlinks to another clone (`crates-io/sha2` →
+  `crates-io/md-5`), so both scripts resolve link targets on **both** sides before
+  stripping the prefix, and re-attach the *logical* `ecosystem/name` — otherwise two
+  corpus projects collapse onto one path and the strip silently leaves an absolute path in.
+
+**Detection is unaffected, and this was checked rather than assumed.** The regenerated dump
+is the same 1570 findings as the pre-change dump taken at `c08a890`, identical on project,
+rule id, algorithm id, severity, line and message on every row — only the `file` column
+differs, and only by having its machine-specific prefix removed. The precision estimator
+reproduces its recorded baseline (81.8%, 77.4–86.1) before reporting, and returns
+**85.3% (95% CI 81.3–89.3)**, unchanged.
+
+### Trust invariants, observed in this run
+
+`/usr/bin/time -v` over the whole 150-project scan reports **0 socket messages sent and 0
+received** — P2 holds across 150 projects, not just on a unit test. No project code was
+executed (P4): every finding resolves to a file the scanner opened for reading.
+
+### CBOM schema conformance — measured the same day
+
+Emitting one component for every one of the **87** algorithm-table rows and validating
+against the schemas vendored in `crates/cbom/data/`:
+
+| Emitted as | Validated against | Errors |
+|---|---|---|
+| 1.7 (default) | 1.7 | **0** |
+| 1.6 (`--schema-version 1.6`) | 1.6 | **0** |
+| 1.7 (default) | 1.6 | **72** |
+
+All 72 are the 1.7-only `algorithmFamily` field against 1.6's
+`additionalProperties: false`, one for each of the 72 components that carry a canonical
+family. This is correct behaviour — 1.7 output is not 1.6 — but it falsifies the README's
+former claim that the CBOM *"round-trips with IBM CBOMkit, Dependency-Track, and every
+CycloneDX consumer"*: a consumer pinned to 1.6 must be given `--schema-version 1.6`. The
+claim has been replaced with what was measured, and **no third-party consumer has been
+tested**, so none is named.
+
+Gated by `every_algorithm_emits_a_bom_valid_at_the_version_it_declares`
+(`crates/cbom/tests/emit_test.rs`), which covers the algorithm table where the existing
+`emit_validates_for_v1_7_and_v1_6` covers only the fixture corpus. Confirmed it can fail,
+per the standing rule: removing the 1.6 suppression in `emit.rs` makes it fail with the 72
+errors above.
