@@ -1,7 +1,7 @@
 # seawall — 150-project corpus benchmark
 
 Sections are appended in date order. **The current run is the last dated section**
-(*Corpus B, timed and dumped in one run — 2026-08-28*); everything above it is the
+(*HNDL flag and SARIF property name — 2026-08-28*); everything above it is the
 record of an earlier phase and is kept as history, not as a current claim.
 
 ---
@@ -837,3 +837,114 @@ five new rows, each of which carries one.
 Tuple for every figure in this section: corpus B, 150 projects all populated ·
 `--source --deps --include-safe` · profile `nist-default` · binary `9e60ffe` · 2 cores of
 an AMD EPYC 9354P · 2026-08-28.
+
+---
+
+## HNDL flag and SARIF property name: precision recomputed, recall published — 2026-08-28
+
+**Measurement tuple:** corpus B (150 projects, all populated) · scanner set
+`--source --deps --include-safe` · profile `nist-default` · binary `608cd8e` · 2 cores of an
+AMD EPYC 9354P · 2026-08-28. Dump taken with the in-tree
+`benchmarks/corpus-b-realworld/dump_findings.py`.
+
+**Precision 85.3% (95% CI 81.3–89.3%), stratified — unchanged, and recomputed rather than
+quoted.** Findings 1570, unchanged.
+
+### Why the finding set should not move, and the check that it did not
+
+Neither change is a detection change. `automationDetails` renames a key in the SARIF emitter,
+which the dump does not read. `apply_hndl_flags` writes a boolean the dump does not record, and
+it runs once over the whole finding set *after* collection, so it cannot add or remove a site.
+That is the prediction. The check is what makes it a measurement:
+
+| | findings | distinct sites | added | removed | changed in place |
+|---|---|---|---|---|---|
+| `9e495cb` (the dump the 85.3% baseline was audited on) | 1570 | 1552 | — | — | — |
+| `608cd8e` (this tree) | 1570 | 1552 | **0** | **0** | **0** |
+
+Sites are keyed on `(project, rule_id, file, line)` and compared on `algorithm_id` and
+`message`; 18 rows legitimately share a site key, which is why the two columns differ.
+Per-ecosystem counts are identical too: go-modules 576, maven 366, crates-io 226,
+crypto-adjacent 198, npm 127, pypi 77.
+
+### The estimator, its sample sizes and its verdicts
+
+An unchanged finding set cannot move a TP/FP ratio, so the audited label sets apply without
+re-labelling and precision is **recomputed, not re-estimated**. It is recomputed rather than
+quoted because a published figure that is never re-derived cannot notice when the tree drifts
+away from it; the estimator asserts it reproduces the recorded baseline from the labels before
+it prints anything, and it did — 85.30%.
+
+Same two strata, same weighting (population share) and same label sets as the 85.3% row in
+*Registry-lookup suppression* above, so the two are the same figure and not merely the same
+number.
+
+| | Population | Audited | TP | FP | DEPENDS | Precision |
+|---|---|---|---|---|---|---|
+| Stratum A | 964 | 272 | 217 | 32 | 23 | 87.1% (held) |
+| Stratum B | 606 | 90 | 70 | 15 | 5 | 82.4% (Wilson 72.9–89.0) |
+| **Weighted** | **1570** | **362** | | | | **85.3%** (95% CI 81.3–89.3) |
+
+Method, in full. Stratum B is the 606 findings from the 46 projects whose working trees were
+restored, sampled uniformly at seed 20260827 and labelled once by **opening every cited
+`file:line` and reading the code at it** — TP if a cryptographic operation or key of the named
+algorithm exists at that line, FP if it does not, DEPENDS if the line is real but its
+quantum-relevance turns on a runtime value the scanner cannot see. DEPENDS rows are excluded
+from both numerator and denominator, which is why the audited 362 yields 249 + 85 = 334 graded
+verdicts. Stratum A is held at the value its own 272-row audit produced; neither change removes
+or reclassifies a stratum-A finding, and the site-set check above is what establishes that.
+The interval is the stratified normal approximation `Var = Σ wᵢ² pᵢ(1−pᵢ)/nᵢ` — **not** Wilson,
+which applies only to the single-stratum figures quoted per row.
+
+### HNDL flag over the corpus: 0 of 1570, measured
+
+`dump_findings.py` records severity but not `hndl_critical`, so the corpus count was taken in a
+separate pass over the same 150 projects and the same `scan_hints.scan_paths` subtrees, with
+`--summary-json`, summing `totals.hndl_critical`:
+
+```
+projects scanned : 150  (errored 0)
+findings         : 1570
+hndl_critical    : 0
+flagged projects : none
+```
+
+**Zero is the correct answer here and is published as a scope limit, not as a result.** The flag
+needs three inputs and `scan-source` fixes two of them at compile time (`usage_context: Unknown`,
+`shelf_life_bucket: "short"`), so no source or dependency finding can meet the policy's
+conditions. Corpus B runs `--source --deps` only and therefore never exercises `scan-certs`,
+which is the one scanner that varies those axes — so this run cannot speak to the flag's
+non-zero path at all. That path is measured on the fixture instead: an X25519 certificate
+(SPKI OID `1.3.101.110`, `primitive = "key-agree"`, `BrokenByShor`) is flagged, and the same
+certificate's Ed25519 *signature* finding is not. Making the count non-zero on source findings
+means making those two axes vary, which moves severity bands corpus-wide; that is a calibration
+change and it has not been made.
+
+### Go recall, on the same finding set
+
+Scored by `benchmarks/corpus-b-realworld/recall_check.py` against this run's dump, so recall and
+precision describe one finding set rather than two runs:
+
+| Denominator | Sites | Found | Recall | What it grades |
+|---|---|---|---|---|
+| In-scope (inside the scanned subtrees) | 407 | 303 | **74.4%** | the scanner |
+| Whole Go clone tree | 1054 | 303 | **28.7%** | the benchmark harness |
+
+647 sites (61.4%) sit outside every scanned subtree, because 92 of 150 projects are restricted
+to `scan_hints.scan_paths`. **Neither number means anything without its denominator.**
+
+In-scope, split by API kind: constructors and generators **301/325 = 92.6%**, operations
+**2/82 = 2.4%**. Every signer and every verifier reads 0.0% across twelve families, as does
+every one-shot digest (`md5.Sum` 0/16, `sha1.Sum` 0/11); the only two operation sites found at
+all are one `rsa.EncryptOAEP` and one `rsa.DecryptOAEP`. Ground truth is 33 stdlib APIs taken
+from the pkg.go.dev package indexes and import-gated — built independently of `data/rules/`,
+which a rule-derived ground truth could not be without scoring 100% by construction.
+
+**85.3% precision and 74.4% recall are one architectural fact reported twice.** A
+constructor-only extractor earns its precision by declining exactly the ambiguous shapes.
+
+### Held
+
+`cargo test --workspace`: **271 tests across 38 suites, all passing**. No finding was added or
+removed anywhere in the corpus, so no coverage was traded for either change, and no speed
+figure is restated here — nothing in this change is on the scanning path.
