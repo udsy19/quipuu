@@ -390,3 +390,61 @@ corpus is structurally unable to see). The estimator of record has not been able
 real improvement in three attempts, because the stratum being improved is the one held constant.
 Re-anchoring the baseline to the figure whose verdicts are published here remains a human's
 decision, and remains the right one.
+
+---
+
+## 8. Follow-up, 2026-08-28 — an identity taken from a name two families share
+
+`CRYPTO-441` asserted `algorithm_id = "ed25519"` on every call to `crypto_sign_keypair`. That is
+the NaCl signature-keygen name **and** the NIST PQC reference API name, so the rule published
+*"Ed25519, quantum-vulnerable. Replace with ML-DSA-65"* on the ML-DSA and SLH-DSA reference
+implementations — 12 findings over the two trees at full scope, 8 of them inside the subtrees
+corpus B scans, every one High.
+
+This is the ninth instance of the class § 2 named — an `algorithm_id` asserting more than its
+input carries — and the second resolved the way `#T2b` was: **an unattributed sentinel beats a
+confident wrong answer.** The Ed25519 arm now requires the file to name a NaCl header; anything
+unqualified falls to `CRYPTO-442` / `signature-unattributed`, which asserts no algorithm.
+
+### What moved on the corpus
+
+**10 findings re-identified; 0 added, 0 removed, 1399 before and after.** The site set
+`(project, file, line)` is identical row for row, and every moved row is a `CRYPTO-441` or
+`CRYPTO-442`. `CRYPTO-441` **10 → 1**: the survivor is `npm/tweetnacl`, the one call site whose
+file includes `tweetnacl.h`. The other nine carry `signature-unattributed` at Medium: 5 dilithium,
+3 sphincsplus, and one pynacl row discussed below.
+
+### The three rows re-scored, and the one that cost us
+
+| row | site | was | now |
+|---|---|---|---|
+| A 148 | `pypi/pynacl/src/libsodium/test/default/sign.c:1282` | TP (`ed25519`, genuinely libsodium) | **TP** — the new claim is weaker and still true |
+| B 90 | `crypto-adjacent/dilithium/avx2/test/test_vectors.c:60` | FP `pqc-as-classical` | **TP** |
+| B 91 | `crypto-adjacent/sphincsplus/ref/test/benchmark.c:148` | FP `pqc-as-classical` | **TP** |
+
+Row 148 is the coverage cost and it is a real one. That file is libsodium's own test; it reaches
+`sodium.h` through `cmptest.h`, and the include set is per-file because following an include means
+resolving the build's include path, which **P4** forbids. So a correct Ed25519 identification is
+weakened to an unattributed one. It stays TP — the line does generate a signature keypair — and
+this cycle therefore claims **no** precision credit for it. The trade is one identification made
+vaguer against twelve made wrong.
+
+### The figure, under both estimators
+
+| estimator | pre 1399 | post 1399 | delta |
+|---|---|---|---|
+| of record — stratum A held at `217/32/23` | 87.3 % (83.5–91.1) | **88.3 %** (84.7–91.9) | **+1.0 pp** |
+| corrected — stratum A read from `v1_labelsA.py` | 89.9 % (85.9–94.0) | **90.9 %** (87.0–94.8) | **+1.0 pp** |
+
+Both estimators reproduce their own baselines on the pre dump before the script prints anything.
+Composition under the corrected estimator: 214 audited rows, **190 TP / 19 FP / 5 DEPENDS**
+(was 188 / 21 / 5); all-DEPENDS-FP 88.8 %, all-DEPENDS-TP 91.1 %.
+
+### Why this one moved the estimator of record when the last two did not
+
+§ 4 recommended re-anchoring `state/precision.json`, and § 7 recorded three consecutive changes
+scored +0.8, +0.0 and +0.0 pp while removing 91 and 80 false positives. **This cycle is not
+evidence against that recommendation.** The +1.0 pp is not the estimator working better; it is the
+defect happening to live in `crypto-adjacent`, which is in stratum B — the stratum that is
+measured rather than held. A fix of identical size inside stratum A would still read +0.0. The
+re-anchor is still the human's move, and still the right one.

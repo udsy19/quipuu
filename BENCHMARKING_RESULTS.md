@@ -121,6 +121,7 @@ Note: many of these are zero for legitimate reasons. The expected-non-zero list 
 
 - **Crypto _libraries_** (vs. consumers): `ring`, `openssl`, `libsodium`, `mbedtls`, `boringssl`, `aws-lc`, `wolfssl`, etc. These implement crypto primitives but expose them through opaque type-based APIs (e.g. `RsaPublicKey::new()`) that don't carry algorithm strings the way consumer code does (`SignatureAlgorithm.RS256`). They're inventory targets for `--deps` / SBOM, not source-pattern targets.
 - **PQC reference implementations**: `liboqs`, `liboqs-python`, `liboqs-rust`, `oqs-provider`, `kyber`, `dilithium`, `sphincsplus`, `pqcrypto`, `swift-crypto`, `tink-go`. These are post-quantum-safe by design — expected zero alert-level findings.
+  > **Retracted 2026-08-28.** The expectation was right and the scanner did not meet it. `dilithium` and `sphincsplus` produced **12 High findings**, every one asserting `ed25519` and every one telling a FIPS 204 / FIPS 205 reference implementation to migrate to ML-DSA-65, because `crypto_sign_keypair` was matched as text. Measured, and fixed, in *"`crypto_sign_keypair` is not libsodium's alone"* below; `tink-go` is also not a PQC implementation and produces 48 findings on its classical paths. Do not read this bullet as a measurement — it was never one.
 - **Pure dependency consumers**: `axios`, `react`, `express`, `lodash`, `chalk`, `commander`, `glob`, `helmet`, `ms`, `semver`, `debug`, `charset-normalizer`, `idna`, `pyasn1`, `python-dateutil`, `six` — these don't directly use crypto APIs. Expected zero.
 - **Go modules**: 22/25 produced zero findings. The Go ecosystem maps many crypto operations through interface-based dispatch (`crypto.Signer`, `cipher.Block`) plus runtime-string `tls.CipherSuite` lookups. A Go-specific Phase 7 pass (string-table detection across Go switch-case blocks) would likely 5–10× the Go finding count. This is the biggest known coverage gap on the corpus.
 
@@ -1779,3 +1780,137 @@ corpus. The corpus run's job here is only to prove the change did not reach furt
 **There is now no way to say "certificates only."** That was previously expressed by the same
 behaviour that made this unsafe. Restoring it needs a negation flag, not replace-semantics, and no
 demand for it is recorded.
+
+---
+
+## `crypto_sign_keypair` is not libsodium's alone — 2026-08-28
+
+Tuple, per the reproducibility rule this file uses throughout: **corpus B, 150 projects, all with
+a populated working tree · scanner set `--source --deps --include-safe` · profile `nist-default` ·
+release build from this tree · dumps taken with `benchmarks/corpus-b-realworld/dump_findings.py`,
+`work/x1_post.json` (1399) → `work/n1_post.json` (1399).**
+
+**10 findings re-identified, 0 added, 0 removed. Precision 87.3 % → 88.3 % under the estimator
+that produced the recorded baseline, and 89.9 % → 90.9 % under the estimator that reads stratum
+A's labels instead of holding it constant.** Both come from one script over the same two dumps,
+and both reproduce their own baselines on the pre dump before anything else prints.
+
+This is the first change in three cycles that the estimator of record can see, and the reason is
+worth naming: the false positives it removes are in `crypto-adjacent`, which sits in stratum B —
+the stratum that is *not* held at a constant. The two preceding cycles removed 91 and 80 false
+positives and were scored +0.8 pp and +0.0 pp because every one of them sat inside the constant.
+
+### What was firing
+
+`cpp.toml`'s extract `CPP-041` matched the bare identifier `crypto_sign_keypair` with no libsodium
+qualification of any kind — no include guard, no header check, no path constraint — and classify
+`CRYPTO-441` attributed `ed25519` unconditionally. That identifier is the SUPERCOP/NIST signature
+API name: libsodium and TweetNaCl implement it as Ed25519, and **every NIST PQC reference
+implementation publishes its own keygen under exactly the same name.**
+
+So we shipped `ed25519 — Replace with ML-DSA-65` on ML-DSA's and SLH-DSA's reference code:
+
+| tree | before | after |
+|---|---|---|
+| `crypto-adjacent/dilithium` (FIPS 204 reference) | 5 findings, `ed25519`, High | 0 `CRYPTO-441`; 5 `CRYPTO-442`, no algorithm asserted, Medium |
+| `crypto-adjacent/sphincsplus` (FIPS 205 reference) | 3 findings, `ed25519`, High | 0 `CRYPTO-441`; 3 `CRYPTO-442` |
+| `npm/tweetnacl` (includes `tweetnacl.h`) | 1 finding, `ed25519`, High | unchanged — 1 `CRYPTO-441`, `ed25519`, High |
+| `pypi/pynacl` (libsodium's own test tree) | 1 finding, `ed25519`, High | 1 `CRYPTO-442` — see the coverage cost below |
+
+Scanned over the **full** clones rather than the corpus's `scan_paths` subtrees, the two reference
+implementations produce **12** such findings (dilithium 5, sphincsplus 7); 8 of the 12 are inside
+the subtrees corpus B scans. `kyber` produces none, as expected — it is KEM-only and defines
+`crypto_kem_keypair`, which does not collide with anything we match.
+
+Trust invariant **P3 held throughout**: all 12 resolve to a real `file:line`. What was invented is
+the *algorithm identity*, from an identifier two families share.
+
+### The fix, and what it costs
+
+The classify layer gained a file-scope predicate, `when.imports`: a list of regexes matched against
+the file's own `#include` targets. `CRYPTO-441` keeps `ed25519` only where the file names a NaCl
+header (`sodium.h`, `sodium/*`, `tweetnacl.h`, `nacl/*`, `crypto_sign*.h`); everything else falls
+to a new `CRYPTO-442` carrying `signature-unattributed`, an inventory-tier id that asserts no
+algorithm and says in its message that the library is unidentified. Include targets are matched
+**as written and never resolved** — resolving one means reproducing the project's include path,
+which is a build, and **P4** forbids running the scanned project's build.
+
+**The cost, stated rather than buried:** `pypi/pynacl/src/libsodium/test/default/sign.c:1282` is
+libsodium's own test and genuinely Ed25519 (`PRECISION_AUDIT_V4.md § 5` row 148, labelled TP). It
+reaches `sodium.h` through `cmptest.h`, and a per-file include set cannot see a transitive include,
+so it falls to the unattributed arm too. **One correct identification is weakened to buy twelve
+wrong ones.** The row is re-labelled by hand in the estimator, in the open, and it stays TP because
+the weaker claim is still true of the line — so the arithmetic below credits this cycle with
+nothing for it.
+
+### The measurement
+
+Predicted before the run and asserted by the script, which exits non-zero rather than print a
+figure if any of it fails: total unchanged at 1399; the site set `(project, file, line)` identical
+row for row; exactly the 10 pre-dump `CRYPTO-441` rows different; every moved row a `CRYPTO-441`
+or `CRYPTO-442`; no `CRYPTO-442` carrying an algorithm. A rule that qualifies one identifier in one
+language cannot reach anything else, and this is what puts that claim at risk.
+
+| estimator | pre 1399 | post 1399 | delta |
+|---|---|---|---|
+| of record — stratum A held at `217/32/23` | 87.3 % (83.5–91.1) | **88.3 %** (84.7–91.9) | **+1.0 pp** |
+| corrected — stratum A read from its own labels | 89.9 % (85.9–94.0) | **90.9 %** (87.0–94.8) | **+1.0 pp** |
+
+Sample sizes and verdicts. Estimator of record: **360 audited rows** — stratum A held at 217 TP /
+32 FP / 23 DEPENDS over 272, stratum B 79 TP / 9 FP over 88 resolving rows of 100. Corrected
+estimator: **214 audited rows** — stratum A 111 TP / 10 FP / 5 DEPENDS over 126 resolving rows of
+150, stratum B as above. Stratified by population share (807 / 592), DEPENDS excluded from both
+sides; scoring all 5 DEPENDS as false positives gives 88.8 %, all as true positives 91.1 %.
+
+**Three rows of the two label sets were re-scored by hand this cycle, and only three.** Each was
+re-read at its cited line, against the *new* claim rather than the old one:
+
+| row | site | was | now |
+|---|---|---|---|
+| A 148 | `pypi/pynacl/.../test/default/sign.c:1282` | TP (`ed25519`) | TP — `CRYPTO-442` claims only that a signature keypair is generated, which is true; specificity lost, precision unchanged |
+| B 90 | `crypto-adjacent/dilithium/avx2/test/test_vectors.c:60` | **FP** — `pqc-as-classical`, ML-DSA published as `ed25519` | TP — asserts no algorithm and names the ambiguity |
+| B 91 | `crypto-adjacent/sphincsplus/ref/test/benchmark.c:148` | **FP** — SLH-DSA published as `ed25519` | TP — same |
+
+A row whose rule id changes is not a row that vanished. Left unmapped, the label lookup would have
+scored all three as "no longer resolves" and quietly shrunk both samples — reporting the two false
+positives as *removed* rather than as *corrected*, which is the more flattering of the two and the
+wrong one. The estimator registers the pre-change key of every re-identified row for exactly this
+reason.
+
+### Held
+
+- `cargo build --release --workspace` clean; `cargo fmt --check` and `cargo clippy --all-targets
+  -- -D warnings` clean.
+- `cargo test --workspace` all passing, **3 new** in `crates/scan-source/tests/scan_test.rs`. They
+  are a fixture pair whose C is byte-identical at the call and differs only in its includes —
+  `crypto.c` (names `sodium.h`, must stay `ed25519`) against `pqc_reference_sign.c` (the
+  dilithium/sphincsplus shape, must assert nothing) — plus `sodium_guarded_include.c`, an
+  `#ifdef`-guarded `#include <sodium.h>`, because portable C guards its optional headers and a
+  collector that reads only top-level includes would go quiet on the most likely real consumers.
+- Speed held, measured rather than assumed: `npm/jose` scans in **0.12–0.16 s** on the post-change
+  binary against **0.13–0.19 s** on the pre-change one, same box, three runs each; the whole
+  `crypto-adjacent/dilithium` tree scans in 0.06–0.07 s. Collecting a file's includes is one pass
+  over the parse tree's top-level children.
+- Recall is untouched: no finding was added or removed and no Go site moved, so no Go line-exact
+  figure can have changed.
+- `regression_check.py` was **not** re-run, and does not need to be: its ecosystem and total floors
+  are counts, the counts are asserted identical, and none of its five per-rule floors names
+  `CRYPTO-441` or `CRYPTO-442`.
+
+### Not re-taken, said out loud
+
+The `--policy nsa-cnsa2` divergence is not re-measured; it describes a 964-finding corpus.
+`scan-network` and `scan-certs` are untouched by this change and corpus B does not exercise them.
+
+The `when.imports` predicate collects includes for **C and C++ only**. Other languages yield an
+empty import set, so a rule carrying the predicate cannot fire on them — the safe direction, since
+not firing costs a finding while a wrong match costs an asserted identity. That is a per-file
+symbol map of the shape the alias/bare-import defect (`#W2`) needs, and it is deliberately not
+generalised here: an unread collector for six more languages would be a claim that something is
+qualified when nothing reads it.
+
+**The gate figure and the published figure still disagree, fifth cycle running.** `PRECISION:`
+reports **88.3 %**; README publishes **90.9 %**. `state/precision.json` holds the estimator of
+record and re-anchoring it is a human's decision, not a cycle's. This cycle is the first evidence
+in three that the estimator of record can move at all — it moved because the fix landed outside
+the held stratum, not because the estimator improved.
