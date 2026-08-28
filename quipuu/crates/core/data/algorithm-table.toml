@@ -1140,6 +1140,14 @@ quantum_status = "QuantumSafe"
 notes = "Marker for a SubtleCrypto call whose algorithm argument is a variable, or names an algorithm with no row in this table. Same semantics as tls-client-config: it records the call site so an auditor can find it, without asserting an algorithm the source does not state. Inventory-tier — deliberately not scored as vulnerable, because scoring it would mean guessing which algorithm it is."
 
 [[algorithm]]
+id = "signature-unattributed"
+display_name = "Signature keygen (implementing library not identified)"
+family = "Signature"
+primitive = "signature"
+quantum_status = "QuantumSafe"
+notes = "Marker for a signature call site whose identifier is shared by a classical and a post-quantum implementation, with nothing in the file to say which one supplies it. The motivating case is the NaCl `crypto_sign_keypair` name: Ed25519 under libsodium and TweetNaCl, ML-DSA / SLH-DSA / FN-DSA under the NIST PQC reference implementations that publish the same API. Unlike ecdsa-unattributed the migration verdict is not exact — the two candidates sit on opposite sides of it — so this row asserts neither. Inventory-tier for the same reason as webcrypto-unattributed: scoring it either way is a guess, and guessing vulnerable told FIPS 204 and FIPS 205 implementations to migrate to FIPS 204. Resolve by hand, or by the include path the build supplies."
+
+[[algorithm]]
 id = "aes-unattributed"
 display_name = "AES (key size and mode not stated at the call site)"
 family = "AES"

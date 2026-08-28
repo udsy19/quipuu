@@ -219,8 +219,10 @@ fn canonicalize_family(family: &str) -> Option<String> {
         // `algorithmFamily` rather than emit something the schema rejects.
         // "Provider" (a JCA/JCE provider registration) and "RNG" (a CSPRNG
         // call site) are the same case: real call sites that name no
-        // algorithm.
-        "TLS" | "JWT" | "WebCrypto" | "Provider" | "RNG" => return None,
+        // algorithm. "Signature" is the same case one step further in: the
+        // primitive is known and the family is not, which is exactly what
+        // the enum has no member for.
+        "TLS" | "JWT" | "WebCrypto" | "Provider" | "RNG" | "Signature" => return None,
         // Identity mapping for everything else (RSASSA-PSS, ECDSA, EdDSA,
         // ECDH, DSA, AES, DES, 3DES, RC4, ChaCha20, MD5, SHA-1/2/3,
         // ML-KEM, ML-DSA, SLH-DSA).

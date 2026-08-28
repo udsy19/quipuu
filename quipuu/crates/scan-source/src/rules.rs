@@ -150,6 +150,31 @@ pub struct WhenClause {
     /// TOML form: `site_context = ["Call", "StructLiteral"]`.
     #[serde(default)]
     pub site_context: Option<Vec<String>>,
+    /// Regexes against the *file's* import set. The rule fires only if at
+    /// least one of them matches at least one import target in the file
+    /// holding the match.
+    ///
+    /// This is the qualification a bare identifier needs when the identifier
+    /// belongs to more than one library. `crypto_sign_keypair` is libsodium's
+    /// Ed25519 keygen *and* the NIST PQC reference API name, so matching the
+    /// text alone attributed Ed25519 to ML-DSA's and SLH-DSA's own reference
+    /// implementations. Naming the header that gives the identifier its
+    /// meaning is what separates them.
+    ///
+    /// The import set is per-file and purely syntactic — a `#include` target
+    /// as written, never resolved and never followed. A file that reaches
+    /// `sodium.h` through another header therefore does not match, and the
+    /// rule that depends on this must fall through to an unattributed arm
+    /// rather than to a guess. Following includes would mean resolving the
+    /// project's include path, which is a build, and P4 forbids one.
+    ///
+    /// Collected for C and C++ today (see `collect_imports`). Other languages
+    /// yield an empty set, so a rule carrying this predicate cannot fire on
+    /// them — the safe direction, since not firing costs a finding while a
+    /// wrong match costs an asserted identity.
+    /// TOML form: `imports = ["(^|/)sodium\\.h$"]`.
+    #[serde(default)]
+    pub imports: Option<Vec<String>>,
 }
 
 /// One language's rule pack — parsed from a single TOML file.

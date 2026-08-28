@@ -249,7 +249,17 @@ severity_hint = "auto"
 message = "libsodium crypto_box_keypair — X25519 key exchange, quantum-vulnerable."
 
 # ============================================================================
-# libsodium — crypto_sign_keypair
+# NaCl API — crypto_sign_keypair
+#
+# The one identifier in this pack that two unrelated families answer to.
+# libsodium and TweetNaCl implement `crypto_sign_keypair` as Ed25519; the NIST
+# PQC reference implementations — ML-DSA (Dilithium), SLH-DSA (SPHINCS+),
+# FN-DSA (Falcon) and every scheme liboqs vendors — publish their keygen under
+# exactly the same name, because it is the SUPERCOP/NIST signature API. Reading
+# the identifier alone told a FIPS 204 implementation to migrate to FIPS 204.
+#
+# So the Ed25519 arm is qualified on the file naming a NaCl header, and
+# anything unqualified gets an inventory-tier id that asserts no algorithm.
 # ============================================================================
 
 [[extract]]
@@ -260,15 +270,32 @@ query = """
   function: (identifier) @fn (#eq? @fn "crypto_sign_keypair"))
 """
 captures = { fn = "ident" }
-api = "libsodium.crypto_sign_keypair"
-description = "libsodium crypto_sign_keypair(pk, sk) — Ed25519 signing."
+api = "nacl-api.crypto_sign_keypair"
+description = "crypto_sign_keypair(pk, sk) — NaCl signature keygen API. Ed25519 under libsodium/TweetNaCl; the same name is the PQC reference API for ML-DSA, SLH-DSA and FN-DSA."
 
 [[classify]]
 id = "CRYPTO-441"
-when.api = "^libsodium\\.crypto_sign_keypair$"
+when.api = "^nacl-api\\.crypto_sign_keypair$"
+# Ed25519 only when the file says where the symbol comes from. Include targets
+# are matched as written and never resolved, so a file that reaches sodium.h
+# through another header falls to CRYPTO-442 — under-claiming, on purpose.
+when.imports = [
+  "(^|/)sodium\\.h$",
+  "(^|/)sodium/",
+  "(^|/)tweetnacl\\.h$",
+  "(^|/)nacl/",
+  "(^|/)crypto_sign(_ed25519[a-z0-9_]*)?\\.h$",
+]
 algorithm_id = "ed25519"
 severity_hint = "auto"
-message = "libsodium crypto_sign_keypair — Ed25519, quantum-vulnerable. Replace with ML-DSA-65."
+message = "libsodium/NaCl crypto_sign_keypair — Ed25519, quantum-vulnerable. Replace with ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-442"
+when.api = "^nacl-api\\.crypto_sign_keypair$"
+algorithm_id = "signature-unattributed"
+severity_hint = "auto"
+message = "crypto_sign_keypair — signature key generation, library not identified. No header in this file says which implementation supplies the symbol: libsodium and TweetNaCl make it Ed25519 (quantum-vulnerable), while the ML-DSA, SLH-DSA and FN-DSA reference implementations use the same name for their own keygen. Resolve against the build's include path before assigning a migration target."
 
 # ============================================================================
 # mbedTLS — mbedtls_rsa_init

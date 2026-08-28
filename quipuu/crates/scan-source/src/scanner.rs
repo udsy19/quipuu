@@ -189,10 +189,12 @@ impl Scanner {
             });
         }
         let source = std::fs::read(path)?;
-        let matches = run_extract(&source, language)?;
-        for m in matches {
+        let extracted = run_extract(&source, language)?;
+        for m in &extracted.matches {
             for classify in &rules.classify {
-                if let Some(finding) = apply_classify(&m, classify, &self.algorithms, path)? {
+                if let Some(finding) =
+                    apply_classify(m, classify, &self.algorithms, path, &extracted.imports)?
+                {
                     out.push(finding);
                     break; // first matching classify rule wins
                 }
@@ -233,13 +235,14 @@ fn detect_language(path: &Path) -> Option<Language> {
 }
 
 /// Run the v0 hard-coded extract pass. Returns one [`RawMatch`] per detected
-/// call site. The TOML rule pack drives classification; what we detect is:
+/// call site, plus the file's import set for the classify layer to qualify
+/// them with. The TOML rule pack drives classification; what we detect is:
 ///
 /// * Go: `rsa.GenerateKey(rand.Reader, <int>)`, `ecdsa.GenerateKey(elliptic.PCURVE(), …)`,
 ///   `ed25519.GenerateKey(...)`, `md5.New()` / `sha1.New()`.
 /// * Python: `rsa.generate_private_key(public_exponent=…, key_size=<int>)`,
 ///   `ec.generate_private_key(ec.SECP256R1())`, `hashlib.md5()` / `hashlib.sha1()`.
-fn run_extract(source: &[u8], language: Language) -> Result<Vec<RawMatch>, ScanError> {
+fn run_extract(source: &[u8], language: Language) -> Result<ExtractedFile, ScanError> {
     let mut parser = Parser::new();
     let ts_lang = match language {
         Language::Go => tree_sitter_go::LANGUAGE,
@@ -264,7 +267,63 @@ fn run_extract(source: &[u8], language: Language) -> Result<Vec<RawMatch>, ScanE
     let mut matches = Vec::new();
     let root = tree.root_node();
     walk(root, source, language, &mut matches, 0);
-    Ok(matches)
+    let imports = collect_imports(root, source, language);
+    Ok(ExtractedFile { matches, imports })
+}
+
+/// One file's extract pass: the call sites, plus the file-scope facts a
+/// classify rule may qualify them with.
+struct ExtractedFile {
+    matches: Vec<RawMatch>,
+    imports: Vec<String>,
+}
+
+/// Every import target named in the file, verbatim.
+///
+/// C and C++ only. `#include <sodium.h>` and `#include "../sign.h"` both
+/// yield the text between the delimiters; nothing is resolved, followed, or
+/// normalised, because resolving an include path means reproducing the
+/// project's build (P4). A rule matches against these strings with a regex,
+/// so it decides for itself how much of the path it cares about.
+///
+/// Returns empty for the other languages. Their import statements have the
+/// same shape and would slot in here, but nothing reads them yet and an
+/// unread collector is a claim that something is qualified when it is not.
+fn collect_imports(root: Node<'_>, source: &[u8], language: Language) -> Vec<String> {
+    if !matches!(language, Language::C | Language::Cpp) {
+        return Vec::new();
+    }
+    let mut out = Vec::new();
+    let mut cursor = root.walk();
+    // `preproc_include` is a top-level node in the C and C++ grammars; an
+    // include inside `#ifdef` sits one level down, under `preproc_ifdef`.
+    // One extra level covers the guarded case without walking the whole tree.
+    for child in root.children(&mut cursor) {
+        push_include_target(child, source, &mut out);
+        if child.kind().starts_with("preproc_if") {
+            let mut inner = child.walk();
+            for grandchild in child.children(&mut inner) {
+                push_include_target(grandchild, source, &mut out);
+            }
+        }
+    }
+    out
+}
+
+fn push_include_target(node: Node<'_>, source: &[u8], out: &mut Vec<String>) {
+    if node.kind() != "preproc_include" {
+        return;
+    }
+    let Some(path) = node.child_by_field_name("path") else {
+        return;
+    };
+    // `<sodium.h>` is a `system_lib_string`, `"sign.h"` a `string_literal`;
+    // both carry their delimiters in the node text.
+    let text = node_text(path, source);
+    let trimmed = text.trim_matches(['<', '>', '"'].as_slice());
+    if !trimmed.is_empty() {
+        out.push(trimmed.to_string());
+    }
 }
 
 /// Maximum AST depth we will descend.
@@ -1194,7 +1253,13 @@ const C_CALLEE_APIS: &[(&str, &str)] = &[
     ("EVP_DigestInit_ex", "openssl.EVP_DigestInit_ex"),
     ("SSL_CTX_set_cipher_list", "openssl.SSL_CTX_set_cipher_list"),
     ("crypto_box_keypair", "libsodium.crypto_box_keypair"),
-    ("crypto_sign_keypair", "libsodium.crypto_sign_keypair"),
+    // Not `libsodium.` — `crypto_sign_keypair` is the NaCl signature keygen
+    // name and the NIST PQC reference API name, so the identifier alone does
+    // not say whose it is. The cpp pack qualifies it on the file's headers.
+    // `crypto_box_keypair` above keeps the libsodium prefix because the PQC
+    // reference API spells its KEM `crypto_kem_keypair`, so it does not
+    // collide.
+    ("crypto_sign_keypair", "nacl-api.crypto_sign_keypair"),
     ("mbedtls_rsa_init", "mbedtls.mbedtls_rsa_init"),
     ("mbedtls_pk_setup", "mbedtls.mbedtls_pk_setup"),
 ];
@@ -2355,6 +2420,7 @@ fn apply_classify(
     rule: &ClassifyRule,
     algorithms: &AlgorithmTable,
     path: &Path,
+    imports: &[String],
 ) -> Result<Option<Finding>, ScanError> {
     // 1. API regex
     let api_re = cached_regex(&rule.when.api)?;
@@ -2367,6 +2433,24 @@ fn apply_classify(
     if let Some(allow) = &rule.when.site_context {
         let ctx_name = format!("{:?}", raw.site_context);
         if !allow.iter().any(|s| s == &ctx_name) {
+            return Ok(None);
+        }
+    }
+
+    // 1.75. File-scope import qualification. When the rule names a header
+    // set, some import in the file holding the match must match one of them.
+    // This is what stops an identifier shared by two libraries from being
+    // attributed to whichever one the rule was written for.
+    if let Some(required) = &rule.when.imports {
+        let mut qualified = false;
+        for pattern in required {
+            let re = cached_regex(pattern)?;
+            if imports.iter().any(|i| re.is_match(i)) {
+                qualified = true;
+                break;
+            }
+        }
+        if !qualified {
             return Ok(None);
         }
     }

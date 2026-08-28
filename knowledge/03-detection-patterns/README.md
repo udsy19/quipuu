@@ -352,7 +352,7 @@ Java crypto is heavily string-driven. The key insight is that `getInstance(Strin
 | 11 | `SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION)` | TLS min version | call on `SSL_CTX_set_min_proto_version`, constant arg[1] |
 | 12 | `X509_new()` / `X509_sign(cert, pkey, digest)` | Certificate | call on `X509_sign`, capture digest arg |
 | 13 | `crypto_box_keypair(pk, sk)` (libsodium) | X25519 + XSalsa20-Poly1305 | call on `crypto_box_keypair` |
-| 14 | `crypto_sign_keypair(pk, sk)` (libsodium) | Ed25519 | call on `crypto_sign_keypair` |
+| 14 | `crypto_sign_keypair(pk, sk)` (libsodium/NaCl) | Ed25519 **only if the file includes a NaCl header** (`sodium.h`, `sodium/*`, `tweetnacl.h`, `nacl/*`, `crypto_sign*.h`); otherwise no algorithm is asserted | call on `crypto_sign_keypair`, qualified by the file's `#include` set — the same name is the NIST PQC reference API, so ML-DSA and SLH-DSA reference code answers to it |
 | 15 | `crypto_secretbox_easy(c, m, mlen, n, k)` (libsodium) | XSalsa20-Poly1305 AEAD | call on `crypto_secretbox_easy` |
 | 16 | `crypto_kx_server_session_keys` / `crypto_kx_client_session_keys` (libsodium) | X25519 key exchange | call on `crypto_kx_*` |
 | 17 | `mbedtls_rsa_init(ctx, MBEDTLS_RSA_PKCS_V21, MBEDTLS_MD_SHA256)` (mbedTLS) | RSA-OAEP-SHA256 | call on `mbedtls_rsa_init`, padding + hash constants |

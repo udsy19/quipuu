@@ -593,6 +593,68 @@ fn scans_c_libsodium_sign_keypair() {
             .any(|f| f.rule_id == "CRYPTO-441" && f.algorithm_id == "ed25519"),
         "expected CRYPTO-441 (Ed25519 sign_keypair) in C fixture"
     );
+    // The fixture includes <sodium.h>, so the qualified arm wins and the
+    // unattributed fallback must not also fire on the same call.
+    assert!(
+        !findings.iter().any(|f| f.rule_id == "CRYPTO-442"),
+        "a file that names sodium.h must not fall through to CRYPTO-442"
+    );
+}
+
+/// `crypto_sign_keypair` in a file that names no NaCl header is not Ed25519.
+///
+/// Measured before the qualification arm existed: 12 findings across
+/// `pq-crystals/dilithium` and `sphincsplus/sphincsplus` in the benchmark
+/// corpus, every one High, every one asserting `ed25519`, every one telling a
+/// FIPS 204 / FIPS 205 reference implementation to replace itself with
+/// ML-DSA-65. The call site is real (P3 held); the algorithm identity was
+/// invented from an identifier two families share.
+#[test]
+fn c_sign_keypair_without_a_nacl_header_asserts_no_algorithm() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/pqc_reference_sign.c"))
+        .expect("scan succeeds");
+
+    assert!(
+        !findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-441" || f.algorithm_id == "ed25519"),
+        "PQC reference shape must not be attributed to Ed25519, got: {findings:?}"
+    );
+    let unattributed: Vec<_> = findings
+        .iter()
+        .filter(|f| f.rule_id == "CRYPTO-442")
+        .collect();
+    assert_eq!(
+        unattributed.len(),
+        1,
+        "the call site is still reported, without an algorithm claim: {findings:?}"
+    );
+    assert_eq!(unattributed[0].algorithm_id, "signature-unattributed");
+    assert_eq!(unattributed[0].location.line, Some(24));
+}
+
+/// A `#include <sodium.h>` behind `#ifdef` still qualifies the call.
+///
+/// Portable C guards its optional headers, so a collector that reads only
+/// top-level includes would drop the Ed25519 arm on exactly the files most
+/// likely to be real consumers.
+#[test]
+fn c_sign_keypair_qualifies_through_a_guarded_include() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/sodium_guarded_include.c"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-441" && f.algorithm_id == "ed25519"),
+        "an #ifdef-guarded sodium.h must still qualify the call: {findings:?}"
+    );
 }
 
 // ============================================================================
