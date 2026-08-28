@@ -2,7 +2,7 @@
   "corpus": "corpus-b-realworld",
   "include_safe": true,
   "total_projects_scanned": 150,
-  "total_elapsed_seconds": 367.44,
+  "total_elapsed_seconds": 281.1,
   "by_ecosystem": {
     "pypi": {
       "projects_scanned": 25,
@@ -11,7 +11,7 @@
       "total_findings": 77,
       "audible_findings": 77,
       "suppressed_findings": 0,
-      "total_duration_seconds": 10.319999999999999
+      "total_duration_seconds": 8.850000000000001
     },
     "npm": {
       "projects_scanned": 25,
@@ -20,7 +20,7 @@
       "total_findings": 127,
       "audible_findings": 127,
       "suppressed_findings": 0,
-      "total_duration_seconds": 6.030000000000001
+      "total_duration_seconds": 5.090000000000001
     },
     "maven": {
       "projects_scanned": 25,
@@ -29,7 +29,7 @@
       "total_findings": 366,
       "audible_findings": 366,
       "suppressed_findings": 0,
-      "total_duration_seconds": 67.32000000000001
+      "total_duration_seconds": 44.05
     },
     "crates-io": {
       "projects_scanned": 25,
@@ -38,16 +38,16 @@
       "total_findings": 226,
       "audible_findings": 226,
       "suppressed_findings": 0,
-      "total_duration_seconds": 10.050000000000002
+      "total_duration_seconds": 2.0300000000000007
     },
     "go-modules": {
       "projects_scanned": 25,
       "projects_with_findings": 20,
       "projects_with_errors": 0,
-      "total_findings": 576,
-      "audible_findings": 576,
+      "total_findings": 485,
+      "audible_findings": 485,
       "suppressed_findings": 0,
-      "total_duration_seconds": 210.86999999999995
+      "total_duration_seconds": 172.91000000000003
     },
     "crypto-adjacent": {
       "projects_scanned": 25,
@@ -56,7 +56,7 @@
       "total_findings": 198,
       "audible_findings": 198,
       "suppressed_findings": 0,
-      "total_duration_seconds": 62.61
+      "total_duration_seconds": 47.87
     }
   },
   "top_10_by_findings": [
@@ -70,10 +70,10 @@
         "jws",
         "jwt"
       ],
-      "total_findings": 196,
-      "audible_findings": 196,
+      "total_findings": 195,
+      "audible_findings": 195,
       "suppressed_findings": 0,
-      "duration_seconds": 0.94,
+      "duration_seconds": 0.68,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -95,7 +95,7 @@
           "count": 2
         },
         {
-          "algorithm_id": "rsa-pkcs1-sha256-2048",
+          "algorithm_id": "rsa-pkcs1-sha256",
           "count": 2
         },
         {
@@ -151,16 +151,12 @@
           "count": 5
         },
         {
-          "algorithm_id": "rsa-pkcs1-sha256-2048",
+          "algorithm_id": "rsa-pkcs1-sha256",
           "count": 5
         },
         {
           "algorithm_id": "x25519",
           "count": 2
-        },
-        {
-          "algorithm_id": "jwt-alg-none",
-          "count": 1
         },
         {
           "algorithm_id": "rsa-2048",
@@ -177,7 +173,7 @@
       "total_findings": 140,
       "audible_findings": 140,
       "suppressed_findings": 0,
-      "duration_seconds": 2.28,
+      "duration_seconds": 0.44,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -195,7 +191,7 @@
           "count": 24
         },
         {
-          "algorithm_id": "ecdsa-p256",
+          "algorithm_id": "ecdsa-unattributed",
           "count": 6
         }
       ]
@@ -209,7 +205,7 @@
       "total_findings": 119,
       "audible_findings": 119,
       "suppressed_findings": 0,
-      "duration_seconds": 16.36,
+      "duration_seconds": 13.52,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -227,12 +223,12 @@
           "count": 6
         },
         {
-          "algorithm_id": "ecdsa-p256",
-          "count": 2
+          "algorithm_id": "ecdsa-unattributed",
+          "count": 4
         },
         {
-          "algorithm_id": "ecdsa-unattributed",
-          "count": 2
+          "algorithm_id": "md5",
+          "count": 1
         }
       ]
     },
@@ -245,18 +241,18 @@
       "total_findings": 93,
       "audible_findings": 93,
       "suppressed_findings": 0,
-      "duration_seconds": 7.42,
+      "duration_seconds": 5.42,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
       "sample_findings": [
         {
-          "algorithm_id": "ecdsa-p256",
-          "count": 22
+          "algorithm_id": "ecdsa-unattributed",
+          "count": 20
         },
         {
-          "algorithm_id": "rsa-2048",
-          "count": 21
+          "algorithm_id": "rsa-unattributed",
+          "count": 15
         },
         {
           "algorithm_id": "aes-unattributed",
@@ -281,15 +277,11 @@
       "total_findings": 78,
       "audible_findings": 78,
       "suppressed_findings": 0,
-      "duration_seconds": 0.42,
+      "duration_seconds": 0.25,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
       "sample_findings": [
-        {
-          "algorithm_id": "ecdsa-p256",
-          "count": 8
-        },
         {
           "algorithm_id": "sha-256",
           "count": 8
@@ -297,6 +289,10 @@
         {
           "algorithm_id": "aes-unattributed-gcm",
           "count": 7
+        },
+        {
+          "algorithm_id": "ecdsa-p256",
+          "count": 6
         },
         {
           "algorithm_id": "ecdsa-p384",
@@ -317,7 +313,7 @@
       "total_findings": 77,
       "audible_findings": 77,
       "suppressed_findings": 0,
-      "duration_seconds": 0.3,
+      "duration_seconds": 0.22,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -331,52 +327,16 @@
           "count": 13
         },
         {
-          "algorithm_id": "rsa-2048",
-          "count": 11
+          "algorithm_id": "ed25519",
+          "count": 9
         },
         {
-          "algorithm_id": "ed25519",
+          "algorithm_id": "rsa-2048",
           "count": 9
         },
         {
           "algorithm_id": "ecdsa-p384",
           "count": 6
-        }
-      ]
-    },
-    {
-      "canonical_id": "go-modules:github.com/aws/aws-sdk-go-v2",
-      "ecosystem": "go-modules",
-      "scan_paths": [
-        "."
-      ],
-      "total_findings": 75,
-      "audible_findings": 75,
-      "suppressed_findings": 0,
-      "duration_seconds": 144.51,
-      "exit_code": 0,
-      "status": "ok",
-      "errors": [],
-      "sample_findings": [
-        {
-          "algorithm_id": "jwt-alg-none",
-          "count": 47
-        },
-        {
-          "algorithm_id": "rsa-1024",
-          "count": 11
-        },
-        {
-          "algorithm_id": "sha-1",
-          "count": 7
-        },
-        {
-          "algorithm_id": "md5",
-          "count": 4
-        },
-        {
-          "algorithm_id": "ecdsa-p256",
-          "count": 2
         }
       ]
     },
@@ -391,7 +351,7 @@
       "total_findings": 65,
       "audible_findings": 65,
       "suppressed_findings": 0,
-      "duration_seconds": 3.81,
+      "duration_seconds": 3.3,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -401,7 +361,7 @@
           "count": 14
         },
         {
-          "algorithm_id": "rsa-1024",
+          "algorithm_id": "rsa-undersized",
           "count": 5
         },
         {
@@ -455,7 +415,7 @@
       "total_findings": 64,
       "audible_findings": 64,
       "suppressed_findings": 0,
-      "duration_seconds": 0.08,
+      "duration_seconds": 0.05,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -465,7 +425,7 @@
           "count": 33
         },
         {
-          "algorithm_id": "rsa-pkcs1-sha256-2048",
+          "algorithm_id": "rsa-pkcs1-sha256",
           "count": 26
         },
         {
@@ -473,11 +433,11 @@
           "count": 2
         },
         {
-          "algorithm_id": "rsa-pss-sha256-2048",
+          "algorithm_id": "rsa-pss-sha256",
           "count": 2
         },
         {
-          "algorithm_id": "rsa-2048",
+          "algorithm_id": "rsa-unattributed",
           "count": 1
         }
       ]
@@ -493,7 +453,7 @@
       "total_findings": 60,
       "audible_findings": 60,
       "suppressed_findings": 0,
-      "duration_seconds": 5.2,
+      "duration_seconds": 4.56,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -503,7 +463,7 @@
           "count": 16
         },
         {
-          "algorithm_id": "rsa-1024",
+          "algorithm_id": "rsa-undersized",
           "count": 7
         },
         {
@@ -536,6 +496,60 @@
         },
         {
           "algorithm_id": "3des",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "canonical_id": "go-modules:github.com/hashicorp/vault",
+      "ecosystem": "go-modules",
+      "scan_paths": [
+        "builtin/logical/pki",
+        "vault/seal",
+        "sdk/helper/certutil"
+      ],
+      "total_findings": 50,
+      "audible_findings": 50,
+      "suppressed_findings": 0,
+      "duration_seconds": 0.7,
+      "exit_code": 0,
+      "status": "ok",
+      "errors": [],
+      "sample_findings": [
+        {
+          "algorithm_id": "ecdsa-p256",
+          "count": 25
+        },
+        {
+          "algorithm_id": "ed25519",
+          "count": 5
+        },
+        {
+          "algorithm_id": "ecdsa-p384",
+          "count": 2
+        },
+        {
+          "algorithm_id": "ecdsa-p521",
+          "count": 2
+        },
+        {
+          "algorithm_id": "rsa-2048",
+          "count": 2
+        },
+        {
+          "algorithm_id": "ecdsa-p256",
+          "count": 5
+        },
+        {
+          "algorithm_id": "ed25519",
+          "count": 5
+        },
+        {
+          "algorithm_id": "ecdsa-p384",
+          "count": 2
+        },
+        {
+          "algorithm_id": "ecdsa-p521",
           "count": 1
         }
       ]

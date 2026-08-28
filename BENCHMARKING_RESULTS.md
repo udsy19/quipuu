@@ -1357,3 +1357,128 @@ clause, `algorithm_id`, severity mapping, or policy weight changed.
 
 Precision therefore stands at **86.5%**, carried forward rather than re-derived. The figure is
 traceable to the run recorded above it, not merely to a green gate.
+
+---
+
+## `alg=none` needs a second witness — 2026-08-28
+
+Tuple, per the reproducibility rule this file uses throughout: **corpus B, 150 projects, all with
+a populated working tree · scanner set `--source --deps --include-safe` · profile `nist-default` ·
+release build from this tree · dumps taken with `benchmarks/corpus-b-realworld/dump_findings.py`.**
+
+**91 findings removed, 0 added, 0 re-classified. Precision 86.5 % → 87.3 % under the estimator
+that produced the recorded baseline, and 80.0 % → 84.7 % under the estimator that stops holding
+stratum A constant.** The second pair is the honest one and the first pair is the comparable one;
+both are printed by the same script, from the same two dumps, and § *The estimator* below says why
+they differ by 6.5 pp before a line of the diff is applied.
+
+### What was firing
+
+`CRYPTO-740` carries `severity_hint = "critical"`, `CWE-347`, and the message *"JWT alg=none —
+signature verification is disabled. CVE-2015-9235 class vulnerability."* It is the loudest thing
+this scanner says. It fired **92 times** on the corpus, and on 91 of those the cited line has
+nothing to do with authentication:
+
+```
+CRYPTO-740, pre-change:                             92 findings, 5.9 % of the corpus
+  aws-sdk-go-v2   47   IpcModeNone = "none", SSETypeNone = "none", CachePolicy…None = "none"
+  aws-sdk-go      29   generated service enums, same shape
+  x-crypto         6   compressionNone = "none" — the SSH null compression algorithm,
+                       and `ssh -F none` in a test's argument list
+  hydra            4   oauth2.SetAuthURLParam("prompt", "none")
+  jwx              2   one real registry entry, one test that tampers a header
+  go-redis         2   EndpointTypeNone = "none"
+  client-go        1   a test's config value
+  pgx              1   require_auth = "none"
+```
+
+**0 of the 92 cited lines mention JWT, JOSE, JWS, JWE or JWK.** The cause is one entry in
+`GO_ALG_SWITCH_WHITELIST`: `"none"` is the only whitelisted JWA name that is also an ordinary
+English word, and the extract layer accepted it in any const, var, composite literal, argument
+list or assignment — the same syntactic positions that make the whitelist work for `RS256`.
+
+### The change, and the fix that was rejected on measurement
+
+The obvious gate — require a JWT/JOSE import in the file — was **tried and rejected before it was
+written**. The pinning fixture `crates/scan-source/tests/fixtures/go/jwt_register.go` imports only
+`crypto`, so an import gate breaks a legitimate test; and 6 of the 92 false positives import a JOSE
+package anyway, so it does not even clear the corpus.
+
+What ships instead is corroboration on siblings: `"none"` registers an algorithm only when another
+JOSE algorithm name appears in the same `const`/`var` declaration, composite literal, `switch`, or
+enclosing block. One name vouches for another, which is exactly how a registry is written and
+exactly how an enum of unrelated strings is not.
+
+The one surviving corpus finding is the one that was always real —
+`go-modules/jwx/jwa/signature_gen.go:23`, `algorithms[8] = NewSignatureAlgorithm("none")`, three
+lines below `NewSignatureAlgorithm("HS512")`. **That survival was the falsification condition
+stated in advance**: if jwx's own registry had stopped being detected, the window was too narrow
+and the change was not to land. It is asserted in the estimator script, not checked by eye.
+
+```
+sites added 0   sites removed 91   removed by rule: {'CRYPTO-740': 91}
+CRYPTO-740: 92 -> 1
+findings classifying as jwt-alg-none whose file names no other JOSE algorithm: 91 -> 0
+stdout severity: High 968 -> 877, Medium 471 -> 471, unscored 131 -> 131
+by ecosystem:    go-modules 576 -> 485; maven, crates-io, crypto-adjacent, npm, pypi unchanged
+```
+
+**A recall loss that was checked for and did not happen.** golang-jwt/jwt registers `alg=none` as
+`func (m *signingMethodNone) Alg() string { return "none" }` — a lone literal in a method body
+with no sibling name, which corroboration would drop. Scanned directly, that file produces no
+`CRYPTO-740` **before or after**: the return-statement shape never matched the classify rule's
+site-context list, so there was nothing to lose. Checked rather than assumed, because it is the
+most-used Go JWT library in the corpus.
+
+### The estimator, and why this cycle reports two numbers
+
+The recorded baseline is a two-stratum weighted estimate in which stratum A — 964 of 1570
+findings — is the constant `A_TP, A_FP, A_DEPENDS = 217, 32, 23`, a carried 87.1 % whose per-row
+labels do not survive. **77 of the 91 findings this change removes are in that stratum**, so 85 %
+of the repair is invisible to the published figure by construction.
+
+So stratum A was re-audited in the same run: 150 rows, uniform, seed 20260828, every row labelled
+by opening its cited `file:line`, verdicts published in full in `PRECISION_AUDIT_V4.md`. It audits
+at **76.6 %** (111 TP / 34 FP / 5 DEPENDS), not 87.1 %.
+
+| estimator | pre — 1570 findings | post — 1479 findings | delta |
+|---|---|---|---|
+| of record (stratum A held) | 86.5 % (82.7–90.3) | **87.3 %** (83.6–91.0) | +0.8 pp |
+| corrected (stratum A audited) | 80.0 % (74.9–85.1) | **84.7 %** (80.0–89.4) | +4.7 pp |
+
+Read the columns, not the diagonal. **86.5 → 80.0 is the same scanner on the same dump** — the
+cost of the constant, not a regression, and it appears the moment the held stratum is read instead
+of remembered. **80.0 → 84.7 is this diff.** The +0.8 pp in the first row is the same repair seen
+through an estimator that cannot see 77 of the 91 findings it removed.
+
+`state/precision.json` holds 86.5 % under the estimator of record, and the figure this run reports
+to it is the like-for-like **87.3 %**, because that is the only one of the four numbers above that
+is comparable to what it holds. The recommendation on the evidence is to re-anchor it to 84.7 %
+and delete the constant — a change to the recorded baseline is not a cycle's to make.
+
+Both rows are produced by one script, `/opt/cryptoscope/work/v1b_precision.py`, which asserts that
+the estimator of record reproduces its own 86.5 % baseline on the pre dump before printing
+anything, and aborts if the change added any finding or removed one outside `CRYPTO-740`.
+
+### Held
+
+`cargo build --release --workspace` clean. `cargo test --workspace`: **295 tests across 41
+targets, all passing** (294 before; this cycle adds `go_alg_none_fires_only_beside_another_jose_name`,
+which pins both corroborated shapes and all four uncorroborated ones against two new fixtures).
+`phase9_go_const_declaration_registers_none` passes **unchanged** — its fixture declares `none`
+beside `hs256` and `hs384`, which is the shape corroboration is meant to keep, and it is the test
+that made this the right instrument rather than an import gate.
+
+`regression_check.py`: **13 of 13 floors met** at 1479 findings, 150 projects, 0 errored. The
+per-rule floor for `CRYPTO-740` is lowered from 3 to **1** in the same change, with the count and
+the reason recorded beside it — one real site is what this corpus contains, and a floor of 3 would
+have demanded two false positives in perpetuity.
+
+### What this does not fix
+
+The 11 `alg=none` rows in the stratum-A sample were **15 % of that stratum's measured false
+positives**. The other two shapes it found — the Java JOSE-dispatch constant
+(`alg.equals(JWSAlgorithm.PS256)`, 13 rows) and calls a test requires to fail
+(`jwt.encode(...)` inside `pytest.raises`, 6 rows) — are untouched, and together they are twice
+the class removed here. Both are named in `PRECISION_AUDIT_V4.md § 2` with their file:line
+evidence; neither has a rule change behind it yet.
