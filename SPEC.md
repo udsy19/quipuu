@@ -231,9 +231,11 @@ seawall validate cbom.json                   # CBOM schema validation
 seawall policy list                          # nist-default | nsa-cnsa2
 ```
 
-Flags: `--rules <dir>`, `--exclude <glob>`, `--format {tui,json,sarif,html,cbom,gitlab-sast}`, `--schema-version {1.7,1.6}`, `--policy <file-or-preset>`, `--fail-on {critical,high,…}` (CI gate), `--config <file>`, `--no-color`, `-v`.
+Flags: `--rules <dir>`, `--exclude <glob>`, `--format {tui,json,sarif,html,cbom,gitlab-sast}`, `--schema-version {1.7,1.6}`, `--policy <file-or-preset>`, `--fail-on {critical,high,medium,low,safe,policy,none}` (CI gate), `--config <file>`, `--no-color`, `-v`.
 
-Exit non-zero when `--fail-on` threshold is met.
+`scan` takes one or more paths, interleaved with flags in any order, because the pre-commit hook appends the staged file list after its configured `args`.
+
+Exit codes: `0` scan completed and no `--fail-on` threshold was met; `1` the threshold was met (a reported finding is at or above it), or an output file could not be written; `2` seawall refused to run — unparseable `--fail-on` value, missing path, or `--net` without `--allow-network`. `--fail-on policy` resolves to the active policy's `[ci] fail_on`.
 
 ## 12. Build order (sequential milestones; keep `main` green)
 

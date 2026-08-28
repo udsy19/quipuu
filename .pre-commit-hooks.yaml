@@ -27,9 +27,11 @@
   # pre-commit passes the list of staged files as positional arguments;
   # seawall accepts a path or list of paths to scan.
   #
-  # --fail-on critical  exits non-zero only when a HNDL-critical finding is
-  #                     present, so medium/low findings don't block every
-  #                     commit.  Change to 'high' or 'medium' to tighten this.
+  # --fail-on critical  exits 1 when a reported finding scores at severity
+  #                     Critical, so medium/low findings don't block every
+  #                     commit.  Change to 'high' or 'medium' to tighten this,
+  #                     or 'policy' to gate at whatever the active policy's
+  #                     [ci] fail_on says.  An unparseable value exits 2.
   #
   # --config is optional; seawall auto-discovers .seawall.toml at the
   # repo root.  Uncomment and adjust the path if your config lives elsewhere.

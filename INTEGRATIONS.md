@@ -44,12 +44,21 @@ The most common ones:
 | Setting | Where | Default |
 |---------|-------|---------|
 | Scan target path | `env.SCAN_TARGET` | `.` (whole repo) |
-| Fail on severity  | `--fail-on` arg   | not set (always exit 0) |
+| Fail on severity  | `--fail-on` arg   | not set (exit 0 on any finding) |
 | Artifact retention | `retention-days` | 30 days |
 | Scan category (Code Scanning UI) | `category:` | `seawall` |
 
 To fail the workflow on critical findings, add `--fail-on critical` to the
-`seawall scan` step args.
+`seawall scan` step args. The threshold is *at or above*: `--fail-on medium`
+fails on Medium, High and Critical alike. `--fail-on policy` defers to the
+active policy's `[ci] fail_on` — `nist-default` says `critical`, `nsa-cnsa2`
+says `high` — so a policy switch moves the gate with it.
+
+Exit codes: **0** the scan ran and no threshold was met; **1** the threshold was
+met, or an output file could not be written; **2** seawall refused to run — a bad
+argument, a path that does not exist, or `--net` without `--allow-network`. A
+threshold seawall cannot parse is a refusal, not a warning, so a typo in the
+gate never reads as a pass.
 
 ---
 
@@ -85,6 +94,9 @@ Subsequent `git commit` invocations will run seawall on staged files only.
 
 The hook exits non-zero only when a **critical** severity finding is present
 (configurable via `args: [--fail-on, high]` in your `.pre-commit-config.yaml`).
+pre-commit passes the staged files as positional arguments; seawall scans every
+one of them, and refuses to run if any is unreadable rather than reporting a
+clean commit for a tree it never opened.
 
 Your `.seawall.toml` at the repo root is picked up automatically.
 

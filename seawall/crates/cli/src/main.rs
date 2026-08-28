@@ -22,7 +22,7 @@ use seawall_cbom::SchemaVersion;
 use seawall_cbom::emit::{EmitOptions, ScanTarget};
 use seawall_cbom::emit_cbom_json;
 use seawall_core::risk::apply_hndl_flags;
-use seawall_core::{Finding, Policy, QuantumRiskScore, load_builtins};
+use seawall_core::{Finding, Policy, QuantumRiskScore, Severity, load_builtins};
 use seawall_report::{ReportOptions, emit_html, emit_sarif, emit_summary_json, partition_audible};
 use seawall_scan_certs::CertScanner;
 use seawall_scan_deps::DepScanner;
@@ -48,14 +48,15 @@ fn main() -> ExitCode {
                 .unwrap_or_default();
             init::run(path)
         }
-        Some("scan") => match args.get(2) {
-            Some(path) => {
-                let opts = parse_scan_flags(&args[3..]);
-                run_scan(PathBuf::from(path), opts)
+        Some("scan") => match parse_scan_args(&args[2..]) {
+            Ok(flags) if flags.paths.is_empty() => {
+                eprintln!("seawall: scan requires at least one path argument");
+                ExitCode::from(2)
             }
-            None => {
-                eprintln!("seawall: scan requires a path argument");
-                ExitCode::FAILURE
+            Ok(flags) => run_scan(flags),
+            Err(msg) => {
+                eprintln!("seawall: {msg}");
+                ExitCode::from(2)
             }
         },
         Some("policy") => match args.get(2).map(String::as_str) {
@@ -90,7 +91,7 @@ fn print_help() {
 
 USAGE:
     seawall init [PATH]                   Walk through setup, write .seawall.toml
-    seawall scan [PATH] [FLAGS]           Scan a file or directory
+    seawall scan <PATH...> [FLAGS]        Scan one or more files or directories
     seawall policy list                   List the built-in policy presets
     seawall mcp-serve [--allow-network]   Start MCP server over stdio
 
@@ -125,6 +126,20 @@ POLICY:
                               file. `seawall policy list` names the presets;
                               the default is nist-default. A policy reweights
                               findings — it never changes what is detected.
+
+CI GATE:
+    --fail-on <threshold>     Exit 1 when a reported finding is at least this
+                              severe. One of: critical, high, medium, low, safe;
+                              `policy` to use the active policy's [ci] fail_on;
+                              `none` to disable. Omitted: seawall always exits 0
+                              on a successful scan.
+
+EXIT CODES:
+    0                         Scan completed; no --fail-on threshold was met
+    1                         --fail-on threshold met, or an output file failed
+                              to write
+    2                         seawall refused to run (bad argument, missing
+                              path, or --net without --allow-network)
 
 FILTERS:
     --include-safe            Show inventory-only findings (QuantumSafe, PqcFinal,
@@ -166,6 +181,10 @@ fn print_policy_list() {
 
 #[derive(Default)]
 struct ScanFlags {
+    /// Every positional argument, in the order given. More than one because
+    /// the pre-commit hook sets `pass_filenames: true` and hands us the whole
+    /// staged file list.
+    paths: Vec<PathBuf>,
     scan_source: bool,
     scan_certs: bool,
     scan_deps: bool,
@@ -186,9 +205,59 @@ struct ScanFlags {
     /// `--policy <name-or-path>`. `None` means "whatever .seawall.toml
     /// says", falling back to the built-in nist-default.
     policy: Option<String>,
+    /// `--fail-on <severity|policy|none>` — the CI gate. `None` means no gate
+    /// was requested and the exit code reflects only whether seawall itself
+    /// ran, which is the documented default.
+    fail_on: Option<FailOn>,
 }
 
-fn parse_scan_flags(tail: &[String]) -> ScanFlags {
+/// Resolved `--fail-on` argument. `Policy` defers to the active policy's
+/// `[ci] fail_on`, so `--policy nsa-cnsa2 --fail-on policy` gates at High
+/// because that preset says so.
+#[derive(Clone, Copy)]
+enum FailOn {
+    Never,
+    AtLeast(Severity),
+    Policy,
+}
+
+impl FailOn {
+    fn parse(value: &str) -> Result<Self, String> {
+        match value {
+            "none" => Ok(FailOn::Never),
+            "policy" => Ok(FailOn::Policy),
+            other => Severity::parse(other).map(FailOn::AtLeast).ok_or_else(|| {
+                let names: Vec<&str> = Severity::ALL.iter().map(|s| s.slug()).collect();
+                format!(
+                    "unknown --fail-on threshold `{other}` (expected one of: {}, policy, none)",
+                    names.join(", "),
+                )
+            }),
+        }
+    }
+
+    /// The severity at or above which the scan should exit non-zero, or `None`
+    /// for "never fail". Resolving `policy` can fail: a policy file is free to
+    /// carry a `fail_on` string we do not recognise, and a gate we cannot read
+    /// must refuse to run rather than default to open.
+    fn threshold(self, policy: &Policy) -> Result<Option<Severity>, String> {
+        match self {
+            FailOn::Never => Ok(None),
+            FailOn::AtLeast(s) => Ok(Some(s)),
+            FailOn::Policy => match policy.ci.fail_on.as_str() {
+                "none" => Ok(None),
+                other => Severity::parse(other).map(Some).ok_or_else(|| {
+                    format!(
+                        "policy `{}` sets ci.fail_on = \"{other}\", which is not a severity",
+                        policy.meta.name,
+                    )
+                }),
+            },
+        }
+    }
+}
+
+fn parse_scan_args(tail: &[String]) -> Result<ScanFlags, String> {
     let mut flags = ScanFlags::default();
     let mut it = tail.iter();
     while let Some(arg) = it.next() {
@@ -253,7 +322,13 @@ fn parse_scan_flags(tail: &[String]) -> ScanFlags {
             }
             "--policy" => match it.next() {
                 Some(p) => flags.policy = Some(p.clone()),
-                None => eprintln!("seawall: --policy requires a preset name or file path"),
+                None => return Err("--policy requires a preset name or file path".into()),
+            },
+            // A CI gate that mis-parses its own threshold is worse than no
+            // gate, so every failure here is fatal rather than a warning.
+            "--fail-on" => match it.next() {
+                Some(v) => flags.fail_on = Some(FailOn::parse(v)?),
+                None => return Err("--fail-on requires a threshold".into()),
             },
             "--schema-version" => {
                 if let Some(v) = it.next() {
@@ -267,10 +342,21 @@ fn parse_scan_flags(tail: &[String]) -> ScanFlags {
                     };
                 }
             }
-            other => {
+            other if other.starts_with('-') => {
                 eprintln!("seawall: ignoring unknown flag `{other}`");
             }
+            // Anything that is not a flag is a path to scan. Flags and paths
+            // may be interleaved: pre-commit appends the staged file list
+            // after the configured `args:`.
+            path => flags.paths.push(PathBuf::from(path)),
         }
+    }
+
+    // A path that isn't there is refused, not skipped. Scanning nothing and
+    // reporting "0 findings" is indistinguishable from a clean tree, which is
+    // the exact failure this gate exists to prevent.
+    if let Some(missing) = flags.paths.iter().find(|p| !p.exists()) {
+        return Err(format!("no such file or directory: {}", missing.display()));
     }
 
     // If no mode flag was passed, default to source + deps (the safe set —
@@ -280,16 +366,19 @@ fn parse_scan_flags(tail: &[String]) -> ScanFlags {
         flags.scan_source = true;
         flags.scan_deps = true;
     }
-    flags
+    Ok(flags)
 }
 
-fn run_scan(path: PathBuf, mut flags: ScanFlags) -> ExitCode {
-    // Load .seawall.toml from the scan target directory (or current dir if
-    // it is a file) and apply it as defaults. Explicit CLI flags still win.
-    let config_dir = if path.is_dir() {
-        path.clone()
+fn run_scan(mut flags: ScanFlags) -> ExitCode {
+    let paths = std::mem::take(&mut flags.paths);
+    // Load .seawall.toml from the first scan target's directory (or current
+    // dir if it is a file) and apply it as defaults. Explicit CLI flags win.
+    let first = &paths[0];
+    let config_dir = if first.is_dir() {
+        first.clone()
     } else {
-        path.parent()
+        first
+            .parent()
             .map(|p| p.to_path_buf())
             .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
     };
@@ -335,37 +424,55 @@ fn run_scan(path: PathBuf, mut flags: ScanFlags) -> ExitCode {
     let mut findings: Vec<Finding> = Vec::new();
     let mut warnings: Vec<seawall_core::ScanWarning> = Vec::new();
 
+    // Each scanner is built once and walked over every path, so a 200-file
+    // pre-commit invocation doesn't reload the rule tables 200 times.
     if flags.scan_source {
-        match Scanner::with_builtins(builtins.algorithms.clone())
-            .and_then(|s| s.scan_path_collecting(&path, &mut warnings))
-        {
-            Ok(mut f) => findings.append(&mut f),
+        let scanner = match Scanner::with_builtins(builtins.algorithms.clone()) {
+            Ok(s) => s,
             Err(e) => {
                 eprintln!("seawall: source scan failed: {e}");
                 return ExitCode::FAILURE;
+            }
+        };
+        for path in &paths {
+            match scanner.scan_path_collecting(path, &mut warnings) {
+                Ok(mut f) => findings.append(&mut f),
+                Err(e) => {
+                    eprintln!("seawall: source scan of {} failed: {e}", path.display());
+                    return ExitCode::FAILURE;
+                }
             }
         }
     }
 
     if flags.scan_certs {
-        match CertScanner::with_builtins()
-            .and_then(|s| s.scan_path_collecting(&path, &mut warnings))
-        {
-            Ok(mut f) => findings.append(&mut f),
+        let scanner = match CertScanner::with_builtins() {
+            Ok(s) => s,
             Err(e) => {
                 eprintln!("seawall: cert scan failed: {e}");
                 return ExitCode::FAILURE;
+            }
+        };
+        for path in &paths {
+            match scanner.scan_path_collecting(path, &mut warnings) {
+                Ok(mut f) => findings.append(&mut f),
+                Err(e) => {
+                    eprintln!("seawall: cert scan of {} failed: {e}", path.display());
+                    return ExitCode::FAILURE;
+                }
             }
         }
     }
 
     if flags.scan_deps {
         let scanner = DepScanner::with_builtins();
-        match scanner.scan_path_collecting(&path, &mut warnings) {
-            Ok(mut f) => findings.append(&mut f),
-            Err(e) => {
-                eprintln!("seawall: deps scan failed: {e}");
-                return ExitCode::FAILURE;
+        for path in &paths {
+            match scanner.scan_path_collecting(path, &mut warnings) {
+                Ok(mut f) => findings.append(&mut f),
+                Err(e) => {
+                    eprintln!("seawall: deps scan of {} failed: {e}", path.display());
+                    return ExitCode::FAILURE;
+                }
             }
         }
     }
@@ -429,9 +536,13 @@ fn run_scan(path: PathBuf, mut flags: ScanFlags) -> ExitCode {
         audible_refs.iter().map(|f| (*f).clone()).collect()
     };
 
+    let scan_target = paths
+        .iter()
+        .map(|p| p.to_string_lossy().into_owned())
+        .collect::<Vec<_>>()
+        .join(" ");
     println!(
-        "seawall: scanned {} → {} finding(s) (policy: {})",
-        path.display(),
+        "seawall: scanned {scan_target} → {} finding(s) (policy: {})",
         findings.len(),
         builtins.policy.meta.name,
     );
@@ -470,7 +581,6 @@ fn run_scan(path: PathBuf, mut flags: ScanFlags) -> ExitCode {
     }
 
     let timestamp = current_timestamp();
-    let scan_target = path.to_string_lossy().into_owned();
     // Any emitter may fail without preventing the others from running; the
     // process exit code still reflects that something went wrong.
     let mut emit_failed = false;
@@ -583,7 +693,13 @@ fn run_scan(path: PathBuf, mut flags: ScanFlags) -> ExitCode {
     }
 
     if flags.open_tui {
-        let tui = Tui::new(displayed_findings, builtins.algorithms, builtins.policy);
+        // Clone: the --fail-on gate below is the last word on the exit code,
+        // so it still needs the findings and tables after the TUI closes.
+        let tui = Tui::new(
+            displayed_findings.clone(),
+            builtins.algorithms.clone(),
+            builtins.policy.clone(),
+        );
         if let Err(e) = tui.run() {
             eprintln!("seawall: TUI failed: {e}");
             return ExitCode::FAILURE;
@@ -614,6 +730,50 @@ fn run_scan(path: PathBuf, mut flags: ScanFlags) -> ExitCode {
     if emit_failed {
         return ExitCode::FAILURE;
     }
+
+    // ── CI gate ───────────────────────────────────────────────────────────
+    // Gate on what was reported, not on the full inventory: a finding hidden
+    // as quantum-safe should not block a commit the operator never saw it in.
+    if let Some(fail_on) = flags.fail_on {
+        let threshold = match fail_on.threshold(&builtins.policy) {
+            Ok(t) => t,
+            Err(e) => {
+                eprintln!("seawall: {e}");
+                return ExitCode::from(2);
+            }
+        };
+        if let Some(threshold) = threshold {
+            let (mut tripped, mut unscored) = (0usize, 0usize);
+            for f in &displayed_findings {
+                match builtins.algorithms.get(&f.algorithm_id) {
+                    // The `?` rows on stdout: an algorithm-id we do not
+                    // catalogue has no severity, so it can neither trip the
+                    // gate nor be quietly counted as clean.
+                    None => unscored += 1,
+                    Some(algo) => {
+                        let sev = QuantumRiskScore::compute(f, algo, &builtins.policy).severity;
+                        if sev.rank() >= threshold.rank() {
+                            tripped += 1;
+                        }
+                    }
+                }
+            }
+            if unscored > 0 {
+                eprintln!(
+                    "seawall: {unscored} finding(s) have an uncatalogued algorithm and were not \
+                     scored against --fail-on",
+                );
+            }
+            if tripped > 0 {
+                eprintln!(
+                    "seawall: {tripped} finding(s) at or above `{}` — failing per --fail-on",
+                    threshold.slug(),
+                );
+                return ExitCode::FAILURE;
+            }
+        }
+    }
+
     ExitCode::SUCCESS
 }
 
