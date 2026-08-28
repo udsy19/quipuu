@@ -113,6 +113,48 @@ fn scans_go_fixture() {
     );
 }
 
+/// The migrated half of `CurvePreferences`. `CRYPTO-032..035` cover the
+/// classical groups; without `CRYPTO-044..048` a config that already names
+/// `tls.X25519MLKEM768` reports only its classical neighbours, so a migrated
+/// service and an unscanned one produce the same output.
+#[test]
+fn go_tls_hybrid_groups_are_classified() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let path = fixtures_root().join("go/tls_pqc_groups.go");
+    let findings = scanner.scan_path(&path).expect("scan succeeds");
+
+    // (rule, algorithm_id, line in the fixture) — the line is asserted so the
+    // finding is pinned to a literal source site, not just to a rule firing.
+    for (rule, algorithm_id, line) in [
+        ("CRYPTO-044", "x25519-mlkem768", 16),
+        ("CRYPTO-045", "secp256r1-mlkem768", 17),
+        ("CRYPTO-046", "secp384r1-mlkem1024", 18),
+        ("CRYPTO-048", "x25519-kyber768-draft00", 27),
+    ] {
+        let f = findings
+            .iter()
+            .find(|f| f.rule_id == rule)
+            .unwrap_or_else(|| panic!("{rule} must fire on the fixture"));
+        assert_eq!(f.algorithm_id, algorithm_id, "{rule} algorithm_id");
+        assert_eq!(f.location.line, Some(line), "{rule} line");
+        assert!(
+            f.location.location.ends_with("tls_pqc_groups.go"),
+            "{rule} must resolve to the fixture file, got {:?}",
+            f.location.location
+        );
+    }
+
+    // The classical neighbour in the same slice still fires, so the new arms
+    // add coverage rather than shadowing the existing ones.
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-032" && f.location.line == Some(19)),
+        "tls.X25519 alongside the hybrids must still report CRYPTO-032",
+    );
+}
+
 #[test]
 fn scans_python_fixture() {
     let b = load_builtins().unwrap();

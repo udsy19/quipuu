@@ -267,6 +267,47 @@ algorithm_id = "ecdh-p521"
 severity_hint = "auto"
 message = "TLS curve P-521 ECDH — quantum-vulnerable. Migrate to ML-KEM hybrid groups."
 
+# The migrated half of the same list. Without these, a config that already
+# names tls.X25519MLKEM768 reports only its classical neighbours and the PQC
+# group is invisible — the tool asks for a migration it cannot see you make,
+# and no adoption percentage over this pack could mean anything. The extract
+# above already emits one event per slice element, so these need no matcher:
+# the arms were simply missing. Names are the IANA registry spellings
+# (knowledge/sources/iana-tls-supported-groups.csv), which is what Go's
+# crypto/tls CurveID constants use.
+
+[[classify]]
+id = "CRYPTO-044"
+when.api = "^crypto/tls\\.Config\\.CurvePreferences$"
+when.args.curve = "X25519MLKEM768"
+algorithm_id = "x25519-mlkem768"
+severity_hint = "auto"
+message = "TLS group X25519MLKEM768 — hybrid X25519 + ML-KEM-768 (FIPS 203). Migrated key-establishment config."
+
+[[classify]]
+id = "CRYPTO-045"
+when.api = "^crypto/tls\\.Config\\.CurvePreferences$"
+when.args.curve = "SecP256r1MLKEM768"
+algorithm_id = "secp256r1-mlkem768"
+severity_hint = "auto"
+message = "TLS group SecP256r1MLKEM768 — hybrid secp256r1 + ML-KEM-768 (FIPS 203). Migrated key-establishment config."
+
+[[classify]]
+id = "CRYPTO-046"
+when.api = "^crypto/tls\\.Config\\.CurvePreferences$"
+when.args.curve = "SecP384r1MLKEM1024"
+algorithm_id = "secp384r1-mlkem1024"
+severity_hint = "auto"
+message = "TLS group SecP384r1MLKEM1024 — hybrid secp384r1 + ML-KEM-1024 (FIPS 203). Meets the CNSA 2.0 ML-KEM parameter set."
+
+[[classify]]
+id = "CRYPTO-048"
+when.api = "^crypto/tls\\.Config\\.CurvePreferences$"
+when.args.curve = "X25519Kyber768Draft00"
+algorithm_id = "x25519-kyber768-draft00"
+severity_hint = "auto"
+message = "TLS group X25519Kyber768Draft00 — pre-standard Kyber, obsoleted by draft-ietf-tls-ecdhe-mlkem. Replace with tls.X25519MLKEM768."
+
 # crypto/ecdh — direct ECDH key-agreement usage (independent of TLS).
 
 [[extract]]
