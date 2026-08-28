@@ -9,11 +9,12 @@
 //! The result envelope carries `deterministic: false` because TLS negotiation
 //! outcome can vary with server state.
 
+use seawall_core::load_builtins;
 use seawall_scan_network::NetScanner;
 use serde_json::{Value, json};
 
-use crate::mcp::errors::{E_NETWORK_DISABLED, E_PATH_NOT_FOUND};
-use crate::mcp::session::{ScanResult, ScanStats, SessionStore};
+use crate::mcp::errors::{E_NETWORK_DISABLED, E_PATH_NOT_FOUND, E_RULESET_INVALID};
+use crate::mcp::session::{ScanResult, ScanStats, SessionStore, apply_policy_param};
 
 pub fn handle(
     params: Option<Value>,
@@ -29,6 +30,12 @@ pub fn handle(
     }
 
     let params = params.unwrap_or(Value::Null);
+
+    // Loaded for the policy, which decides the HNDL flag in `session.insert`.
+    // `apply_policy_param` also makes `params.policy` mean something here; it
+    // was honoured by scan_source alone.
+    let mut builtins = load_builtins().map_err(|e| (E_RULESET_INVALID, e.to_string()))?;
+    apply_policy_param(&params, &mut builtins)?;
 
     let targets: Vec<String> = params
         .get("targets")
@@ -80,7 +87,7 @@ pub fn handle(
         warnings: vec![],
         deterministic: false, // TLS negotiation is non-deterministic
     };
-    session.insert(result);
+    session.insert(result, &builtins.algorithms, &builtins.policy);
 
     let stored = session.get(&scan_id).expect("just inserted");
     let findings_json: Vec<Value> = stored

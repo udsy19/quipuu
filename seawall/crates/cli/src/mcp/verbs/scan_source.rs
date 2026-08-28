@@ -64,7 +64,7 @@ pub fn handle(params: Option<Value>, session: &mut SessionStore) -> Result<Value
         warnings,
         deterministic: true,
     };
-    session.insert(result);
+    session.insert(result, &builtins.algorithms, &builtins.policy);
 
     if session_mode == "streaming" {
         // Streaming: return scanId + initial cursor; client polls get_scan_results.

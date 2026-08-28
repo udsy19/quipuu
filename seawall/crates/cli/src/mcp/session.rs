@@ -6,6 +6,7 @@
 
 use std::collections::HashMap;
 
+use seawall_core::risk::apply_hndl_flags;
 use seawall_core::{AlgorithmTable, Builtins, Finding, Policy, QuantumRiskScore, ScanWarning};
 use serde::{Deserialize, Serialize};
 
@@ -55,7 +56,20 @@ impl SessionStore {
     }
 
     /// Store a completed scan and return its id.
-    pub fn insert(&mut self, result: ScanResult) -> String {
+    ///
+    /// Deciding `hndl_critical` here, rather than in each of the five verbs
+    /// that build a `ScanResult`, is deliberate: this is the one path every
+    /// stored result takes, and taking the table and policy as arguments makes
+    /// skipping the step a compile error rather than an omission nobody sees.
+    /// `query_findings` filters on the flag and `get_scan_results` ships it to
+    /// the wire, so an unset flag is a wrong answer, not a missing one.
+    pub fn insert(
+        &mut self,
+        mut result: ScanResult,
+        algorithms: &AlgorithmTable,
+        policy: &Policy,
+    ) -> String {
+        apply_hndl_flags(&mut result.findings, algorithms, policy);
         let id = result.scan_id.clone();
         self.scans.insert(id.clone(), result);
         id

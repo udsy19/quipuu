@@ -21,6 +21,7 @@ use std::process::ExitCode;
 use seawall_cbom::SchemaVersion;
 use seawall_cbom::emit::{EmitOptions, ScanTarget};
 use seawall_cbom::emit_cbom_json;
+use seawall_core::risk::apply_hndl_flags;
 use seawall_core::{Finding, Policy, QuantumRiskScore, load_builtins};
 use seawall_report::{ReportOptions, emit_html, emit_sarif, emit_summary_json, partition_audible};
 use seawall_scan_certs::CertScanner;
@@ -409,6 +410,11 @@ fn run_scan(path: PathBuf, mut flags: ScanFlags) -> ExitCode {
             }
         }
     }
+
+    // Decide the HNDL flag before anything reads it. Every scanner writes a
+    // hard-coded `false` because none of them holds a policy; leaving it there
+    // shipped a permanent zero in the field the product is named after.
+    apply_hndl_flags(&mut findings, &builtins.algorithms, &builtins.policy);
 
     // Partition into "audible" (alert-worthy) and "suppressed" (inventory-only:
     // QuantumSafe / PqcFinal / PqcDraft). The CBOM consumes the full set —

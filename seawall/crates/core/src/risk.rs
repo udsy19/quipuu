@@ -4,7 +4,9 @@
 //!       + Exposure + DetectionConfidence
 //! Bands: ≥75 Critical, 50–74 High, 25–49 Medium, 10–24 Low, <10 Safe.
 
-use crate::{AlgorithmRecord, Confidence, Exposure, Finding, Policy, Severity, UsageContext};
+use crate::{
+    AlgorithmRecord, AlgorithmTable, Confidence, Exposure, Finding, Policy, Severity, UsageContext,
+};
 
 /// Result of scoring one finding.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -146,6 +148,32 @@ pub fn is_hndl_critical(finding: &Finding, algorithm: &AlgorithmRecord, policy: 
     );
 
     status_ok && context_ok && shelf_ok
+}
+
+/// Decide `hndl_critical` for every finding, in place.
+///
+/// The scanners construct findings without a policy — they cannot decide this,
+/// and they were all writing a hard-coded `false`. That made
+/// `summary.json.totals.hndl_critical` and the HTML report's HNDL section
+/// permanently zero, and `is_hndl_critical` reachable from tests only: the
+/// product answered "no HNDL exposure" for every input, including inputs that
+/// meet all three of the active policy's conditions.
+///
+/// This is the one place the flag is decided, so it runs once over the whole
+/// finding set after collection and before anything reads it. It overwrites
+/// rather than or-s: the value a scanner wrote carries no information, and a
+/// stale `true` surviving a policy change would be the same defect mirrored.
+///
+/// A finding whose `algorithm_id` has no table row keeps `false` — the flag
+/// requires a `quantum_status` to test, and inventing one would be a claim we
+/// cannot ground.
+pub fn apply_hndl_flags(findings: &mut [Finding], algorithms: &AlgorithmTable, policy: &Policy) {
+    for finding in findings.iter_mut() {
+        finding.hndl_critical = match algorithms.get(&finding.algorithm_id) {
+            Some(algorithm) => is_hndl_critical(finding, algorithm, policy),
+            None => false,
+        };
+    }
 }
 
 fn usage_context_name(c: UsageContext) -> &'static str {
