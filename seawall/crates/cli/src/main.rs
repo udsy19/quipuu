@@ -22,7 +22,7 @@ use seawall_cbom::SchemaVersion;
 use seawall_cbom::emit::{EmitOptions, ScanTarget};
 use seawall_cbom::emit_cbom_json;
 use seawall_core::risk::apply_hndl_flags;
-use seawall_core::{Finding, Policy, QuantumRiskScore, Severity, load_builtins};
+use seawall_core::{Finding, Policy, Severity, load_builtins, severity_of};
 use seawall_report::{ReportOptions, emit_html, emit_sarif, emit_summary_json, partition_audible};
 use seawall_scan_certs::CertScanner;
 use seawall_scan_deps::DepScanner;
@@ -559,9 +559,11 @@ fn run_scan(mut flags: ScanFlags) -> ExitCode {
             Some(l) => format!("{}:{}", f.location.location, l),
             None => f.location.location.clone(),
         };
-        let Some(algo) = builtins.algorithms.get(&f.algorithm_id) else {
-            // Unknown algorithm-ids (e.g. cert with an OID we don't yet
-            // catalogue, or `unknown` from scan-deps) are still informative.
+        // Unknown algorithm-ids (e.g. cert with an OID we don't yet catalogue,
+        // or `unknown` from scan-deps) are still informative, and print `?`
+        // rather than a band. `severity_of` is the shared statement of that;
+        // stdout was the only surface that already got it right.
+        let Some(severity) = severity_of(f, &builtins.algorithms, &builtins.policy) else {
             println!(
                 "  ?\t{rule}\t{algo}\t{where_}\t{msg}",
                 rule = f.rule_id,
@@ -570,10 +572,9 @@ fn run_scan(mut flags: ScanFlags) -> ExitCode {
             );
             continue;
         };
-        let score = QuantumRiskScore::compute(f, algo, &builtins.policy);
         println!(
             "  {sev:?}\t{rule}\t{algo}\t{where_}\t{msg}",
-            sev = score.severity,
+            sev = severity,
             rule = f.rule_id,
             algo = f.algorithm_id,
             msg = f.message,
@@ -745,13 +746,12 @@ fn run_scan(mut flags: ScanFlags) -> ExitCode {
         if let Some(threshold) = threshold {
             let (mut tripped, mut unscored) = (0usize, 0usize);
             for f in &displayed_findings {
-                match builtins.algorithms.get(&f.algorithm_id) {
+                match severity_of(f, &builtins.algorithms, &builtins.policy) {
                     // The `?` rows on stdout: an algorithm-id we do not
                     // catalogue has no severity, so it can neither trip the
                     // gate nor be quietly counted as clean.
                     None => unscored += 1,
-                    Some(algo) => {
-                        let sev = QuantumRiskScore::compute(f, algo, &builtins.policy).severity;
+                    Some(sev) => {
                         if sev.rank() >= threshold.rank() {
                             tripped += 1;
                         }

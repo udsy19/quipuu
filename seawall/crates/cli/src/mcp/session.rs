@@ -7,8 +7,10 @@
 use std::collections::HashMap;
 
 use seawall_core::risk::apply_hndl_flags;
-use seawall_core::{AlgorithmTable, Builtins, Finding, Policy, QuantumRiskScore, ScanWarning};
+use seawall_core::{AlgorithmTable, Builtins, Finding, Policy, ScanWarning, score_of};
 use serde::{Deserialize, Serialize};
+
+use seawall_report::UNSCORED_LABEL;
 
 use crate::mcp::errors::E_POLICY_INVALID;
 use serde_json::Value;
@@ -137,15 +139,19 @@ pub fn finding_with_risk_to_json(
     policy: &Policy,
 ) -> Value {
     let mut value = serde_json::to_value(finding).unwrap_or(Value::Null);
-    if let Some(obj) = value.as_object_mut()
-        && let Some(algo) = algorithms.get(&finding.algorithm_id)
-    {
-        let score = QuantumRiskScore::compute(finding, algo, policy);
-        obj.insert("risk_score".into(), Value::from(score.total));
-        obj.insert(
-            "severity".into(),
-            Value::from(format!("{:?}", score.severity)),
-        );
+    if let Some(obj) = value.as_object_mut() {
+        match score_of(finding, algorithms, policy) {
+            Some(score) => {
+                obj.insert("risk_score".into(), Value::from(score.total));
+                obj.insert("severity".into(), Value::from(score.severity.label()));
+            }
+            // Say unscored rather than omitting the field: an absent
+            // `severity` is a fact about our tables that a client cannot
+            // distinguish from a serialisation slip.
+            None => {
+                obj.insert("severity".into(), Value::from(UNSCORED_LABEL));
+            }
+        }
     }
     value
 }

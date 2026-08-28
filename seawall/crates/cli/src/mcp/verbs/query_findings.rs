@@ -13,7 +13,7 @@
 //!   groupBy?: "algorithmId" | "ruleId"
 //!   sort?: "ruleId" | "algorithmId"
 
-use seawall_core::{Finding, QuantumRiskScore, Severity, load_builtins};
+use seawall_core::{Finding, Severity, load_builtins, severity_of};
 use serde_json::{Value, json};
 
 use crate::mcp::errors::{E_RULESET_INVALID, E_SCAN_NOT_FOUND};
@@ -110,11 +110,11 @@ fn apply_filter(
 
     if let Some(sev_str) = filter.get("severity").and_then(Value::as_str) {
         let target_sev = parse_severity(sev_str);
-        if let Some(algo_record) = builtins.algorithms.get(&finding.algorithm_id) {
-            let score = QuantumRiskScore::compute(finding, algo_record, &builtins.policy);
-            if score.severity != target_sev {
-                return false;
-            }
+        // An unscored finding matches no severity filter. It used to match
+        // *every* one — the `if let` had no else — so `severity: "Critical"`
+        // returned findings the same session reported as having no severity.
+        if severity_of(finding, &builtins.algorithms, &builtins.policy) != Some(target_sev) {
+            return false;
         }
     }
 
