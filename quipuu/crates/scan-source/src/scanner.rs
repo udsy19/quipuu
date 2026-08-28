@@ -523,6 +523,19 @@ const STRUCTURAL_APIS: &[&str] = &[
     "crypto/tls.Config.MinVersion",
 ];
 
+/// The apis reached through `match_java_field_access` — a bare enum-constant
+/// reference, with no call around it to say what is being done with the name.
+///
+/// Read by `java_enum_classify_rules_declare_the_sites_they_fire_in`: these
+/// are the rules that cannot infer operationality from their own match and so
+/// must name the site contexts they accept.
+pub fn java_enum_api_surface() -> Vec<String> {
+    JAVA_ENUM_CLASS_APIS
+        .iter()
+        .map(|(_, api)| api.to_string())
+        .collect()
+}
+
 /// Every `api` string the extract layer can emit.
 ///
 /// This is the reachability contract between the two rule layers: a
@@ -1952,7 +1965,8 @@ pub(crate) fn classify_site_context(
     // Priority 1: MapEntry. Most non-operational — allowlist maps, protobuf
     // enum tables, JS/TS object literals. Wins over StructLiteral because
     // a `keyed_element` IS technically a kind of composite literal field
-    // but the map-key semantics dominate.
+    // but the map-key semantics dominate. A `map.put(k, v)` call is the same
+    // table written in Java's spelling, so it lands here too.
     if chain.iter().any(|p| {
         matches!(
             p.kind(),
@@ -1961,20 +1975,16 @@ pub(crate) fn classify_site_context(
     }) {
         return SiteContext::MapEntry;
     }
+    if enclosing_callee_matches(&chain, source, is_map_insert_callee) {
+        return SiteContext::MapEntry;
+    }
 
     // Priority 2: TestAssertion. Walk up looking for argument_list whose
     // call_expression's callee is a known test helper.
-    for p in &chain {
-        let kind = p.kind();
-        if matches!(kind, "argument_list" | "arguments")
-            && let Some(call) = p.parent()
-            && let Some(callee) = call.child_by_field_name("function")
-        {
-            let callee_text = node_text(callee, source);
-            if is_test_assertion_callee(&callee_text, language) {
-                return SiteContext::TestAssertion;
-            }
-        }
+    if enclosing_callee_matches(&chain, source, |callee| {
+        is_test_assertion_callee(callee, language)
+    }) {
+        return SiteContext::TestAssertion;
     }
 
     // Priority 3: RegistryLookup. A lookup call names an algorithm in order
@@ -1991,7 +2001,7 @@ pub(crate) fn classify_site_context(
     for p in &chain {
         if matches!(p.kind(), "argument_list" | "arguments")
             && let Some(call) = p.parent()
-            && let Some(callee) = call.child_by_field_name("function")
+            && let Some(callee) = callee_of(call)
             && is_registry_lookup_callee(&node_text(callee, source))
         {
             let consumed_by_a_call = call
@@ -2003,7 +2013,39 @@ pub(crate) fn classify_site_context(
         }
     }
 
-    // Priority 4: StructLiteral, but ONLY when the composite_literal's type
+    // Priority 4: Comparison. Naming an algorithm in order to test a value
+    // against it selects a branch and computes nothing — the operation the
+    // branch guards cites its own line. Both operands are comparison
+    // operands, so `alg.equals(JWSAlgorithm.PS256)` and
+    // `JWSAlgorithm.HS512.equals(alg)` are the same site, and an equality
+    // method reached through either field is enough on its own.
+    if chain.iter().any(|p| {
+        p.kind() == "binary_expression"
+            && p.child_by_field_name("operator")
+                .is_some_and(|op| matches!(node_text(op, source).as_str(), "==" | "!="))
+    }) {
+        return SiteContext::Comparison;
+    }
+    for p in &chain {
+        if matches!(p.kind(), "method_invocation" | "call_expression")
+            && let Some(callee) = callee_of(*p)
+            && is_equality_callee(&node_text(callee, source))
+        {
+            return SiteContext::Comparison;
+        }
+    }
+
+    // Priority 5: CollectionElement. A supported-algorithm set —
+    // `algs.add(JWSAlgorithm.PS384)`, `Arrays.asList(HS512, HS384, HS256)` —
+    // declares which algorithms the surrounding class can handle. That is a
+    // capability, not a use; nothing is signed, wrapped or hashed at the line.
+    if chain.iter().any(|p| p.kind() == "array_initializer")
+        || enclosing_callee_matches(&chain, source, is_collection_membership_callee)
+    {
+        return SiteContext::CollectionElement;
+    }
+
+    // Priority 6: StructLiteral, but ONLY when the composite_literal's type
     // is a struct (or a struct pointer), not a slice/array/map type. A Go
     // `[]string{"RS256", ...}` array is non-operational despite having a
     // `literal_element` parent — treat it as Default so default-allow
@@ -2032,8 +2074,9 @@ pub(crate) fn classify_site_context(
         }
     }
 
-    // Priority 5: Call. Any argument_list we didn't classify as
-    // TestAssertion or RegistryLookup is a regular call site — UNLESS the literal sits inside
+    // Priority 7: Call. Any argument_list we didn't classify as TestAssertion,
+    // RegistryLookup, Comparison or CollectionElement is a regular call site —
+    // UNLESS the literal sits inside
     // a slice / array / map composite literal that's then PASSED to a call
     // (e.g. `WithValidMethods([]string{"HS256"})`). The collection-literal
     // semantics dominate: the string is data, not an operational arg.
@@ -2062,17 +2105,28 @@ pub(crate) fn classify_site_context(
         // Fall through — collection-as-call-arg is non-operational.
     }
 
-    // Priority 6: StringConstant. const/var declarations — but ONLY when
+    // Priority 8: StringConstant. const/var declarations — but ONLY when
     // the literal is a DIRECT child (via expression_list / spec). If the
     // literal sits inside a composite_literal that's inside the var_spec
     // (e.g. `var x = []string{"RS256"}`), the array semantics dominate and
     // we don't want to classify the inner element as a StringConstant.
+    //
+    // `local_variable_declaration` / `field_declaration` are the Java
+    // spellings of the same thing: `JWSAlgorithm ns = JWSAlgorithm.RS384;`
+    // binds an algorithm exactly as `const RS256 = "RS256"` does. Without
+    // them every Java enum reference outside a call reads as Default, which
+    // is indistinguishable from "we did not look".
     let has_composite_in_chain = chain.iter().any(|p| p.kind() == "composite_literal");
     if !has_composite_in_chain
         && chain.iter().any(|p| {
             matches!(
                 p.kind(),
-                "const_spec" | "var_spec" | "const_declaration" | "var_declaration"
+                "const_spec"
+                    | "var_spec"
+                    | "const_declaration"
+                    | "var_declaration"
+                    | "local_variable_declaration"
+                    | "field_declaration"
             )
         })
     {
@@ -2103,6 +2157,71 @@ fn is_registry_lookup_callee(callee: &str) -> bool {
         .unwrap_or(callee)
         .to_ascii_lowercase()
         .starts_with("lookup")
+}
+
+/// The callee node of a call, across the two field spellings tree-sitter uses.
+///
+/// Go, JavaScript and Rust expose the whole callee expression under
+/// `function`. Java's `method_invocation` splits it into `object` + `name`,
+/// so a `function` lookup returns `None` at every Java call site — which is
+/// why the TestAssertion and RegistryLookup arms above, both written against
+/// `function`, had never once fired on Java.
+fn callee_of(call: Node<'_>) -> Option<Node<'_>> {
+    call.child_by_field_name("function")
+        .or_else(|| call.child_by_field_name("name"))
+}
+
+/// True when some enclosing call in `chain` has a callee the predicate accepts
+/// and the matched node sits in that call's argument list.
+fn enclosing_callee_matches(
+    chain: &[Node<'_>],
+    source: &[u8],
+    predicate: impl Fn(&str) -> bool,
+) -> bool {
+    chain.iter().any(|p| {
+        matches!(p.kind(), "argument_list" | "arguments")
+            && p.parent()
+                .and_then(callee_of)
+                .is_some_and(|callee| predicate(&node_text(callee, source)))
+    })
+}
+
+/// Last dotted / path segment of a callee, generics stripped — `Arrays.asList`
+/// and `asList` have to answer the same.
+fn callee_head(callee: &str) -> &str {
+    callee
+        .rsplit(['.', ':'])
+        .next()
+        .unwrap_or(callee)
+        .split('<')
+        .next()
+        .unwrap_or(callee)
+}
+
+/// Recognise equality tests. `equals` is Java's `==` for objects and the only
+/// spelling the JOSE stacks use to dispatch on an algorithm — jose4j's
+/// identifiers are `String`s, so the case-insensitive form is the same test.
+/// `compareTo` is deliberately absent: it orders as often as it compares, and
+/// no corpus site reaches an algorithm name through it.
+fn is_equality_callee(callee: &str) -> bool {
+    matches!(callee_head(callee), "equals" | "equalsIgnoreCase")
+}
+
+/// Recognise collection-membership callees — the shape that builds a
+/// `SUPPORTED_ALGORITHMS` set. Membership, not computation: adding an
+/// algorithm to a set and asking whether a set contains one are both
+/// statements about a capability.
+fn is_collection_membership_callee(callee: &str) -> bool {
+    matches!(
+        callee_head(callee),
+        "add" | "addAll" | "asList" | "of" | "contains" | "containsAll" | "remove"
+    )
+}
+
+/// Recognise map-insertion callees. `map.put(alg, hash)` is the call spelling
+/// of the keyed-literal table [`SiteContext::MapEntry`] already covers.
+fn is_map_insert_callee(callee: &str) -> bool {
+    matches!(callee_head(callee), "put" | "putAll" | "putIfAbsent")
 }
 
 /// Recognise test-framework assertion callees so SiteContext can mark

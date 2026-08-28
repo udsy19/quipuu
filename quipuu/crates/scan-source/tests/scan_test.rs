@@ -1000,6 +1000,83 @@ fn phase1_main_java_unchanged() {
 }
 
 // ============================================================================
+// Java JOSE dispatch: an enum constant compared, collected or tabulated.
+//
+// `PRECISION_AUDIT_V4.md § 2` measured this as the largest false-positive
+// class in corpus B — 13 of 150 sampled stratum-A rows. The Go spelling of
+// the same shape (`jwa.LookupSignatureAlgorithm("PS256")`) was suppressed by
+// the registry-lookup cycle; these tests hold the Java spelling to the same
+// verdict, in both directions.
+// ============================================================================
+
+fn jose_dispatch_findings() -> Vec<quipuu_core::Finding> {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    scanner
+        .scan_path(&fixtures_root().join("java/JoseDispatch.java"))
+        .expect("scan succeeds")
+}
+
+#[test]
+fn java_jose_operational_sites_still_fire() {
+    // The half of the fixture that must survive. Without this the dispatch
+    // test below passes trivially for a scanner that reads no Java at all.
+    let findings = jose_dispatch_findings();
+    for (rule, why) in [
+        ("CRYPTO-259", "declaration binding JWSAlgorithm.RS384"),
+        ("CRYPTO-243", "signWith(key, SignatureAlgorithm.PS384)"),
+        (
+            "CRYPTO-264",
+            "setAlgorithmIdentifier(AlgorithmIdentifiers.NONE)",
+        ),
+        (
+            "CRYPTO-260",
+            "super(AlgorithmIdentifiers.RSA_USING_SHA256, ...)",
+        ),
+    ] {
+        assert!(
+            findings.iter().any(|f| f.rule_id == rule),
+            "{rule} must still fire — {why}; got {:?}",
+            findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
+        );
+    }
+}
+
+#[test]
+fn java_jose_dispatch_sites_do_not_fire() {
+    // Every line below names a JOSE algorithm and performs none of it. Each
+    // is asserted separately so a failure names the shape that regressed
+    // rather than a count.
+    let lines: Vec<u32> = jose_dispatch_findings()
+        .iter()
+        .filter_map(|f| f.location.line)
+        .collect();
+    for (line, shape) in [
+        (
+            42u32,
+            "alg.equals(JWSAlgorithm.ES512) — comparison, argument side",
+        ),
+        (
+            46,
+            "JWSAlgorithm.EdDSA.equals(alg) — comparison, receiver side",
+        ),
+        (50, "alg == JWEAlgorithm.RSA_OAEP_256 — equality operator"),
+        (56, "algs.add(JWSAlgorithm.HS512) — supported-algorithm set"),
+        (61, "Arrays.asList(HS384, HS256) — preference list"),
+        (
+            66,
+            "hashes.put(SignatureAlgorithm.ES256, ...) — resolver table",
+        ),
+        (73, "assertEquals(JWSAlgorithm.RS512, alg) — test assertion"),
+    ] {
+        assert!(
+            !lines.contains(&line),
+            "JoseDispatch.java:{line} must produce no finding — {shape}"
+        );
+    }
+}
+
+// ============================================================================
 // Phase 7: Go string-table dispatch — switch { case "RS256": ... }
 //
 // V3 corpus run: 22/25 Go projects produced zero findings because JWT/JOSE

@@ -62,7 +62,18 @@ RULE_FLOORS = {
     "CRYPTO-704":  4,   # Go JWT PS384  (V11: 6)
     "CRYPTO-705":  4,   # Go JWT PS512  (V11: 6)
     "CRYPTO-560": 50,   # rustls::ClientConfig::builder
-    "CRYPTO-241":  1,   # jjwt HS256 — the canonical jjwt-api regression
+    # CRYPTO-241 (jjwt HS256) was floored at 1 as "the canonical jjwt-api
+    # regression". Removed on 2026-08-28: the corpus contained exactly one
+    # CRYPTO-241 site, `Arrays.asList(HS512, HS384, HS256)` at
+    # jjwt-api SignatureAlgorithm.java:115, and `PRECISION_AUDIT_V4.md § 5`
+    # rows 86-87 label it a false positive — a preference list of enum
+    # constants, no HMAC computed. jjwt-api's other 4 findings are the same
+    # two lines. A floor of 1 therefore demanded that one false positive be
+    # kept forever, and 0 would be a floor that cannot fail.
+    # The regression it was built to catch — the scanner going silent on
+    # jjwt — is now held by fixtures instead, which is where a shape this
+    # narrow belongs: phase1_jjwt_* and java_jose_operational_sites_still_fire
+    # in crates/scan-source/tests/scan_test.rs.
 }
 
 

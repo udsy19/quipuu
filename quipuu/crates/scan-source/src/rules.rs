@@ -397,6 +397,44 @@ when = { api = "^foo$", args = { bits = { lt = 2048 } } }
         );
     }
 
+    /// A Java enum-constant reference carries no evidence of its own about
+    /// what is being done with the name. `JWSAlgorithm.PS256` is the same
+    /// eleven characters in `signWith(key, PS256)`, in `alg.equals(PS256)`
+    /// and in `algs.add(PS256)`; only the surrounding syntax separates a
+    /// signature from a branch test and a capability list. So every classify
+    /// rule reached through `match_java_field_access` has to name the site
+    /// contexts it accepts — a rule that stays silent fires in all of them,
+    /// which is how the dispatch shape became the largest false-positive
+    /// class in `PRECISION_AUDIT_V4.md § 2`.
+    ///
+    /// The Go spelling of the same rules already carries the same allow-list
+    /// (`go.toml`, the `go.alg-switch` / `go.alg-register` family).
+    #[test]
+    fn java_enum_classify_rules_declare_the_sites_they_fire_in() {
+        let enum_apis = crate::scanner::java_enum_api_surface();
+        let pack = RulePack::builtin_java().unwrap();
+        let mut silent = Vec::new();
+        for rule in &pack.classify {
+            let re = regex::Regex::new(&rule.when.api)
+                .unwrap_or_else(|e| panic!("java/{}: bad api regex: {e}", rule.id));
+            if enum_apis.iter().any(|api| re.is_match(api)) && rule.when.site_context.is_none() {
+                silent.push(format!(
+                    "java/{}: when.api = {:?} is an enum-constant reference but the \
+                     rule names no when.site_context",
+                    rule.id, rule.when.api
+                ));
+            }
+        }
+        assert!(
+            silent.is_empty(),
+            "{} Java enum-constant classify rules fire in every site context, \
+             including comparison operands, supported-algorithm sets and lookup \
+             tables. Add `when.site_context = [\"Call\", \"StringConstant\"]`:\n  {}",
+            silent.len(),
+            silent.join("\n  ")
+        );
+    }
+
     #[test]
     fn builtin_rules_load() {
         let go = RulePack::builtin_go().expect("Go rule pack must parse");

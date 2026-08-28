@@ -61,6 +61,15 @@ pub enum SiteContext {
     /// Match is an argument to a test-framework assertion or helper
     /// (e.g. `require.Equal(t, "HS256", got)`). Test scaffolding, not crypto.
     TestAssertion,
+    /// Match is an operand of an equality test — `alg.equals(JWSAlgorithm.PS256)`,
+    /// `JWSAlgorithm.HS512.equals(alg)`, `alg == RS256`. Naming an algorithm in
+    /// order to compare against it selects a branch; the operation, if any,
+    /// happens inside the branch and cites its own line.
+    Comparison,
+    /// Match is an element handed to a collection-membership call —
+    /// `algs.add(JWSAlgorithm.PS384)`, `Arrays.asList(HS512, HS384, HS256)`.
+    /// A supported-algorithm set declares a capability; it computes nothing.
+    CollectionElement,
     /// Match is the argument of a registry-retrieval call whose result is not
     /// handed straight to another call — `jwa.LookupSignatureAlgorithm("PS256")`,
     /// `return lookupBuiltinSignatureAlgorithm("ES384")`. Naming an algorithm
