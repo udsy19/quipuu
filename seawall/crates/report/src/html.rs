@@ -212,8 +212,8 @@ pub fn emit_html(
                 .and_then(|a| a.replacement.as_deref())
                 .and_then(|repl_id| algorithms.get(repl_id));
             RegisterRow {
-                severity_class: severity_class(s.severity),
-                severity_label: severity_label(s.severity),
+                severity_class: s.severity.slug().to_string(),
+                severity_label: s.severity.label().to_string(),
                 rule_id: s.finding.rule_id.clone(),
                 algorithm: s.display_name.clone(),
                 file_line: file_line_str(s.finding),
@@ -278,30 +278,6 @@ fn file_line_str(f: &Finding) -> String {
         Some(line) => format!("{}:{}", f.location.location, line),
         None => f.location.location.clone(),
     }
-}
-
-/// CSS class for a severity badge.
-fn severity_class(s: Severity) -> String {
-    match s {
-        Severity::Critical => "critical",
-        Severity::High => "high",
-        Severity::Medium => "medium",
-        Severity::Low => "low",
-        Severity::Safe => "safe",
-    }
-    .to_string()
-}
-
-/// Human-readable severity label.
-fn severity_label(s: Severity) -> String {
-    match s {
-        Severity::Critical => "Critical",
-        Severity::High => "High",
-        Severity::Medium => "Medium",
-        Severity::Low => "Low",
-        Severity::Safe => "Safe",
-    }
-    .to_string()
 }
 
 /// Human-readable label for a warning kind.

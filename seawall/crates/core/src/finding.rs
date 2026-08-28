@@ -104,6 +104,59 @@ pub enum Severity {
     Safe,
 }
 
+impl Severity {
+    /// Every band, most severe first.
+    pub const ALL: [Severity; 5] = [
+        Severity::Critical,
+        Severity::High,
+        Severity::Medium,
+        Severity::Low,
+        Severity::Safe,
+    ];
+
+    /// Comparison rank — **higher is worse**. `a.rank() >= b.rank()` reads as
+    /// "a is at least as severe as b", which is the `--fail-on` gate test.
+    pub fn rank(self) -> u8 {
+        match self {
+            Severity::Safe => 0,
+            Severity::Low => 1,
+            Severity::Medium => 2,
+            Severity::High => 3,
+            Severity::Critical => 4,
+        }
+    }
+
+    /// Title-case display name, as it appears in reports and on stdout.
+    pub fn label(self) -> &'static str {
+        match self {
+            Severity::Critical => "Critical",
+            Severity::High => "High",
+            Severity::Medium => "Medium",
+            Severity::Low => "Low",
+            Severity::Safe => "Safe",
+        }
+    }
+
+    /// Lowercase machine name — the CSS class in the HTML report and the
+    /// spelling `--fail-on` accepts.
+    pub fn slug(self) -> &'static str {
+        match self {
+            Severity::Critical => "critical",
+            Severity::High => "high",
+            Severity::Medium => "medium",
+            Severity::Low => "low",
+            Severity::Safe => "safe",
+        }
+    }
+
+    /// Parse a [`Severity::slug`], case-insensitively. `None` for anything
+    /// else — callers decide whether an unknown spelling is fatal.
+    pub fn parse(s: &str) -> Option<Self> {
+        let lowered = s.to_ascii_lowercase();
+        Severity::ALL.into_iter().find(|s| s.slug() == lowered)
+    }
+}
+
 /// One cryptographic finding.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Finding {

@@ -24,17 +24,6 @@ pub fn severity_badge(sev: Severity) -> &'static str {
     }
 }
 
-/// Sort key so Critical comes first.
-pub fn severity_order(sev: Severity) -> u8 {
-    match sev {
-        Severity::Critical => 0,
-        Severity::High => 1,
-        Severity::Medium => 2,
-        Severity::Low => 3,
-        Severity::Safe => 4,
-    }
-}
-
 // ---------------------------------------------------------------------------
 // Left-pane list rows (Findings tab)
 // ---------------------------------------------------------------------------

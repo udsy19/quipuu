@@ -689,7 +689,7 @@ pub fn render_findings_detail(detail: &FindingDetail) -> Paragraph<'_> {
             format!(
                 "  Risk score: {}/100 ({})",
                 score.total,
-                fmt_sev(score.severity)
+                score.severity.label()
             ),
             Style::default()
                 .fg(sev_color(score.severity))
@@ -729,16 +729,6 @@ fn wrap_text(text: &str, width: usize) -> Vec<String> {
         lines.push(String::new());
     }
     lines
-}
-
-fn fmt_sev(sev: Severity) -> &'static str {
-    match sev {
-        Severity::Critical => "Critical",
-        Severity::High => "High",
-        Severity::Medium => "Medium",
-        Severity::Low => "Low",
-        Severity::Safe => "Safe",
-    }
 }
 
 fn score_lines(score: &ScoreBreakdown) -> Vec<Line<'static>> {

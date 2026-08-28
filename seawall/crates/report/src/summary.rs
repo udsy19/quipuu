@@ -55,7 +55,7 @@ pub fn emit_summary_json(
             .or_insert((0, Severity::Safe));
         entry.0 += 1;
         // Keep the worst severity seen for this algorithm.
-        if severity_ord(severity) > severity_ord(entry.1) {
+        if severity.rank() > entry.1.rank() {
             entry.1 = severity;
         }
     }
@@ -73,7 +73,7 @@ pub fn emit_summary_json(
             json!({
                 "algorithm_id": algo_id,
                 "count": count,
-                "severity": severity_name(sev)
+                "severity": sev.label()
             })
         })
         .collect();
@@ -99,26 +99,4 @@ pub fn emit_summary_json(
     });
 
     Ok(serde_json::to_string_pretty(&summary)?)
-}
-
-/// Ordinal for severity comparison (higher = worse).
-fn severity_ord(s: Severity) -> u8 {
-    match s {
-        Severity::Safe => 0,
-        Severity::Low => 1,
-        Severity::Medium => 2,
-        Severity::High => 3,
-        Severity::Critical => 4,
-    }
-}
-
-/// Display name for severity.
-fn severity_name(s: Severity) -> &'static str {
-    match s {
-        Severity::Critical => "Critical",
-        Severity::High => "High",
-        Severity::Medium => "Medium",
-        Severity::Low => "Low",
-        Severity::Safe => "Safe",
-    }
 }
