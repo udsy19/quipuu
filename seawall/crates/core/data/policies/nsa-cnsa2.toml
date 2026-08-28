@@ -23,10 +23,15 @@ display_name = "NSA CNSA 2.0 (National Security Systems)"
 source_url = "https://media.defense.gov/2025/May/30/2003728741/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS.PDF"
 notes = """
 Approved for NSS: ML-KEM-1024, ML-DSA-87, LMS / single-tree XMSS for firmware
-signing, AES-256, SHA-384 and SHA-512. SLH-DSA and FN-DSA are explicitly NOT
-approved for NSS, and the lower ML-KEM / ML-DSA parameter sets do not meet the
-suite. Everything CNSA 2.0 leaves off that list is reported at full
-algorithm-vulnerability weight via `deprecation.policy_disallowed`.
+signing (SP 800-208), AES-256, SHA-384 and SHA-512. SLH-DSA and FN-DSA are
+explicitly NOT approved for NSS, HSS and XMSS^MT are prohibited, and the lower
+ML-KEM / ML-DSA parameter sets do not meet the suite. Everything CNSA 2.0
+leaves off that list is reported at full algorithm-vulnerability weight via
+`deprecation.policy_disallowed`.
+
+Every algorithm this paragraph names has a row in the algorithm table, and
+`Policy::cross_check` reads the id lists below rather than this prose — so a
+claim made here and nowhere else fails the load.
 """
 
 # -----------------------------------------------------------------------------
@@ -75,6 +80,10 @@ policy_disallowed = [
   "slh-dsa-shake-192s", "slh-dsa-shake-192f",
   "slh-dsa-shake-256s", "slh-dsa-shake-256f",
   "fn-dsa-512", "fn-dsa-1024",
+  # Stateful hash-based signatures: CNSA 2.0 takes LMS and single-tree XMSS
+  # for software/firmware signing and PROHIBITS the multi-tree variants.
+  # `lms` and `xmss` are therefore absent from this list on purpose.
+  "hss", "xmss-mt",
   # Hybrids carrying an under-strength KEM, plus the pre-FIPS Kyber draft.
   # secp384r1-mlkem1024 is left approved: CNSA 2.0 does not require a hybrid
   # but tolerates one when a protocol demands it, and that group carries the

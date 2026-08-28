@@ -19,6 +19,12 @@
 #   replacement              recommended PQC replacement algorithm-id (optional)
 #   fips                     FIPS reference if any (e.g. "FIPS 203")
 #   oid                      most common OID (string, dotted decimal)
+#   undetectable             why this row is carried although no emitter can
+#                            produce it. Present iff the id is unreachable from
+#                            every emitter; the reachability gate in
+#                            crates/cli/tests/algorithm_reachability.rs fails
+#                            both when a row is unreachable without a reason and
+#                            when a row that has become reachable keeps one.
 #   notes                    free-form; cite sources where they matter
 #
 # Sources tracked at the entry level. Family-wide source notes:
@@ -346,6 +352,17 @@ oid = "1.3.101.111"
 # DH / DSA -------------------------------------------------------------------
 
 [[algorithm]]
+id = "dh-unattributed"
+display_name = "Finite-Field DH (group size not stated)"
+family = "DH"
+primitive = "key-agree"
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-768"
+oid = "1.2.840.10046.2.1"
+notes = "dhKeyAgreement (PKCS #3) and dhpublicnumber (X9.42) name the key type; the prime size lives in the DomainParameters we do not parse, so no group size can be asserted. Shor breaks finite-field DH at every group size, so the migration verdict is exact and only the classical strength is unknown — which is why no classical_security_bits is recorded. Sentinel, in the same role as ecdsa-unattributed."
+
+[[algorithm]]
 id = "dh-2048"
 display_name = "Finite-Field DH (2048-bit)"
 family = "DH"
@@ -354,6 +371,7 @@ classical_security_bits = 112
 nist_quantum_security_level = 0
 quantum_status = "BrokenByShor"
 replacement = "ml-kem-768"
+undetectable = "The DH OIDs name no group size, so a certificate resolves to dh-unattributed. This row becomes reachable when the SPKI DomainParameters prime is parsed, the way rsaEncryption is refined by modulus length today."
 notes = "NIST IR 8547 IPD: deprecated after 2030, disallowed after 2035."
 
 [[algorithm]]
@@ -365,6 +383,7 @@ classical_security_bits = 128
 nist_quantum_security_level = 0
 quantum_status = "BrokenByShor"
 replacement = "ml-kem-768"
+undetectable = "Same as dh-2048: no emitter can state a DH group size today."
 
 [[algorithm]]
 id = "dsa-2048"
@@ -800,6 +819,7 @@ family = "FN-DSA"
 primitive = "signature"
 quantum_status = "PqcDraft"
 fips = "FIPS 206 (DRAFT)"
+undetectable = "No production OID is assigned: the IETF drafts still carry XX placeholders under 2.16.840.1.101.3.4.3, and knowledge/05-x509-pqc §2.4 records the decision not to guess them. Carried anyway because nsa-cnsa2 rules on FN-DSA — CNSA 2.0 excludes it from NSS — and a policy cannot name an algorithm the table lacks."
 notes = "FIPS 206 not yet IPD as of mid-2026. No OID assigned."
 
 [[algorithm]]
@@ -809,6 +829,62 @@ family = "FN-DSA"
 primitive = "signature"
 quantum_status = "PqcDraft"
 fips = "FIPS 206 (DRAFT)"
+undetectable = "Same as fn-dsa-512: no production OID, and CNSA 2.0 rules on it."
+
+# ============================================================================
+# STATEFUL HASH-BASED SIGNATURES — NIST SP 800-208
+#
+# Quantum-safe and deployed today in secure boot and firmware signing, which is
+# where CNSA 2.0 puts them and why they carry the earliest deadline in
+# `policies/nsa-cnsa2.toml`. CNSA 2.0 approves LMS and single-tree XMSS and
+# explicitly prohibits HSS and XMSS^MT, so all four need ids: a policy cannot
+# rule on an algorithm the table does not name, and `Policy::cross_check`
+# only sees ids, not the prose in `[meta].notes`.
+#
+# Status is QuantumSafe rather than PqcFinal: these are hash constructions
+# standardised by an SP, not by FIPS 203/204/205, and `PqcFinal` requires a
+# FIPS reference. No NIST security category is assigned by SP 800-208, so
+# nist_quantum_security_level is omitted rather than invented.
+#
+# Sources: NIST SP 800-208 (Oct 2020); CNSA 2.0 FAQ v2.1 (Dec 2024) — see
+# knowledge/02-nist-pqc-timeline §6.1 and knowledge/09-regulatory §2.
+# ============================================================================
+
+[[algorithm]]
+id = "lms"
+display_name = "LMS (Leighton-Micali Signature)"
+family = "LMS"
+primitive = "signature"
+quantum_status = "QuantumSafe"
+undetectable = "No LMS OID is vendored: we ship no source for the X.509 SPKI codepoints and P2 forbids fetching one, so nothing is asserted. Reachable the moment an OID lands in oid-table.toml."
+notes = "RFC 8554 / NIST SP 800-208. Stateful: a one-time key reused signs away the private key, so detection matters most in firmware-signing build systems. CNSA 2.0 approves LMS for software and firmware signing, SHA-256/192 preferred."
+
+[[algorithm]]
+id = "hss"
+display_name = "HSS (Hierarchical Signature System, multi-tree LMS)"
+family = "LMS"
+primitive = "signature"
+quantum_status = "QuantumSafe"
+undetectable = "As lms — no vendored OID."
+notes = "RFC 8554 / NIST SP 800-208. Multi-tree LMS. Quantum-safe, but explicitly PROHIBITED by CNSA 2.0, which takes single-tree LMS only; listed in nsa-cnsa2 policy_disallowed."
+
+[[algorithm]]
+id = "xmss"
+display_name = "XMSS (single-tree)"
+family = "XMSS"
+primitive = "signature"
+quantum_status = "QuantumSafe"
+undetectable = "As lms — no vendored OID."
+notes = "RFC 8391 / NIST SP 800-208. Stateful hash-based. CNSA 2.0 approves single-tree XMSS for software and firmware signing."
+
+[[algorithm]]
+id = "xmss-mt"
+display_name = "XMSS^MT (multi-tree)"
+family = "XMSS"
+primitive = "signature"
+quantum_status = "QuantumSafe"
+undetectable = "As lms — no vendored OID."
+notes = "RFC 8391 / NIST SP 800-208. Quantum-safe, but explicitly PROHIBITED by CNSA 2.0, which takes single-tree XMSS only; listed in nsa-cnsa2 policy_disallowed."
 
 # ============================================================================
 # TLS HYBRID GROUPS — combined classical + PQC key agreement

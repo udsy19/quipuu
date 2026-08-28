@@ -83,6 +83,31 @@ fn rsa_oid_resolves() {
     assert_eq!(b.oids.lookup("1.2.840.113549.1.1.1"), Some("rsa-2048"));
 }
 
+/// The two finite-field DH OIDs name the key type and nothing else: the prime
+/// size lives in the `DomainParameters` we do not parse. Resolving them to
+/// `dh-2048` asserted a group size no emitter can observe, and that assertion
+/// reached the CBOM as a component. `dh-unattributed` states the family and
+/// declines the size, in the same role `ecdsa-unattributed` already plays.
+#[test]
+fn dh_oids_do_not_assert_a_group_size() {
+    let b = load_builtins().unwrap();
+    // dhKeyAgreement (PKCS #3) and dhpublicnumber (X9.42).
+    assert_eq!(
+        b.oids.lookup("1.2.840.113549.1.3.1"),
+        Some("dh-unattributed")
+    );
+    assert_eq!(b.oids.lookup("1.2.840.10046.2.1"), Some("dh-unattributed"));
+
+    let rec = b
+        .algorithms
+        .get("dh-unattributed")
+        .expect("the sentinel must have a row");
+    // Shor breaks finite-field DH at every group size, so the migration
+    // verdict stays exact even though the classical strength is unknown.
+    assert!(rec.classical_security_bits.is_none());
+    assert_eq!(rec.replacement.as_deref(), Some("ml-kem-768"));
+}
+
 #[test]
 fn ml_kem_oid_resolves_per_rfc_9935() {
     let b = load_builtins().unwrap();

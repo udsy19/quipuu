@@ -85,6 +85,13 @@ pub struct AlgorithmRecord {
     pub replacement: Option<String>,
     pub fips: Option<String>,
     pub oid: Option<String>,
+    /// Why this row is carried although no emitter can produce it.
+    ///
+    /// Set iff the id is unreachable from every emitter — a policy or a
+    /// standard names the algorithm, so the table must, but nothing in the
+    /// scanners can yield a finding that carries it. Enforced in both
+    /// directions by `crates/cli/tests/algorithm_reachability.rs`.
+    pub undetectable: Option<String>,
     #[serde(default)]
     pub notes: String,
 }
