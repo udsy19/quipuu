@@ -184,6 +184,103 @@ algorithm_id = "dsa-unattributed"
 severity_hint = "high"
 message = "DSA keypair generator. Deprecated for new use (FIPS 186-5)."
 
+# --- PQC: FIPS 203 / 204, standard JCA names since JDK 24 (JEP 496 / 497) --
+# KeyPairGenerator.getInstance generates both ML-KEM (JEP 496) and ML-DSA
+# (JEP 497) key pairs; the parameter set is fully in the name, so these need
+# no refining capture, matching the WebCrypto PQC arms in javascript.toml.
+
+[[classify]]
+id = "CRYPTO-215"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?ML-KEM-512\"?$" }
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-216"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?ML-KEM-768\"?$" }
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-217"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?ML-KEM-1024\"?$" }
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-218"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?ML-DSA-44\"?$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-219"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?ML-DSA-65\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-223"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?ML-DSA-87\"?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 204, quantum-resistant. Migrated signature call site."
+
+# ============================================================================
+# javax.crypto.KEM.getInstance — FIPS 203 encapsulation/decapsulation object.
+# The key pair is generated separately via KeyPairGenerator (above); this is
+# the JDK 24+ (JEP 496) surface that performs the encap/decap operation
+# itself and previously had no extract rule at all.
+# ============================================================================
+
+[[extract]]
+id = "JAV-040"
+language = "java"
+query = """
+(method_invocation
+  object: (identifier) @cls (#eq? @cls "KEM")
+  name: (identifier) @fn (#eq? @fn "getInstance")
+  arguments: (argument_list (string_literal) @algo))
+"""
+captures = { cls = "ident", fn = "ident", algo = "literal_string" }
+api = "javax.crypto.KEM.getInstance"
+description = "Java KEM.getInstance(algo) — FIPS 203 key encapsulation mechanism."
+
+[[classify]]
+id = "CRYPTO-227"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?ML-KEM-512\"?$" }
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-228"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?ML-KEM-768\"?$" }
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-229"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?ML-KEM-1024\"?$" }
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
 # ============================================================================
 # java.security.MessageDigest.getInstance
 # ============================================================================
@@ -712,3 +809,29 @@ when.args.algo = { regex = "(?i)with(DSA|DSAinP1363Format)\"?$" }
 algorithm_id = "dsa-unattributed"
 severity_hint = "auto"
 message = "Signature.getInstance('{algo}') — DSA, broken by Shor and already discouraged classically. Replace with ML-DSA-65."
+
+# --- PQC: FIPS 204, standard JCA name since JDK 24 (JEP 497) ---------------
+
+[[classify]]
+id = "CRYPTO-224"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?ML-DSA-44\"?$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-225"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?ML-DSA-65\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-226"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?ML-DSA-87\"?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 204, quantum-resistant. Migrated signature call site."

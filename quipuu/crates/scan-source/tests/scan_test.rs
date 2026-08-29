@@ -366,6 +366,34 @@ fn scans_java_keypairgenerator_rsa() {
     );
 }
 
+#[test]
+fn scans_java_pqc_keypairgenerator_and_signature_and_kem() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Pqc.java"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-216", "ml-kem-768"), // KeyPairGenerator.getInstance("ML-KEM-768")
+        ("CRYPTO-219", "ml-dsa-65"),  // KeyPairGenerator.getInstance("ML-DSA-65")
+        ("CRYPTO-225", "ml-dsa-65"),  // Signature.getInstance("ML-DSA-65")
+        ("CRYPTO-228", "ml-kem-768"), // KEM.getInstance("ML-KEM-768")
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in Java PQC fixture; findings: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+}
+
 // ============================================================================
 // JavaScript fixtures
 // ============================================================================

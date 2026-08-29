@@ -1130,6 +1130,7 @@ const JAVA_CALLEE_APIS: &[(&str, &str)] = &[
         "Signature.getInstance",
         "java.security.Signature.getInstance",
     ),
+    ("KEM.getInstance", "javax.crypto.KEM.getInstance"),
 ];
 
 fn match_java_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
@@ -2130,7 +2131,8 @@ fn populate_java_args(
         "javax.crypto.Cipher.getInstance"
         | "java.security.KeyPairGenerator.getInstance"
         | "java.security.MessageDigest.getInstance"
-        | "java.security.Signature.getInstance" => {
+        | "java.security.Signature.getInstance"
+        | "javax.crypto.KEM.getInstance" => {
             // First arg is a string literal like "AES/GCM/NoPadding"
             let key = match api {
                 "javax.crypto.Cipher.getInstance" => "spec",
