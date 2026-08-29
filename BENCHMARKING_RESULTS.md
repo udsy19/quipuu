@@ -2208,3 +2208,93 @@ ML-KEM/hybrid groups still report `kx_group: None` (`ring` has no ML-KEM kx grou
 It only stops the classical groups from asserting a primitive they never exercised. No live-host
 verification was run this cycle (no `--allow-network` target was authorized); the fix is verified
 statically, against the algorithm table, which is sufficient for the defect it closes.
+
+## JS/Python extract queries could not see a name-imported call — 2026-08-29 (`#Y4`)
+
+**Measurement tuple:** corpus B (150 manifest projects) · `--source --deps --include-safe` ·
+profile `nist-default` · release binary built from this cycle's tree · dumps
+`work/net_fix_dump.json` (1085, `b6a3055`, the population `state/precision.json`'s 90.4 % is
+anchored on) → `work/y4_post.json` (1111). Script: `work/y4_precision.py`.
+
+**What changed.** Every JS/TS and Python extract query recognised a call only through the module
+object (`crypto.generateKeyPair(...)`, `hashlib.md5(...)`); a name-imported binding
+(`const { generateKeyPair } = require('node:crypto')`, `import { generateKeyPair } from
+'node:crypto'`, `from hashlib import md5`) was invisible, including through aliased destructuring
+(`{ generateKeyPair: generateKeyPair_ }`). Root cause: `collect_imports`
+(`crates/scan-source/src/scanner.rs`) returned nothing for JS/Python, and `match_call` only ever
+looked up a callee's full member-expression text, which a bare identifier never has.
+
+**Fix: `collect_bare_bindings`, not a new api surface.** It records, per file, the local names a
+`require`/`import` (JS, alias-aware) or `from hashlib import ...` (Python) binds directly from a
+crypto module, mapped to the exact `module.method` key the qualified call already produces
+(`generateKeyPair` from `node:crypto` → `"crypto.generateKeyPair"`, the existing `JS_CALLEE_APIS`
+key). `match_call` resolves a bare identifier callee through this map before the existing lookup,
+so a name-imported call reaches the same classify rules the qualified form already does — no new
+`api` constant, no new classify rule, no new `when.imports` predicate. Explicitly out of scope,
+per the item that raised this (`Backlog.md` `#Y4`): barrel files, re-exports, dynamic specifiers,
+`import * as c`.
+
+**Corpus effect: 26 findings added, 0 removed, 0 reclassified.** `y4_precision.py` asserts every
+pre-existing `(project, rule_id, file, line)` row is byte-identical in the post dump and exits
+non-zero if one moved.
+
+| | CRYPTO-140 (`md5`) | CRYPTO-141 (`sha-1`) | CRYPTO-310 (`md5`) | CRYPTO-311 (`sha-1`) | CRYPTO-320 (`rsa-unattributed`) |
+|---|---|---|---|---|---|
+| new findings | 2 | 8 | 4 | 3 | 9 |
+
+Eight projects, all `npm`/`pypi`, none in the 46-project restored stratum: `jsonwebtoken`,
+`node-rsa`, `ssh2` (JS, name-imported `generateKeyPairSync`/`createHash`); `botocore`, `ecdsa`,
+`paramiko`, `pycryptodome`, `setuptools` (Python, `from hashlib import md5`/`sha1`).
+
+**All 26 were hand-labelled by opening the cited `file:line` — 26 TP, 0 FP, 0 DEPENDS.** Every one
+is a direct `generateKeyPairSync('rsa', ...)`/`createHash('md5'|'sha1')`/`md5(...)`/`sha1(...)`
+call that genuinely executes — five are jsonwebtoken/node-rsa test files, but each calls
+`generateKeyPairSync` unconditionally rather than inside a branch the assertion requires to fail
+(the FP shape `PRECISION_AUDIT_V3` and `#S2` established); two pycryptodome rows are test-vector
+generator scripts that still genuinely call `sha1(...)` to build their fixtures. None is a string
+comparison, a registry lookup, or a call a surrounding assertion requires to fail.
+
+**Precision: 90.4 % → 91.6 % (95 % CI 87.9–95.4), +1.21 pp.** All 26 new findings fall in stratum
+A (the 104 always-scanned projects); the 46-project restored stratum is untouched by this fix in
+this corpus. Folded into the currently-anchored estimator (`state/precision.json`, stratum A:
+70 TP / 9 FP of 79 audited; stratum B unmoved at 101 TP / 9 FP of 110). `y4_precision.py`
+reproduces the anchored 90.4 % on the pre dump exactly before reporting anything else.
+
+| | stratum A | stratum B | weighted |
+|---|---|---|---|
+| findings, pre → post | 469 → 495 | 616 → 616 | 1085 → 1111 |
+| TP / FP, pre → post | 70/9 → 96/9 | 101/9 → 101/9 | |
+| precision | 91.4 % | 91.8 % | **91.6 % (87.9–95.4)** |
+
+**Read this honestly, same caveat every fully-labelled-delta cycle before this one has carried.**
+The 26 new findings are audited at 100 % where the rest of the corpus sits at roughly 20 %, which
+biases the number upward. Unlike `#Y3`'s Go keygen fix, this failure mode is not FP-proof by
+construction — a bare `md5`/`sha1`/`generateKeyPair` name could in principle be shadowed by a
+same-named local function rather than the crypto import, which is exactly why `collect_bare_bindings`
+only maps a name that a real `require`/`import`/`from hashlib import` bound it from; a shadowing
+redefinition after the import would still misattribute, and none of the 26 corpus sites shadow one.
+
+**This is a recall fix, not a precision-hunting one — reported as one to match `#Y4`'s own framing.**
+9 of the 10 immediately recoverable findings on the isolation probe were `md5`/`sha1`, the oldest,
+most-scanned-for classical defects; `npm/ssh2`'s entire `lib/` went from 0 findings to 5
+(2×`md5`, 3×`sha1`, exactly as predicted) purely because every file in it opens with a destructured
+`require`. Also verified against the isolation fixture cited by the item: `tests/fixtures/`
+0/4 → 4/4 and 0/2 → 2/2 for the aliased and unaliased destructuring forms respectively.
+
+**Still missing, said out loud rather than claimed:** the 4 `createCipheriv('chacha20')` sites in
+`ssh2/lib/` stay invisible — no ChaCha arm exists in `javascript.toml` at all, a separate,
+unaddressed coverage gap. `import * as crypto from 'node:crypto'` and re-exported/barrel-file
+bindings are unresolved by design, stated in the code.
+
+**`PRECISION:` line is emitted because this diff touches `crates/scan-source/src/scanner.rs`,
+inside `DETECTION_PATHS`.** `state/precision.json` is not written from this cycle — only a human
+moves the anchor — so the gate compares the reported figure against the still-anchored 90.4 % and
+the +1.21 pp delta clears it.
+
+**Not re-run, said out loud:** `regression_check.py` — its floors are lower bounds and this change
+is a pure addition (0 rows removed, 0 reclassified, verified above), so no floor can fall; re-running
+it would spend ~10 minutes re-deriving a fact the row-identity assertion already pins. Go line-exact
+recall unmoved — no Go file or rule was touched. `cargo build --release --workspace` clean;
+`cargo test --workspace` all passing, 4 new (`scan_test` 20 → 24) — one per isolation shape: aliased
+`require` destructuring, bare `require` destructuring, ESM named import, and Python `from hashlib
+import ... as ...`, each promoted from the manual CLI probe into `tests/fixtures/`.

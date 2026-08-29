@@ -458,6 +458,94 @@ fn scans_js_generatekeypair_ec() {
     );
 }
 
+// `#Y4` — bare identifier calls reached through a name import, not the
+// module object. Every assertion here failed before `collect_bare_bindings`.
+
+#[test]
+fn scans_js_generatekeypair_via_aliased_destructure() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/named_import_crypto.js"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-320" && f.algorithm_id == "rsa-unattributed"),
+        "expected CRYPTO-320 via `const {{ generateKeyPair: generateKeyPair_ }} = require(...)`; \
+         findings: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn scans_js_createhash_via_bare_destructure() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/named_import_crypto.js"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-310" && f.algorithm_id == "md5"),
+        "expected CRYPTO-310 via `const {{ createHash }} = require('crypto')`"
+    );
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-311" && f.algorithm_id == "sha-1"),
+        "expected CRYPTO-311 via `const {{ createHash }} = require('crypto')`"
+    );
+}
+
+#[test]
+fn scans_js_generatekeypair_via_esm_named_import() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/named_import_crypto.mjs"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-320" && f.algorithm_id == "rsa-unattributed"),
+        "expected CRYPTO-320 via `import {{ generateKeyPair }} from 'node:crypto'`"
+    );
+}
+
+#[test]
+fn scans_python_hashlib_named_import() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("python/hashlib_named_import.py"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-140" && f.algorithm_id == "md5"),
+        "expected CRYPTO-140 via `from hashlib import md5`; findings: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-141" && f.algorithm_id == "sha-1"),
+        "expected CRYPTO-141 via `from hashlib import sha1 as s1`"
+    );
+}
+
 // ============================================================================
 // C / C++ fixtures
 // ============================================================================

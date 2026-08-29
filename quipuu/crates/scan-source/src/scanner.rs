@@ -266,7 +266,8 @@ fn run_extract(source: &[u8], language: Language) -> Result<ExtractedFile, ScanE
 
     let mut matches = Vec::new();
     let root = tree.root_node();
-    walk(root, source, language, &mut matches, 0);
+    let bare_bindings = collect_bare_bindings(root, source, language);
+    walk(root, source, language, &mut matches, 0, &bare_bindings);
     let imports = collect_imports(root, source, language);
     Ok(ExtractedFile { matches, imports })
 }
@@ -310,6 +311,202 @@ fn collect_imports(root: Node<'_>, source: &[u8], language: Language) -> Vec<Str
     out
 }
 
+/// Local names bound directly (not through a member expression) from a
+/// crypto module import, mapped to the same `module.method` key the
+/// member-expression form already produces — `generateKeyPair` destructured
+/// from `require('node:crypto')` maps to `"crypto.generateKeyPair"`, the
+/// existing [`JS_CALLEE_APIS`] key, and `md5` from `from hashlib import md5`
+/// maps to `"hashlib.md5"`, the existing [`PYTHON_CALLEE_APIS`] key. A bare
+/// call resolves through this map before the normal callee lookup
+/// (see `match_call`), so no new api table or classify rule is needed —
+/// see `#Y4`: every JS/Python extract query only recognised a call reached
+/// through the module object, so a name-imported binding was invisible.
+fn collect_bare_bindings(
+    root: Node<'_>,
+    source: &[u8],
+    language: Language,
+) -> HashMap<String, String> {
+    match language {
+        Language::JavaScript | Language::TypeScript => collect_js_bare_bindings(root, source),
+        Language::Python => collect_python_bare_bindings(root, source),
+        _ => HashMap::new(),
+    }
+}
+
+fn walk_all<'a>(node: Node<'a>, f: &mut impl FnMut(Node<'a>)) {
+    f(node);
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        walk_all(child, f);
+    }
+}
+
+/// Strip the delimiters off a JS `string` node's text (`'x'`, `"x"`, `` `x` ``).
+fn string_literal_value(node: Node<'_>, source: &[u8]) -> String {
+    node_text(node, source)
+        .trim_matches(['\'', '"', '`'].as_slice())
+        .to_string()
+}
+
+/// `const { generateKeyPair } = require('node:crypto')`, the ESM
+/// `import { generateKeyPair } from 'node:crypto'`, and both forms with an
+/// alias (`{ generateKeyPair: generateKeyPair_ }`, `as`). Out of scope, named
+/// per `#Y4`: barrel files, re-exports, dynamic specifiers, `import * as c`.
+fn collect_js_bare_bindings(root: Node<'_>, source: &[u8]) -> HashMap<String, String> {
+    let mut out = HashMap::new();
+    walk_all(root, &mut |node| match node.kind() {
+        "variable_declarator" => {
+            let (Some(name), Some(value)) = (
+                node.child_by_field_name("name"),
+                node.child_by_field_name("value"),
+            ) else {
+                return;
+            };
+            if name.kind() != "object_pattern" || value.kind() != "call_expression" {
+                return;
+            }
+            let Some(function) = value.child_by_field_name("function") else {
+                return;
+            };
+            if node_text(function, source) != "require" {
+                return;
+            }
+            if !requires_crypto_module(value, source) {
+                return;
+            }
+            add_js_pattern_bindings(name, source, &mut out);
+        }
+        "import_statement" => {
+            let Some(source_node) = node.child_by_field_name("source") else {
+                return;
+            };
+            if !matches!(
+                string_literal_value(source_node, source).as_str(),
+                "crypto" | "node:crypto"
+            ) {
+                return;
+            }
+            let mut cursor = node.walk();
+            for specifier in node
+                .named_children(&mut cursor)
+                .filter(|n| n.kind() == "import_clause")
+                .flat_map(|clause| {
+                    let mut c = clause.walk();
+                    clause
+                        .named_children(&mut c)
+                        .filter(|n| n.kind() == "named_imports")
+                        .flat_map(|ni| {
+                            let mut c2 = ni.walk();
+                            ni.named_children(&mut c2)
+                                .filter(|n| n.kind() == "import_specifier")
+                                .collect::<Vec<_>>()
+                        })
+                        .collect::<Vec<_>>()
+                })
+            {
+                let Some(orig) = specifier.child_by_field_name("name") else {
+                    continue;
+                };
+                let original = node_text(orig, source);
+                let local = specifier
+                    .child_by_field_name("alias")
+                    .map(|a| node_text(a, source))
+                    .unwrap_or_else(|| original.clone());
+                out.insert(local, format!("crypto.{original}"));
+            }
+        }
+        _ => {}
+    });
+    out
+}
+
+/// Does `require(...)`'s sole argument name the Node `crypto` module?
+fn requires_crypto_module(call: Node<'_>, source: &[u8]) -> bool {
+    let Some(args) = call.child_by_field_name("arguments") else {
+        return false;
+    };
+    let mut cursor = args.walk();
+    args.named_children(&mut cursor)
+        .next()
+        .map(|arg| {
+            matches!(
+                string_literal_value(arg, source).as_str(),
+                "crypto" | "node:crypto"
+            )
+        })
+        .unwrap_or(false)
+}
+
+/// Walk a JS destructuring `object_pattern`, recording each bound local name
+/// against its original (pre-alias) property name.
+fn add_js_pattern_bindings(pattern: Node<'_>, source: &[u8], out: &mut HashMap<String, String>) {
+    let mut cursor = pattern.walk();
+    for element in pattern.named_children(&mut cursor) {
+        match element.kind() {
+            // `{ generateKeyPair }` — key and local name are the same token.
+            "shorthand_property_identifier_pattern" => {
+                let name = node_text(element, source);
+                out.insert(name.clone(), format!("crypto.{name}"));
+            }
+            // `{ generateKeyPair: generateKeyPair_ }`
+            "pair_pattern" => {
+                let (Some(key), Some(value)) = (
+                    element.child_by_field_name("key"),
+                    element.child_by_field_name("value"),
+                ) else {
+                    continue;
+                };
+                let original = node_text(key, source);
+                let local = node_text(value, source);
+                out.insert(local, format!("crypto.{original}"));
+            }
+            _ => {}
+        }
+    }
+}
+
+/// `from hashlib import md5, sha1 as s1`. Out of scope, named per `#Y4`:
+/// everything beyond `hashlib` — the `cryptography.hazmat` classes are
+/// already reachable bare (see [`PYTHON_CALLEE_APIS`]) because they are
+/// imported as classes, not as the function that is actually called.
+fn collect_python_bare_bindings(root: Node<'_>, source: &[u8]) -> HashMap<String, String> {
+    let mut out = HashMap::new();
+    walk_all(root, &mut |node| {
+        if node.kind() != "import_from_statement" {
+            return;
+        }
+        let Some(module) = node.child_by_field_name("module_name") else {
+            return;
+        };
+        if node_text(module, source) != "hashlib" {
+            return;
+        }
+        let mut cursor = node.walk();
+        for name in node.children_by_field_name("name", &mut cursor) {
+            match name.kind() {
+                "dotted_name" | "identifier" => {
+                    let n = node_text(name, source);
+                    out.insert(n.clone(), format!("hashlib.{n}"));
+                }
+                "aliased_import" => {
+                    let (Some(orig), Some(alias)) = (
+                        name.child_by_field_name("name"),
+                        name.child_by_field_name("alias"),
+                    ) else {
+                        continue;
+                    };
+                    out.insert(
+                        node_text(alias, source),
+                        format!("hashlib.{}", node_text(orig, source)),
+                    );
+                }
+                _ => {}
+            }
+        }
+    });
+    out
+}
+
 fn push_include_target(node: Node<'_>, source: &[u8], out: &mut Vec<String>) {
     if node.kind() != "preproc_include" {
         return;
@@ -346,7 +543,14 @@ const MAX_AST_DEPTH: usize = 512;
 /// blob is an OOM kill of a CI container rather than a skipped file.
 const MAX_SOURCE_BYTES: u64 = 16 * 1024 * 1024;
 
-fn walk(node: Node<'_>, source: &[u8], language: Language, out: &mut Vec<RawMatch>, depth: usize) {
+fn walk(
+    node: Node<'_>,
+    source: &[u8],
+    language: Language,
+    out: &mut Vec<RawMatch>,
+    depth: usize,
+    bare_bindings: &HashMap<String, String>,
+) {
     if depth >= MAX_AST_DEPTH {
         return;
     }
@@ -364,7 +568,7 @@ fn walk(node: Node<'_>, source: &[u8], language: Language, out: &mut Vec<RawMatc
             | "invocation_expression"
             | "object_creation_expression"
     );
-    if is_call_like && let Some(m) = match_call(node, source, language) {
+    if is_call_like && let Some(m) = match_call(node, source, language, bare_bindings) {
         out.push(m);
     }
     // Java enum-constant references like `SignatureAlgorithm.RS256` are
@@ -422,12 +626,17 @@ fn walk(node: Node<'_>, source: &[u8], language: Language, out: &mut Vec<RawMatc
     }
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
-        walk(child, source, language, out, depth + 1);
+        walk(child, source, language, out, depth + 1, bare_bindings);
     }
 }
 
 /// Inspect one call node and decide if it's a known crypto API site.
-fn match_call(call: Node<'_>, source: &[u8], language: Language) -> Option<RawMatch> {
+fn match_call(
+    call: Node<'_>,
+    source: &[u8],
+    language: Language,
+    bare_bindings: &HashMap<String, String>,
+) -> Option<RawMatch> {
     let kind = call.kind();
 
     // For object_creation_expression (Java `new Foo()` / C# `new Foo()`)
@@ -466,10 +675,29 @@ fn match_call(call: Node<'_>, source: &[u8], language: Language) -> Option<RawMa
     let args = call.child_by_field_name("arguments")?;
     let callee_text = node_text(function, source);
 
+    // A bare identifier callee (`generateKeyPair(...)`, `md5(...)`) carries no
+    // module qualifier for `match_python_callee`/`match_js_callee` to key on.
+    // If the file's own imports bound that exact name from a crypto module,
+    // resolve it to the same `module.method` key the qualified call already
+    // produces, so it reaches the existing callee tables unqualified — see
+    // `collect_bare_bindings`.
+    let resolved_callee = if function.kind() == "identifier"
+        && matches!(
+            language,
+            Language::Python | Language::JavaScript | Language::TypeScript
+        ) {
+        bare_bindings
+            .get(&callee_text)
+            .cloned()
+            .unwrap_or_else(|| callee_text.clone())
+    } else {
+        callee_text.clone()
+    };
+
     let (api, mut args_map) = match language {
         Language::Go => match_go_callee(&callee_text)?,
-        Language::Python => match_python_callee(&callee_text)?,
-        Language::JavaScript | Language::TypeScript => match_js_callee(&callee_text)?,
+        Language::Python => match_python_callee(&resolved_callee)?,
+        Language::JavaScript | Language::TypeScript => match_js_callee(&resolved_callee)?,
         Language::C | Language::Cpp => match_c_callee(&callee_text)?,
         Language::Rust => match_rust_callee(&callee_text)?,
         Language::Java | Language::CSharp => return None, // handled above
