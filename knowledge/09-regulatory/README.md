@@ -25,7 +25,7 @@
 
 **2026 updates:** A January 8, 2024 technical correction was published; no substantive deadline changes confirmed. A July 2024 White House report estimated the total government-wide PQC migration cost at ~$7.1 billion (2024 dollars, 2025–2035).
 
-**Implication for quipuu:** The annual inventory obligation creates a recurring procurement opportunity — federal agencies need crypto-discovery tooling to satisfy this mandate every year, and OMB has published no native tooling to help them.
+**Implication for quipuu:** The inventory obligation recurs annually and OMB publishes no tooling for it, so the artifact an agency has to produce every year is a machine-generated cryptographic inventory — which is what `--cbom` emits.
 
 ---
 
@@ -107,7 +107,7 @@
 
 **Named industry CRADA collaborators (47+, partial list):** Amazon Web Services, Cisco Systems, IBM, JPMorgan Chase, Microsoft, NSA, CISA, Palo Alto Networks, Samsung SDS, SandboxAQ, Keyfactor, Thales DIS CPL USA, InfoSec Global, MITRE, HSBC, wolfSSL, ISARA Corporation, U.S. Army DEVCOM C5ISR Center.
 
-**Implication for quipuu:** This is a buyer-signal goldmine — every named collaborator is actively engaged in solving the crypto-discovery problem. The explicit finding that "no single product finds all vulnerable crypto" validates a multi-layer scanner. SP 1800-38B is the reference architecture quipuu should align to.
+**Implication for quipuu:** The project's explicit finding that "no single product finds all vulnerable crypto" is the argument for scanning source, dependencies, certificates and TLS in one pass rather than doing one of them well. SP 1800-38B is the reference architecture quipuu should align to.
 
 ---
 
@@ -193,7 +193,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline: No binding PQC deadline from any US banking regulator found** as of June 2026.
 
-**Implication for quipuu:** US banking is in a pre-mandate awareness phase — OCC and FFIEC supervisory guidance creates reputational pressure without hard deadlines. The G7 CEG roadmap (see §12 below) is the more actionable international signal for financial sector buyers.
+**Implication for quipuu:** US banking is in a pre-mandate awareness phase — OCC and FFIEC supervisory guidance sets expectations without hard deadlines. The G7 CEG roadmap (see §12 below) is where the financial sector's actual dates come from.
 
 ---
 
@@ -210,7 +210,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline: No hard PQC deadline in current NIS2 text.** COM(2026)13 amendment is pending.
 
-**Implication for quipuu:** When COM(2026)13 is adopted, NIS2-regulated essential entities (~100,000+ organizations across the EU) will need PQC migration plans — quipuu provides the inventory foundation those plans require.
+**Implication for quipuu:** When COM(2026)13 is adopted, NIS2-regulated essential entities will need PQC migration plans, and a cryptographic inventory is the input such a plan takes.
 
 ---
 
@@ -271,7 +271,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Status:** Non-binding soft law. The 2026/2030/2035 milestones are from the NIS CG roadmap, not directly from the Recommendation text.
 
-**Implication for quipuu:** The 2026 inventory obligation (even soft-law) drives immediate budget allocation across EU member states for crypto-discovery tooling — the procurement window is open now.
+**Implication for quipuu:** The 2026 inventory obligation is soft law, but it is the earliest EU-wide date that names an inventory as the deliverable, so it is the first milestone a CBOM has to satisfy.
 
 ---
 
@@ -297,7 +297,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Status:** Guidance deadlines, not legally enforceable mandates. Aligned with NIST IR 8547's 2035 federal deprecation target.
 
-**Implication for quipuu:** The 2028 "full discovery exercise" deadline is the clearest single-date driver for a crypto-inventory scanner in the UK market — Phase 1 is literally "do the inventory."
+**Implication for quipuu:** Phase 1 names the deliverable as a "full discovery exercise" and dates it to 2028 — the obligation is the inventory itself, not a migration.
 
 ---
 
@@ -382,7 +382,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline: No hard PQC deadline found** in MAS binding regulation.
 
-**Implication for quipuu:** MAS advisory recommending cryptographic asset inventory is a direct use-case statement for quipuu, from a regulator covering Singapore's $800B+ banking sector.
+**Implication for quipuu:** MAS advises a cryptographic asset inventory, so Singapore's financial regulator asks in as many words for the artifact this scanner emits.
 
 ---
 
@@ -404,7 +404,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline:** No single unified Japanese law mandating PQC as of mid-2026. The 2035 target is policy direction.
 
-**Implication for quipuu:** Japan's financial sector is under FSA pressure without a hard mandate — early mover tooling adoption is feasible.
+**Implication for quipuu:** Japan's financial sector is under FSA pressure without a hard mandate, so any inventory here is dated by CRYPTREC guidance rather than by law.
 
 ---
 
@@ -421,7 +421,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline: No hard PQC deadline found** in PCI DSS text.
 
-**Implication for quipuu:** PCI DSS 12.3.3's crypto-inventory and cipher-suite-monitoring requirements (already in force as of April 2025) are a compliance driver for quipuu today, in ~9 million merchant environments and their acquirers.
+**Implication for quipuu:** PCI DSS 12.3.3's crypto-inventory and cipher-suite-monitoring requirements have been in force since April 2025 — an inventory obligation that binds today rather than one dated to a future transition.
 
 ---
 
@@ -460,7 +460,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Hard deadline: No explicit PQC obligations in NYDFS Part 500** — but the asset-inventory and encryption requirements create the implicit foundation.
 
-**Implication for quipuu:** 3,000+ NYDFS-regulated entities (banks, insurers, MSBs) must maintain asset inventories per 500.13. Quipuu output integrates directly into that evidence requirement.
+**Implication for quipuu:** 500.13 already requires regulated entities to maintain asset inventories, so quipuu output is evidence against a requirement that binds today rather than one dated to a future transition.
 
 ---
 
@@ -477,7 +477,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Bottom line:** "As of early 2026, no U.S. sector has a binding, mandatory PQC adoption requirement for private-sector entities." (confirmed by multiple law review analyses)
 
-**Implication for quipuu:** No state creates an immediate compliance mandate, but the federal+EU+UK+AU pressure is sufficient for enterprise sales without state mandates.
+**Implication for quipuu:** No state creates an immediate compliance mandate; every binding US obligation in this file is federal, so the state layer adds no date a policy preset has to encode.
 
 ---
 
@@ -507,30 +507,3 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 | **2035** | EC/NIS CG Roadmap | EU | Soft law | Remaining EU systems complete migration |
 | **2035** | Japan national target | Japan | Policy direction | National PQC migration complete |
 
----
-
-## Buyer Pressure Ranking
-
-**Tier 1 — Hardest buyers (budget allocated, hard dates, compliance risk):**
-
-1. **NSA / DoD (CNSA 2.0 for NSS)** — January 2027 acquisition gate, staggered 2025–2033 exclusive-use dates, binding on the entire US defense industrial base and IC. Any contractor selling into DoD must demonstrate CNSA 2.0 readiness. Budget is allocated ($7.1B government-wide estimate). Procurement decisions happening now.
-
-2. **US Federal Civilian (OMB M-23-02)** — Annual inventory obligation already active since May 2023. FCEB agencies are the only non-NSS sector with a current, recurring, binding crypto-inventory requirement. Creates annual recurring procurement cycle.
-
-3. **Australian Commonwealth agencies (ASD ISM)** — Only jurisdiction with a confirmed hard 2030 compliance deadline (ISM-1917 Rev.1, December 2024) specifying exact algorithm parameter sets (ML-KEM-1024, ML-DSA-87). Binding for all Commonwealth agencies.
-
-**Tier 2 — Strong buyers (regulatory intent, budget forming, 2027–2030 horizon):**
-
-4. **EU product vendors (CRA, December 2027)** — ~500,000 organizations selling connected products into the EU must demonstrate "state-of-the-art" cryptography by December 2027. The 2027 date is close enough to drive current procurement. ANSSI qualification mandate from 2027 adds French government market urgency.
-
-5. **UK critical infrastructure operators (NCSC guidance, Phase 1 by 2028)** — Phase 1 explicitly requires a "full discovery exercise" by 2028. While guidance rather than law, NCSC guidance compliance is a material factor in UK government contracts and insurance underwriting.
-
-6. **G7 financial sector (G7 CEG roadmap, Jan 2026)** — Targets 2030–2032 for critical systems, 2035 overall. G7 finance ministries explicitly require "comprehensive inventory of cryptographic assets" — MAS, BIS Project Leap, G7 CEG all point to crypto inventory as the first deliverable.
-
-**Tier 3 — Emerging buyers (awareness phase, 1–3 year mandate horizon):**
-
-7. **EU NIS2 essential entities** — COM(2026)13 will force national PQC strategy adoption within ~1 year of passage; NIS2 essential entities (~100K organizations) will then need inventory plans.
-
-8. **PCI DSS-scoped merchants/acquirers** — Requirement 12.3.3 (cipher-suite monitoring, in force April 2025) is an immediate hook; full PQC mandate likely in PCI DSS 5.x (expected 2027–2028).
-
-9. **NYDFS-regulated entities** — 3,000+ NY-licensed financial companies with active asset-inventory requirements today, even without explicit PQC language.
