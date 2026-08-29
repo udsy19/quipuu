@@ -656,6 +656,32 @@ fn scans_python_hashlib_named_import() {
     );
 }
 
+#[test]
+fn scans_python_pycryptodome_des() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("python/pycryptodome_des.py"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-809" && f.algorithm_id == "des"),
+        "expected CRYPTO-809 via `Crypto.Cipher.DES.new`; findings: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-810" && f.algorithm_id == "3des"),
+        "expected CRYPTO-810 via `Crypto.Cipher.DES3.new`"
+    );
+}
+
 // ============================================================================
 // C / C++ fixtures
 // ============================================================================

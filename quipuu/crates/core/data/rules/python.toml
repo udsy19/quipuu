@@ -403,3 +403,21 @@ when.args.bits = { ge = 3072 }
 algorithm_id = "rsa-3072"
 severity_hint = "auto"
 message = "pycryptodome RSA-{bits} — quantum-vulnerable regardless of key size."
+
+# pycryptodome/pycryptodomex — Crypto.Cipher.DES / Crypto.Cipher.DES3
+# (Cryptodome.Cipher.* imports the identical class names, so the bare
+# `DES.new`/`DES3.new` callee text this rule keys on covers both namespaces.)
+
+[[classify]]
+id = "CRYPTO-809"
+when.api = "^Crypto\\.Cipher\\.DES\\.new$"
+algorithm_id = "des"
+severity_hint = "critical"
+message = "Single DES — 56-bit key, brute-forced since 1998. Disallowed by NIST SP 800-131A. Replace with AES-256-GCM."
+
+[[classify]]
+id = "CRYPTO-810"
+when.api = "^Crypto\\.Cipher\\.DES3\\.new$"
+algorithm_id = "3des"
+severity_hint = "critical"
+message = "3DES disallowed for new encryption use (NIST SP 800-131A, 2023) — 64-bit block invites Sweet32. Replace with AES-256-GCM."

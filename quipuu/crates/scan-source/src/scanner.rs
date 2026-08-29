@@ -1274,6 +1274,8 @@ const PYTHON_CALLEE_APIS: &[(&str, &str)] = &[
     ("ssl.SSLContext", "ssl.SSLContext"),
     ("jwt.encode", "jwt.encode"),
     ("RSA.generate", "Crypto.PublicKey.RSA.generate"),
+    ("DES.new", "Crypto.Cipher.DES.new"),
+    ("DES3.new", "Crypto.Cipher.DES3.new"),
 ];
 
 fn match_python_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {

@@ -3295,3 +3295,67 @@ re-derive: the audited population is unchanged.
 **Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
 --all-targets -- -D warnings` clean; `cargo test --workspace` all passing (110 `scan-source`
 tests, was 108).
+
+## `#Y34`: pycryptodome's `Crypto.Cipher.DES.new`/`DES3.new` gain coverage — 2026-08-29
+
+**Closed this cycle: `#Y34`.** `python.toml` had classical-crypto coverage for `hashlib` and
+`cryptography.hazmat`, but nothing keyed to pycryptodome's `Crypto.Cipher.DES`/`DES3` classes —
+the Go equivalent (`crypto/des.NewCipher`/`NewTripleDESCipher`) was already covered, and a
+Semgrep head-to-head run (`#Y36`) had already found this exact gap on an 8-site fixture.
+`PYTHON_CALLEE_APIS` gains two rows, `("DES.new", "Crypto.Cipher.DES.new")` and `("DES3.new",
+"Crypto.Cipher.DES3.new")`, mirroring the existing bare-identifier `RSA.generate` →
+`Crypto.PublicKey.RSA.generate` row exactly — no new mechanism, no import-namespace check,
+because the bare-identifier match already covers both `Crypto.Cipher` and the `Cryptodome.Cipher`
+pycryptodomex alias (both bind the identical class name `DES`/`DES3`, so the same two rows fire
+regardless of which package the import came from). `python.toml` gains `CRYPTO-809`/`810`,
+mirroring `crypto/des.NewCipher`/`NewTripleDESCipher`'s severity band and message verbatim.
+
+**Corpus effect: 41 findings added, 0 removed, 0 reclassified, all 41 in `pypi:pycryptodome`
+(stratum A — confirmed absent from `c11_stratumB.json`'s 640 restored-stratum rows).** Full
+150-project pre/post dump (`work/y33_post.json` 1419 → `work/y34_post.json`, script
+`work/y34_precision.py`). All 41 hand-verified TP by opening the cited `file:line`:
+`lib/Crypto/IO/PEM.py:80,157,160` (real DES-CBC/DES-EDE3-CBC PEM passphrase decrypt/encrypt),
+and 38 sites across `SelfTest/Cipher/test_{DES,DES3,CBC,CFB,CTR,OFB,EAX,OpenPGP}.py` — the
+library's own correctness tests, every `DES.new`/`DES3.new` call a real, successful cipher
+construction followed by a real encrypt/decrypt round-trip. Two of those (`test_CBC.py:124,128`)
+sit in a test whose *next* line wraps a different call (`cipher.encrypt`/`decrypt`, not
+`DES3.new`) in `assertRaises` for a wrong-length argument — the construction itself is not the
+assertion's target and always succeeds, the same "real regardless of what the surrounding test
+later asserts" shape `#Y29`'s Rust arm already established for `openssl::Rsa::generate`. 0 FP.
+
+**A harness bug surfaced by this measurement, worked around rather than left silent.**
+`dump_findings_local.py`/`dump_findings_flags.py` compute `scan_paths = hints.get("scan_paths")
+or [""]` — an explicitly empty `scan_paths = []` (today's fix marking `crates-io:rustls-pemfile`
+`unscannable`, since it is the same clone as `crates-io:rustls`) is falsy in Python, so the `or`
+silently falls back to scanning the whole clone anyway, reintroducing the exact 140-finding
+double-count the manifest change was meant to retire. The raw post dump carries those 140 rows
+(`CRYPTO-560`/`561`/`570`, `DEP-001`); `y34_precision.py` filters `crates-io:rustls-pemfile` out
+by project name before diffing rather than trust the raw total, and neither adds nor removes any
+of the 41 real findings. The fallback needs an explicit `is None` check in place of `or [""]`;
+not fixed here since it is harness tooling in `work/`, not this repo.
+
+**Precision: 96.52% → 96.78% (+0.264pp), `work/y34_precision.py`**, which reproduces the anchored
+96.52% on the pre dump before computing anything else. All 41 new rows are folded into stratum
+A's TP tally (`216→257` TP, FP unchanged at 9) rather than left as a population-only weight
+shift — unlike a reclassification of an existing row, a brand-new row cannot collide with the
+original 225-row sample, so folding fully-audited new rows into a stratum's own TP/FP count is
+the same operation `#Y30`/`#W3` already used when their new rows landed in stratum B; the script
+also prints the weight-shift-only reading (96.50%, i.e. flat) for comparison, so the folded
+number is not the only one on record.
+
+| | before | after (folded) | after (weight-shift only) |
+|---|---|---|---|
+| stratum A | 615 findings, TP=216 FP=9 | 656 findings, TP=257 FP=9 | 656 findings, TP=216 FP=9 |
+| stratum B | 798 findings, TP=283 FP=9 (untouched) | 798, unchanged | 798, unchanged |
+| **weighted** | **96.52%** (94.9–98.1) | **96.78%** (95.3–98.2) | 96.50% (94.9–98.1) |
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (111 `scan-source`
+tests, was 110 — `scans_python_pycryptodome_des` new, fixture
+`tests/fixtures/python/pycryptodome_des.py`).
+
+**Not re-taken, said out loud:** `regression_check.py` — none of its per-rule floors name
+`CRYPTO-809`/`810`, and the change is a pure addition with no removed or reclassified row, so a
+floor check would spend ~6 minutes re-deriving a value the row-identity diff above already pins.
+The `--policy nsa-cnsa2` divergence still describes an earlier finding count; `scan-network` and
+`scan-certs` are untouched.
