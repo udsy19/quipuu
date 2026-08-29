@@ -353,16 +353,17 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 **Specific controls:**
 - **ISM-1917 (Rev. 0, March 2024):** Requires "future cryptographic requirements and dependencies are considered during the transition to post-quantum cryptography."
 - **ISM-1917 (Rev. 1, December 2024):** Development and procurement of new cryptographic equipment/software "ensures support for the use of ML-DSA-87, ML-KEM-1024, SHA-384, SHA-512, and AES-256 **by no later than 2030**."
-- **ISM-1990–1996 (new December 2024):** Adopts specific ML-KEM and ML-DSA parameter sets as ASD-Approved Cryptographic Algorithms (AACAs). ISM-1996: hybrid schemes must include at least one AACA component.
+- **ISM-1990–1996 (new December 2024):** Adopts specific ML-KEM and ML-DSA parameter sets as ASD-Approved Cryptographic Algorithms (AACAs). The two that name parameter sets read, verbatim:
+  - **ISM-1991:** "When using ML-DSA for digital signatures, ML-DSA-65 or ML-DSA-87 is used, preferably ML-DSA-87."
+  - **ISM-1995:** "When using ML-KEM for encapsulating encryption session keys (and similar keys), ML-KEM-768 or ML-KEM-1024 is used, preferably ML-KEM-1024."
+- **ISM-1996:** hybrid schemes must include at least one AACA component.
+- **ISM-2073:** "A post-quantum cryptography transition plan is developed, implemented and maintained." No date attached.
 
-**ASD phased milestones:**
-- **End of 2026**: Detailed transition plan in place
-- **End of 2028**: PQC implementation begins on most critical/sensitive systems
-- **End of 2030**: Full transition complete; RSA, DH, ECDH, ECDSA to be ceased
+**Dates in the catalogue:** ISM-1917 is the only control in the ISM that names a year. Swept across all 1150 controls of `ISM_catalog.json` version `2026.06.18`, the years 2026, 2027, 2028, 2029, 2031 and 2035 match no control text; 2030 matches ISM-1917 alone. There is no ISM control behind an end-of-2026 planning date, an end-of-2028 implementation date, or an end-of-2030 cessation of RSA/DH/ECDH/ECDSA. What ISM-1917 obliges by 2030 is *support for* ML-DSA-87, ML-KEM-1024, SHA-384, SHA-512 and AES-256 in newly developed and procured equipment — a procurement-readiness obligation, not a cutoff for the legacy algorithms.
 
-**Binding status:** For Commonwealth agencies, ISM compliance is mandatory. The 2030 PQC target is the only confirmed hard deadline in any current binding law globally (for the stated agencies and scope).
+**Binding status:** For Commonwealth agencies, ISM compliance is mandatory. ISM-1917's 2030 date is the only year stated in binding text by any regulator in this file.
 
-**Implication for quipuu:** Australia has the hardest statutory PQC deadline of any surveyed jurisdiction (2030 for Commonwealth agencies). ASD specifies exact algorithm parameter sets — quipuu should flag any deployment using ML-KEM-512 or ML-KEM-768 in an Australian government context as non-compliant (ISM requires ML-KEM-1024).
+**Implication for quipuu:** ASD names exact parameter sets, and they are ranges with a preference, not single values: ML-KEM-768 and ML-KEM-1024 both satisfy ISM-1995, ML-DSA-65 and ML-DSA-87 both satisfy ISM-1991. An `au-asd-ism` preset must disallow **ML-KEM-512 and ML-DSA-44** and must not flag ML-KEM-768 or ML-DSA-65. ISM-1917 is a separate check with a separate verdict — it constrains what new equipment must *support*, which is not a property of a finding at a call site.
 
 ---
 
@@ -492,11 +493,10 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 | **2027** | ANSSI qualification mandate | France | Yes (qualified products) | PQC required for ANSSI-qualified crypto products |
 | **Dec 11, 2027** | EU CRA Annex I full compliance | EU | Yes | All essential cybersecurity requirements apply (incl. state-of-the-art crypto) |
 | **2028** | UK NCSC Phase 1 end | UK | Guidance | "Full discovery exercise" must be complete |
-| **Dec 31, 2028** | ASD ISM ISM-1917 | Australia | Yes (Commonwealth) | PQC implementation begins on critical systems |
 | **2029** | Microsoft internal target | Enterprise benchmark | No | Microsoft's own early-adoption target |
 | **2030** | NIST IR 8547 (IPD) deprecation | US (proposed) | Draft only | RSA-2048, P-256, ECDH deprecated (proposed) |
 | **2030** | BSI/EU joint statement | EU | Guidance | Most sensitive applications quantum-resistant |
-| **Dec 31, 2030** | ASD ISM ISM-1917 hard target | Australia | Yes (Commonwealth) | Full transition; RSA/ECDH/ECDSA ceased |
+| **Dec 31, 2030** | ASD ISM ISM-1917 | Australia | Yes (Commonwealth) | New equipment/software must support ML-DSA-87, ML-KEM-1024, SHA-384/512, AES-256 |
 | **Dec 31, 2030** | CNSA 2.0 firmware signing | US (NSS) | Yes (NSS only) | Exclusive use of CNSA 2.0 for firmware signing |
 | **2030–2032** | G7 CEG critical systems | G7 financial | Guidance | Priority critical financial systems migrate |
 | **Dec 31, 2031** | NSM-10 / CNSA 2.0 | US (NSS) | Yes (NSS) | Vast majority of NSS crypto must be quantum-resistant |

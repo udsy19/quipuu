@@ -74,7 +74,7 @@ Every load-bearing build decision for quipuu, in **Why → Evidence → Decision
 - `knowledge/02-nist-pqc-timeline` §1: NIST IR 8547 status confirmed IPD as of 2026-06-12. SP 800-131A Rev 3 also IPD.
 - CNSA 2.0 (NSA) is more aggressive than NIST: requires AES-256 only, SHA-384 minimum, exclusive PQC for networking/firmware by 2030 (`knowledge/02-nist-pqc-timeline`).
 - UK NCSC's 2028 Phase 1 ("full discovery exercise") is the tightest national deadline today (`knowledge/09-regulatory`).
-- Australia ASD ISM-1917 is the only currently-binding hard deadline globally: ML-KEM-1024/ML-DSA-87 by 2030 (`knowledge/09-regulatory`).
+- Australia ASD ISM-1917 carries the only year stated in binding regulatory text: new equipment and software must *support* ML-DSA-87, ML-KEM-1024, SHA-384, SHA-512 and AES-256 by 2030 (`knowledge/09-regulatory`). It is a procurement-readiness obligation, not a cutoff for the legacy algorithms.
 
 **Decision:** Ship a default `policy.toml` shipping NIST IR 8547 IPD values as the default. CLI accepts `--policy <file>` to override. Provide named presets, one TOML each under `crates/core/data/policies/`. Shipped as of Phase 19: `nist-default` (IR 8547 IPD) and `nsa-cnsa2` (CNSA 2.0 for NSS). `uk-ncsc`, `au-asd-ism` and `eu-cra` were listed here in June 2026 and are **not** shipped — a preset is only added once its algorithm verdicts trace to a primary source held in `knowledge/09-regulatory/`. Every report header prints the policy in force ("Risk classified per NIST IR 8547 IPD, Nov 2024").
 
