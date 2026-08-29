@@ -2400,3 +2400,65 @@ rounded up to the target.
 README `:245`–`:258` and `:313` updated to these numbers. Precision is untouched — 94.7 % stands;
 this is a recall-only measurement on the same finding set. `regression_check.py` and
 `cargo test --workspace` not re-run: no Rust file changed, so this cannot regress either.
+
+## Go crypto/dsa GenerateKey/Sign/Verify rule — 2026-08-29
+
+**Measurement tuple:** corpus B (150 manifest projects) · `--source --deps --include-safe` ·
+profile `nist-default` · release binary built from this cycle's tree · dumps
+`work/cycle-opsites/opsites_post.json` (1242, the population `state/precision.json`'s 94.7 % is
+anchored on) → `work/dsa1_post.json` (1244). Script: `work/dsa1_precision.py`.
+
+**What changed.** The Go recall follow-up above named the last open gap in the operations row:
+`dsa.Sign`/`dsa.Verify` at 0.0 %, because `#V4` added `rsa`/`ecdsa`/`ed25519`/`md5`/`sha1` operation
+rules but not `dsa`. `go.toml` gains `GO-012`/`CRYPTO-016` for `dsa.GenerateKey` and
+`GO-013`/`CRYPTO-017` for `dsa.Sign`/`dsa.Verify`; `scanner.rs`'s `GO_CALLEE_APIS` table gains the
+three matching callee rows. None of the three apis states a parameter at the call site —
+`GenerateKey` takes an already-parameterised `*dsa.PrivateKey`, the prime/subprime size lives in a
+separate `dsa.GenerateParameters` call this pack does not track — so all three resolve to the
+existing `dsa-unattributed` sentinel Java's `KeyPairGenerator.getInstance("DSA")` already publishes
+(`java.toml` `CRYPTO-212`), extending the matcher rather than forking a new mechanism.
+
+**Corpus effect: 2 findings added, 0 removed, 0 reclassified.** `dsa1_precision.py` asserts every
+pre-existing `(project, rule_id, file, line)` row is byte-identical in the post dump and reproduces
+the anchored 94.7 % on the pre dump exactly before reporting anything else. Both new findings are
+`golang.org/x/crypto/ssh/keys.go` (`CRYPTO-017`, `dsa-unattributed`, High): line 694 is
+`dsa.Verify` inside `(*dsaPublicKey).Verify`, decoding an RFC 4253 §6.6 `dss_signature_blob` into a
+real digest/r/s before calling it; line 732 is `dsa.Sign` inside
+`(*dsaPrivateKey).SignWithAlgorithm`, reached from the exported `Sign` method. Both read directly as
+genuine DSA operations inside the SSH `ssh-dss` host-key algorithm, not test code — **2 TP, 0 FP, 0
+DEPENDS**.
+
+**Precision: 94.7 % → 94.7 % (+0.02 pp, rounds to the same figure).** Both new findings land in
+stratum B (`golang.org/x/crypto` is one of the 46 corpus-integrity-restored projects); folded into
+the currently-anchored estimator (stratum A: 123 TP / 9 FP of 132 audited, unchanged; stratum B:
+205 → 207 TP / 9 FP of 214 → 216 audited). `state/precision.json` is not touched — the figure it
+holds is still correct to one decimal place.
+
+| | stratum A | stratum B | weighted |
+|---|---|---|---|
+| findings, pre → post | 522 → 522 | 720 → 722 | 1242 → 1244 |
+| TP / FP, pre → post | 123/9 (unchanged) | 205/9 → 207/9 | |
+| precision | 93.2 % | 95.8 % → 95.8 % | **94.7 % (92.3–97.1)** |
+
+**Recall closes the row this item was filed to close.** `recall_check.py` against `dsa1_post.json`:
+in-scope Go recall **98.0 % → 98.5 %** (401/407); operations recall **97.6 % → 100.0 %** (82/82) —
+every sign/verify/encrypt/decrypt/digest operation API in the ground truth is now fully found, the
+remaining 6-site gap is entirely in the constructor row (`ecdh.P256`/`P384`/`X25519`, 2 missed
+sites each, untouched by this change). Whole-tree recall 37.9 % → **38.0 %** (401/1054).
+
+`work/synth_family_gap.py`'s method, re-pointed at `dsa1_post.json`: CBOM family-losses across the
+25 `go-modules` projects **12 → 11**. Small because the fix closes only one of the two `dsa`
+family-losses the prior measurement named — `x-crypto` (now found, in-scope) — while
+`vault/helper/pkcs7/sign.go:220`'s `dsa.Sign` remains a whole-tree-vs-in-scope miss:
+`vault`'s `scan_hints.scan_paths` subtree does not include that file, so this is the corpus-scope
+gap the recall section already names, not a detection defect in the new rule.
+
+README `:245`–`:260` and `:313` updated to these numbers.
+
+**Held:** `cargo build --release --workspace` clean; `cargo test --workspace` all passing, 1 test
+updated in place (`go_operation_sites_are_all_detected`, whose fixture gained a `dsaOps` function
+and now checks 3 more findings — `crates/scan-source/tests/fixtures/go/operations.go`,
+`crates/scan-source/tests/scan_test.rs`). `every_classify_rule_targets_an_api_the_extractor_can_emit`
+and `classify_rules_never_publish_a_parameter_their_when_clause_contradicts` both pass against the
+new rules. `regression_check.py` not re-run — pure addition of 2 findings, floors are lower bounds
+and cannot fall.
