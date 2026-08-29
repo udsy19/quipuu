@@ -501,17 +501,19 @@ fn scans_java_ssl_parameters_set_named_groups() {
     }
 
     // 10 named-group elements across the two direct calls (secp256r1 appears
-    // in both, once per call) + 1 more through the delegating-helper call,
-    // plus the pre-existing CRYPTO-210 RSA finding from the control method —
-    // nothing else.
+    // in both, once per call) + 1 more through the delegating-helper call +
+    // 3 more through the #Y24 part (b) System.setProperty comma-delimited
+    // form (secp256r1, ffdhe2048, X25519MLKEM768), plus the pre-existing
+    // CRYPTO-210 RSA finding from the control method and the unrelated
+    // system property (which must not fire) — nothing else.
     let set_named_groups_count = findings
         .iter()
         .filter(|f| f.rule_id.starts_with("CRYPTO-79") || f.rule_id.starts_with("CRYPTO-80"))
         .count();
     assert_eq!(
         set_named_groups_count,
-        11,
-        "expected exactly 11 setNamedGroups findings (one per array element), got {}: {:#?}",
+        14,
+        "expected exactly 14 setNamedGroups findings (one per array element / property token), got {}: {:#?}",
         set_named_groups_count,
         findings
             .iter()

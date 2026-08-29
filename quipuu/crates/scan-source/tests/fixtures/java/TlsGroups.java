@@ -29,4 +29,17 @@ public class TlsGroups {
     void viaHelper(SSLParameters parameters) {
         setNamedGroups(parameters, new String[]{"X25519MLKEM768"});
     }
+
+    // #Y24 part (b): the same setting via a JVM-wide system property, a
+    // single comma-delimited string rather than one array element per group.
+    // Includes stray whitespace around a comma (a real Java style, never an
+    // issue for the array form) to exercise trimming.
+    void viaSystemProperty() {
+        System.setProperty("jdk.tls.namedGroups", "secp256r1, ffdhe2048,X25519MLKEM768");
+    }
+
+    // Control: an unrelated system property must not fire.
+    void unrelatedSystemProperty() {
+        System.setProperty("http.agent", "quipuu-test");
+    }
 }

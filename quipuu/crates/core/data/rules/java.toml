@@ -1201,8 +1201,10 @@ message = "Signature.getInstance() with a non-literal algorithm argument — the
 # missing-adoption case. Names and default order verified directly against
 # openjdk/jdk27u's sun.security.ssl.NamedGroup.java (jeps/527's own page
 # 403s), not guessed from a JEP description. Backlog #Y24, first change,
-# part (a) — System.setProperty("jdk.tls.namedGroups", "a,b,c")'s
-# comma-delimited single-string form is out of scope here (#Y24 part (b)).
+# part (a). Part (b) — System.setProperty("jdk.tls.namedGroups", "a,b,c")'s
+# comma-delimited single-string form — is a separate Rust structural matcher,
+# match_java_set_property_named_groups in scanner.rs, reusing the same
+# api/args.group shape so the classify arms below fire on either call shape.
 # ============================================================================
 
 [[extract]]

@@ -702,6 +702,16 @@ fn walk(
     {
         out.extend(ms);
     }
+    // Java `System.setProperty("jdk.tls.namedGroups", "a,b,c")` — the
+    // comma-delimited system-property form of the same setting, `#Y24` part
+    // (b). Runs alongside `match_java_set_named_groups` on the same node
+    // kind, same reasoning as that hook's own comment above.
+    if language == Language::Java
+        && kind == "method_invocation"
+        && let Some(ms) = match_java_set_property_named_groups(node, source)
+    {
+        out.extend(ms);
+    }
     // Go runtime string-table dispatch: `switch alg { case "RS256": ... }`.
     // V3 corpus run: 22 of 25 Go projects produced zero findings because
     // golang-jwt, go-jose, lestrrat-go/jwx and similar libraries route
@@ -957,6 +967,66 @@ fn match_java_set_named_groups(call: Node<'_>, source: &[u8]) -> Option<Vec<RawM
             offset: element.start_byte() as u32,
             symbol: format!("setNamedGroups({group})"),
             snippet: node_text(element, source),
+            site_context: quipuu_core::SiteContext::Call,
+        });
+    }
+
+    if results.is_empty() {
+        None
+    } else {
+        Some(results)
+    }
+}
+
+/// Match Java `System.setProperty("jdk.tls.namedGroups", "secp256r1,ffdhe2048,X25519MLKEM768")`.
+///
+/// `match_java_set_named_groups` above covers the instance-method array form,
+/// reached from code that already holds an `SSLParameters`. This is the same
+/// downgrade risk (`#Y24`) reached a different way: a JVM-wide system
+/// property, set once at startup for FIPS-mode or approved-algorithm-baseline
+/// hardening, years before ML-KEM existed. The value is a single
+/// comma-delimited string literal, not one AST node per group — no existing
+/// extract mechanism splits a string literal's contents, so this matcher
+/// does the split itself and emits one `RawMatch` per token, reusing the
+/// array form's `api`/`args.group` shape unchanged so `CRYPTO-798`..`808`
+/// fire on either call shape identically. Backlog `#Y24` part (b).
+fn match_java_set_property_named_groups(call: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch>> {
+    let object = call.child_by_field_name("object")?;
+    let name = call.child_by_field_name("name")?;
+    if node_text(object, source) != "System" || node_text(name, source) != "setProperty" {
+        return None;
+    }
+    let args = call.child_by_field_name("arguments")?;
+    let mut args_cursor = args.walk();
+    let literals: Vec<Node> = args
+        .named_children(&mut args_cursor)
+        .filter(|a| a.kind() == "string_literal")
+        .collect();
+    if literals.len() != 2 {
+        return None;
+    }
+    let (prop, value) = (literals[0], literals[1]);
+    if string_literal_value(prop, source) != "jdk.tls.namedGroups" {
+        return None;
+    }
+
+    let value_text = string_literal_value(value, source);
+    let start = value.start_position();
+    let mut results = Vec::new();
+    for token in value_text.split(',') {
+        let group = token.trim();
+        if group.is_empty() {
+            continue;
+        }
+        let mut group_args = HashMap::new();
+        group_args.insert("group".into(), ArgValue::Str(group.to_string()));
+        results.push(RawMatch {
+            api: "javax.net.ssl.SSLParameters.setNamedGroups".into(),
+            args: group_args,
+            line: (start.row + 1) as u32,
+            offset: value.start_byte() as u32,
+            symbol: format!("setProperty(jdk.tls.namedGroups, {group})"),
+            snippet: node_text(call, source),
             site_context: quipuu_core::SiteContext::Call,
         });
     }
