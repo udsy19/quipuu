@@ -124,6 +124,12 @@ void liboqs_kem_heap(void) {
     OQS_KEM *kem = OQS_KEM_new(OQS_KEM_alg_ml_kem_768);
 }
 
+/* CPP-063 / CRYPTO-472..483 — liboqs heap-form SIG, SLH-DSA has no stack-form
+   header so OQS_SIG_new is its only call shape. */
+void liboqs_sig_heap_slh_dsa(void) {
+    OQS_SIG *sig = OQS_SIG_new(OQS_SIG_alg_slh_dsa_pure_sha2_128s);
+}
+
 /* Out of scope: OQS_SIG_STFL_* is the stateful hash-signature API (LMS/XMSS),
    a firmware-signing population this project does not target. Must not fire. */
 void liboqs_stfl_out_of_scope(void) {

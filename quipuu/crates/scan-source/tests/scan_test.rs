@@ -3032,8 +3032,9 @@ fn scans_c_liboqs_heap_form_kem() {
 
 /// `OQS_SIG_STFL_new` is the stateful hash-signature API (LMS/XMSS) — a
 /// separate, firmware-signing population this project has stood down on
-/// covering. It must not be picked up by any liboqs rule: exactly 6 liboqs
-/// findings total (3 stack-KEM, 2 stack-SIG, 1 heap-KEM), none on its line.
+/// covering. It must not be picked up by any liboqs rule: exactly 7 liboqs
+/// findings total (3 stack-KEM, 2 stack-SIG, 1 heap-KEM, 1 heap-SIG SLH-DSA),
+/// none on its line.
 #[test]
 fn liboqs_stfl_new_is_out_of_scope() {
     let b = load_builtins().unwrap();
@@ -3048,8 +3049,8 @@ fn liboqs_stfl_new_is_out_of_scope() {
         .collect();
     assert_eq!(
         liboqs.len(),
-        6,
-        "expected exactly 6 liboqs findings (STFL excluded); got: {:#?}",
+        7,
+        "expected exactly 7 liboqs findings (STFL excluded); got: {:#?}",
         liboqs
             .iter()
             .map(|f| (&f.rule_id, &f.algorithm_id, f.location.line))
@@ -3058,5 +3059,29 @@ fn liboqs_stfl_new_is_out_of_scope() {
     assert!(
         !liboqs.iter().any(|f| f.message.contains("STFL")),
         "OQS_SIG_STFL_new must not be classified by a liboqs rule"
+    );
+}
+
+/// Backlog `#Y44`: liboqs heap-form SIG API had classify arms for ML-DSA but
+/// none for SLH-DSA, though the extract rule (`OQS_SIG_new`) already covers
+/// both families. SLH-DSA has no stack-form header upstream (no
+/// `src/sig_slh_dsa/`), so this heap-form arm is its only detection path.
+#[test]
+fn scans_c_liboqs_heap_form_sig_slh_dsa() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-472" && f.algorithm_id == "slh-dsa-sha2-128s"),
+        "expected CRYPTO-472 (liboqs heap-form OQS_SIG_new(OQS_SIG_alg_slh_dsa_pure_sha2_128s)); got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
     );
 }

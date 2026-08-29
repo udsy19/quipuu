@@ -3506,3 +3506,46 @@ fixture rather than the corpus.
 --all-targets -- -D warnings` clean; `cargo test --workspace` all passing (117 `scan-source`
 integration tests, was 116, +1 new C# fixture test — csharp.toml's own two prior PQC tests both
 still pass unchanged).
+
+## `#Y44`: liboqs heap-form SIG API gains an SLH-DSA classify arm — 2026-08-29
+
+**Closed this cycle: `#Y44`.** `cpp.toml`'s `OQS_SIG_new` rule (the heap-form liboqs SIG API,
+algorithm passed at runtime as an `OQS_SIG_alg_*` macro identifier) had three classify arms for
+ML-DSA and none for SLH-DSA, though the extract query already captures both families identically
+— confirmed via `grep -n "slh_dsa\|sphincs" crates/core/data/rules/cpp.toml` returning nothing
+before this change. SLH-DSA has no dedicated stack-form header upstream — `open-quantum-safe/
+liboqs`'s `src/` tree has `sig_ml_dsa/` but no `sig_slh_dsa/`, confirmed by directory listing
+against the corpus's own liboqs clone (`work/corpus-clones/crypto-adjacent/liboqs`) — so
+`OQS_SIG_new` is SLH-DSA's only call shape in this library, making this the cheapest of the three
+liboqs gaps this vault has tracked (`#Y33`, closed prior cycle, needed a whole stack-form rule;
+this needed only new arms on an existing one).
+
+`cpp.toml` gains twelve classify arms, `CRYPTO-472..483`, one per `OQS_SIG_alg_slh_dsa_pure_*`
+macro (`sha2`/`shake` × `128`/`192`/`256` × `s`/`f`), matching the twelve rows `algorithm-table.toml`
+already carries (`slh-dsa-sha2-128s` … `slh-dsa-shake-256f`) — read directly from the corpus's
+own `liboqs/src/sig/sig.h`, not guessed. Liboqs also defines a much larger family of
+`OQS_SIG_alg_slh_dsa_*_prehash_*` (HashSLH-DSA) macros with no corresponding row in
+`algorithm-table.toml`; inventing one is out of this cycle's scope and is left as a future item,
+stated rather than silently dropped. Fixture `tests/fixtures/cpp/crypto.c` gains one heap-form SIG
+site (`OQS_SIG_new(OQS_SIG_alg_slh_dsa_pure_sha2_128s)`); the four-site liboqs heap-form probe
+(RSA control + KEM heap + this SIG heap site, per the existing fixture's population) goes 1/4 →
+4/4 detected; new test `scans_c_liboqs_heap_form_sig_slh_dsa`, and the existing
+`liboqs_stfl_new_is_out_of_scope` count assertion updated 6 → 7 liboqs findings to include it.
+
+**Corpus effect: 0 findings added, 0 removed, 0 reclassified — a falsification, not a
+re-derivation.** Full 150-project pre/post dump (`work/y44_before.json` ↔ `work/y44_after.json`,
+both 1515 findings from 149/150 scanned projects, byte-identical row sets on `(project, rule_id,
+file, line, algorithm_id, severity)`; script `work/y44_precision.py`; pre-change binary built from
+commit `75e5f01` in a throwaway worktree). Corpus B's own liboqs clone reports 0 findings on both
+dumps — its `OQS_SIG_new` call sites sit outside `scan_hints.scan_paths` (liboqs's own `tests/`
+tree), the same shape `#Y29`'s C/C++ re-ship documented for `RSA_generate_key` — so no corpus
+project exercises either the old or the new arms.
+
+**Precision 97.06% held, exactly, `work/y44_precision.py`.** The script reproduces the anchored
+97.06% on the pre dump before asserting the diff is empty; an empty diff cannot move a TP/FP ratio
+in either estimator, so this is coverage added at precision held, verified against the fixture
+rather than the corpus.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (118 `scan-source`
+integration tests, was 117).
