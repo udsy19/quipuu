@@ -3549,3 +3549,54 @@ rather than the corpus.
 **Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
 --all-targets -- -D warnings` clean; `cargo test --workspace` all passing (118 `scan-source`
 integration tests, was 117).
+
+## `#Y47`: pyca/cryptography's own first-party ML-KEM/ML-DSA classes gain coverage — 2026-08-29
+
+**Closed this cycle: `#Y47`.** `python.toml` recognized every classical primitive pyca/cryptography
+exposes (RSA, EC, Ed25519/Ed448/X25519/X448, AES, hashlib) but had no classify arm at all for the
+library's own first-party FIPS 203/204 classes — confirmed via `grep -n "mlkem\|mldsa"
+crates/core/data/rules/python.toml` returning zero classify-arm hits before this change (one
+unrelated message-text hit on the classical `x25519` arm recommending the hybrid). A maintainer
+scanning their own fork of `cryptography` — the one library in this corpus that has fully migrated
+three algorithms to post-quantum — got zero PQC findings and 216 classical/other ones.
+
+`python.toml` gains six classify arms, `CRYPTO-820..825`, one per parameter set (`ml-kem-512/768/
+1024`, `ml-dsa-44/65/87`). `scanner.rs`'s `PYTHON_CALLEE_APIS` table gains 36 entries mapping the
+literal class-name call form — `MLKEM768PrivateKey.generate()`, `.from_seed_bytes()`,
+`MLKEM768PublicKey.from_public_bytes()`, and the ML-DSA equivalents, both bare-imported and
+module-qualified spellings — straight to a per-parameter-set api string; the parameter set is
+stated in the class name itself, same shape the existing ed25519/x25519 arms already use, so no arg
+capture is needed. **Deliberately scoped to that literal-class-name form only.** The instance-method
+form reached through a variable (`key.encapsulate()`, `sig_key.sign()`) is not resolvable to a class
+without receiver type-tracking this codebase does not do anywhere for Python — confirmed by counting
+the corpus's own test suite: of pyca's 58 real ML-KEM/ML-DSA call sites across `tests/hazmat/
+primitives/test_mlkem.py`, `tests/wycheproof/test_mlkem.py`, `test_mldsa.py`, and `tests/wycheproof/
+test_mldsa.py`, 40 use the literal-class-name form this change detects and 18 use the
+variable-receiver form it deliberately leaves alone rather than risk a false match on an unrelated
+library's `.sign()`/`.encapsulate()` method.
+
+New fixture `tests/fixtures/python/pqc_native.py` plants six literal-class-name sites (both ML-KEM
+and ML-DSA, `.generate()` and `.from_seed_bytes()`/`.from_public_bytes()`) plus two
+variable-receiver sites (`key.encapsulate()`, `sig_key.sign()`) that must NOT be classified; new
+test `scans_python_pqc_native_mlkem_mldsa` asserts both halves — 0/6 → 6/6 on the detectable sites,
+and exactly 6 total `ml-kem-*`/`ml-dsa-*` findings (not 8), proving the two variable-receiver sites
+stayed unclassified rather than silently matching.
+
+**Corpus effect: 0 findings added, 0 removed, 0 reclassified — a falsification, not a
+re-derivation.** Full 150-project pre/post dump (`work/y47_before.json` ↔ `work/y47_after.json`,
+both 1655 findings; script `work/y47_precision.py`; pre-change binary built from commit `a583392`
+in a throwaway worktree). `pypi:cryptography` itself reports 3 findings on both dumps, unchanged —
+its own `scan_hints.scan_paths` (`benchmarks/corpus-b-realworld/ecosystems/pypi/cryptography.toml`)
+scopes the scan to `src/cryptography/` and explicitly excludes `tests/`, so none of the 58 real call
+sites — literal-class-name or otherwise — are visible to corpus B at all. Same shape `#Y29` and
+`#Y44` already documented for wolfssl, aws-lc, and liboqs: the fix is real, the corpus just cannot
+see the call sites it fixes.
+
+**Precision 97.06% held, exactly, `work/y47_precision.py`.** The script reproduces the anchored
+97.06% on the pre dump before asserting the diff is empty; an empty diff cannot move a TP/FP ratio
+in either estimator, so this is coverage added at precision held, verified against the fixture
+rather than the corpus.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (119 `scan-source`
+integration tests, was 118).

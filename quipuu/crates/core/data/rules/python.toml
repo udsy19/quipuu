@@ -421,3 +421,82 @@ when.api = "^Crypto\\.Cipher\\.DES3\\.new$"
 algorithm_id = "3des"
 severity_hint = "critical"
 message = "3DES disallowed for new encryption use (NIST SP 800-131A, 2023) — 64-bit block invites Sweet32. Replace with AES-256-GCM."
+
+# pyca/cryptography — first-party ML-KEM / ML-DSA (cryptography.hazmat.
+# primitives.asymmetric.mlkem / .mldsa). The parameter set is stated in the
+# class name itself (MLKEM768PrivateKey, MLDSA65PublicKey, …), so — like the
+# ed25519/x25519 arms above — no arg capture is needed: `generate()`,
+# `from_seed_bytes()`, and `from_public_bytes()` on that literal class name
+# all resolve straight to the matching algorithm_id via PYTHON_CALLEE_APIS.
+# Deliberately scoped to the literal-class-name call form only, per #Y47 —
+# not the instance-method form (`key.encapsulate()`, `key.sign()`) reached
+# through a variable, which this table cannot resolve to a class without
+# receiver type-tracking this codebase does not do anywhere for Python.
+
+[[extract]]
+id = "PY-080"
+language = "python"
+query = """
+(call
+  function: (attribute
+    object: (identifier) @cls (#match? @cls "^MLKEM(512|768|1024)(Private|Public)Key$")
+    attribute: (identifier) @fn (#match? @fn "^(generate|from_seed_bytes|from_public_bytes)$")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "cryptography.hazmat.mlkem.{cls}.{fn}"
+description = "pyca ML-KEM key generation/import: MLKEM768PrivateKey.generate(), .from_seed_bytes(), MLKEM768PublicKey.from_public_bytes()."
+
+[[classify]]
+id = "CRYPTO-820"
+when.api = "^cryptography\\.hazmat\\.mlkem\\.ml_kem_512$"
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "pyca ML-KEM-512 — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-821"
+when.api = "^cryptography\\.hazmat\\.mlkem\\.ml_kem_768$"
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "pyca ML-KEM-768 — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-822"
+when.api = "^cryptography\\.hazmat\\.mlkem\\.ml_kem_1024$"
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "pyca ML-KEM-1024 — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[extract]]
+id = "PY-081"
+language = "python"
+query = """
+(call
+  function: (attribute
+    object: (identifier) @cls (#match? @cls "^MLDSA(44|65|87)(Private|Public)Key$")
+    attribute: (identifier) @fn (#match? @fn "^(generate|from_seed_bytes|from_public_bytes)$")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "cryptography.hazmat.mldsa.{cls}.{fn}"
+description = "pyca ML-DSA key generation/import: MLDSA65PrivateKey.generate(), .from_seed_bytes(), MLDSA65PublicKey.from_public_bytes()."
+
+[[classify]]
+id = "CRYPTO-823"
+when.api = "^cryptography\\.hazmat\\.mldsa\\.ml_dsa_44$"
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "pyca ML-DSA-44 — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-824"
+when.api = "^cryptography\\.hazmat\\.mldsa\\.ml_dsa_65$"
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "pyca ML-DSA-65 — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-825"
+when.api = "^cryptography\\.hazmat\\.mldsa\\.ml_dsa_87$"
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "pyca ML-DSA-87 — FIPS 204, quantum-resistant. Migrated signature call site."

@@ -3085,3 +3085,56 @@ fn scans_c_liboqs_heap_form_sig_slh_dsa() {
             .collect::<Vec<_>>()
     );
 }
+
+/// Backlog `#Y47`: pyca/cryptography's own first-party ML-KEM/ML-DSA classes
+/// had no classify arm at all — `python.toml` recognized every classical
+/// primitive in the library but not the two it migrated to FIPS 203/204.
+/// Scoped to the literal-class-name call form (`MLKEM768PrivateKey.generate()`)
+/// only; the instance-method form reached through a variable
+/// (`key.encapsulate()`, `sig_key.sign()`) is not resolvable to a class
+/// without receiver type-tracking this codebase does not do for Python, and
+/// must NOT produce an ml-kem/ml-dsa finding.
+#[test]
+fn scans_python_pqc_native_mlkem_mldsa() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("python/pqc_native.py"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-821", "ml-kem-768"),  // MLKEM768PrivateKey.generate()
+        ("CRYPTO-822", "ml-kem-1024"), // MLKEM1024PrivateKey.from_seed_bytes(...)
+        ("CRYPTO-821", "ml-kem-768"),  // MLKEM768PublicKey.from_public_bytes(...)
+        ("CRYPTO-824", "ml-dsa-65"),   // MLDSA65PrivateKey.generate()
+        ("CRYPTO-823", "ml-dsa-44"),   // MLDSA44PrivateKey.generate()
+        ("CRYPTO-824", "ml-dsa-65"),   // MLDSA65PublicKey.from_public_bytes(...)
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in Python PQC fixture; findings: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+
+    let pqc_count = findings
+        .iter()
+        .filter(|f| f.algorithm_id.starts_with("ml-kem") || f.algorithm_id.starts_with("ml-dsa"))
+        .count();
+    assert_eq!(
+        pqc_count,
+        6,
+        "instance-method calls through a variable (key.encapsulate(), sig_key.sign()) must not \
+         be classified as ml-kem/ml-dsa — got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
