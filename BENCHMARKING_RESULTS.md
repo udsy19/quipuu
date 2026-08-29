@@ -3003,3 +3003,103 @@ extending coverage past the two `*KeyGenerationParameters` constructors to the
 `MLKemEncapsulator`/`MLKemDecapsulator`/`MLDsaSigner` operation sites — is not attempted this
 cycle; no C#/NuGet corpus exists to validate it against either way, same limitation `#Y21`
 itself named.
+
+## `#Y24` part (a): Java `SSLParameters.setNamedGroups` — TLS hardening config, not PQC-adoption code
+
+**The gap, and why it ranked above every other open item.** Every prior Java PQC rule in this
+pack fires on code that has already decided to adopt PQC (`KeyPairGenerator.getInstance("ML-KEM-768")`
+and neighbours). `SSLParameters.setNamedGroups(String[])` is the opposite direction: TLS
+group-list hardening or compliance configuration, often written years before ML-KEM existed,
+for reasons that have nothing to do with PQC. JDK 27 puts `X25519MLKEM768` first in its own
+default group list — an old hardening baseline that pins a classical-only list silently
+*blocks* that default-on upgrade once the JVM updates, with no PQC decision made by anyone.
+That is a downgrade case a scanner should flag with higher confidence than a missing-adoption
+case, and `java.toml` had zero rules for it (`grep -n -i "setNamedGroups\|jdk.tls.namedGroups"
+java.toml` → nothing).
+
+**Verified against JDK 27 source directly, not the JEP page.** `openjdk.org/jeps/527` still
+403s to a direct fetch, as it has every prior cycle that tried. Instead, `sun.security.ssl.
+NamedGroup.java` was read on the `openjdk/jdk27u` branch (the actual JDK 27 update branch, not
+`master`, which `make/conf/version-numbers.conf` shows is already JDK 28-dev) — the literal
+source of truth for the property string each named group registers under. Confirmed spellings
+and default order: hybrid groups first (`X25519MLKEM768`, `SecP256r1MLKEM768`,
+`SecP384r1MLKEM1024`), then classical (`x25519`, `secp256r1`, `secp384r1`, `secp521r1`, `x448`,
+`ffdhe2048`, `ffdhe3072`, `ffdhe4096`) — matching the filing's own guess, now primary-sourced
+rather than asserted.
+
+**Fix required a scanner change, not TOML alone, despite the filing's "TOML-only" estimate.**
+`SSLParameters.setNamedGroups` is reached through an instance variable (`sslParams`, `params`,
+whatever the caller named it), not a static class name — unlike every existing
+`JAVA_CALLEE_APIS` row, there is no receiver text to key a lookup table on without resolving the
+variable's declared type, which P4 forbids. `match_java_set_named_groups` (`scanner.rs`) is a
+new structural matcher, hooked in `walk()` the same way `match_java_field_access` runs alongside
+`match_call` rather than instead of it: it fires on method name `setNamedGroups` alone (the same
+receiver-agnostic assumption `WEBCRYPTO_METHOD_APIS`'s method-only rows already make), finds the
+`array_creation_expression` argument at any position (not just first — see below), and emits one
+`RawMatch` per string-literal element, mirroring `match_go_curve_preferences`'s per-element
+shape so each group routes to its own `algorithm_id`. `java.toml` gains one extract rule
+(`JAV-100`) and 11 classify arms (`CRYPTO-798`–`808`).
+
+**"Any position" was not the first draft — the corpus itself falsified "first argument."** The
+filing assumed `sslParams.setNamedGroups(new String[]{...})`, array as the sole argument.
+`grep -rn setNamedGroups` across every ecosystem in `work/corpus-clones/` (85 hits) surfaced a
+second real shape in corpus B itself: conscrypt's own test suite calls a local two-argument
+helper, `setNamedGroups(parameters, new String[]{...})`, array as the *second* argument. A
+first-argument-only matcher would have shipped scoring zero on the one real corpus site that
+exists. `tests/fixtures/java/TlsGroups.java` now covers both shapes plus a control (an unrelated
+`KeyPairGenerator.initialize` call that must not fire) and a negative case (the helper's own
+pass-through `parameters.setNamedGroups(groups)`, a variable argument, must not fire either).
+New test `scans_java_ssl_parameters_set_named_groups` (`scan-source` tests 106 → 107).
+
+**`ffdhe*` made two existing algorithm-table rows reachable for the first time.** `dh-2048` and
+`dh-3072` existed already, each carrying an `undetectable = "no emitter can state a DH group
+size today"` note — true until now. RFC 7919's named groups state their size in the name, so
+`ffdhe2048`/`ffdhe3072` map onto those exact rows and the stale `undetectable` field is removed
+from both (replaced with a `notes` line pointing at this rule) rather than left to mislead a
+reader into thinking the row is still dead. `dh-4096` is a new row for `ffdhe4096`, no prior
+placeholder existed to reuse.
+
+**Corpus effect: targeted, not a full 150-project re-dump — and why that is sufficient here.**
+A brand-new Java-only structural matcher keyed on one exact method name cannot reach any file
+that does not contain that method name as a substring, so `grep -rl setNamedGroups` across
+every ecosystem directory in `work/corpus-clones/` (not just maven) enumerates the full set of
+files this diff could possibly move: four maven projects (`netty-handler`, `bcpkix-jdk18on`,
+`tomcat-embed-core`, `conscrypt-openjdk-uber`). All four were scanned directly with both the
+pre-change binary (built from `f148385`, this diff's immediate parent, in a worktree) and the
+post-change binary. Three are byte-for-byte identical stdout. The fourth:
+
+```
+conscrypt-openjdk-uber: 229 → 232 findings
++ High    CRYPTO-804  ecdh-p384        SSLSocketTest.java:1060  (secp384r1, via the helper shape)
++ Medium  CRYPTO-798  x25519-mlkem768  SSLSocketTest.java:1190  (X25519MLKEM768, via the helper shape)
++ Medium  CRYPTO-798  x25519-mlkem768  SSLSocketTest.java:1197  (X25519MLKEM768, via the helper shape)
+```
+
+**3 findings added, 0 removed, 0 reclassified — all 3 hand-verified TP** by opening the cited
+lines: each is a real `setNamedGroups(parameters, new String[]{"..."})` call with the claimed
+literal at that exact position. Not every element of every array in that test file fires —
+several use Conscrypt/Android's own spelling (`"P-256"`, `"P-384"`, `"X25519"` capitalised) or
+placeholder names (`"foo"`, `"bar"`), neither of which this cycle's rules claim to know; that is
+a coverage gap for a future cycle to primary-source, not a false positive this one introduces.
+
+**Precision: 96.2% → 96.2%, held (`work/y30_precision.py`).** `conscrypt-openjdk-uber` is not
+in `c11_stratumB.json` (the 46 restored projects), so it is stratum A — the 104
+always-scanned population whose per-row labels do not survive re-derivation and are carried as
+a constant (`191 TP / 9 FP`, per the estimator anchored at `state/precision.json`). All 3 new
+findings land in that stratum, so the audited ratio cannot move; the population weight shifts by
+3 of 1369 raw findings, moving the weighted estimate by −0.001 pp (96.18% either side, rounds to
+96.2%). The script reproduces the recorded 96.2% baseline from the anchored counts before
+computing anything else, the same falsification-before-conclusion shape every precision script
+in this file follows.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (107 `scan-source`
+tests, was 106). `every_classify_rule_targets_an_api_the_extractor_can_emit` re-checked green —
+`javax.net.ssl.SSLParameters.setNamedGroups` is registered in `STRUCTURAL_APIS`, the same table
+`crypto/tls.Config.CurvePreferences` uses for the equivalent Go shape.
+
+**Not attempted, unchanged in rank:** `#Y24` part (b) — `System.setProperty("jdk.tls.namedGroups",
+"a,b,c")`, a single comma-delimited string rather than one AST node per group, named explicitly
+in the original filing as separate scope, not bundled into this estimate. The Conscrypt/Android
+named-group spelling gap surfaced above. `#Y20`'s remaining scope, the duplicate-site dump
+artifact, and `#Y27` (`needs-human-approval`) are all unchanged from the prior cycle's note.

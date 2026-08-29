@@ -1118,3 +1118,121 @@ when.api = "^java\\.security\\.Signature\\.getInstance$"
 algorithm_id = "jca-unattributed"
 severity_hint = "auto"
 message = "Signature.getInstance() with a non-literal algorithm argument — the value is not statically knowable at this call site. Inspect the value passed in."
+
+# ============================================================================
+# SSLParameters.setNamedGroups — TLS group-list hardening/compliance
+# configuration, the opposite direction from every other Java PQC rule above.
+# Those all fire on code that has already decided to adopt PQC; this one
+# fires on a classical-only group list written years before ML-KEM existed,
+# for FIPS-mode or approved-algorithm-baseline reasons unrelated to PQC. JDK
+# 27 puts X25519MLKEM768 first in its own default group list, so an old
+# hardening baseline that pins a classical-only list silently blocks the
+# default-on PQC upgrade once the JVM updates — a downgrade case, not a
+# missing-adoption case. Names and default order verified directly against
+# openjdk/jdk27u's sun.security.ssl.NamedGroup.java (jeps/527's own page
+# 403s), not guessed from a JEP description. Backlog #Y24, first change,
+# part (a) — System.setProperty("jdk.tls.namedGroups", "a,b,c")'s
+# comma-delimited single-string form is out of scope here (#Y24 part (b)).
+# ============================================================================
+
+[[extract]]
+id = "JAV-100"
+language = "java"
+query = """
+(method_invocation
+  name: (identifier) @fn (#eq? @fn "setNamedGroups")
+  arguments: (argument_list
+    (array_creation_expression
+      value: (array_initializer (string_literal) @group))))
+"""
+captures = { fn = "ident", group = "literal_string" }
+api = "javax.net.ssl.SSLParameters.setNamedGroups"
+description = "Java SSLParameters.setNamedGroups(String[]) — TLS key-exchange group preference list, one event per named group."
+
+[[classify]]
+id = "CRYPTO-798"
+when.api = "^javax\\.net\\.ssl\\.SSLParameters\\.setNamedGroups$"
+when.args.group = "X25519MLKEM768"
+algorithm_id = "x25519-mlkem768"
+severity_hint = "auto"
+message = "TLS group X25519MLKEM768 in setNamedGroups — hybrid X25519 + ML-KEM-768 (FIPS 203). Migrated key-establishment config."
+
+[[classify]]
+id = "CRYPTO-799"
+when.api = "^javax\\.net\\.ssl\\.SSLParameters\\.setNamedGroups$"
+when.args.group = "SecP256r1MLKEM768"
+algorithm_id = "secp256r1-mlkem768"
+severity_hint = "auto"
+message = "TLS group SecP256r1MLKEM768 in setNamedGroups — hybrid secp256r1 + ML-KEM-768 (FIPS 203). Migrated key-establishment config."
+
+[[classify]]
+id = "CRYPTO-800"
+when.api = "^javax\\.net\\.ssl\\.SSLParameters\\.setNamedGroups$"
+when.args.group = "SecP384r1MLKEM1024"
+algorithm_id = "secp384r1-mlkem1024"
+severity_hint = "auto"
+message = "TLS group SecP384r1MLKEM1024 in setNamedGroups — hybrid secp384r1 + ML-KEM-1024 (FIPS 203). Meets the CNSA 2.0 ML-KEM parameter set."
+
+[[classify]]
+id = "CRYPTO-801"
+when.api = "^javax\\.net\\.ssl\\.SSLParameters\\.setNamedGroups$"
+when.args.group = "x25519"
+algorithm_id = "x25519"
+severity_hint = "auto"
+message = "TLS group x25519 in setNamedGroups — classical ECDH, vulnerable to Shor. A classical-only group list here silently blocks JDK 27's default-on PQC hybrid upgrade. Add X25519MLKEM768 first."
+
+[[classify]]
+id = "CRYPTO-802"
+when.api = "^javax\\.net\\.ssl\\.SSLParameters\\.setNamedGroups$"
+when.args.group = "x448"
+algorithm_id = "x448"
+severity_hint = "auto"
+message = "TLS group x448 in setNamedGroups — classical ECDH, vulnerable to Shor. A classical-only group list here silently blocks JDK 27's default-on PQC hybrid upgrade. Add X25519MLKEM768 first."
+
+[[classify]]
+id = "CRYPTO-803"
+when.api = "^javax\\.net\\.ssl\\.SSLParameters\\.setNamedGroups$"
+when.args.group = "secp256r1"
+algorithm_id = "ecdh-p256"
+severity_hint = "auto"
+message = "TLS group secp256r1 in setNamedGroups — classical ECDH, quantum-vulnerable. Add X25519MLKEM768 / SecP256r1MLKEM768 first."
+
+[[classify]]
+id = "CRYPTO-804"
+when.api = "^javax\\.net\\.ssl\\.SSLParameters\\.setNamedGroups$"
+when.args.group = "secp384r1"
+algorithm_id = "ecdh-p384"
+severity_hint = "auto"
+message = "TLS group secp384r1 in setNamedGroups — classical ECDH, quantum-vulnerable. Add SecP384r1MLKEM1024 first."
+
+[[classify]]
+id = "CRYPTO-805"
+when.api = "^javax\\.net\\.ssl\\.SSLParameters\\.setNamedGroups$"
+when.args.group = "secp521r1"
+algorithm_id = "ecdh-p521"
+severity_hint = "auto"
+message = "TLS group secp521r1 in setNamedGroups — classical ECDH, quantum-vulnerable. Migrate to an ML-KEM hybrid group."
+
+[[classify]]
+id = "CRYPTO-806"
+when.api = "^javax\\.net\\.ssl\\.SSLParameters\\.setNamedGroups$"
+when.args.group = "ffdhe2048"
+algorithm_id = "dh-2048"
+severity_hint = "auto"
+message = "TLS group ffdhe2048 in setNamedGroups — finite-field DH (RFC 7919), quantum-vulnerable. Migrate to an ML-KEM hybrid group."
+
+[[classify]]
+id = "CRYPTO-807"
+when.api = "^javax\\.net\\.ssl\\.SSLParameters\\.setNamedGroups$"
+when.args.group = "ffdhe3072"
+algorithm_id = "dh-3072"
+severity_hint = "auto"
+message = "TLS group ffdhe3072 in setNamedGroups — finite-field DH (RFC 7919), quantum-vulnerable. Migrate to an ML-KEM hybrid group."
+
+[[classify]]
+id = "CRYPTO-808"
+when.api = "^javax\\.net\\.ssl\\.SSLParameters\\.setNamedGroups$"
+when.args.group = "ffdhe4096"
+algorithm_id = "dh-4096"
+severity_hint = "auto"
+message = "TLS group ffdhe4096 in setNamedGroups — finite-field DH (RFC 7919), quantum-vulnerable. Migrate to an ML-KEM hybrid group."

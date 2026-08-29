@@ -397,6 +397,58 @@ fn scans_java_pqc_keypairgenerator_and_signature_and_kem() {
     }
 }
 
+#[test]
+fn scans_java_ssl_parameters_set_named_groups() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/TlsGroups.java"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-798", "x25519-mlkem768"),
+        ("CRYPTO-801", "x25519"),
+        ("CRYPTO-802", "x448"),
+        ("CRYPTO-803", "ecdh-p256"),
+        ("CRYPTO-804", "ecdh-p384"),
+        ("CRYPTO-805", "ecdh-p521"),
+        ("CRYPTO-806", "dh-2048"),
+        ("CRYPTO-807", "dh-3072"),
+        ("CRYPTO-808", "dh-4096"),
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in TlsGroups fixture; findings: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+
+    // 10 named-group elements across the two direct calls (secp256r1 appears
+    // in both, once per call) + 1 more through the delegating-helper call,
+    // plus the pre-existing CRYPTO-210 RSA finding from the control method —
+    // nothing else.
+    let set_named_groups_count = findings
+        .iter()
+        .filter(|f| f.rule_id.starts_with("CRYPTO-79") || f.rule_id.starts_with("CRYPTO-80"))
+        .count();
+    assert_eq!(
+        set_named_groups_count,
+        11,
+        "expected exactly 11 setNamedGroups findings (one per array element), got {}: {:#?}",
+        set_named_groups_count,
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id, f.location.line))
+            .collect::<Vec<_>>()
+    );
+}
+
 // ============================================================================
 // JavaScript fixtures
 // ============================================================================

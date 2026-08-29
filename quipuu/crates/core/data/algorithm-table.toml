@@ -486,8 +486,7 @@ classical_security_bits = 112
 nist_quantum_security_level = 0
 quantum_status = "BrokenByShor"
 replacement = "ml-kem-768"
-undetectable = "The DH OIDs name no group size, so a certificate resolves to dh-unattributed. This row becomes reachable when the SPKI DomainParameters prime is parsed, the way rsaEncryption is refined by modulus length today."
-notes = "NIST IR 8547 IPD: deprecated after 2030, disallowed after 2035."
+notes = "NIST IR 8547 IPD: deprecated after 2030, disallowed after 2035. Reachable via Java SSLParameters.setNamedGroups('ffdhe2048') (RFC 7919 named group, group size stated in the name); a certificate's DH OIDs still name no group size and resolve to dh-unattributed until the SPKI DomainParameters prime is parsed, the way rsaEncryption is refined by modulus length today."
 
 [[algorithm]]
 id = "dh-3072"
@@ -498,7 +497,18 @@ classical_security_bits = 128
 nist_quantum_security_level = 0
 quantum_status = "BrokenByShor"
 replacement = "ml-kem-768"
-undetectable = "Same as dh-2048: no emitter can state a DH group size today."
+notes = "Reachable via Java SSLParameters.setNamedGroups('ffdhe3072'), same as dh-2048."
+
+[[algorithm]]
+id = "dh-4096"
+display_name = "Finite-Field DH (4096-bit)"
+family = "DH"
+primitive = "key-agree"
+classical_security_bits = 152
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-1024"
+notes = "Reachable via Java SSLParameters.setNamedGroups('ffdhe4096'), same as dh-2048."
 
 [[algorithm]]
 id = "dsa-unattributed"

@@ -692,6 +692,16 @@ fn walk(
     {
         out.push(m);
     }
+    // Java `sslParams.setNamedGroups(new String[]{...})` — an instance
+    // method, so it runs alongside (not instead of) `match_call`'s
+    // `method_invocation` handling, the same way `match_java_field_access`
+    // above runs alongside the call-site check. Backlog `#Y24`.
+    if language == Language::Java
+        && kind == "method_invocation"
+        && let Some(ms) = match_java_set_named_groups(node, source)
+    {
+        out.extend(ms);
+    }
     // Go runtime string-table dispatch: `switch alg { case "RS256": ... }`.
     // V3 corpus run: 22 of 25 Go projects produced zero findings because
     // golang-jwt, go-jose, lestrrat-go/jwx and similar libraries route
@@ -878,6 +888,70 @@ fn match_java_method_invocation(call: Node<'_>, source: &[u8]) -> Option<RawMatc
     })
 }
 
+/// Match Java `sslParams.setNamedGroups(new String[]{"x25519", "SecP256r1MLKEM768", ...})`.
+///
+/// `SSLParameters.setNamedGroups` is reached through an instance variable —
+/// `sslParams`, `params`, whatever the caller named it — not a static class
+/// name, so unlike every `JAVA_CALLEE_APIS` row there is no receiver text to
+/// key a lookup table on (resolving the variable's declared type means
+/// building the project, which P4 forbids). The method name alone is
+/// specific enough that a false match is not a real risk, the same
+/// assumption `WEBCRYPTO_METHOD_APIS`'s method-only rows already make.
+/// Backlog `#Y24`: this is TLS hardening configuration written for reasons
+/// unrelated to PQC, so a classical-only group list here silently blocks the
+/// PQC upgrade JDK 27's own default would otherwise make.
+///
+/// Emits one `RawMatch` per string literal in the array initializer, mirroring
+/// `match_go_curve_preferences`'s per-element shape so each group routes to
+/// its own `algorithm_id`.
+fn match_java_set_named_groups(call: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch>> {
+    let name = call.child_by_field_name("name")?;
+    if node_text(name, source) != "setNamedGroups" {
+        return None;
+    }
+    // The array literal is the sole argument on the real instance-method
+    // call (`sslParams.setNamedGroups(new String[]{...})`) but the second of
+    // two on the delegating-helper shape corpus B's own conscrypt test suite
+    // uses (`setNamedGroups(parameters, new String[]{...})`), so scan every
+    // argument rather than assume a position.
+    let args = call.child_by_field_name("arguments")?;
+    let mut args_cursor = args.walk();
+    let array_arg = args
+        .named_children(&mut args_cursor)
+        .find(|a| a.kind() == "array_creation_expression")?;
+    let initializer = array_arg.child_by_field_name("value")?;
+    if initializer.kind() != "array_initializer" {
+        return None;
+    }
+
+    let mut results = Vec::new();
+    let mut cursor = initializer.walk();
+    for element in initializer.children(&mut cursor) {
+        if element.kind() != "string_literal" {
+            continue;
+        }
+        let group = string_literal_value(element, source);
+        let mut group_args = HashMap::new();
+        group_args.insert("group".into(), ArgValue::Str(group.clone()));
+        let start = element.start_position();
+        results.push(RawMatch {
+            api: "javax.net.ssl.SSLParameters.setNamedGroups".into(),
+            args: group_args,
+            line: (start.row + 1) as u32,
+            offset: element.start_byte() as u32,
+            symbol: format!("setNamedGroups({group})"),
+            snippet: node_text(element, source),
+            site_context: quipuu_core::SiteContext::Call,
+        });
+    }
+
+    if results.is_empty() {
+        None
+    } else {
+        Some(results)
+    }
+}
+
 /// Handle `new ClassName()` — Java and C#.
 fn match_object_creation(call: Node<'_>, source: &[u8], language: Language) -> Option<RawMatch> {
     // Java: object_creation_expression has a `type` field (type_identifier)
@@ -1016,6 +1090,8 @@ const STRUCTURAL_APIS: &[&str] = &[
     "crypto/tls.Config.CurvePreferences",
     // match_go_tls_min_version
     "crypto/tls.Config.MinVersion",
+    // match_java_set_named_groups
+    "javax.net.ssl.SSLParameters.setNamedGroups",
 ];
 
 /// The apis reached through `match_java_field_access` — a bare enum-constant
