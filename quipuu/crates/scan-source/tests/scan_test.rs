@@ -1187,6 +1187,35 @@ fn scans_csharp_bouncycastle_mlkem_and_mldsa() {
 }
 
 #[test]
+fn scans_csharp_native_mlkem_mldsa_slhdsa() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("csharp/PqcNative.cs"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-600", "rsa-unattributed"),    // RSA.Create() control
+        ("CRYPTO-671", "ml-kem-768"),          // MLKem.GenerateKey(MLKemAlgorithm.MLKem768)
+        ("CRYPTO-674", "ml-dsa-65"),           // MLDsa.GenerateKey(MLDsaAlgorithm.MLDsa65)
+        ("CRYPTO-676", "slh-dsa-sha2-128s"), // SlhDsa.GenerateKey(SlhDsaAlgorithm.SlhDsaSha2_128s)
+        ("CRYPTO-688", "ml-kem-unattributed"), // parameter set read from a variable
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in C# native PQC fixture; findings: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+}
+
+#[test]
 fn end_to_end_rsa_keygen_scores_high() {
     // Walking-skeleton end-to-end demo: real file in, Finding out, score out.
     let b = load_builtins().unwrap();

@@ -3458,3 +3458,51 @@ comparison.
 **Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
 --all-targets -- -D warnings` clean; `cargo test --workspace` all passing (116 `scan-source`
 tests, was 115).
+
+## `#Y43`: .NET 10+ first-party `MLKem`/`MLDsa`/`SlhDsa` PQC classes gain coverage — 2026-08-29
+
+**Closed this cycle: `#Y43`'s `MLKem`/`MLDsa`/`SlhDsa` arms.** `csharp.toml`'s only asymmetric-keygen
+template was `{cls}.Create`; the three native classes (`System.Security.Cryptography`, shipped in
+`net10.0`+ and on the `Microsoft.Bcl.Cryptography` polyfill package for older TFMs, confirmed via
+`learn.microsoft.com`'s `MLKem`/`MLDsa`/`SlhDsa`/`MLKemAlgorithm`/`MLDsaAlgorithm`/
+`SlhDsaAlgorithm` class pages fetched 2026-08-29) use the static factory `GenerateKey(algorithm)`
+and derive from `IDisposable` directly, not `AsymmetricAlgorithm` — a different axis the templated
+rule structurally cannot match, so every call produced zero findings. `CSHARP_CALLEE_APIS`
+(`crates/scan-source/src/scanner.rs`) gains three rows (`MLKem.GenerateKey`, `MLDsa.GenerateKey`,
+`SlhDsa.GenerateKey`) and a `populate_args` arm reads the sole argument's member-access name
+(`nth_csharp_arg_member_access_name`, arg index 0) into a `paramset` capture, the same
+degrade-on-a-variable shape the existing BouncyCastle C# arms already use. `csharp.toml` gains
+`CRYPTO-670..690`: 3 literal arms for `MLKemAlgorithm` (`ml-kem-512/768/1024`), 3 for
+`MLDsaAlgorithm` (`ml-dsa-44/65/87`), 12 for `SlhDsaAlgorithm` (all twelve FIPS 205 parameter
+sets, property names read verbatim off the class page — `SlhDsaSha2_128s`, `SlhDsaShake128f`,
+etc.), and one family-sentinel fallback per class (`ml-kem-unattributed` / `ml-dsa-unattributed` /
+`slh-dsa-unattributed`) for a non-literal argument. Fixture
+`tests/fixtures/csharp/PqcNative.cs` (RSA control, one literal site per class, one unattributed
+variable site) goes 1/5 detected → 5/5; new test `scans_csharp_native_mlkem_mldsa_slhdsa`.
+
+**`CompositeMLDsa` deferred, not shipped this cycle.** Its 17 named combinations
+(`MLDsa44WithECDsaP256`, `MLDsa65WithRSA3072Pss`, …) have no corresponding row in
+`algorithm-table.toml` — every existing PQC classify arm in this codebase resolves to an id that
+table already defines, and inventing 17 new composite ids (or one compound sentinel) is exactly
+the class of larger, riskier change `#Y39` deferred its own `pqc.legacy` remainder for. Left as a
+distinct future item rather than rushed into this diff.
+
+**Corpus effect: 0 findings added, 0 removed, 0 reclassified — a falsification, not a
+re-derivation.** Full 150-project pre/post dump (`work/y43_before.json` ↔ `work/y43_after.json`,
+both 1655 findings, byte-identical row sets on `(project, rule_id, file, line, algorithm_id,
+severity)`; script `work/y43_precision.py`). Neither dump matches the 1515 total the `#Y39` entry
+above recorded — both the pre-change binary (built from commit `33c8111` in a worktree) and the
+post-change binary read the same +140 environment drift `OPEN-ASK #CORPUSDRIFT` already named, so
+it cancels out of the diff and is not this cycle's to resolve (rule 7). No project in corpus B
+calls any of the three classes — expected, since they are brand-new .NET 10 preview APIs with, per
+the ecosystem lens's own note, no measured corpus demand yet on either side of this change.
+
+**Precision: 97.06% held, exactly, `work/y43_precision.py`.** The script reproduces the anchored
+97.06% on the pre dump before asserting the diff is empty; an empty diff cannot move a TP/FP ratio
+in either estimator, so this is a coverage-added-at-precision-held result verified against the
+fixture rather than the corpus.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (117 `scan-source`
+integration tests, was 116, +1 new C# fixture test — csharp.toml's own two prior PQC tests both
+still pass unchanged).

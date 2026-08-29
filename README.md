@@ -216,6 +216,15 @@ under one flag set, on an unnamed machine, and presenting one that names all thr
 
 Audit-validated precision: **97.06%** (95% CI: 95.7%–98.4%) — measured 2026-08-29 on **613 audited findings** out of 1515, every one labelled by opening its cited `file:line`. Methodology, the full label set and per-finding verdicts are in `BENCHMARKING_RESULTS.md`, `PRECISION_AUDIT_V4.md` and `PRECISION_AUDIT_V3.md`.
 
+**Coverage was added the same day with no change to this figure.** `csharp.toml` had no rule for
+.NET 10's first-party `MLKem`/`MLDsa`/`SlhDsa` classes (`System.Security.Cryptography`, no NuGet
+dependency) — a static-factory shape (`MLKem.GenerateKey(MLKemAlgorithm.MLKem768)`) the templated
+`{cls}.Create` rule structurally cannot match. 21 new classify arms cover all 3+3+12 literal
+parameter sets plus a family-sentinel fallback per class. Corpus B has no known call site for
+these brand-new preview APIs, so the pre/post dump is byte-identical (0 added, 0 removed);
+coverage is verified against a five-site fixture instead. Full accounting in
+`BENCHMARKING_RESULTS.md`, ".NET 10+ first-party MLKem/MLDsa/SlhDsa PQC classes gain coverage."
+
 **This is a 0.28-point rise from the 96.78% published earlier the same day, and it is coverage added, not a reanchor.** `java.toml`'s only BouncyCastle constructor rule matched four classical classes and none of BC's nine PQC lightweight-API classes (`MLKEMKeyPairGenerator`, `MLDSAKeyPairGenerator`, `SLHDSAKeyPairGenerator`, `MLKEMGenerator`, `MLKEMExtractor`, `MLDSASigner`, `SLHDSASigner`, `HashMLDSASigner`, `HashSLHDSASigner`), so any call to any of them produced zero findings. `java.toml` gained `CRYPTO-811..819`, each degrading to a family sentinel since none of the nine take a parameter set as a constructor literal. 55 new findings, all hand-verified true positive, entirely inside BouncyCastle's own `bcprov-jdk18on`/`bcpkix-jdk18on` implementation — no other corpus project has migrated to this API yet. Full accounting in `BENCHMARKING_RESULTS.md`, "BouncyCastle lightweight-API PQC classes gain coverage."
 
 **Coverage was added the same day with no change to this figure.** `circl` — Go's own PQC library, and the only place in the 150-project corpus that calls ML-DSA/ML-KEM/SLH-DSA directly — previously matched zero rules in any pack. `go.toml` gained rules for `circl`'s `mldsa{44,65,87}` and `mlkem{512,768,1024}` packages (the parameter set is which package is imported, not an argument) and `slhdsa.GenerateKey`'s `id` argument (one package, twelve parameter sets). 6 new findings, all hand-verified true positive, entirely inside `circl`'s own tree — no other corpus project imports these packages. Full accounting in `BENCHMARKING_RESULTS.md`, "circl (Go's own PQC library) gains its own rules."

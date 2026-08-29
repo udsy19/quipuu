@@ -358,3 +358,237 @@ when.api = "^Org\\.BouncyCastle\\.Crypto\\.Parameters\\.MLDsaKeyGenerationParame
 algorithm_id = "ml-dsa-unattributed"
 severity_hint = "auto"
 message = "new MLDsaKeyGenerationParameters(random, …) with a non-literal or OID-looked-up parameter set — FIPS 204, quantum-resistant, but the parameter set is not statically knowable at this call site."
+
+# ============================================================================
+# System.Security.Cryptography — MLKem / MLDsa / SlhDsa (.NET 10+, first-party,
+# no NuGet dependency)
+#
+# Shipped in System.Security.Cryptography.dll itself (net10.0+; also on the
+# Microsoft.Bcl.Cryptography polyfill package for older TFMs) as a static
+# factory: MLKem.GenerateKey(MLKemAlgorithm.MLKem768). Unlike RSA.Create() /
+# ECDsa.Create() these classes derive from IDisposable directly, not
+# AsymmetricAlgorithm, and take the parameter set as the sole GenerateKey
+# argument rather than a property set afterwards — a different axis from
+# every other rule in this file, per backlog #Y43. Property names read
+# directly from learn.microsoft.com's MLKemAlgorithm / MLDsaAlgorithm /
+# SlhDsaAlgorithm class pages (net-10.0), not guessed.
+# ============================================================================
+
+[[extract]]
+id = "CSH-052"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "MLKem")
+    name: (identifier) @fn (#eq? @fn "GenerateKey"))
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "MLKemAlgorithm")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", fn = "ident", paramcls = "ident", paramset = "ident" }
+api = "System.Security.Cryptography.MLKem.GenerateKey"
+description = "MLKem.GenerateKey(MLKemAlgorithm.MLKem768) — .NET 10+ first-party FIPS 203 ML-KEM key generation."
+
+[[classify]]
+id = "CRYPTO-670"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.GenerateKey$"
+when.args.paramset = "MLKem512"
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "MLKem.GenerateKey(MLKemAlgorithm.MLKem512) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-671"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.GenerateKey$"
+when.args.paramset = "MLKem768"
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "MLKem.GenerateKey(MLKemAlgorithm.MLKem768) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-672"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.GenerateKey$"
+when.args.paramset = "MLKem1024"
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "MLKem.GenerateKey(MLKemAlgorithm.MLKem1024) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[extract]]
+id = "CSH-053"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "MLDsa")
+    name: (identifier) @fn (#eq? @fn "GenerateKey"))
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "MLDsaAlgorithm")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", fn = "ident", paramcls = "ident", paramset = "ident" }
+api = "System.Security.Cryptography.MLDsa.GenerateKey"
+description = "MLDsa.GenerateKey(MLDsaAlgorithm.MLDsa65) — .NET 10+ first-party FIPS 204 ML-DSA key generation."
+
+[[classify]]
+id = "CRYPTO-673"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.GenerateKey$"
+when.args.paramset = "MLDsa44"
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "MLDsa.GenerateKey(MLDsaAlgorithm.MLDsa44) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-674"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.GenerateKey$"
+when.args.paramset = "MLDsa65"
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "MLDsa.GenerateKey(MLDsaAlgorithm.MLDsa65) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-675"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.GenerateKey$"
+when.args.paramset = "MLDsa87"
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "MLDsa.GenerateKey(MLDsaAlgorithm.MLDsa87) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[extract]]
+id = "CSH-054"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "SlhDsa")
+    name: (identifier) @fn (#eq? @fn "GenerateKey"))
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "SlhDsaAlgorithm")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", fn = "ident", paramcls = "ident", paramset = "ident" }
+api = "System.Security.Cryptography.SlhDsa.GenerateKey"
+description = "SlhDsa.GenerateKey(SlhDsaAlgorithm.SlhDsaSha2_128s) — .NET 10+ first-party FIPS 205 SLH-DSA key generation."
+
+[[classify]]
+id = "CRYPTO-676"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.GenerateKey$"
+when.args.paramset = "SlhDsaSha2_128s"
+algorithm_id = "slh-dsa-sha2-128s"
+severity_hint = "auto"
+message = "SlhDsa.GenerateKey(SlhDsaAlgorithm.SlhDsaSha2_128s) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-677"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.GenerateKey$"
+when.args.paramset = "SlhDsaSha2_128f"
+algorithm_id = "slh-dsa-sha2-128f"
+severity_hint = "auto"
+message = "SlhDsa.GenerateKey(SlhDsaAlgorithm.SlhDsaSha2_128f) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-678"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.GenerateKey$"
+when.args.paramset = "SlhDsaSha2_192s"
+algorithm_id = "slh-dsa-sha2-192s"
+severity_hint = "auto"
+message = "SlhDsa.GenerateKey(SlhDsaAlgorithm.SlhDsaSha2_192s) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-679"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.GenerateKey$"
+when.args.paramset = "SlhDsaSha2_192f"
+algorithm_id = "slh-dsa-sha2-192f"
+severity_hint = "auto"
+message = "SlhDsa.GenerateKey(SlhDsaAlgorithm.SlhDsaSha2_192f) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-680"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.GenerateKey$"
+when.args.paramset = "SlhDsaSha2_256s"
+algorithm_id = "slh-dsa-sha2-256s"
+severity_hint = "auto"
+message = "SlhDsa.GenerateKey(SlhDsaAlgorithm.SlhDsaSha2_256s) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-681"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.GenerateKey$"
+when.args.paramset = "SlhDsaSha2_256f"
+algorithm_id = "slh-dsa-sha2-256f"
+severity_hint = "auto"
+message = "SlhDsa.GenerateKey(SlhDsaAlgorithm.SlhDsaSha2_256f) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-682"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.GenerateKey$"
+when.args.paramset = "SlhDsaShake128s"
+algorithm_id = "slh-dsa-shake-128s"
+severity_hint = "auto"
+message = "SlhDsa.GenerateKey(SlhDsaAlgorithm.SlhDsaShake128s) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-683"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.GenerateKey$"
+when.args.paramset = "SlhDsaShake128f"
+algorithm_id = "slh-dsa-shake-128f"
+severity_hint = "auto"
+message = "SlhDsa.GenerateKey(SlhDsaAlgorithm.SlhDsaShake128f) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-684"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.GenerateKey$"
+when.args.paramset = "SlhDsaShake192s"
+algorithm_id = "slh-dsa-shake-192s"
+severity_hint = "auto"
+message = "SlhDsa.GenerateKey(SlhDsaAlgorithm.SlhDsaShake192s) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-685"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.GenerateKey$"
+when.args.paramset = "SlhDsaShake192f"
+algorithm_id = "slh-dsa-shake-192f"
+severity_hint = "auto"
+message = "SlhDsa.GenerateKey(SlhDsaAlgorithm.SlhDsaShake192f) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-686"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.GenerateKey$"
+when.args.paramset = "SlhDsaShake256s"
+algorithm_id = "slh-dsa-shake-256s"
+severity_hint = "auto"
+message = "SlhDsa.GenerateKey(SlhDsaAlgorithm.SlhDsaShake256s) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-687"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.GenerateKey$"
+when.args.paramset = "SlhDsaShake256f"
+algorithm_id = "slh-dsa-shake-256f"
+severity_hint = "auto"
+message = "SlhDsa.GenerateKey(SlhDsaAlgorithm.SlhDsaShake256f) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+# The OID-lookup overload, or a parameter set read from a variable, captures
+# no `paramset` — same degrade-instead-of-vanish shape the BouncyCastle arms
+# above already play for `ml-kem-unattributed` / `ml-dsa-unattributed`.
+[[classify]]
+id = "CRYPTO-688"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.GenerateKey$"
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "MLKem.GenerateKey(…) with a non-literal parameter set — FIPS 203, quantum-resistant, but the parameter set is not statically knowable at this call site."
+
+[[classify]]
+id = "CRYPTO-689"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.GenerateKey$"
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "MLDsa.GenerateKey(…) with a non-literal parameter set — FIPS 204, quantum-resistant, but the parameter set is not statically knowable at this call site."
+
+[[classify]]
+id = "CRYPTO-690"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.GenerateKey$"
+algorithm_id = "slh-dsa-unattributed"
+severity_hint = "auto"
+message = "SlhDsa.GenerateKey(…) with a non-literal parameter set — FIPS 205, quantum-resistant, but the parameter set is not statically knowable at this call site."

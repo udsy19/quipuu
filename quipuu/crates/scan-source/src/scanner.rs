@@ -2084,6 +2084,18 @@ const CSHARP_CALLEE_APIS: &[(&str, &str)] = &[
         "RandomNumberGenerator.Fill",
         "System.Security.Cryptography.RandomNumberGenerator.Create",
     ),
+    (
+        "MLKem.GenerateKey",
+        "System.Security.Cryptography.MLKem.GenerateKey",
+    ),
+    (
+        "MLDsa.GenerateKey",
+        "System.Security.Cryptography.MLDsa.GenerateKey",
+    ),
+    (
+        "SlhDsa.GenerateKey",
+        "System.Security.Cryptography.SlhDsa.GenerateKey",
+    ),
 ];
 
 /// C# `new Foo()` constructors.
@@ -2249,6 +2261,20 @@ fn populate_args(
             // variable is always possible, so this can legitimately capture
             // nothing.
             if let Some(paramset) = nth_csharp_arg_member_access_name(args_node, 1, source) {
+                out.insert("paramset".into(), ArgValue::Str(paramset));
+            }
+        }
+        (
+            Language::CSharp,
+            "System.Security.Cryptography.MLKem.GenerateKey"
+            | "System.Security.Cryptography.MLDsa.GenerateKey"
+            | "System.Security.Cryptography.SlhDsa.GenerateKey",
+        ) => {
+            // MLKem.GenerateKey(MLKemAlgorithm.MLKem768) — the sole argument is
+            // a member access naming the static algorithm-set field. A variable
+            // there captures nothing and the classify layer degrades to the
+            // family sentinel, same shape as the BouncyCastle arm above.
+            if let Some(paramset) = nth_csharp_arg_member_access_name(args_node, 0, source) {
                 out.insert("paramset".into(), ArgValue::Str(paramset));
             }
         }
