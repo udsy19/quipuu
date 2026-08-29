@@ -2837,11 +2837,19 @@ actually does. `aws-lc-rs` backend swap (part b of `#Y5`) remains `needs-human-a
 unchanged — it expands the trusted dependency surface in the crate carrying the P2 network
 invariant and was not attempted this cycle.
 
-**Corpus effect: none, and none possible.** Corpus B is scanned with `--source --deps
---include-safe`; `scan-network` requires `--allow-network` naming a host and is not part of the
-benchmark harness (`corpus-b-realworld` never invokes it — see the standing
-corpus-B-cannot-see-network-or-certs limitation). The published precision figure is unaffected
-by this change and is not re-measured here.
+**Corpus effect: verified none, not just argued none.** Corpus B is scanned with `--source
+--deps --include-safe`; `scan-network` requires `--allow-network` naming a host and is not part
+of the benchmark harness (`corpus-b-realworld` never invokes it — see the standing
+corpus-B-cannot-see-network-or-certs limitation), so this diff could only move a `--source
+--deps` finding if the new `tls-group-not-probed` algorithm-table row disturbed table lookup
+for an unrelated id. It doesn't: a fresh full-corpus `dump_findings.py` run against a binary
+built from this diff wrote **1377** findings, and diffing that dump's `(project, rule_id,
+algorithm_id, file, line, message)` keys against `work/y26_post.json` (1371, the dump behind
+the anchored 96.2%) shows **0 removed, 0 reclassified, +6** — exactly the six `circl`
+ML-KEM/SLH-DSA findings the immediately preceding entry already added and hand-verified TP,
+untouched by this diff. **Precision: 96.2% → 96.2% (95% CI 94.5–97.9), unmoved** — the anchored
+stratified estimate (stratum A 191 TP / 9 FP of 200; stratum B 270 TP / 9 FP of 279) applies
+unchanged since the labelled finding set is byte-identical.
 
 **Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
 --all-targets --release -- -D warnings` clean; `cargo test --workspace` all passing (1 new
