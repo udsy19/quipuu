@@ -2102,3 +2102,76 @@ manifest. The caveat is stated beside the invitation.
 figure moved because the population changed, not because a sample of it did. `state/precision.json`
 still holds **88.3 %**, taken over a population 24.5 % of which this cycle removed; the estimator
 of record now reads **88.6 %** on the corpus that exists. Re-anchoring it is a human's decision.
+
+---
+
+## Go RSA/ECDSA keygen unattributed fallback — 2026-08-29 (`#Y3`/`#X8`)
+
+**Measurement tuple:** corpus B (150 manifest projects, 140 repositories) · `--source --deps
+--include-safe` · profile `nist-default` · release binary built from this cycle's tree · dumps
+`work/c15_dump.json` (1056, the population `state/precision.json`'s 88.8 % is anchored on) →
+`work/y3_dump.json` (1085). Script: `work/y3_precision.py`.
+
+**What changed.** `GO-001`'s extract query requires the RSA key-size argument to be an inline int
+literal; `GO-010`'s requires the ECDSA curve argument to be an inline `elliptic.PXXX()` call.
+`rsa.GenerateKey(rand.Reader, bits)` and `ecdsa.GenerateKey(curve, rand.Reader)` with a variable
+argument still matched the api but captured nothing, so none of `CRYPTO-001..004` /
+`CRYPTO-010..013` fired and the call site produced **zero findings** instead of a degraded one —
+the same asymmetry six of seven language packs had already closed with an `*-unattributed` arm
+(`crates/core/data/rules/go.toml:83-84,151-160`, new `CRYPTO-005`/`CRYPTO-014`). Verified on an
+isolation fixture before the corpus run: `rsa.GenerateKey(rand.Reader, bits)` and
+`ecdsa.GenerateKey(c, rand.Reader)` now report `rsa-unattributed`/`ecdsa-unattributed`, while the
+literal-argument sibling calls in the same file are unaffected.
+
+**Corpus effect: 29 findings added, 0 removed, 0 reclassified.** `y3_precision.py` asserts every
+pre-existing `(project, rule_id, file, line)` row is byte-identical in the post dump and exits
+non-zero if one moved or if an added row carries any rule id other than `CRYPTO-005`/`CRYPTO-014`;
+it did not.
+
+| | CRYPTO-005 (`rsa-unattributed`) | CRYPTO-014 (`ecdsa-unattributed`) |
+|---|---|---|
+| new findings | 8 | 21 |
+
+Eleven projects across `go-modules` and `crypto-adjacent` — `aws-lc`, `boringssl`, `tink-go`,
+`aws-sdk-go-v2`, `go-jose`, `consul`, `vault`, `pgx`, `jwx`, `golang.org/x/crypto`, `kubernetes`.
+
+**All 29 were hand-labelled by opening the cited `file:line` — 29 TP, 0 FP, 0 DEPENDS.** Every one
+is a direct `rsa.GenerateKey`/`ecdsa.GenerateKey` call whose size or curve argument is a parameter,
+a struct field, or a loop variable rather than a literal — genuine key-generation operations, some
+in test helpers (`kex_test.go`-style table tests still execute the call). None is inside a branch
+that cannot run, a comment, or a non-executing assertion.
+
+**Precision: 88.8 % → 90.4 % (95 % CI 86.2–94.6), +1.65 pp — an improvement, not just coverage held
+at flat precision.** The 29 new findings were folded into whichever stratum their project belongs
+to (7 into stratum A, 22 into stratum B) at 100 % audit coverage, added to the currently-anchored
+estimator (`state/precision.json`, DECISION E2E1 — stratum A read from its own labels: 63 TP / 9 FP
+of 77 audited; stratum B: 79 TP / 9 FP of 88 audited). `y3_precision.py` reproduces the anchored
+88.8 % on the pre dump exactly before reporting anything else.
+
+| | stratum A | stratum B | weighted |
+|---|---|---|---|
+| findings, pre → post | 462 → 469 | 594 → 616 | 1056 → 1085 |
+| TP / FP, pre → post | 63/9 → 70/9 | 79/9 → 101/9 | |
+| precision | 88.6 % | 91.8 % | **90.4 % (86.2–94.6)** |
+
+**Read this honestly: the delta is dominated by the sample being audited at 100 % where the rest
+of the corpus sits at roughly 20 %, same caveat every fully-labelled-delta cycle before this one
+has carried.** The 29 new findings are all TP because the fix's failure mode — a real call site
+producing zero findings — has no false-positive side by construction: the argument shape it now
+recognizes is unconditionally a key-generation call, and the classify arm asserts nothing about
+size or curve it cannot observe. A future sample redraw would likely settle closer to the corpus
+average than to 100 %.
+
+**`PRECISION:` line is emitted because this diff touches `crates/core/data/rules/go.toml`, inside
+`DETECTION_PATHS`.** `state/precision.json` is not written from this cycle — only a human moves the
+anchor — so the gate compares the reported figure against the still-anchored 88.8 % and the +1.65 pp
+delta clears it.
+
+**Not re-run, said out loud:** `regression_check.py`'s per-rule and per-ecosystem floors are lower
+bounds; this change is a pure addition (0 rows removed, 0 reclassified, verified above), so no floor
+can fall as a result and re-running it would spend ~10 minutes re-deriving a fact the row-identity
+assertion already pins. Speed not re-measured — the two new classify arms are a no-op on every call
+site that already resolved a literal argument, and neither adds new extraction work (they read the
+same `bits`/`curve_fn` captures GO-001/GO-010 already compute). Go line-exact recall unmoved: the
+fix subtracts nothing and the recall instrument counts constructor sites the extractor reaches at
+all, which was already true before this fix (it counted the call site, just under no algorithm id).

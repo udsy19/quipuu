@@ -83,6 +83,20 @@ algorithm_id = "rsa-4096"
 severity_hint = "auto"
 message = "RSA-{bits} key generation. Larger key does NOT protect against Shor's algorithm."
 
+# GO-001's query requires the bit-length argument to be an inline int literal.
+# `rsa.GenerateKey(rand.Reader, bits)` with `bits` a variable or expression
+# still matches the api but captures no `bits`, so none of CRYPTO-001..004
+# fire. Without this arm the call site vanished from the report entirely
+# instead of degrading to an unattributed finding — the same shape the
+# WebCrypto and Node generateKeyPair packs already handle. Placed last so the
+# literal-bits arms above still win when the size is known.
+[[classify]]
+id = "CRYPTO-005"
+when.api = "^crypto/rsa\\.GenerateKey$"
+algorithm_id = "rsa-unattributed"
+severity_hint = "auto"
+message = "RSA key generation via crypto/rsa.GenerateKey with a non-literal key size — the value is not statically knowable at this call site. Quantum-vulnerable to Shor's algorithm regardless of size."
+
 # ============================================================================
 # crypto/ecdsa — ECDSA key generation
 # ============================================================================
@@ -138,6 +152,18 @@ when.args.curve_fn = "P521"
 algorithm_id = "ecdsa-p521"
 severity_hint = "auto"
 message = "ECDSA P-521 — quantum-vulnerable. Replace with ML-DSA-87."
+
+# GO-010's query requires the curve argument to be an inline `elliptic.PXXX()`
+# call. `ecdsa.GenerateKey(curve, rand.Reader)` with `curve` a variable still
+# matches the api but captures no `curve_fn`, so none of CRYPTO-010..013 fire
+# and the call site vanished instead of degrading. Same fix and same ordering
+# rationale as CRYPTO-005 above.
+[[classify]]
+id = "CRYPTO-014"
+when.api = "^crypto/ecdsa\\.GenerateKey$"
+algorithm_id = "ecdsa-unattributed"
+severity_hint = "auto"
+message = "ECDSA key generation via crypto/ecdsa.GenerateKey with a non-inline curve expression — the curve is not statically knowable at this call site. Quantum-vulnerable at every curve — replace with ML-DSA."
 
 # ============================================================================
 # crypto/ed25519 / crypto/ecdh
