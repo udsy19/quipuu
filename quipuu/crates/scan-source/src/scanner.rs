@@ -782,6 +782,8 @@ const GO_CALLEE_APIS: &[(&str, &str)] = &[
     ("ed25519.GenerateKey", "crypto/ed25519.GenerateKey"),
     ("md5.New", "crypto/md5_sha1.New"),
     ("sha1.New", "crypto/md5_sha1.New"),
+    ("md5.Sum", "crypto/md5_sha1.Sum"),
+    ("sha1.Sum", "crypto/md5_sha1.Sum"),
     ("aes.NewCipher", "crypto/aes.NewCipher"),
     ("des.NewCipher", "crypto/des.NewCipher"),
     ("des.NewTripleDESCipher", "crypto/des.NewTripleDESCipher"),
@@ -790,6 +792,26 @@ const GO_CALLEE_APIS: &[(&str, &str)] = &[
     ("jwt.NewWithClaims", "jwt.NewWithClaims"),
     ("jwt_go.NewWithClaims", "jwt.NewWithClaims"),
     ("jwtgo.NewWithClaims", "jwt.NewWithClaims"),
+    // Sign/verify/encrypt/decrypt *operation* sites, distinct from the
+    // constructors above. A key generated in one file and used in another (or
+    // received as a function argument, e.g. certificate validation) never
+    // matches a constructor rule, so these were invisible entirely rather
+    // than degrading to the unattributed sentinel. None of these captures a
+    // parameter set — the size/curve lives on the key, not at this call site.
+    ("rsa.SignPKCS1v15", "crypto/rsa.Op"),
+    ("rsa.VerifyPKCS1v15", "crypto/rsa.Op"),
+    ("rsa.SignPSS", "crypto/rsa.Op"),
+    ("rsa.VerifyPSS", "crypto/rsa.Op"),
+    ("rsa.EncryptOAEP", "crypto/rsa.Op"),
+    ("rsa.DecryptOAEP", "crypto/rsa.Op"),
+    ("rsa.EncryptPKCS1v15", "crypto/rsa.Op"),
+    ("rsa.DecryptPKCS1v15", "crypto/rsa.Op"),
+    ("ecdsa.Sign", "crypto/ecdsa.Op"),
+    ("ecdsa.SignASN1", "crypto/ecdsa.Op"),
+    ("ecdsa.Verify", "crypto/ecdsa.Op"),
+    ("ecdsa.VerifyASN1", "crypto/ecdsa.Op"),
+    ("ed25519.Sign", "crypto/ed25519.Op"),
+    ("ed25519.Verify", "crypto/ed25519.Op"),
 ];
 
 /// Exact-match lookup in one of the callee → api tables.
@@ -872,10 +894,17 @@ fn match_go_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> 
     let api = lookup(GO_CALLEE_APIS, callee)?;
     let mut args = HashMap::new();
     // For md5/sha1, the classifier reads `args.pkg` to disambiguate.
-    if callee == "md5.New" {
+    if callee == "md5.New" || callee == "md5.Sum" {
         args.insert("pkg".into(), ArgValue::Str("md5".into()));
-    } else if callee == "sha1.New" {
+    } else if callee == "sha1.New" || callee == "sha1.Sum" {
         args.insert("pkg".into(), ArgValue::Str("sha1".into()));
+    }
+    // The *.Op apis have no parameter set to capture; the message names the
+    // specific function called instead (Sign vs. VerifyASN1 vs. EncryptOAEP).
+    if (api == "crypto/rsa.Op" || api == "crypto/ecdsa.Op" || api == "crypto/ed25519.Op")
+        && let Some(fn_name) = callee.split('.').nth(1)
+    {
+        args.insert("fn".into(), ArgValue::Str(fn_name.into()));
     }
     Some((api.into(), args))
 }

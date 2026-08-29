@@ -97,6 +97,32 @@ algorithm_id = "rsa-unattributed"
 severity_hint = "auto"
 message = "RSA key generation via crypto/rsa.GenerateKey with a non-literal key size — the value is not statically knowable at this call site. Quantum-vulnerable to Shor's algorithm regardless of size."
 
+# GO-001 only sees the constructor. A signer/verifier that receives an
+# already-generated *rsa.PrivateKey/*rsa.PublicKey never calls GenerateKey in
+# the same file — kubernetes and vault's pkcs7 helper are both this shape —
+# and the operation site vanished from the report entirely. The key size is
+# not stated at a Sign/Verify/Encrypt/Decrypt call, so this degrades straight
+# to the unattributed sentinel rather than guessing a size.
+[[extract]]
+id = "GO-002"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "rsa")
+    field: (field_identifier) @fn (#match? @fn "^(SignPKCS1v15|VerifyPKCS1v15|SignPSS|VerifyPSS|EncryptOAEP|DecryptOAEP|EncryptPKCS1v15|DecryptPKCS1v15)$")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "crypto/rsa.Op"
+description = "RSA sign/verify/encrypt/decrypt operation (rsa.SignPKCS1v15, VerifyPSS, EncryptOAEP, …) — the key size is not stated at this call site."
+
+[[classify]]
+id = "CRYPTO-006"
+when.api = "^crypto/rsa\\.Op$"
+algorithm_id = "rsa-unattributed"
+severity_hint = "auto"
+message = "RSA operation via crypto/rsa.{fn} on a key received rather than generated here — the key size is not statically knowable at this call site. Quantum-vulnerable to Shor's algorithm regardless of size."
+
 # ============================================================================
 # crypto/ecdsa — ECDSA key generation
 # ============================================================================
@@ -165,6 +191,31 @@ algorithm_id = "ecdsa-unattributed"
 severity_hint = "auto"
 message = "ECDSA key generation via crypto/ecdsa.GenerateKey with a non-inline curve expression — the curve is not statically knowable at this call site. Quantum-vulnerable at every curve — replace with ML-DSA."
 
+# Same gap as GO-002, one crate over: ecdsa.Sign/SignASN1/Verify/VerifyASN1
+# take an *ecdsa.PrivateKey/*ecdsa.PublicKey with no curve at the call site —
+# kubernetes' certificate validation path is exactly this shape (VerifyASN1
+# on a key parsed from a CSR). Same fix, same degrade-to-unattributed answer
+# CRYPTO-014 already uses for the constructor's non-literal curve case.
+[[extract]]
+id = "GO-011"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "ecdsa")
+    field: (field_identifier) @fn (#match? @fn "^(Sign|SignASN1|Verify|VerifyASN1)$")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "crypto/ecdsa.Op"
+description = "ECDSA sign/verify operation (ecdsa.Sign, SignASN1, Verify, VerifyASN1) — the curve is bound to the key, not stated at this call site."
+
+[[classify]]
+id = "CRYPTO-015"
+when.api = "^crypto/ecdsa\\.Op$"
+algorithm_id = "ecdsa-unattributed"
+severity_hint = "auto"
+message = "ECDSA operation via crypto/ecdsa.{fn} on a key received rather than generated here — the curve is not statically knowable at this call site. Quantum-vulnerable at every curve — replace with ML-DSA."
+
 # ============================================================================
 # crypto/ed25519 / crypto/ecdh
 # ============================================================================
@@ -188,6 +239,30 @@ when.api = "^crypto/ed25519\\.GenerateKey$"
 algorithm_id = "ed25519"
 severity_hint = "auto"
 message = "Ed25519 — quantum-vulnerable to Shor. Replace with ML-DSA-65."
+
+# Ed25519 has no parameter set to lose — unlike rsa/ecdsa's operation sites,
+# this needs no unattributed fallback, just the same algorithm_id the
+# constructor already uses. golang-jwt/jwt's EdDSA verifier calls
+# ed25519.Verify directly and never GenerateKey in the same file.
+[[extract]]
+id = "GO-021"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "ed25519")
+    field: (field_identifier) @fn (#match? @fn "^(Sign|Verify)$")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "crypto/ed25519.Op"
+description = "Ed25519 sign/verify operation."
+
+[[classify]]
+id = "CRYPTO-021"
+when.api = "^crypto/ed25519\\.Op$"
+algorithm_id = "ed25519"
+severity_hint = "auto"
+message = "Ed25519 {fn} operation — quantum-vulnerable to Shor. Replace with ML-DSA-65."
 
 # ============================================================================
 # crypto/tls — TLS config
@@ -506,6 +581,41 @@ cwe = "CWE-327"
 [[classify]]
 id = "CRYPTO-051"
 when.api = "^crypto/md5_sha1\\.New$"
+when.args.pkg = "sha1"
+algorithm_id = "sha-1"
+severity_hint = "critical"
+message = "SHA-1 is classically broken (SHAttered, 2017). Use SHA-256 or stronger."
+cwe = "CWE-327"
+
+# md5.Sum(data) / sha1.Sum(data) is the one-shot package-level form; New()
+# above only sees the streaming hash.Hash constructor. consul, coredns, etcd,
+# grafana, hydra, minio, prometheus, vault and x/crypto all call this form and
+# none of it was visible.
+[[extract]]
+id = "GO-051"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#match? @pkg "^(md5|sha1)$")
+    field: (field_identifier) @fn (#eq? @fn "Sum")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "crypto/md5_sha1.Sum"
+description = "MD5 or SHA-1 one-shot hash via md5.Sum/sha1.Sum."
+
+[[classify]]
+id = "CRYPTO-052"
+when.api = "^crypto/md5_sha1\\.Sum$"
+when.args.pkg = "md5"
+algorithm_id = "md5"
+severity_hint = "critical"
+message = "MD5 is classically broken (collision attacks since 2004). Use SHA-256 or stronger."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-053"
+when.api = "^crypto/md5_sha1\\.Sum$"
 when.args.pkg = "sha1"
 algorithm_id = "sha-1"
 severity_hint = "critical"
