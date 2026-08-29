@@ -3653,3 +3653,56 @@ rather than the corpus.
 --all-targets -- -D warnings` clean; `cargo test --workspace` all passing (119 `scan-source`
 integration tests, unchanged count — new assertions were added to an existing test rather than a
 new `#[test]` fn).
+
+## `#Y24` part (b): Java `System.setProperty("jdk.tls.namedGroups", ...)` gains coverage — 2026-08-29
+
+**Closed this cycle: `#Y24`'s second, smaller-looking-but-genuinely-new-mechanism item**, open
+since cycle 26 (part (a) — the `SSLParameters.setNamedGroups(String[])` instance-method form —
+closed then). Part (b) is the same TLS group-list hardening setting reached through a JVM-wide
+system property instead: `System.setProperty("jdk.tls.namedGroups",
+"secp256r1,ffdhe2048,X25519MLKEM768")`. The value is a single comma-delimited string literal, not
+one AST node per group, and no existing extract mechanism in any of the seven rule packs splits a
+string literal's contents — confirmed before writing anything by reading `scanner.rs`'s own header
+comment, which states plainly that `[[extract]]` TOML blocks are documentation only and every real
+match is a hand-written Rust structural matcher.
+
+**First change:** a new structural matcher, `match_java_set_property_named_groups` (`scanner.rs`),
+hooked into `walk()` alongside `match_java_set_named_groups` on the same `method_invocation` node
+kind. It requires the receiver text to be exactly `System` (not just any `setProperty` — that
+method name alone is generic enough, `Properties.setProperty` exists, that keying on it alone the
+way part (a) keys on `setNamedGroups` alone would be a real false-positive risk) and exactly two
+`string_literal` arguments, the first equal to `"jdk.tls.namedGroups"`. The second literal's value
+is split on `,`, each token trimmed and skipped if empty, and one `RawMatch` is emitted per token —
+reusing part (a)'s exact `api`/`args.group` shape unchanged, so `CRYPTO-798`..`808` fire on either
+call shape with zero classify-arm changes. No dedup of repeated group names, matching part (a)'s
+own array-form behaviour (a name repeated across two calls counts twice there too).
+
+`tests/fixtures/java/TlsGroups.java` gains two new methods: `viaSystemProperty` (three groups,
+including one with stray whitespace around a comma — a real Java style the array-literal form
+never had to handle) and `unrelatedSystemProperty` (an unrelated property key, a control asserting
+the matcher does not fire on every `System.setProperty` call). The existing
+`scans_java_ssl_parameters_set_named_groups` test's expected count moves from 11 to 14.
+
+**Corpus effect: 0 findings added, 0 removed, 0 reclassified — a falsification, not a
+re-derivation, and not for lack of a real corpus site.** Corpus B *does* contain two literal
+`System.setProperty("jdk.tls.namedGroups", ...)` call sites —
+`conscrypt-openjdk-uber/common/src/test/java/org/conscrypt/javax/net/ssl/SSLSocketTest.java:994`
+(`"X25519MLKEM768,X25519"`) and `:1256` (`"invalid,invalid2"`), found via `grep -rl
+"jdk.tls.namedGroups" work/corpus-clones` before writing the matcher — but both sit in
+`common/src/test/java/`, outside `conscrypt-openjdk-uber.toml`'s own `scan_hints.scan_paths`
+(`openjdk/src/main/java/`, `common/src/main/java/`; `openjdk/src/test/` is separately excluded).
+Full 150-project pre/post dump (`work/y24b_before.json` ↔ `work/y24b_after.json`, both 1515
+findings from 149/150 projects; script `work/y24b_precision.py`; pre-change binary built from
+commit `b5931ed` in a throwaway worktree) confirms a byte-identical row set. Same shape `#Y29`,
+`#Y44`, `#Y47`, and `#Y21`'s second item already documented: the fix is real, the corpus has a
+real site, but scope excludes it.
+
+**Precision 97.06% held, exactly, `work/y24b_precision.py`.** The script reproduces the anchored
+97.06% on the pre dump before asserting the diff is empty; an empty diff cannot move a TP/FP ratio
+in either estimator, so this is coverage added at precision held, verified against the fixture
+(11/11 → 14/14 on the extended `TlsGroups.java` probe) rather than the corpus.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (119 `scan-source`
+integration tests, unchanged count — new assertions were added to an existing test rather than a
+new `#[test]` fn).
