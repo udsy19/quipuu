@@ -726,6 +726,255 @@ severity_hint = "auto"
 message = "JWT signed with EdDSA (Ed25519) — quantum-vulnerable."
 
 # ============================================================================
+# github.com/cloudflare/circl — Go's own PQC library (backlog #Y20, second
+# item). Unlike WebCrypto's algorithm-name string argument, circl's ML-DSA and
+# ML-KEM parameter sets are picked by which package is imported (mldsa44 vs.
+# mldsa65 vs. mldsa87), so the "arg-literal" capture here is the package
+# identifier itself, read off the callee text in match_go_callee. SLH-DSA is
+# the exception — one package, twelve parameter sets selected by an `ID`
+# argument — so its capture is a real argument read, same shape as jwt's
+# `alg` capture above.
+# ============================================================================
+
+[[extract]]
+id = "GO-070"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#match? @pkg "^(mldsa44|mldsa65|mldsa87)$")
+    field: (field_identifier) @fn (#match? @fn "^(GenerateKey|NewKeyFromSeed)$")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "circl/sign/mldsa.GenerateKey"
+description = "ML-DSA (circl mldsa44/65/87) key generation."
+
+[[classify]]
+id = "CRYPTO-070"
+when.api = "^circl/sign/mldsa\\.GenerateKey$"
+when.args.pkg = "mldsa44"
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "circl ML-DSA-44 key generation ({pkg}.{fn}) — FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-071"
+when.api = "^circl/sign/mldsa\\.GenerateKey$"
+when.args.pkg = "mldsa65"
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "circl ML-DSA-65 key generation ({pkg}.{fn}) — FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-072"
+when.api = "^circl/sign/mldsa\\.GenerateKey$"
+when.args.pkg = "mldsa87"
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "circl ML-DSA-87 key generation ({pkg}.{fn}) — FIPS 204, quantum-resistant."
+
+[[extract]]
+id = "GO-071"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#match? @pkg "^(mldsa44|mldsa65|mldsa87)$")
+    field: (field_identifier) @fn (#match? @fn "^(SignTo|Verify)$")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "circl/sign/mldsa.Op"
+description = "ML-DSA (circl mldsa44/65/87) sign/verify operation."
+
+[[classify]]
+id = "CRYPTO-073"
+when.api = "^circl/sign/mldsa\\.Op$"
+when.args.pkg = "mldsa44"
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "circl ML-DSA-44 {fn} operation — FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-074"
+when.api = "^circl/sign/mldsa\\.Op$"
+when.args.pkg = "mldsa65"
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "circl ML-DSA-65 {fn} operation — FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-075"
+when.api = "^circl/sign/mldsa\\.Op$"
+when.args.pkg = "mldsa87"
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "circl ML-DSA-87 {fn} operation — FIPS 204, quantum-resistant."
+
+[[extract]]
+id = "GO-072"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#match? @pkg "^(mlkem512|mlkem768|mlkem1024)$")
+    field: (field_identifier) @fn (#match? @fn "^(GenerateKeyPair|NewKeyFromSeed)$")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "circl/kem/mlkem.GenerateKeyPair"
+description = "ML-KEM (circl mlkem512/768/1024) key generation."
+
+[[classify]]
+id = "CRYPTO-076"
+when.api = "^circl/kem/mlkem\\.GenerateKeyPair$"
+when.args.pkg = "mlkem512"
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "circl ML-KEM-512 key generation ({pkg}.{fn}) — FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-077"
+when.api = "^circl/kem/mlkem\\.GenerateKeyPair$"
+when.args.pkg = "mlkem768"
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "circl ML-KEM-768 key generation ({pkg}.{fn}) — FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-078"
+when.api = "^circl/kem/mlkem\\.GenerateKeyPair$"
+when.args.pkg = "mlkem1024"
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "circl ML-KEM-1024 key generation ({pkg}.{fn}) — FIPS 203, quantum-resistant."
+
+[[extract]]
+id = "GO-073"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "slhdsa")
+    field: (field_identifier) @fn (#eq? @fn "GenerateKey"))
+  arguments: (argument_list
+    (_) @rand
+    (selector_expression
+      operand: (identifier) @id_pkg
+      field: (field_identifier) @id)))
+"""
+captures = { pkg = "ident", fn = "ident", rand = "ident", id_pkg = "ident", id = "ident" }
+api = "circl/sign/slhdsa.GenerateKey"
+description = "SLH-DSA (circl slhdsa) key generation; `id` selects one of twelve FIPS 205 parameter sets."
+
+[[classify]]
+id = "CRYPTO-079"
+when.api = "^circl/sign/slhdsa\\.GenerateKey$"
+when.args.id = "SHA2_128s"
+algorithm_id = "slh-dsa-sha2-128s"
+severity_hint = "auto"
+message = "circl SLH-DSA-SHA2-128s key generation — FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-080"
+when.api = "^circl/sign/slhdsa\\.GenerateKey$"
+when.args.id = "SHAKE_128s"
+algorithm_id = "slh-dsa-shake-128s"
+severity_hint = "auto"
+message = "circl SLH-DSA-SHAKE-128s key generation — FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-081"
+when.api = "^circl/sign/slhdsa\\.GenerateKey$"
+when.args.id = "SHA2_128f"
+algorithm_id = "slh-dsa-sha2-128f"
+severity_hint = "auto"
+message = "circl SLH-DSA-SHA2-128f key generation — FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-082"
+when.api = "^circl/sign/slhdsa\\.GenerateKey$"
+when.args.id = "SHAKE_128f"
+algorithm_id = "slh-dsa-shake-128f"
+severity_hint = "auto"
+message = "circl SLH-DSA-SHAKE-128f key generation — FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-083"
+when.api = "^circl/sign/slhdsa\\.GenerateKey$"
+when.args.id = "SHA2_192s"
+algorithm_id = "slh-dsa-sha2-192s"
+severity_hint = "auto"
+message = "circl SLH-DSA-SHA2-192s key generation — FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-084"
+when.api = "^circl/sign/slhdsa\\.GenerateKey$"
+when.args.id = "SHAKE_192s"
+algorithm_id = "slh-dsa-shake-192s"
+severity_hint = "auto"
+message = "circl SLH-DSA-SHAKE-192s key generation — FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-085"
+when.api = "^circl/sign/slhdsa\\.GenerateKey$"
+when.args.id = "SHA2_192f"
+algorithm_id = "slh-dsa-sha2-192f"
+severity_hint = "auto"
+message = "circl SLH-DSA-SHA2-192f key generation — FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-086"
+when.api = "^circl/sign/slhdsa\\.GenerateKey$"
+when.args.id = "SHAKE_192f"
+algorithm_id = "slh-dsa-shake-192f"
+severity_hint = "auto"
+message = "circl SLH-DSA-SHAKE-192f key generation — FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-087"
+when.api = "^circl/sign/slhdsa\\.GenerateKey$"
+when.args.id = "SHA2_256s"
+algorithm_id = "slh-dsa-sha2-256s"
+severity_hint = "auto"
+message = "circl SLH-DSA-SHA2-256s key generation — FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-088"
+when.api = "^circl/sign/slhdsa\\.GenerateKey$"
+when.args.id = "SHAKE_256s"
+algorithm_id = "slh-dsa-shake-256s"
+severity_hint = "auto"
+message = "circl SLH-DSA-SHAKE-256s key generation — FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-089"
+when.api = "^circl/sign/slhdsa\\.GenerateKey$"
+when.args.id = "SHA2_256f"
+algorithm_id = "slh-dsa-sha2-256f"
+severity_hint = "auto"
+message = "circl SLH-DSA-SHA2-256f key generation — FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-090"
+when.api = "^circl/sign/slhdsa\\.GenerateKey$"
+when.args.id = "SHAKE_256f"
+algorithm_id = "slh-dsa-shake-256f"
+severity_hint = "auto"
+message = "circl SLH-DSA-SHAKE-256f key generation — FIPS 205, quantum-resistant."
+
+# GO-073's query requires arg 1 to be an inline `slhdsa.<ID>` selector.
+# `slhdsa.GenerateKey(rand.Reader, id)` with `id` a variable still matches the
+# api but captures nothing, so without this arm the call site would vanish
+# instead of degrading — same fix, same ordering rationale as CRYPTO-005 and
+# CRYPTO-014 above. Placed last so the twelve literal arms win when the
+# parameter set is known.
+[[classify]]
+id = "CRYPTO-091"
+when.api = "^circl/sign/slhdsa\\.GenerateKey$"
+algorithm_id = "slh-dsa-unattributed"
+severity_hint = "auto"
+message = "circl SLH-DSA key generation via slhdsa.GenerateKey with a non-inline parameter-set argument — the value is not statically knowable at this call site. FIPS 205, quantum-resistant regardless of parameter set."
+
+# ============================================================================
 # Phase 7: Go string-table dispatch — `switch alg { case "RS256": ... }`
 #
 # V3 corpus run: 22/25 Go projects produced zero findings because JWT/JOSE

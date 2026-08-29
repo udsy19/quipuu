@@ -953,6 +953,48 @@ const GO_CALLEE_APIS: &[(&str, &str)] = &[
     ("dsa.GenerateKey", "crypto/dsa.GenerateKey"),
     ("dsa.Sign", "crypto/dsa.Op"),
     ("dsa.Verify", "crypto/dsa.Op"),
+    // circl's PQC packages are one Go package per parameter set — the
+    // package name itself is the parameter, unlike WebCrypto's algorithm
+    // string argument. Backlog `#Y20`'s second item: the co-occurrence
+    // check above only softens a classical finding when circl is used
+    // alongside it; these rows make a circl call a finding in its own
+    // right, the same status webcrypto's ML-DSA/ML-KEM arms already give
+    // JS. `SignMuTo`/`ComputeMu`/the `crypto.Signer` method form are left
+    // out — real call shapes not yet seen in the corpus.
+    ("mldsa44.GenerateKey", "circl/sign/mldsa.GenerateKey"),
+    ("mldsa65.GenerateKey", "circl/sign/mldsa.GenerateKey"),
+    ("mldsa87.GenerateKey", "circl/sign/mldsa.GenerateKey"),
+    ("mldsa44.NewKeyFromSeed", "circl/sign/mldsa.GenerateKey"),
+    ("mldsa65.NewKeyFromSeed", "circl/sign/mldsa.GenerateKey"),
+    ("mldsa87.NewKeyFromSeed", "circl/sign/mldsa.GenerateKey"),
+    ("mldsa44.SignTo", "circl/sign/mldsa.Op"),
+    ("mldsa65.SignTo", "circl/sign/mldsa.Op"),
+    ("mldsa87.SignTo", "circl/sign/mldsa.Op"),
+    ("mldsa44.Verify", "circl/sign/mldsa.Op"),
+    ("mldsa65.Verify", "circl/sign/mldsa.Op"),
+    ("mldsa87.Verify", "circl/sign/mldsa.Op"),
+    (
+        "mlkem512.GenerateKeyPair",
+        "circl/kem/mlkem.GenerateKeyPair",
+    ),
+    (
+        "mlkem768.GenerateKeyPair",
+        "circl/kem/mlkem.GenerateKeyPair",
+    ),
+    (
+        "mlkem1024.GenerateKeyPair",
+        "circl/kem/mlkem.GenerateKeyPair",
+    ),
+    ("mlkem512.NewKeyFromSeed", "circl/kem/mlkem.GenerateKeyPair"),
+    ("mlkem768.NewKeyFromSeed", "circl/kem/mlkem.GenerateKeyPair"),
+    (
+        "mlkem1024.NewKeyFromSeed",
+        "circl/kem/mlkem.GenerateKeyPair",
+    ),
+    // slhdsa.GenerateKey(rand, id) — one package for all twelve parameter
+    // sets, disambiguated by the `id` argument rather than the package
+    // name; see populate_args below for the capture.
+    ("slhdsa.GenerateKey", "circl/sign/slhdsa.GenerateKey"),
 ];
 
 /// Exact-match lookup in one of the callee → api tables.
@@ -1039,6 +1081,17 @@ fn match_go_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> 
         args.insert("pkg".into(), ArgValue::Str("md5".into()));
     } else if callee == "sha1.New" || callee == "sha1.Sum" {
         args.insert("pkg".into(), ArgValue::Str("sha1".into()));
+    }
+    // circl's ML-DSA/ML-KEM packages carry the parameter set in their own
+    // name (mldsa44, mlkem768, ...); the classify layer reads `args.pkg` the
+    // same way it reads md5/sha1 above.
+    if api.starts_with("circl/sign/mldsa") || api.starts_with("circl/kem/mlkem") {
+        if let Some(pkg) = callee.split('.').next() {
+            args.insert("pkg".into(), ArgValue::Str(pkg.into()));
+        }
+        if let Some(fn_name) = callee.split('.').nth(1) {
+            args.insert("fn".into(), ArgValue::Str(fn_name.into()));
+        }
     }
     // The *.Op apis have no parameter set to capture; the message names the
     // specific function called instead (Sign vs. VerifyASN1 vs. EncryptOAEP).
@@ -1891,6 +1944,15 @@ fn populate_args(
             // selector whose field names the signing method.
             if let Some(alg) = nth_arg_selector_field(args_node, 0, source) {
                 out.insert("alg".into(), ArgValue::Str(alg));
+            }
+        }
+        (Language::Go, "circl/sign/slhdsa.GenerateKey") => {
+            // GenerateKey(random, slhdsa.SHA2_128s) — arg 1 is a selector
+            // whose field names the parameter set. A variable there (an ID
+            // computed or passed through) captures nothing and the classify
+            // layer degrades to slh-dsa-unattributed.
+            if let Some(id) = nth_arg_selector_field(args_node, 1, source) {
+                out.insert("id".into(), ArgValue::Str(id));
             }
         }
         (Language::Python, "hashlib.new") => {

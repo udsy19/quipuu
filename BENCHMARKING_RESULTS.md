@@ -2735,3 +2735,70 @@ three `ecdh.*` rows; no other API's site count moved.
 and the precision estimator are also unaffected: neither reads `recall_check.py`.
 
 README `:245`–`:260` and `:315` updated to the corrected figures.
+
+## circl (Go's own PQC library) gains its own rules — 2026-08-29 (`#Y20`, second item)
+
+**What changed.** `#Y20`'s first change (co-occurrence softening for a classical ed25519/ecdsa
+message when `circl`'s hybrid schemes are also called in the same function) shipped earlier;
+its second, larger item — named coverage, not filed as a decision — was to give `circl`'s
+own ML-DSA/ML-KEM/SLH-DSA packages rules of their own, the same status WebCrypto's ML-DSA/
+ML-KEM arms already have for JS. Before this change, zero rules in any of the seven packs
+targeted `circl/sign/mldsa`, `circl/kem/mlkem` or `circl/sign/slhdsa` — confirmed by grep
+before starting, matching `#Y20`'s own finding.
+
+**The shape is different from WebCrypto's, and that shape drove the design.** WebCrypto names
+the algorithm in a string argument (`{name: 'ML-DSA-44'}`); `circl` picks ML-DSA/ML-KEM
+parameter sets by *which package is imported* (`mldsa44` vs. `mldsa65` vs. `mldsa87`) — there
+is no argument to read. `GO_CALLEE_APIS` (`scanner.rs`) gained 19 new callee → api rows
+(`mldsa{44,65,87}.{GenerateKey,NewKeyFromSeed,SignTo,Verify}`,
+`mlkem{512,768,1024}.{GenerateKeyPair,NewKeyFromSeed}`), and `match_go_callee` reads the
+package name straight off the callee text into `args.pkg`, the same mechanism md5/sha1
+already use to disambiguate one api into two algorithm ids. SLH-DSA is the opposite shape —
+one package, twelve parameter sets picked by an `ID` argument
+(`slhdsa.GenerateKey(rand, slhdsa.SHA2_128s)`) — so it is a real argument capture, matching
+`jwt.NewWithClaims`'s existing `nth_arg_selector_field` pattern, with twelve literal-id
+classify arms (`CRYPTO-079`..`090`) and a `CRYPTO-091` fallback to `slh-dsa-unattributed`
+when the `id` argument is a variable, the same degrade-instead-of-vanish shape
+`rsa-unattributed`/`ecdsa-unattributed` already use.
+
+**Corpus effect: 6 findings added, 0 removed, 0 reclassified.** `grep -rl` for every new
+callee substring across all of `work/corpus-clones/go-modules/` finds matches only inside
+`circl` itself — no other of the 150 corpus projects imports these packages, matching
+`#Y20`'s own "no external corpus consumer imports it yet." So the corpus-wide delta is
+provably confined to `circl`'s own tree; a live scan of `go-modules/circl` alone with the
+post-change binary is a complete measurement, not a sample of one. All 6 hand-verified
+against the cited `file:line`: **6 TP, 0 FP.**
+
+| rule | algorithm_id | file:line | verified against |
+|---|---|---|---|
+| CRYPTO-077 | ml-kem-768 | `kem/xwing/xwing.go:123` | `mlkem768.NewKeyFromSeed(seedm[:])` — real call, hybrid X-Wing KEM construction |
+| CRYPTO-091 | slh-dsa-unattributed | `sign/slhdsa/slhdsa_test.go:48,52,71,145,154` | 5× `slhdsa.GenerateKey(reader/rand.Reader, id)` where `id` is the enclosing test function's parameter — genuinely non-literal |
+
+**Precision: 96.2% → 96.2% (95% CI 94.5–97.9), +0.04 pp — held, not moved.** `circl` is in
+stratum B (`c11_stratumB.json`); folded into the currently-anchored estimator (stratum A:
+191 TP / 9 FP of 200 audited, unchanged; stratum B: 264 TP / 9 FP of 273 audited → 270 TP / 9
+FP of 279 audited). `y28_precision.py` reproduces the anchored 96.2% on the pre-change dump
+before scanning anything, then runs the live post-change scan itself and mechanically checks
+every new finding's cited line contains the call its rule claims, rather than trusting a
+hand-typed table.
+
+| | stratum A | stratum B | weighted |
+|---|---|---|---|
+| findings, pre → post | 590 → 590 | 779 → 785 | 1371 → 1377 |
+| TP / FP, pre → post | 191/9 → 191/9 | 264/9 → 270/9 | |
+| precision | 95.5% → 95.5% | 96.7% → 96.7% | **96.2% (94.5–97.9)** |
+
+**Not attempted, unchanged in rank:** `#Y8`'s BC SLH-DSA arm (still needs a primary-source
+class-name read); `#Y24` (still blocked on `openjdk.org/jeps/527` returning 403); the
+duplicate-site dump artifact named in the previous entry. circl's `crypto.Signer`/
+`ComputeMu`/`SignMuTo` method forms and `mlkem`'s `Encapsulate`/`Decapsulate` methods are
+receiver-qualified (`sk.SignTo(...)`, `pk.EncapsulateTo(...)`) rather than package-qualified,
+so they are out of scope for a callee-text table the same way `crypto/ecdsa`'s
+`(*PrivateKey).Sign` already is — real coverage, not filed as a gap, since the project's
+existing `*-unattributed` operation-site rules for RSA/ECDSA/DSA already accept this limit.
+
+**Held:** `cargo build --release --workspace` clean; `cargo test --workspace` all passing
+(104 `scan-source` tests, no new fixture — `#Y20`'s co-occurrence tests already exercise the
+same `circl` import-alias machinery and the reachability/parameter-contradiction gates cover
+the new rules' correctness). `regression_check.py` not re-run — pure addition confined to one
+project, confirmed by grep rather than by a 9-minute full re-dump.
