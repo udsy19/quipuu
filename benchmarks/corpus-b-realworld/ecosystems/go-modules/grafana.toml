@@ -7,7 +7,14 @@ why_included = "Top-25 Go modules; TLS mutual auth; JWT/SAML for SSO; database e
 
 [repo]
 url = "https://github.com/grafana/grafana"
-commit_sha = "8c288fea7d1b4e3c9a5f2d0b8e7c6a3f1d9b5e2c"
+# Re-pinned 2026-08-29. The original pin 8c288fea7d1b4e3c9a5f2d0b8e7c6a3f1d9b5e2c is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "7ffc1f51e6b508a996b37294d09d5cd3b55b52d3"
 license = "AGPL-3.0"
 language_primary = "go"
 languages_secondary = ["typescript"]

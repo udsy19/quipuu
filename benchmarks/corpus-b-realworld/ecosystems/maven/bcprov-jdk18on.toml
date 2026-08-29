@@ -7,7 +7,14 @@ why_included = "The canonical Java crypto provider; RSA/ECDSA/AES/3DES/SHA/X.509
 
 [repo]
 url = "https://github.com/bcgit/bc-java"
-commit_sha = "695fd2bea64b8466b872a9d0c2e7019fee7ac86f"
+# Re-pinned 2026-08-29. The original pin 695fd2bea64b8466b872a9d0c2e7019fee7ac86f is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "e0dce82d34bde9a2ec9d9fa387709f0e85220761"
 license = "MIT"
 language_primary = "java"
 languages_secondary = []

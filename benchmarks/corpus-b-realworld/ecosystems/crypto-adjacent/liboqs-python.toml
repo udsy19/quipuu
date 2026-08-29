@@ -7,7 +7,14 @@ why_included = "PQC Python bindings; ML-KEM/ML-DSA/SLH-DSA accessible from Pytho
 
 [repo]
 url = "https://github.com/open-quantum-safe/liboqs-python"
-commit_sha = "168eba89c1663893c1c593f7a6c4da4d49541d36"
+# Re-pinned 2026-08-29. The original pin 168eba89c1663893c1c593f7a6c4da4d49541d36 is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "0f9e50bea240792b802a6e56f5e4d33a9ec0a6b0"
 license = "MIT"
 language_primary = "python"
 languages_secondary = []

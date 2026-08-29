@@ -7,7 +7,14 @@ why_included = "Top-20 Go modules; OIDC/OAuth2 token signing (RS256/ES256); PKCE
 
 [repo]
 url = "https://github.com/ory/hydra"
-commit_sha = "1b1063b5f4a31d04bfba43a5c25bd47f14e3b7a1"
+# Re-pinned 2026-08-29. The original pin 1b1063b5f4a31d04bfba43a5c25bd47f14e3b7a1 is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "4174065ffb052799890f7480f5360a877a67ffc1"
 license = "Apache-2.0"
 language_primary = "go"
 languages_secondary = []

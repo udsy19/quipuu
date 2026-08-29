@@ -24,6 +24,12 @@ selection_rank = 23
 substituted_for = ""
 
 [scan_hints]
-scan_paths = ["age/src/"]
+# Repaired 2026-08-29. This crates-io entry clones github.com/str4d/age, which
+# is a Go repository (cmd/, internal/, go.mod) and has no age/src/ and no Rust.
+# The Rust crate of this name lives at str4d/rage. Recorded rather than
+# silently re-pointed: changing the URL changes what the corpus contains and
+# needs a re-clone. Scope is the whole repository, which is what it was
+# already being scanned as.
+scan_paths = []
 exclude_paths = ["tests/"]
 expected_languages = ["rust"]

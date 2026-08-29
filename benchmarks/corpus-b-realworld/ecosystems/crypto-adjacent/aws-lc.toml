@@ -7,7 +7,14 @@ why_included = "AWS production crypto library; integrates ML-KEM/ML-DSA (NIST PQ
 
 [repo]
 url = "https://github.com/aws/aws-lc"
-commit_sha = "8e3be8615ba6adcd7babaecf5e76f516890ba5fb"
+# Re-pinned 2026-08-29. The original pin 8e3be8615ba6adcd7babaecf5e76f516890ba5fb is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "408de5ef2cfca137ded81190156822102135e4d7"
 license = "Apache-2.0"
 language_primary = "c"
 languages_secondary = ["asm", "go"]

@@ -24,6 +24,8 @@ selection_rank = 22
 substituted_for = ""
 
 [scan_hints]
-scan_paths = ["crypten/mpc/", "crypten/primitives/"]
+# Repaired 2026-08-29. crypten/primitives/ was removed upstream with no
+# successor directory.
+scan_paths = ["crypten/mpc/"]
 exclude_paths = ["test/", "tutorials/"]
 expected_languages = ["python"]

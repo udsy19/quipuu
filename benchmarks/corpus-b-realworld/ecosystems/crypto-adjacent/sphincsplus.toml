@@ -7,7 +7,14 @@ why_included = "NIST PQC standard (SLH-DSA/FIPS 205) hash-based signature refere
 
 [repo]
 url = "https://github.com/sphincsplus/sphincsplus"
-commit_sha = "eea7cc4a79dcb17b43b20e12bc7ecebfc86f3515"
+# Re-pinned 2026-08-29. The original pin eea7cc4a79dcb17b43b20e12bc7ecebfc86f3515 is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "7ec789ace6874d875f4bb84cb61b81155398167e"
 license = "CC0-1.0"
 language_primary = "c"
 languages_secondary = []
@@ -24,6 +31,8 @@ selection_rank = 19
 substituted_for = ""
 
 [scan_hints]
-scan_paths = ["ref/", "avx2/"]
+# Repaired 2026-08-29. There is no single avx2/; the AVX2 implementations are
+# split per hash function.
+scan_paths = ["ref/", "sha2-avx2/", "shake-avx2/"]
 exclude_paths = []
 expected_languages = ["c"]

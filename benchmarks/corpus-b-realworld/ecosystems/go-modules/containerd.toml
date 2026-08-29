@@ -7,7 +7,14 @@ why_included = "Top-25 Go modules; mTLS gRPC; image layer encryption; OCI conten
 
 [repo]
 url = "https://github.com/containerd/containerd"
-commit_sha = "48d0fcd94f855d5cc62843640fe7c0a9bd7d6cee"
+# Re-pinned 2026-08-29. The original pin 48d0fcd94f855d5cc62843640fe7c0a9bd7d6cee is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "a9eb76fb198ed3efe7b2419c7fd7874582f1831c"
 license = "Apache-2.0"
 language_primary = "go"
 languages_secondary = []
@@ -24,6 +31,9 @@ selection_rank = 19
 substituted_for = ""
 
 [scan_hints]
-scan_paths = ["pkg/encryption/", "pkg/cri/", "core/transfer/"]
+# Repaired 2026-08-29. pkg/cri/ moved to internal/cri/. pkg/encryption/ is
+# dropped with no replacement: image encryption left containerd for the
+# separate imgcrypt repository, which this corpus does not carry.
+scan_paths = ["internal/cri/", "core/transfer/"]
 exclude_paths = ["vendor/"]
 expected_languages = ["go"]

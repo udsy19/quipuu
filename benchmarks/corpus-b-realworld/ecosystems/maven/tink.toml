@@ -24,6 +24,7 @@ selection_rank = 12
 substituted_for = ""
 
 [scan_hints]
-scan_paths = ["java/src/main/java/"]
+# Repaired 2026-08-29. Tink renamed the Java tree java/ -> java_src/.
+scan_paths = ["java_src/src/main/java/"]
 exclude_paths = ["java/src/test/", "testing/"]
 expected_languages = ["java"]

@@ -7,7 +7,14 @@ why_included = "Top-20 Go modules; RSA-OAEP, RSA-PKCS1v1.5, ECDH-ES, AES-KeyWrap
 
 [repo]
 url = "https://github.com/go-jose/go-jose"
-commit_sha = "b53008138df0f877a2d2cb70e06e21c68a8fc16a"
+# Re-pinned 2026-08-29. The original pin b53008138df0f877a2d2cb70e06e21c68a8fc16a is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "e37f31a2de27ccfb006124f217fa1152f1d202e9"
 license = "Apache-2.0"
 language_primary = "go"
 languages_secondary = []

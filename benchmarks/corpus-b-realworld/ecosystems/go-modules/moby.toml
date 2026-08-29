@@ -7,7 +7,14 @@ why_included = "Top-25 Go modules; TLS for Docker daemon API; registry TLS; cont
 
 [repo]
 url = "https://github.com/moby/moby"
-commit_sha = "17c3b610a7a28daa8773d4d847e2fa8d3bb2da4e"
+# Re-pinned 2026-08-29. The original pin 17c3b610a7a28daa8773d4d847e2fa8d3bb2da4e is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "50f190f54bb919b85a99624ae59decc050bbf3a3"
 license = "Apache-2.0"
 language_primary = "go"
 languages_secondary = []
@@ -24,6 +31,7 @@ selection_rank = 18
 substituted_for = "docker/docker (now github.com/moby/moby)"
 
 [scan_hints]
-scan_paths = ["daemon/listeners/", "registry/"]
+# Repaired 2026-08-29. registry/ moved to daemon/pkg/registry/.
+scan_paths = ["daemon/listeners/", "daemon/pkg/registry/"]
 exclude_paths = ["vendor/", "man/"]
 expected_languages = ["go"]

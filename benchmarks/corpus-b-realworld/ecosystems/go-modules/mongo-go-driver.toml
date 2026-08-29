@@ -7,7 +7,14 @@ why_included = "Top-25 Go modules; TLS for MongoDB connections; X.509 auth; SCRA
 
 [repo]
 url = "https://github.com/mongodb/mongo-go-driver"
-commit_sha = "44f851998f6b7c9c4f5e2a0d9b8c7f3e6a4d2c1b"
+# Re-pinned 2026-08-29. The original pin 44f851998f6b7c9c4f5e2a0d9b8c7f3e6a4d2c1b is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "359ddb6bcdbc2fdb4f3b30e979a84a3dfa997399"
 license = "Apache-2.0"
 language_primary = "go"
 languages_secondary = []

@@ -24,6 +24,7 @@ selection_rank = 10
 substituted_for = ""
 
 [scan_hints]
-scan_paths = ["jetty-server/src/main/java/", "jetty-util/src/main/java/"]
+# Repaired 2026-08-29. Jetty 12 moved the core modules under jetty-core/.
+scan_paths = ["jetty-core/jetty-server/src/main/java/", "jetty-core/jetty-util/src/main/java/"]
 exclude_paths = ["jetty-server/src/test/"]
 expected_languages = ["java"]

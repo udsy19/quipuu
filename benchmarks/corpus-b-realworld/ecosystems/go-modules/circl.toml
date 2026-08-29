@@ -7,7 +7,14 @@ why_included = "NIST PQC candidates (Kyber/ML-KEM, Dilithium/ML-DSA, SPHINCS+, F
 
 [repo]
 url = "https://github.com/cloudflare/circl"
-commit_sha = "9547f48f35d3e3d4e9bf5af8e8c8c8c8b9a23c12"
+# Re-pinned 2026-08-29. The original pin 9547f48f35d3e3d4e9bf5af8e8c8c8c8b9a23c12 is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "352600b0a4b2380815cef55fc690c65049c7e56b"
 license = "BSD-3-Clause"
 language_primary = "go"
 languages_secondary = ["c"]

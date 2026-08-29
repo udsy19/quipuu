@@ -7,7 +7,14 @@ why_included = "Google's high-level crypto API for Go; AEAD, hybrid encryption (
 
 [repo]
 url = "https://github.com/tink-crypto/tink-go"
-commit_sha = "1b6b2e274e85105bfa155183145a1dcfd63331f1"
+# Re-pinned 2026-08-29. The original pin 1b6b2e274e85105bfa155183145a1dcfd63331f1 is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "ca6ac4c9d045f0bcfbf4c85900e3989b65be5a77"
 license = "Apache-2.0"
 language_primary = "go"
 languages_secondary = []

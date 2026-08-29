@@ -24,6 +24,10 @@ selection_rank = 14
 substituted_for = ""
 
 [scan_hints]
-scan_paths = ["src/"]
+# Repaired 2026-08-29. The pin is upstream's own "Remove code (#327)": at this
+# commit the repository really is a single README.md and has no src/. This is
+# a correctly-pinned project with nothing to find, not a failed checkout —
+# the integrity baseline records files_scanned=1 so that stays provable.
+scan_paths = []
 exclude_paths = ["tests/", "benches/"]
 expected_languages = ["rust"]

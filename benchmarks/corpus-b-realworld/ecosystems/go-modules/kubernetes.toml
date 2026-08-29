@@ -7,7 +7,14 @@ why_included = "Top-25 Go modules; extensive TLS stack; X.509 certificate bootst
 
 [repo]
 url = "https://github.com/kubernetes/kubernetes"
-commit_sha = "82c23b41d67b5daadad6d3a09dc74a13a72cba47"
+# Re-pinned 2026-08-29. The original pin 82c23b41d67b5daadad6d3a09dc74a13a72cba47 is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "451fe361bf80a3e3b54e2fa53d23850c0d6267cf"
 license = "Apache-2.0"
 language_primary = "go"
 languages_secondary = []

@@ -7,7 +7,14 @@ why_included = "Top-15 Go modules by monthly downloads; HS256/HS384/HS512/RS256/
 
 [repo]
 url = "https://github.com/golang-jwt/jwt"
-commit_sha = "e8e5b83c6f3f9d1a7dec9a01b1ab09d70ff9e7b1"
+# Re-pinned 2026-08-29. The original pin e8e5b83c6f3f9d1a7dec9a01b1ab09d70ff9e7b1 is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "1a11d3724e63105d751decf9adbdc90165137b45"
 license = "MIT"
 language_primary = "go"
 languages_secondary = []

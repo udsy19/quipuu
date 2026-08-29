@@ -7,7 +7,14 @@ why_included = "Widely used portable crypto library; X25519/Ed25519/ChaCha20Poly
 
 [repo]
 url = "https://github.com/jedisct1/libsodium"
-commit_sha = "5687d211c48b38facb9e77c59b233dc25dadb330"
+# Re-pinned 2026-08-29. The original pin 5687d211c48b38facb9e77c59b233dc25dadb330 is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "09dc85e866602f95873a4c0a6499e20d1029229d"
 license = "ISC"
 language_primary = "c"
 languages_secondary = ["asm"]

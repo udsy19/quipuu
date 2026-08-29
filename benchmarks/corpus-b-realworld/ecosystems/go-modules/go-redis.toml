@@ -7,7 +7,14 @@ why_included = "Top-25 Go modules; TLS for Redis connections; AUTH command; ACL 
 
 [repo]
 url = "https://github.com/redis/go-redis"
-commit_sha = "bf57a51fd879fbd9b4b4f79f26ae55ccc9fef3d1"
+# Re-pinned 2026-08-29. The original pin bf57a51fd879fbd9b4b4f79f26ae55ccc9fef3d1 is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "18837034a1b96d331567d4fea23b303fd8bf2800"
 license = "BSD-2-Clause"
 language_primary = "go"
 languages_secondary = []

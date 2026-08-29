@@ -7,7 +7,14 @@ why_included = "Top-25 Go modules; TLS client-server and peer encryption; mutual
 
 [repo]
 url = "https://github.com/etcd-io/etcd"
-commit_sha = "22d55b52cd413dda892abad4c0c3e63a1a4b4e3b"
+# Re-pinned 2026-08-29. The original pin 22d55b52cd413dda892abad4c0c3e63a1a4b4e3b is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "7531e2efabb512dcd9a432a9d207f95706596efc"
 license = "Apache-2.0"
 language_primary = "go"
 languages_secondary = []

@@ -24,6 +24,9 @@ selection_rank = 7
 substituted_for = ""
 
 [scan_hints]
-scan_paths = ["okhttp/src/main/kotlin/", "okhttp/src/main/java/"]
+# Repaired 2026-08-29. okhttp moved to Kotlin Multiplatform source sets, so
+# `okhttp/src/main/` holds only resources. The JVM/Android sources the old
+# paths named are now under jvmMain/ and commonJvmAndroid/.
+scan_paths = ["okhttp/src/jvmMain/kotlin/", "okhttp/src/commonJvmAndroid/kotlin/"]
 exclude_paths = ["mockwebserver/", "okhttp/src/test/"]
 expected_languages = ["kotlin", "java"]

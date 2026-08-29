@@ -7,7 +7,14 @@ why_included = "Canonical C crypto library; RSA/DSA/EC/DH/AES/SHA; TLS 1.2/1.3; 
 
 [repo]
 url = "https://github.com/openssl/openssl"
-commit_sha = "5034664e30a1264a8f5ce835fd1e1c582177a167"
+# Re-pinned 2026-08-29. The original pin 5034664e30a1264a8f5ce835fd1e1c582177a167 is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "594f5e09e733a07613d2cc88c70a160cdab3a6a9"
 license = "Apache-2.0"
 language_primary = "c"
 languages_secondary = ["asm"]

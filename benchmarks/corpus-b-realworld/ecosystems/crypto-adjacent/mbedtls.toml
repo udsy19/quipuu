@@ -7,7 +7,14 @@ why_included = "ARM embedded TLS library; PSA Crypto API (PAKE, FFDH, ECDH); PQC
 
 [repo]
 url = "https://github.com/Mbed-TLS/mbedtls"
-commit_sha = "cc6887ffe80f7b1cd8e58c84281e834b06ed7f77"
+# Re-pinned 2026-08-29. The original pin cc6887ffe80f7b1cd8e58c84281e834b06ed7f77 is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "522e2e4651db0758dcc7f5da6737239ce45cab22"
 license = "Apache-2.0"
 language_primary = "c"
 languages_secondary = []
@@ -24,6 +31,11 @@ selection_rank = 9
 substituted_for = ""
 
 [scan_hints]
-scan_paths = ["library/", "include/mbedtls/", "include/psa/"]
+# Repaired 2026-08-29. The PSA Crypto headers moved into the tf-psa-crypto
+# submodule, which clone_all.sh does not fetch — tf-psa-crypto/ is an empty
+# directory on disk. Dropped rather than re-pointed at a path that is not
+# there: the PSA API is out of this corpus's reach until the harness fetches
+# submodules.
+scan_paths = ["library/", "include/mbedtls/"]
 exclude_paths = ["tests/", "programs/"]
 expected_languages = ["c"]

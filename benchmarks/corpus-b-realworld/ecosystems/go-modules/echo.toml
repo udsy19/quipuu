@@ -7,7 +7,14 @@ why_included = "Top-15 Go web frameworks; HTTPS/TLS; JWT middleware; CSRF protec
 
 [repo]
 url = "https://github.com/labstack/echo"
-commit_sha = "78c3d954e1a6b9f2c3d5e8a7b4c1f0d9e6b3a5f2"
+# Re-pinned 2026-08-29. The original pin 78c3d954e1a6b9f2c3d5e8a7b4c1f0d9e6b3a5f2 is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "e552b4de75b640bc622411fe01eed33f7704c8a0"
 license = "MIT"
 language_primary = "go"
 languages_secondary = []

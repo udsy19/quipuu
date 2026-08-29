@@ -7,7 +7,14 @@ why_included = "Top-30 Maven; JSON parsing used in JOSE/JWT pipelines; scanner m
 
 [repo]
 url = "https://github.com/eclipse-ee4j/parsson"
-commit_sha = "dcdf704bda37d4200804583cd5ec7d7dede553ea"
+# Re-pinned 2026-08-29. The original pin dcdf704bda37d4200804583cd5ec7d7dede553ea is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "2d01f006047e05cef49d13abe5ab25d66108f71a"
 license = "EPL-2.0 OR GPL-2.0"
 language_primary = "java"
 languages_secondary = []

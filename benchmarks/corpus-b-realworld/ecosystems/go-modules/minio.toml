@@ -7,7 +7,14 @@ why_included = "Top-20 Go modules; SSE-C/SSE-S3/SSE-KMS (AES-256-GCM); TLS; STS;
 
 [repo]
 url = "https://github.com/minio/minio"
-commit_sha = "7aac2a2c3b94f4e9d7a1c5f2e8b3c6d0a9f1e7b4"
+# Re-pinned 2026-08-29. The original pin 7aac2a2c3b94f4e9d7a1c5f2e8b3c6d0a9f1e7b4 is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "7aac2a2c5b7c882e68c1ce017d8256be2feea27f"
 license = "AGPL-3.0"
 language_primary = "go"
 languages_secondary = []
@@ -24,6 +31,7 @@ selection_rank = 13
 substituted_for = ""
 
 [scan_hints]
-scan_paths = ["cmd/crypto/", "internal/crypto/"]
+# Repaired 2026-08-29. cmd/crypto/ moved to internal/crypto/, already declared.
+scan_paths = ["internal/crypto/"]
 exclude_paths = ["vendor/"]
 expected_languages = ["go"]

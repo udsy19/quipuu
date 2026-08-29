@@ -24,6 +24,8 @@ selection_rank = 17
 substituted_for = ""
 
 [scan_hints]
-scan_paths = ["src/main/java/"]
+# Repaired 2026-08-29. The LDAP SDK is an Ant project, not Maven: sources sit
+# directly at src/com/unboundid/, and src/main/java/ has never existed here.
+scan_paths = ["src/"]
 exclude_paths = ["src/test/"]
 expected_languages = ["java"]

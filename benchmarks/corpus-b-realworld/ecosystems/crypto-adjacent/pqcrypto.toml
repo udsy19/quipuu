@@ -7,7 +7,14 @@ why_included = "Comprehensive PQC Rust bindings (Kyber/ML-KEM, Dilithium/ML-DSA,
 
 [repo]
 url = "https://github.com/rustpq/pqcrypto"
-commit_sha = "cc7902403ec3e53df9cd0f25f5775c762ca7ccb5"
+# Re-pinned 2026-08-29. The original pin cc7902403ec3e53df9cd0f25f5775c762ca7ccb5 is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "a63b4bcc0ef768f03d145e0913103bc75dc69223"
 license = "MIT"
 language_primary = "rust"
 languages_secondary = ["c"]
@@ -24,6 +31,9 @@ selection_rank = 24
 substituted_for = ""
 
 [scan_hints]
-scan_paths = ["pqcrypto-kyber/src/", "pqcrypto-dilithium/src/", "pqcrypto-sphincsplus/src/"]
+# Repaired 2026-08-29. The crates were renamed to their FIPS names:
+# pqcrypto-kyber -> pqcrypto-mlkem, pqcrypto-dilithium -> pqcrypto-mldsa.
+# pqcrypto-sphincsplus keeps its pre-FIPS name upstream and is unchanged.
+scan_paths = ["pqcrypto-mlkem/src/", "pqcrypto-mldsa/src/", "pqcrypto-sphincsplus/src/"]
 exclude_paths = []
 expected_languages = ["rust"]

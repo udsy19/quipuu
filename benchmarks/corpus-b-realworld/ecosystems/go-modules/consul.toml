@@ -24,6 +24,8 @@ selection_rank = 5
 substituted_for = ""
 
 [scan_hints]
-scan_paths = ["agent/connect/", "agent/tls/", "tlsutil/"]
+# Repaired 2026-08-29. agent/tls/ has never existed; the TLS configurator is
+# tlsutil/, already declared on the same line.
+scan_paths = ["agent/connect/", "tlsutil/"]
 exclude_paths = ["vendor/", "ui/"]
 expected_languages = ["go"]

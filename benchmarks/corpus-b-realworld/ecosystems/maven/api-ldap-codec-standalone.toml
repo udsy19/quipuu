@@ -7,7 +7,14 @@ why_included = "Top-40 Maven; ASN.1/BER LDAP encoding/decoding; X.509 certificat
 
 [repo]
 url = "https://github.com/apache/directory-ldap-api"
-commit_sha = "2d01f006047e05cef49d13abe5ab25d66108f71a"
+# Re-pinned 2026-08-29. The original pin 2d01f006047e05cef49d13abe5ab25d66108f71a is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "7150b2dd594c9e26b0857f17e3f5575575aeac9c"
 license = "Apache-2.0"
 language_primary = "java"
 languages_secondary = []

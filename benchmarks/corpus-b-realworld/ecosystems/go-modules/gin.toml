@@ -7,7 +7,14 @@ why_included = "Top-10 Go web frameworks by downloads; HTTPS/TLS server; JWT mid
 
 [repo]
 url = "https://github.com/gin-gonic/gin"
-commit_sha = "d75fcd4c5b7ce33b4aa0c4e3e5b4f2c9a1b8e7d6"
+# Re-pinned 2026-08-29. The original pin d75fcd4c5b7ce33b4aa0c4e3e5b4f2c9a1b8e7d6 is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "dcaa4296d111981ffb31ac3eba90bb63e1eb5ab9"
 license = "MIT"
 language_primary = "go"
 languages_secondary = []

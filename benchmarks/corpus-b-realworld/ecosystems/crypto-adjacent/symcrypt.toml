@@ -7,7 +7,14 @@ why_included = "Microsoft production crypto library; FIPS 140-3 validated; ML-KE
 
 [repo]
 url = "https://github.com/microsoft/SymCrypt"
-commit_sha = "61b250ac42af6742edc16ca9e0a7cfe7e3a9672a"
+# Re-pinned 2026-08-29. The original pin 61b250ac42af6742edc16ca9e0a7cfe7e3a9672a is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "286762b7730e2b780678f5ab11fef2b1bad639e0"
 license = "MIT"
 language_primary = "c"
 languages_secondary = ["asm"]

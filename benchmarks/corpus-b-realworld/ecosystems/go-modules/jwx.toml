@@ -7,7 +7,14 @@ why_included = "Top-20 Go modules; RSA/ECDSA/Ed25519 signing; ECDH-ES encryption
 
 [repo]
 url = "https://github.com/lestrrat-go/jwx"
-commit_sha = "a746d3fd2b72bc4ccd2f9fca45adb4ad8b26e748"
+# Re-pinned 2026-08-29. The original pin a746d3fd2b72bc4ccd2f9fca45adb4ad8b26e748 is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "58b17e258d3241791fba553a0758b2c47c0a5e82"
 license = "MIT"
 language_primary = "go"
 languages_secondary = []

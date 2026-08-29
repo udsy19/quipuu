@@ -24,6 +24,14 @@ selection_rank = 3
 substituted_for = "rustls/rustls-pemfile (was separate repo, now part of rustls monorepo)"
 
 [scan_hints]
-scan_paths = ["rustls-pemfile/src/"]
+# Unscannable since 2026-08-29. The rustls-pemfile crate was split out of the
+# rustls workspace upstream, so no rustls-pemfile/ directory exists at the
+# pinned commit. Until 2026-08-29 the harness answered that by scanning the
+# whole rustls workspace and recording it as this project: 140 findings, a
+# superset of the 16 that crates-io:rustls reports from the same clone, which
+# `crates-io/rustls` symlinks to. Declaring the project unscannable keeps the
+# 150-project denominator honest instead of double-counting one clone.
+unscannable = "crate split out of the rustls workspace upstream; not present at the pinned commit, and the clone is the same tree crates-io:rustls already scans"
+scan_paths = []
 exclude_paths = []
 expected_languages = ["rust"]

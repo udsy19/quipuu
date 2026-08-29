@@ -7,7 +7,14 @@ why_included = "Top-20 Go modules; DNSSEC (RSA/ECDSA signing); DoT/DoH (TLS); de
 
 [repo]
 url = "https://github.com/coredns/coredns"
-commit_sha = "f2f5b5a1c2d99f6c3f2c4e9a8b7c5d3e1a0f9b8c"
+# Re-pinned 2026-08-29. The original pin f2f5b5a1c2d99f6c3f2c4e9a8b7c5d3e1a0f9b8c is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "31643259cf0cf4072e71aba4266e86cb840398c1"
 license = "Apache-2.0"
 language_primary = "go"
 languages_secondary = []

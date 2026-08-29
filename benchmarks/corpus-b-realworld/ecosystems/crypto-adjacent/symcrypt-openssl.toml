@@ -7,7 +7,14 @@ why_included = "OpenSSL 3.x provider using SymCrypt; PQC algorithms via SymCrypt
 
 [repo]
 url = "https://github.com/microsoft/SymCrypt-OpenSSL"
-commit_sha = "d35ba3fe5449bee3e6d43e1f296c3ca818bd36be"
+# Re-pinned 2026-08-29. The original pin d35ba3fe5449bee3e6d43e1f296c3ca818bd36be is not a
+# commit in the repository this project clones, so `clone_all.sh` could never
+# check it out: it clones with --no-checkout, the checkout failed, and the
+# project was left with an empty working tree that every corpus figure counted
+# as "scanned, zero findings". Ten of the unreachable pins are the pinned or
+# current sha of a different project in this same corpus, so the pins were
+# shuffled across project files at construction rather than lost since.
+commit_sha = "d73b1e9ebf589f5c0098810e74e9556b2bef776a"
 license = "MIT"
 language_primary = "c"
 languages_secondary = []
