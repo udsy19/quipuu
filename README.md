@@ -10,7 +10,7 @@ open reports/quipuu.html
 
 <!-- TODO: add screenshot or asciinema recording -->
 
-Seven languages. Four output formats. No account. No cloud. No LLM. Median project scans in 285ms.
+Seven languages. Four output formats. No account. No cloud. No LLM. Median project scans in 170ms; the mean is 1532ms — see the benchmark table, both are real.
 
 > **Formerly `cryptoscope`, briefly `seawall`.** Renamed to `quipuu` in August 2026, before any
 > release. A quipu is the Incan knotted-cord record system — an entire civilisation's inventory

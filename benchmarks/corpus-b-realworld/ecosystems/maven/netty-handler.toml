@@ -24,6 +24,6 @@ selection_rank = 5
 substituted_for = ""
 
 [scan_hints]
-scan_paths = ["handler/src/main/java/", "common/src/main/java/"]
+scan_paths = ["handler/src/main/java/", "common/src/main/java/", "pkitesting/src/main/java/"]
 exclude_paths = ["handler/src/test/"]
 expected_languages = ["java"]

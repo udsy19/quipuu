@@ -237,6 +237,23 @@ algorithm_id = "ml-dsa-87"
 severity_hint = "auto"
 message = "KeyPairGenerator.getInstance('{algo}') — FIPS 204, quantum-resistant. Migrated signature call site."
 
+# `KeyPairGenerator.getInstance(keyType)` with `keyType` a variable (netty's
+# `pkitesting/Algorithms.java` is the corpus's own example) matches none of
+# CRYPTO-210..223 above — none of their regexes match the variable's
+# identifier text — and the call site vanished from the report entirely
+# instead of degrading. Same defect class Go's `rsa-unattributed` fallback
+# (`go.toml` CRYPTO-005) fixes; here the family itself is unknown (RSA, EC,
+# DSA, ML-KEM, ML-DSA, or a provider-specific name all reach this same
+# call shape), so it degrades to the JCA-wide sentinel rather than guessing
+# a family the source does not state. Placed last so every literal arm above
+# still wins when the algorithm is known.
+[[classify]]
+id = "CRYPTO-234"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+algorithm_id = "jca-unattributed"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance() with a non-literal algorithm argument — the value is not statically knowable at this call site. Inspect the value passed in."
+
 # ============================================================================
 # javax.crypto.KEM.getInstance — FIPS 203 encapsulation/decapsulation object.
 # The key pair is generated separately via KeyPairGenerator (above); this is
@@ -280,6 +297,18 @@ when.args.algo = { regex = "(?i)^\"?ML-KEM-1024\"?$" }
 algorithm_id = "ml-kem-1024"
 severity_hint = "auto"
 message = "KEM.getInstance('{algo}') — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+# `KEM.getInstance(algorithmName)` with a variable argument matches none of
+# CRYPTO-227..229 above and vanished from the report entirely. Unlike
+# KeyPairGenerator/Signature, this API is ML-KEM-only (JEP 496 defines no
+# classical KEM under it), so the parameter set — not the family — is what's
+# unknown; `ml-kem-unattributed` already names exactly that case.
+[[classify]]
+id = "CRYPTO-236"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "KEM.getInstance() with a non-literal algorithm argument — FIPS 203, quantum-resistant, but the parameter set is not statically knowable at this call site."
 
 # ============================================================================
 # java.security.MessageDigest.getInstance
@@ -835,3 +864,17 @@ when.args.algo = { regex = "(?i)^\"?ML-DSA-87\"?$" }
 algorithm_id = "ml-dsa-87"
 severity_hint = "auto"
 message = "Signature.getInstance('{algo}') — FIPS 204, quantum-resistant. Migrated signature call site."
+
+# `Signature.getInstance(algorithmIdentifier)` with a variable argument (the
+# same netty `pkitesting/Algorithms.java` call site as CRYPTO-234's
+# KeyPairGenerator sibling) matches none of the transformation-string arms
+# above and vanished from the report entirely. Same fallback shape, same
+# JCA-wide sentinel — the family (RSA, ECDSA, EdDSA, DSA, ML-DSA, ...) is not
+# statically knowable at this call site. Placed last so every literal arm
+# above still wins when the transformation is known.
+[[classify]]
+id = "CRYPTO-235"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+algorithm_id = "jca-unattributed"
+severity_hint = "auto"
+message = "Signature.getInstance() with a non-literal algorithm argument — the value is not statically knowable at this call site. Inspect the value passed in."

@@ -1140,6 +1140,14 @@ quantum_status = "QuantumSafe"
 notes = "Marker for a SubtleCrypto call whose algorithm argument is a variable, or names an algorithm with no row in this table. Same semantics as tls-client-config: it records the call site so an auditor can find it, without asserting an algorithm the source does not state. Inventory-tier — deliberately not scored as vulnerable, because scoring it would mean guessing which algorithm it is."
 
 [[algorithm]]
+id = "jca-unattributed"
+display_name = "JCA getInstance call (algorithm not statically determined)"
+family = "JCA"
+primitive = "unknown"
+quantum_status = "QuantumSafe"
+notes = "Marker for a java.security.KeyPairGenerator.getInstance/Signature.getInstance call whose algorithm argument is a variable rather than a string literal. Same semantics as webcrypto-unattributed: JCA's getInstance is provider-dispatched, so the family (RSA, EC, DSA, ML-KEM, ML-DSA, or a third-party provider name) is not stated at the call site — asserting one would be a guess. Inventory-tier — deliberately not scored as vulnerable."
+
+[[algorithm]]
 id = "signature-unattributed"
 display_name = "Signature keygen (implementing library not identified)"
 family = "Signature"
