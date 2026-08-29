@@ -13,8 +13,8 @@
 recorded_at = "2026-08-29"
 total_projects = 150
 unscannable_projects = 1
-files_scanned_total = 108271
-bytes_scanned_total = 1965771861
+files_scanned_total = 108280
+bytes_scanned_total = 1965876664
 
 [[project]]
 canonical_id = "crates-io:age"
@@ -529,8 +529,8 @@ bytes_scanned = 851520
 [[project]]
 canonical_id = "maven:io.netty:netty-handler"
 head_sha = "ec35cbeff85c12137e70ca25b77988606ecca33d"
-files_scanned = 378
-bytes_scanned = 2848503
+files_scanned = 387
+bytes_scanned = 2953306
 
 [[project]]
 canonical_id = "maven:org.apache.directory.api:api-ldap-codec-standalone"

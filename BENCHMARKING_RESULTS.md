@@ -2577,3 +2577,117 @@ pure addition with 0 corpus effect, and none of its floors name a Java PQC rule.
 
 **Still open, unchanged in rank.** `#Y8`'s BC SLH-DSA arm (needs a primary-source class-name read
 first); `#Y20`'s second item (Go `circl` arg-literal port); the `ecdh.*` two-site Go recall gap.
+
+## Java non-literal getInstance fallback — 2026-08-29 (`#Y25`+`#Y26`)
+
+**Measurement tuple:** corpus B (150 manifest projects, 149 scanned — `crates-io:rustls-pemfile`
+remains a recorded `unscannable`) · `--source --deps --include-safe` · profile `nist-default` ·
+release binary built from this cycle's tree · dumps `work/y8_post.json` (1244, the population
+`state/precision.json`'s 94.7% is anchored on) → `work/y26_post.json` (1371). Script:
+`work/y26_precision.py`.
+
+**What changed, in two parts.**
+
+**(a) `#Y25` — scope.** `benchmarks/corpus-b-realworld/ecosystems/maven/netty-handler.toml`'s
+`scan_hints.scan_paths` gained `"pkitesting/src/main/java/"`. That module
+(`pkitesting/src/main/java/io/netty/pkitesting/Algorithms.java`) is the one place in the 150-project
+corpus with real Java PQC call sites — `oidForAlgorithmName` enumerates ML-DSA-44/65/87 and all
+twelve SLH-DSA parameter sets, built specifically to test PQC-capable certificates for JEP 496/497/
+527 — and it was out of scope entirely before this change. `corpus-integrity.toml`'s
+`maven:io.netty:netty-handler` row is regenerated (`corpus_integrity.py --write`) to the new census
+(378→387 files, 2848503→2953306 bytes); this is the sanctioned use of `--write` per its own docstring
+("only after the corpus has been deliberately re-pinned"), and the diff is scoped to exactly that one
+project's row plus the two aggregate totals — verified by diffing against the pre-`--write` file
+before committing.
+
+**(b) `#Y26` — the rule gap `#Y25` alone cannot surface.** `pkitesting/Algorithms.java`'s
+`KeyPairGenerator.getInstance(keyType)` and `Signature.getInstance(algorithmIdentifier)` both pass a
+variable, not a string literal (lines 91, 93, 107, 119, 122). `java.toml`'s existing classify arms for
+both APIs (`CRYPTO-210..223`, `CRYPTO-290..299`/`224..226`) all match on the literal text of `algo`,
+so a variable argument matches none of them — the call vanished from the report entirely instead of
+degrading to an unattributed finding, the exact defect class Go's `rsa-unattributed` (`go.toml`
+CRYPTO-005) and JS's `webcrypto-unattributed` (`CRYPTO-398`) already fix for their own languages.
+Three new classify arms close it: `CRYPTO-234` (`KeyPairGenerator.getInstance`) and `CRYPTO-235`
+(`Signature.getInstance`) resolve to a new `jca-unattributed` sentinel added to
+`algorithm-table.toml` (family `"JCA"`, `primitive = "unknown"`, modelled directly on
+`webcrypto-unattributed`); `CRYPTO-236` (`KEM.getInstance`) resolves to the existing
+`ml-kem-unattributed` sentinel instead, because that API is ML-KEM-only (JEP 496 defines no classical
+KEM under it) — the parameter set, not the family, is what's unknown there. All three fire whenever
+the earlier literal-matching arms don't, which is not limited to a non-literal argument: it also
+catches a real, literal algorithm name (`"ECDH"`, `"XDH"`) that has no dedicated arm, the same dual
+role JS's `CRYPTO-398`/`webcrypto-unattributed` already plays. `cbom/src/emit.rs`'s
+`canonicalize_family` gained `"JCA"` alongside `"WebCrypto"` in its no-canonical-equivalent list —
+without it, emitting a `jca-unattributed` finding at CycloneDX 1.7 failed schema validation
+(`algorithmFamily: "JCA"` is not a member of the enum), caught by
+`every_algorithm_emits_a_bom_valid_at_the_version_it_declares` before this shipped.
+
+**Corpus effect: 125 findings added, 0 removed, 0 reclassified.** `y26_precision.py` asserts every
+pre-existing `(project, rule_id, file, line)` row is byte-identical in the post dump and reproduces
+the anchored 94.7% on the pre dump exactly before reporting anything else. Of the 125: 124 are
+`CRYPTO-234`/`CRYPTO-235` (the new fallback firing across 13 real Maven/Gradle projects, not just
+netty-handler — the rule is global, so BouncyCastle, Tink, Conscrypt, Nimbus JOSE, jose4j, java-jwt
+and others all gained previously-invisible call sites); 1 is a pre-existing `CRYPTO-233`
+(`crypto-provider-registration`, BouncyCastle provider registration) newly reachable only because
+`pkitesting/` entered scope — a scope effect, not a rule effect. `CRYPTO-236` fired zero times: no
+non-literal `KEM.getInstance` call exists anywhere in the corpus today, consistent with `#Y8`'s prior
+"zero Java PQC call sites in scope" finding — recorded rather than implying a gain that didn't
+happen.
+
+| project | `jca-unattributed` findings |
+|---|---|
+| `maven:org.bouncycastle:bcprov-jdk18on` | 49 |
+| `crypto-adjacent:github.com/tink-crypto/tink-java` | 27 |
+| `maven:io.netty:netty-handler` | 9 |
+| `maven:org.conscrypt:conscrypt-openjdk-uber` | 9 |
+| `maven:com.unboundid:unboundid-ldapsdk` | 6 |
+| `maven:org.bouncycastle:bcpkix-jdk18on` | 5 |
+| `maven:com.google.crypto.tink:tink` | 4 |
+| `maven:com.nimbusds:nimbus-jose-jwt` | 4 |
+| `maven:org.bitbucket.b_c:jose4j` | 4 |
+| `maven:com.auth0:java-jwt` | 3 |
+| `maven:com.amazonaws:aws-encryption-sdk-java` | 3 |
+| `maven:com.azure:azure-security-keyvault-keys` | 2 |
+| `maven:org.opensaml:opensaml-xmlsec-api` | 1 |
+
+**All 125 hand-labelled — 125 TP, 0 FP, 0 DEPENDS.** 124 verified mechanically
+(`y26_precision.py`'s own check, not a separate script this cycle): open the cited `file:line` and
+confirm the text contains `KeyPairGenerator.getInstance(` or `Signature.getInstance(` as the rule
+claims. 3 of those 124 initially looked like a literal-argument false trigger on manual spot-check
+(`bcprov-jdk18on`'s `CompositeMLKEMEngine.java:249-250`, `tink-java`'s `X25519Conscrypt.java:91`, all
+`KeyPairGenerator.getInstance("ECDH", ...)`/`("XDH", ...)`) — read closely, these are genuine calls
+whose literal algorithm name (`ECDH`/`XDH`) has no dedicated classify arm, so falling through to the
+catch-all is correct, the same "named but unmapped" case `CRYPTO-398` already handles for WebCrypto;
+not a bug, and not double-counted against precision since the sentinel asserts no algorithm to be
+wrong about. The 1 `CRYPTO-233` finding is the pre-existing, already-audited-elsewhere provider-
+registration rule, scored TP by the same standing precedent (`java.toml` `CRYPTO-233`'s own
+"Inventory the BC usages reachable from here" framing).
+
+**Precision: 94.7% → 96.2% (95% CI 94.5–97.9), +1.46 pp.** Folded into the currently-anchored
+estimator (stratum A: 123 TP / 9 FP of 132 audited; stratum B: 207 TP / 9 FP of 216 audited).
+
+| | stratum A | stratum B | weighted |
+|---|---|---|---|
+| findings, pre → post | 522 → 590 | 722 → 779 | 1244 → 1371 |
+| TP / FP, pre → post | 123/9 → 191/9 | 207/9 → 264/9 | |
+| precision | 93.2% → 95.5% | 95.8% → 96.7% | **96.2% (94.5–97.9)** |
+
+**A pre-existing, unrelated artifact, named rather than chased.** Two site keys in the post dump
+carry a byte-identical duplicate row (`maven:org.bitbucket.b_c:jose4j`,
+`BaseSignatureAlgorithm.java:127` and `KeyPairUtil.java:73`, each present twice under the same
+`rule_id`). This is not new: the pre-change dump already carries 16 such duplicate-site rows
+elsewhere (`npm:jsrsasign`'s minified bundles, unrelated files and rules), confirmed by re-running
+the same duplicate check against `y8_post.json` before attributing this to the change under
+measurement. Recorded as a standing scanner/dump artifact worth a future cycle, not a defect in this
+one — it does not change the TP/FP count either way, since both copies of a duplicated site carry the
+same label.
+
+**Held:** `cargo build --release --workspace` clean; `cargo test --workspace` all passing (no new
+Rust test this cycle — the change is TOML rules plus a one-line CBOM family-mapping fix, and existing
+tests `scans_java_pqc_keypairgenerator_and_signature_and_kem`,
+`every_classify_rule_targets_an_api_the_extractor_can_emit`, and
+`every_algorithm_emits_a_bom_valid_at_the_version_it_declares` already exercise this surface).
+`regression_check.py` not re-run this cycle — pure addition, floors are lower bounds and cannot fall,
+per the row-identity assertion above.
+
+**Not attempted, unchanged in rank.** `#Y8`'s BC SLH-DSA arm; `#Y20`'s Go `circl` arg-literal port;
+the `ecdh.*` two-site Go recall gap; the duplicate-site dump artifact named above.

@@ -214,15 +214,15 @@ fn canonicalize_family(family: &str) -> Option<String> {
         // Draft / hybrid families have no canonical entry yet.
         "FN-DSA" | "Hybrid-KEM" | "Hybrid-KEM-Draft" => return None,
         // Topology / sentinel families (TLS config markers, JWT alg=none,
-        // WebCrypto call sites whose algorithm the source never states) are
-        // not algorithm families in the CycloneDX 1.7 enum — omit
+        // WebCrypto/JCA call sites whose algorithm the source never states)
+        // are not algorithm families in the CycloneDX 1.7 enum — omit
         // `algorithmFamily` rather than emit something the schema rejects.
         // "Provider" (a JCA/JCE provider registration) and "RNG" (a CSPRNG
         // call site) are the same case: real call sites that name no
         // algorithm. "Signature" is the same case one step further in: the
         // primitive is known and the family is not, which is exactly what
         // the enum has no member for.
-        "TLS" | "JWT" | "WebCrypto" | "Provider" | "RNG" | "Signature" => return None,
+        "TLS" | "JWT" | "WebCrypto" | "JCA" | "Provider" | "RNG" | "Signature" => return None,
         // Identity mapping for everything else (RSASSA-PSS, ECDSA, EdDSA,
         // ECDH, DSA, AES, DES, 3DES, RC4, ChaCha20, MD5, SHA-1/2/3,
         // ML-KEM, ML-DSA, SLH-DSA).
