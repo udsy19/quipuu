@@ -242,20 +242,22 @@ The release before it removed the second shape, an `alg=none` finding on a const
 
 ### Recall, published beside precision
 
-**Go-only line-exact recall: 74.4%** — 303 of 407 in-scope `crypto/*` standard-library call sites, re-measured 2026-08-29 on the 1056-finding dump the precision figure above is sampled from, and unchanged by this release's suppression: all 80 removed findings are Java JOSE enum references, and Go is the only language the ground truth covers. The release before it removed 91 Go `alg=none` constants and did not move the figure either, for the same reason — none sits on a `crypto/*` call site. **This is a Go number and is not a recall figure for a seven-language tool**; no equivalent ground truth exists yet for the other six packs.
+**Go-only line-exact recall: 98.0%** — 399 of 407 in-scope `crypto/*` standard-library call sites, re-measured 2026-08-29 on the 1242-finding post-operation-sites dump (`opsites_post.json`), the same dump the 94.7% precision figure above is sampled from. This is a 23.6-point rise from the 74.4% published earlier the same day: `go.toml`'s new sign/verify/encrypt/decrypt operation-site rules (see above) close almost the entire gap this section used to describe. **This is a Go number and is not a recall figure for a seven-language tool**; no equivalent ground truth exists yet for the other six packs.
 
 Ground truth is built independently of our own rule files, by scanning the 25 Go corpus projects for 33 quantum-relevant stdlib APIs and requiring the matching `crypto/*` import, so it cannot inherit our blind spots. Reproduce with `python3 recall_check.py --clones DIR --dump results/all_findings.json`, which scores against a `dump_findings.py` artifact so recall is measured on exactly the finding set the precision audit samples.
 
-**The shape is the finding, not the headline.** Recall by API kind splits cleanly:
+**The shape is the finding, not the headline.** Recall by API kind, which used to split sharply, now nearly closes:
 
 | API kind | in-scope sites | found | recall |
 |---|---|---|---|
-| Generators and constructors (`rsa.GenerateKey`, `ecdsa.GenerateKey`, `ed25519.GenerateKey`, `ecdh.*`, `md5.New`, `sha1.New`, `des.NewTripleDESCipher`, `rc4.NewCipher`) | 325 | 301 | **92.6%** |
-| Operations (`ecdsa.Sign`, `ecdsa.Verify`, `rsa.SignPSS`, `rsa.VerifyPKCS1v15`, `ed25519.Sign`, `dsa.Sign`, `md5.Sum`, `sha1.Sum`, …) | 82 | 2 | **2.4%** |
+| Generators and constructors (`rsa.GenerateKey`, `ecdsa.GenerateKey`, `ed25519.GenerateKey`, `ecdh.*`, `md5.New`, `sha1.New`, `des.NewTripleDESCipher`, `rc4.NewCipher`) | 325 | 319 | **98.2%** |
+| Operations (`ecdsa.Sign`, `ecdsa.Verify`, `rsa.SignPSS`, `rsa.VerifyPKCS1v15`, `ed25519.Sign`, `dsa.Sign`, `md5.Sum`, `sha1.Sum`, …) | 82 | 80 | **97.6%** |
 
-Every signer and every verifier is at **0.0%** across twelve families, and so is every one-shot digest (`md5.Sum`, `sha1.Sum`). The only two operation sites we find at all are one `rsa.EncryptOAEP` and one `rsa.DecryptOAEP`. That is the extract layer working as designed: it carries 59 `[[extract]]` blocks against 280 `[[classify]]` arms, and they are almost all constructors. **A constructor-only extractor earns precision by declining exactly the ambiguous shapes.** 90.4% precision and 74.4% recall are the same architectural fact reported twice — trust invariant P3 (every finding resolves to a real `file:line`) is what makes the trade deliberate rather than accidental.
+**What is still missed, named rather than rounded away.** `dsa.Sign`/`dsa.Verify` are still at **0.0%** (1 site each) — the operation-site fix added `rsa`/`ecdsa`/`ed25519`/`md5`/`sha1` rules, not `dsa`, so this is an open, known gap rather than a regression. The three `ecdh.*` key-agreement APIs (`P256`, `P384`, `X25519`) each miss 2 of their sites, unrelated to this fix — those rules predate it and were not touched. Every other API in the table, sign/verify/hash included, is at 100%. **The remaining precision/recall trade is nearly gone**: 94.7% precision and 98.0% recall are close to the same number from two directions now, not the same architectural fact reported twice.
 
-**A second denominator, which bounds the benchmark rather than the tool.** Those 407 sites are the ones inside the subtrees the harness actually hands to the scanner. Over the whole Go clone tree the ground truth is **1054 sites**, so **647 (61.4%) sit outside every scanned subtree and are never looked at**. The harness restricts 92 of 150 projects to `scan_hints.scan_paths`. Recall against the whole tree would read 28.7%, and neither number should be quoted without saying which denominator it uses.
+**A second denominator, which bounds the benchmark rather than the tool.** Those 407 sites are the ones inside the subtrees the harness actually hands to the scanner. Over the whole Go clone tree the ground truth is **1054 sites**, so **647 (61.4%) sit outside every scanned subtree and are never looked at**. The harness restricts 92 of 150 projects to `scan_hints.scan_paths`. Recall against the whole tree now reads **37.9%** (399/1054, up from 28.7%), and neither number should be quoted without saying which denominator it uses.
+
+**A related measure: does a missing operation site cost a whole algorithm family in the CBOM?** Re-run on the same post-fix dump, `work/synth_family_gap.py`'s method (family evidenced by a stdlib operation call site, absent from our findings) drops from **20 to 12** family-losses across the 25 `go-modules` projects — real, but short of the item's own `≤4` target, because the fix didn't add a `dsa` rule and `md5.Sum`/`sha1.Sum` sites inside test-only files in a few large projects (`grafana`, `vault`) still outnumber the ones this fix reaches directly. Not reproducible from this repo alone — the script reads a corpus-local dump path — but the method is `recall_check.py`'s own ground-truth construction applied to CBOM family coverage instead of line-exact sites.
 
 The benchmark corpus and reproduce scripts live in `benchmarks/corpus-b-realworld/`. Run `./clone_all.sh`, then `python3 scan_corpus.py --include-safe` for the speed and finding counts, `python3 dump_findings.py` for the per-finding dump the precision audit samples, and `python3 recall_check.py` for the recall figures; all three take `--clones` if the corpus lives outside the repo. Verify the numbers yourself.
 
@@ -308,7 +310,7 @@ quipuu scan .
 | Auditable open rule format | Yes (TOML) | No (binary) | Yes (QL) | No | Yes (YAML) |
 | Languages (crypto-specific) | 7 | 7+ | 7+ | Java only | Any |
 | Published precision (crypto findings) | 94.7% (346 audited rows, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
-| Published recall | 74.4% (Go stdlib, 303/407 in-scope sites) | Not published | Not published | Not published | Not published |
+| Published recall | 98.0% (Go stdlib, 399/407 in-scope sites) | Not published | Not published | Not published | Not published |
 | Scan speed | 170ms median project; 230s for the 150-project corpus (2 cores) | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
 
 **Where CodeQL wins:** CodeQL has full inter-procedural data-flow. It can trace a key from generation through storage to use and flag misuse that a pattern-based scanner cannot see. If you need that depth and can absorb the scan time, CodeQL delivers it. quipuu does not attempt to replicate data-flow analysis — it trades that capability for speed, locality, and PQC specificity.

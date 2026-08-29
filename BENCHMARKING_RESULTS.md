@@ -2375,3 +2375,28 @@ security-relevant, consistent with the existing `CRYPTO-050`/`051` `md5.New`/`sh
 row-identity assertion above. `cargo build --release --workspace` clean; `cargo test --workspace`
 all passing, 1 new (`scan_test` 101 → 102): `go_operation_sites_are_all_detected`, covering all
 five new rules against a dedicated fixture.
+
+## Go recall follow-up — 2026-08-29
+
+The `#V4` writeup above left two measurements unrun. Both are run now, against the same
+`opsites_post.json` dump (1242 findings, `work/cycle-opsites/opsites_post.json`) the 94.7 %
+precision figure is sampled from — no new dump, no code change.
+
+`python3 recall_check.py --clones /opt/cryptoscope/work/corpus-clones --dump
+work/cycle-opsites/opsites_post.json`: **in-scope Go recall 74.4 % → 98.0 %** (399/407).
+Constructors 92.6 % → 98.2 % (319/325), operations **2.4 % → 97.6 %** (80/82) — the row README
+`:254` called "every signer and every verifier is at 0.0 %" is now 100 % for every API except
+`dsa.Sign`/`dsa.Verify` (1 site each, 0.0 % — no `dsa` rule was added by `#V4`, so this is a named
+open gap, not a regression) and the three `ecdh.*` key-agreement APIs (2 of their sites missed
+each, unrelated to this fix — those rules predate it). Whole-tree recall (the harness denominator,
+647 of 1054 sites outside every scanned subtree) moves with the numerator: 28.7 % → 37.9 %.
+
+`work/synth_family_gap.py`'s method (CBOM family evidenced by a stdlib operation site, absent from
+our findings), re-pointed at the same dump: **family-losses across the 25 `go-modules` projects,
+20 → 12.** Short of the item's own `≤ 4` target — `dsa` has no rule, and `grafana`/`vault`'s
+test-only `md5.Sum`/`sha1.Sum` sites outnumber what the fix reaches. Reported as measured, not
+rounded up to the target.
+
+README `:245`–`:258` and `:313` updated to these numbers. Precision is untouched — 94.7 % stands;
+this is a recall-only measurement on the same finding set. `regression_check.py` and
+`cargo test --workspace` not re-run: no Rust file changed, so this cannot regress either.
