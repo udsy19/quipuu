@@ -195,7 +195,7 @@ Mock results table — what the published artifact contains, with the actual num
 
 Honesty about apples vs oranges:
 
-- **CBOMkit is a SonarQube plugin.** Running it standalone requires a SonarQube server. We containerize that — Java + SonarQube + plugin — but the startup time is real and we report it separately ("first-scan latency" vs "warm scan latency"). It's not fair to count Sonar server startup against CBOMkit's throughput, but it *is* fair to flag it as a deployment friction.
+- **CBOMkit is a SonarQube plugin.** Running it standalone requires a SonarQube server. We containerize that — Java + SonarQube + plugin — but the startup time is real and we report it separately ("first-scan latency" vs "warm scan latency"). It's not fair to count Sonar server startup against CBOMkit's throughput, but it *is* fair to flag it as a deployment friction. That same server is also what CBOMkit gets in return: a persistent CBOM database, a query API, and SonarQube's compliance-policy surface — capabilities a single local binary doesn't offer by architecture.
 - **cryptobom-forge runs on top of CodeQL SARIF.** It can't find what CodeQL didn't surface. We benchmark the pipeline together (CodeQL + cryptobom-forge) and report it as a stack.
 - **Snyk and SandboxAQ are closed-source.** We can run trial accounts against our corpus and report what they find. We *cannot* benchmark throughput because we don't control their infrastructure. We mark these "limited-access" and only report precision/recall.
 - **Semgrep crypto rulepack is rule-driven.** It only finds what its rules describe. We measure it on the rules it has; we don't punish it for things outside its scope (e.g., it doesn't claim to do TLS probing, so it isn't compared on TLS).

@@ -324,7 +324,7 @@ quipuu scan .
 | SARIF output | Yes | Yes | Yes | No | Yes |
 | MCP server | Yes | No | No | No | No |
 | Auditable open rule format | Yes (TOML) | No (binary) | Yes (QL) | No | Yes (YAML) |
-| Languages (crypto-specific) | 7 | 7+ | 7+ | Java only | Any |
+| Languages (crypto-specific) | 7 | 7+ | 7+ | Java, Python, Go (C# in development) | Any |
 | Published precision (crypto findings) | 97.06% (613 audited rows, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
 | Published recall | 100.0% (Go stdlib, 401/401 in-scope sites) | Not published | Not published | Not published | Not published |
 | Scan speed | 170ms median project; 230s for the 150-project corpus (2 cores) | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
