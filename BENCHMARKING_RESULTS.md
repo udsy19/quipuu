@@ -3279,9 +3279,10 @@ this is a genuine falsification of "this change reaches nothing corpus B scans,"
 assumption. Root cause, checked by hand: wolfssl's `scan_hints.exclude_paths` in `benchmarks/
 corpus-b-realworld/ecosystems/crypto-adjacent/wolfssl.toml` excludes `tests/`, which is exactly
 where every `RSA_generate_key` call site in that project lives (`tests/api/test_ossl_rsa.c`,
-`test_evp_pkey.c`) — confirmed directly by scanning the excluded file with the built binary: 8
-TP (`CRYPTO-404`/`406`), 5 correctly-suppressed `ExpectNull` sites, 0 false positives, exactly as
-designed. aws-lc's one legacy call site (`tool-openssl/crl_test.cc`, not `_ex`) sits outside its
+`test_evp_pkey.c`) — confirmed directly by scanning both excluded files with the built binary:
+12 TP (`CRYPTO-404`/`406`; 8 in `test_ossl_rsa.c`, 4 in `test_evp_pkey.c`), 5 correctly-suppressed
+`ExpectNull` sites (all in `test_ossl_rsa.c`), 0 false positives, exactly as designed. aws-lc's
+one legacy call site (`tool-openssl/crl_test.cc`, not `_ex`) sits outside its
 `scan_paths` (`crypto/`, `ssl/`, `include/openssl/`) entirely; the only two occurrences of the
 identifier inside aws-lc's scanned paths are the function's own definition and declaration, not
 calls. Same shape as `#W1`'s `--certs` gate and cycle 23's `CurvePreferences`: the corpus is not
