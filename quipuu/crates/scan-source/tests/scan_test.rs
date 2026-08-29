@@ -961,6 +961,34 @@ fn scans_csharp_sha256_create() {
 }
 
 #[test]
+fn scans_csharp_bouncycastle_mlkem_and_mldsa() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("csharp/Pqc.cs"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-662", "ml-kem-768"), // new MLKemKeyGenerationParameters(random, MLKemParameters.ml_kem_768)
+        ("CRYPTO-664", "ml-kem-unattributed"), // parameter set read from a variable
+        ("CRYPTO-666", "ml-dsa-65"), // new MLDsaKeyGenerationParameters(random, MLDsaParameters.ml_dsa_65)
+        ("CRYPTO-667", "ml-dsa-87"), // MLDsaParameters.ml_dsa_87_with_sha512 — same parameter set, pre-hashed
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in C# PQC fixture; findings: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+}
+
+#[test]
 fn end_to_end_rsa_keygen_scores_high() {
     // Walking-skeleton end-to-end demo: real file in, Finding out, score out.
     let b = load_builtins().unwrap();

@@ -2919,3 +2919,87 @@ prior one, which is a stronger claim than any floor it checks.
 **`#Y8` is now closed — all three arms landed.** `#Y21` (BC's C# PQC classes) remains open and
 blocked on the same class of primary-source read this entry just performed for Java, not yet
 attempted for `bc-csharp`.
+
+## `#Y21`'s first change — BouncyCastle.Cryptography's ML-KEM/ML-DSA classes in C#, read from source
+
+**What was missing.** `csharp.toml` had one PQC-adjacent line (an `RSA.Create()` message
+recommending ML-KEM/ML-DSA as the replacement) and zero rules for any BouncyCastle or
+Microsoft PQC class — the C# pack was entirely blind to BC's own post-quantum API.
+
+**The class names, read from the primary source, not the nuget.org description page `#Y21`
+flagged as unverified.** `gh api repos/bcgit/bc-csharp/git/trees/release-2.7.0?recursive=1`
+shows the names the backlog item guessed (`MLKemKeyPairGenerator` under
+`Org.BouncyCastle.Pqc.Crypto.MLKem`) do not exist — that namespace still only holds BC's
+pre-standardisation `crystals/dilithium` and `sphincsplus` code, no Kyber directory at all.
+The real classes moved out of the experimental `Pqc` namespace once ML-KEM/ML-DSA became FIPS
+203/204: `Org.BouncyCastle.Crypto.Generators.{MLKemKeyPairGenerator,MLDsaKeyPairGenerator}`,
+`Org.BouncyCastle.Crypto.Parameters.{MLKemKeyGenerationParameters,MLDsaKeyGenerationParameters,
+MLKemParameters,MLDsaParameters}`. Read directly from
+`crypto/src/crypto/parameters/{MLKemParameters,MLDsaParameters}.cs` at the `release-2.7.0` tag
+(the exact version `#Y21` cited): the parameter set is a static field on `MLKemParameters`/
+`MLDsaParameters` (`ml_kem_512/768/1024`, `ml_dsa_44/65/87` and three `_with_sha512` HashML-DSA
+pre-hash variants) passed as the second constructor argument to the `*KeyGenerationParameters`
+class, not stated on the `KeyPairGenerator` itself — same two-step shape BC's Java build uses,
+confirmed against `MLKemKeyPairGenerator.cs`'s `Init(KeyGenerationParameters)` signature.
+SLH-DSA is *not* covered — BC's C# port has no FIPS-205-named classes yet, only the legacy
+`SPHINCSPlusSigner` family, so no rule targets it (would be the same guess `#Y21` itself
+flagged as the risk).
+
+**Fix required a scanner change, not just TOML.** C#'s `new Foo(args)` handling
+(`match_object_creation` in `scan-source/scanner.rs`) had never called `populate_args` — the
+only existing C# constructor rule, `RijndaelManaged`, takes no arguments that matter, so the
+gap was invisible until now. It does for both Java and C# ctors now, mirroring the
+`invocation_expression` path a few lines up. A new `nth_csharp_arg_member_access_name` helper
+unwraps tree-sitter-c-sharp's `argument` wrapper node (Go's `argument_list` has no such
+layer, which is why `nth_arg_selector_field` couldn't be reused directly) before matching
+`TypeName.field`. `csharp.toml` gains two extract rules (`CSH-050`/`051`) and eight classify
+arms (`CRYPTO-661`–`668`): three literal parameter-set matches plus a non-literal fallback per
+family, reusing the existing `ml-kem-unattributed`/`ml-dsa-unattributed` sentinels
+(`algorithm-table.toml`) rather than inventing new ones — the semantics (family known, exact
+parameter set not statically knowable at this call site) are identical to why those rows exist
+for the Rust `ml-kem`/`ml-dsa` crates.
+
+**Verified against a planted fixture.** `tests/fixtures/csharp/Pqc.cs`: `MLKemKeyGenerationParameters(random,
+MLKemParameters.ml_kem_768)` → `CRYPTO-662`/`ml-kem-768`; the same constructor with a
+variable parameter set → `CRYPTO-664`/`ml-kem-unattributed`; `MLDsaKeyGenerationParameters(random,
+MLDsaParameters.ml_dsa_65)` → `CRYPTO-666`/`ml-dsa-65`; and `MLDsaParameters.ml_dsa_87_with_sha512`
+(HashML-DSA pre-hash) → `CRYPTO-667`/`ml-dsa-87`, confirming the pre-hash suffix folds into the
+same parameter-set id rather than being missed. New test
+`scans_csharp_bouncycastle_mlkem_and_mldsa` (`scan-source` tests 105 → 106).
+
+**Corpus effect: 0, verified by row-identity diff on a held corpus state, not assumed from "no
+C# in corpus B."** Corpus B has no `csharp`/NuGet ecosystem directory at all
+(`benchmarks/corpus-b-realworld/ecosystems/` lists `crates-io`, `crypto-adjacent`,
+`go-modules`, `maven`, `npm`, `pypi` only), so this diff cannot add or remove a corpus B
+finding by construction. That was checked rather than trusted: a binary built from this
+diff's tree and a binary built from the immediately preceding commit (`77c513f`) were run
+against the *same* `work/corpus-clones` snapshot back to back — **1517 findings both sides,
+0 added, 0 removed, 0 reclassified** on `(project, rule_id, algorithm_id, file, line,
+severity)` keys.
+
+**A pre-existing corpus drift surfaced by that check, not caused by this diff.** Both of this
+cycle's dumps returned 1517 findings, not the 1377 the anchored 96.2% baseline
+(`state/precision.json`, sha `77c513f`) was measured against — `work/y29_post.json`. The delta
+is concentrated in a handful of projects whose live clone under `work/corpus-clones/` has
+moved since that dump was taken (e.g. `maven:org.bouncycastle:bcprov-jdk18on`'s clone now
+resolves extra findings under a `bcpkix-jdk18on` subtree it didn't reach before; `crates-io:
+rustls-pemfile`, `crates-io:rustls` and `crates-io:webpki` show a similar shape). This is an
+environment fact, not a code change — confirmed by running the *pre-change* binary against
+today's corpus state and getting the identical 1517, and is filed as `OPEN-ASK #CORPUSDRIFT`
+in `03-Product/Backlog.md` rather than resolved here: re-baselining precision against a corpus
+snapshot this cycle did not take is exactly the move rule 7 reserves for the human adjudicator.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (106 `scan-source`
+tests, was 105). `every_classify_rule_targets_an_api_the_extractor_can_emit` and
+`classify_rules_never_publish_a_parameter_their_when_clause_contradicts` both re-checked green
+against all 8 new arms — the two new `CSHARP_CTOR_APIS` rows register in `api_surface()`
+automatically, so no gate needed hand-updating. **Precision: 96.2% → 96.2%, unmoved** — the
+row-identity diff is a stronger claim than any audit re-derivation, since zero findings changed
+means the labelled set that produced 96.2% is untouched.
+
+**`#Y21` first change closed.** The second, larger item that same backlog entry named —
+extending coverage past the two `*KeyGenerationParameters` constructors to the
+`MLKemEncapsulator`/`MLKemDecapsulator`/`MLDsaSigner` operation sites — is not attempted this
+cycle; no C#/NuGet corpus exists to validate it against either way, same limitation `#Y21`
+itself named.

@@ -245,3 +245,116 @@ algorithm_id = "aes-unattributed"
 severity_hint = "high"
 message = "new RijndaelManaged() — deprecated in .NET 6+; disallowed in FIPS mode. Key size and mode come from the properties set afterwards, not from this call. Use AesGcm instead."
 cwe = "CWE-327"
+
+# ============================================================================
+# BouncyCastle.Cryptography — ML-KEM / ML-DSA (FIPS 203 / 204)
+#
+# BC ships these under Org.BouncyCastle.Crypto.{Generators,Kems,Parameters,
+# Signers}, not under the experimental Org.BouncyCastle.Pqc.Crypto namespace
+# that still holds its pre-standardisation Kyber/Dilithium code — read
+# directly from bcgit/bc-csharp's release-2.7.0 tag, not taken from a
+# nuget.org description page (backlog #Y21's own ship-gate). The parameter
+# set is stated as a static field of MLKemParameters/MLDsaParameters passed
+# into the *KeyGenerationParameters constructor, not the KeyPairGenerator
+# itself — same two-step shape BC's own Java build uses.
+# ============================================================================
+
+[[extract]]
+id = "CSH-050"
+language = "csharp"
+query = """
+(object_creation_expression
+  type: (identifier) @cls (#eq? @cls "MLKemKeyGenerationParameters")
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "MLKemParameters")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", paramcls = "ident", paramset = "ident" }
+api = "Org.BouncyCastle.Crypto.Parameters.MLKemKeyGenerationParameters.new"
+description = "new MLKemKeyGenerationParameters(random, MLKemParameters.ml_kem_768) — FIPS 203 ML-KEM parameter selection."
+
+[[classify]]
+id = "CRYPTO-661"
+when.api = "^Org\\.BouncyCastle\\.Crypto\\.Parameters\\.MLKemKeyGenerationParameters\\.new$"
+when.args.paramset = "ml_kem_512"
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "new MLKemKeyGenerationParameters(random, MLKemParameters.ml_kem_512) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-662"
+when.api = "^Org\\.BouncyCastle\\.Crypto\\.Parameters\\.MLKemKeyGenerationParameters\\.new$"
+when.args.paramset = "ml_kem_768"
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "new MLKemKeyGenerationParameters(random, MLKemParameters.ml_kem_768) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-663"
+when.api = "^Org\\.BouncyCastle\\.Crypto\\.Parameters\\.MLKemKeyGenerationParameters\\.new$"
+when.args.paramset = "ml_kem_1024"
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "new MLKemKeyGenerationParameters(random, MLKemParameters.ml_kem_1024) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+# The OID-lookup constructor overload, or a parameter set read from a
+# variable, captures no `paramset` — same degrade-instead-of-vanish shape
+# `ml-kem-unattributed` already plays for the Rust `ml-kem` crate dependency
+# signal (`algorithm-table.toml`): the family is stated, the exact set is not.
+[[classify]]
+id = "CRYPTO-664"
+when.api = "^Org\\.BouncyCastle\\.Crypto\\.Parameters\\.MLKemKeyGenerationParameters\\.new$"
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "new MLKemKeyGenerationParameters(random, …) with a non-literal or OID-looked-up parameter set — FIPS 203, quantum-resistant, but the parameter set is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-051"
+language = "csharp"
+query = """
+(object_creation_expression
+  type: (identifier) @cls (#eq? @cls "MLDsaKeyGenerationParameters")
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "MLDsaParameters")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", paramcls = "ident", paramset = "ident" }
+api = "Org.BouncyCastle.Crypto.Parameters.MLDsaKeyGenerationParameters.new"
+description = "new MLDsaKeyGenerationParameters(random, MLDsaParameters.ml_dsa_65) — FIPS 204 ML-DSA parameter selection."
+
+# The `_with_sha512` fields select the HashML-DSA pre-hash construction
+# (FIPS 204 §5.4), which changes how the message is digested, not which
+# parameter set is in use — folded into the same regex, same reasoning
+# java.toml's SLH-DSA pre-hash arms already use.
+[[classify]]
+id = "CRYPTO-665"
+when.api = "^Org\\.BouncyCastle\\.Crypto\\.Parameters\\.MLDsaKeyGenerationParameters\\.new$"
+when.args.paramset = { regex = "^ml_dsa_44(_with_sha512)?$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "new MLDsaKeyGenerationParameters(random, MLDsaParameters.{paramset}) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-666"
+when.api = "^Org\\.BouncyCastle\\.Crypto\\.Parameters\\.MLDsaKeyGenerationParameters\\.new$"
+when.args.paramset = { regex = "^ml_dsa_65(_with_sha512)?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "new MLDsaKeyGenerationParameters(random, MLDsaParameters.{paramset}) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-667"
+when.api = "^Org\\.BouncyCastle\\.Crypto\\.Parameters\\.MLDsaKeyGenerationParameters\\.new$"
+when.args.paramset = { regex = "^ml_dsa_87(_with_sha512)?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "new MLDsaKeyGenerationParameters(random, MLDsaParameters.{paramset}) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-668"
+when.api = "^Org\\.BouncyCastle\\.Crypto\\.Parameters\\.MLDsaKeyGenerationParameters\\.new$"
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "new MLDsaKeyGenerationParameters(random, …) with a non-literal or OID-looked-up parameter set — FIPS 204, quantum-resistant, but the parameter set is not statically knowable at this call site."

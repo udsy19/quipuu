@@ -885,11 +885,14 @@ fn match_object_creation(call: Node<'_>, source: &[u8], language: Language) -> O
     let type_node = call.child_by_field_name("type")?;
     let type_text = node_text(type_node, source);
 
-    let (api, args_map) = match language {
+    let (api, mut args_map) = match language {
         Language::Java => match_java_ctor(&type_text)?,
         Language::CSharp => match_csharp_ctor(&type_text)?,
         _ => return None,
     };
+    if let Some(args) = call.child_by_field_name("arguments") {
+        populate_args(language, &api, args, source, &mut args_map);
+    }
 
     let start = call.start_position();
     Some(RawMatch {
@@ -1904,10 +1907,20 @@ const CSHARP_CALLEE_APIS: &[(&str, &str)] = &[
 ];
 
 /// C# `new Foo()` constructors.
-const CSHARP_CTOR_APIS: &[(&str, &str)] = &[(
-    "RijndaelManaged",
-    "System.Security.Cryptography.RijndaelManaged.new",
-)];
+const CSHARP_CTOR_APIS: &[(&str, &str)] = &[
+    (
+        "RijndaelManaged",
+        "System.Security.Cryptography.RijndaelManaged.new",
+    ),
+    (
+        "MLKemKeyGenerationParameters",
+        "Org.BouncyCastle.Crypto.Parameters.MLKemKeyGenerationParameters.new",
+    ),
+    (
+        "MLDsaKeyGenerationParameters",
+        "Org.BouncyCastle.Crypto.Parameters.MLDsaKeyGenerationParameters.new",
+    ),
+];
 
 fn match_csharp_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
     let api = lookup(CSHARP_CALLEE_APIS, callee)?;
@@ -2027,6 +2040,21 @@ fn populate_args(
             // SSL_CTX_set_cipher_list(ctx, cipher_str) — arg 1 is a string
             if let Some(s) = nth_arg_string(args_node, 1, source) {
                 out.insert("cipher_str".into(), ArgValue::Str(s));
+            }
+        }
+        (
+            Language::CSharp,
+            "Org.BouncyCastle.Crypto.Parameters.MLKemKeyGenerationParameters.new"
+            | "Org.BouncyCastle.Crypto.Parameters.MLDsaKeyGenerationParameters.new",
+        ) => {
+            // new MLKemKeyGenerationParameters(random, MLKemParameters.ml_kem_768)
+            // new MLDsaKeyGenerationParameters(random, MLDsaParameters.ml_dsa_65)
+            // arg 1 is a member access naming the static parameter-set field;
+            // the OID-lookup overload passes an expression here instead, and a
+            // variable is always possible, so this can legitimately capture
+            // nothing.
+            if let Some(paramset) = nth_csharp_arg_member_access_name(args_node, 1, source) {
+                out.insert("paramset".into(), ArgValue::Str(paramset));
             }
         }
         (Language::Rust, "rsa.RsaPrivateKey.new") => {
@@ -2298,6 +2326,26 @@ fn nth_arg_selector_field(args: Node<'_>, n: usize, source: &[u8]) -> Option<Str
         return None;
     }
     Some(node_text(arg.child_by_field_name("field")?, source))
+}
+
+/// C# field name of a `TypeName.field` member access at argument position `n`.
+/// `new MLKemKeyGenerationParameters(random, MLKemParameters.ml_kem_768)` →
+/// `ml_kem_768`. C# wraps every argument in an `argument` node (tree-sitter-
+/// c-sharp's `argument_list` has no bare-expression children the way Go's
+/// `argument_list` does), so this unwraps that layer before matching
+/// `member_access_expression` the same way `nth_arg_selector_field` does for
+/// Go's `selector_expression`.
+fn nth_csharp_arg_member_access_name(args: Node<'_>, n: usize, source: &[u8]) -> Option<String> {
+    let arg = nth_real_arg(args, n)?;
+    let expr = if arg.kind() == "argument" {
+        arg.named_child(0)?
+    } else {
+        arg
+    };
+    if expr.kind() != "member_access_expression" {
+        return None;
+    }
+    Some(node_text(expr.child_by_field_name("name")?, source))
 }
 
 /// Attribute name of a `mod.Attr(...)` call at argument position `n`.
