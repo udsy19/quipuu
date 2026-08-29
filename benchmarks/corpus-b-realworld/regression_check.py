@@ -30,20 +30,34 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 CLONES_DIR = SCRIPT_DIR / "clones"
 
-# V8 floor (commit 89d35cb). A 5% margin below the observed V8 numbers gives
-# us room for legitimate scan_hints changes while still catching real
-# regressions (e.g., a rule rewrite that breaks the Java JWT path).
-# Floors lowered for Phase 16 (SiteContext suppression). The total drop from
-# V8 (1194) → V11 (986) is intentional FP suppression — see PRECISION_AUDIT_V2.
-# The new floors are 5% below the observed V11 values.
+# Floors are 5% below an observed run, so a real coverage regression fails and
+# ordinary run-to-run variation does not.
+#
+# Re-taken 2026-08-29 against the corpus scope repair. Every floor here was set
+# on runs in which three projects were scanned over a tree their manifest did
+# not declare: `scan_corpus.py` dropped a `scan_path` that was not on disk and,
+# when none of a project's paths resolved, scanned the whole repository. The
+# maven and crates-io floors were carrying that widening as if it were
+# coverage — `rustls-pemfile` alone contributed 140 findings from the entire
+# rustls workspace, 33 of them CRYPTO-560 sites that `crates-io:rustls` already
+# reports from the same clone. Holding the old numbers would demand that the
+# harness keep double-counting one repository to stay green.
+#
+# The V11 values they replace are kept beside each row: a floor that moves has
+# to say what it moved from.
 V11_FLOOR = {
-    "pypi":             36,   # V11: 38
-    "npm":             111,   # V11: 117
-    "maven":           292,   # V11: 308
-    "crates-io":       214,   # V11: 226
-    "go-modules":      276,   # V11: 291
-    "crypto-adjacent":   5,   # V11: 6
-    "total":           936,   # V11: 986  (5% under)
+    "pypi":             73,   # observed 77   (V11 floor 36, observed 38)
+    "npm":             120,   # observed 127  (V11 floor 111, observed 117)
+    "maven":            76,   # observed 81   (V11 floor 292 — jetty-server 119
+                              #   and tink 93 of it came from whole-repo scans)
+    "crates-io":        81,   # observed 86   (V11 floor 214 — 140 of it was
+                              #   rustls-pemfile scanning the rustls workspace)
+    "go-modules":      460,   # observed 485  (V11 floor 276, observed 291)
+    "crypto-adjacent": 190,   # observed 200  (V11 floor 6 — a floor of 6
+                              #   against 200 cannot detect an ecosystem
+                              #   vanishing, which is the failure that started
+                              #   this; see corpus_integrity.py)
+    "total":          1003,   # observed 1056 (V11 floor 936, observed 986)
 }
 V8_FLOOR = V11_FLOOR  # Backwards-compatible alias for existing references
 
@@ -61,7 +75,14 @@ RULE_FLOORS = {
                         # contains — see BENCHMARKING_RESULTS.md.
     "CRYPTO-704":  4,   # Go JWT PS384  (V11: 6)
     "CRYPTO-705":  4,   # Go JWT PS512  (V11: 6)
-    "CRYPTO-560": 50,   # rustls::ClientConfig::builder
+    "CRYPTO-560": 16,   # rustls::ClientConfig::builder. Floor was 50 until
+                        # 2026-08-29. The corpus reported 79 of these, and 62
+                        # were the rustls workspace counted a second time under
+                        # the `rustls-pemfile` name, whose declared scope does
+                        # not exist at its pinned commit and which symlinks to
+                        # the same clone. Observed 17 over the repaired scope —
+                        # 10 from `crates-io:rustls`, 7 from
+                        # `crates-io:hyper-rustls`.
     # CRYPTO-241 (jjwt HS256) was floored at 1 as "the canonical jjwt-api
     # regression". Removed on 2026-08-28: the corpus contained exactly one
     # CRYPTO-241 site, `Arrays.asList(HS512, HS384, HS256)` at
