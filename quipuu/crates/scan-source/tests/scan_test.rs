@@ -2884,3 +2884,106 @@ fn go_ed25519_op_names_a_colocated_circl_pqc_call() {
         plain_ecdsa.message
     );
 }
+
+/// Backlog `#Y33`: liboqs stack-form API — algorithm baked into the function
+/// name — had zero rules. All three ML-KEM-768 operations must resolve to the
+/// same algorithm-id.
+#[test]
+fn scans_c_liboqs_stack_form_kem() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    let kem: Vec<_> = findings
+        .iter()
+        .filter(|f| f.rule_id == "CRYPTO-461" && f.algorithm_id == "ml-kem-768")
+        .collect();
+    assert_eq!(
+        kem.len(),
+        3,
+        "expected keypair/encaps/decaps to all report ml-kem-768; got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
+/// Same crossing, the SIG family: liboqs stack-form ML-DSA-65.
+#[test]
+fn scans_c_liboqs_stack_form_sig() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    let sig: Vec<_> = findings
+        .iter()
+        .filter(|f| f.rule_id == "CRYPTO-464" && f.algorithm_id == "ml-dsa-65")
+        .collect();
+    assert_eq!(
+        sig.len(),
+        2,
+        "expected keypair/sign to both report ml-dsa-65; got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
+/// liboqs heap-form API: the algorithm arrives as the `OQS_KEM_alg_*` macro
+/// name, a bare identifier argument to `OQS_KEM_new`, not a string literal.
+#[test]
+fn scans_c_liboqs_heap_form_kem() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-467" && f.algorithm_id == "ml-kem-768"),
+        "expected CRYPTO-467 (liboqs heap-form OQS_KEM_new(OQS_KEM_alg_ml_kem_768)); got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
+/// `OQS_SIG_STFL_new` is the stateful hash-signature API (LMS/XMSS) — a
+/// separate, firmware-signing population this project has stood down on
+/// covering. It must not be picked up by any liboqs rule: exactly 6 liboqs
+/// findings total (3 stack-KEM, 2 stack-SIG, 1 heap-KEM), none on its line.
+#[test]
+fn liboqs_stfl_new_is_out_of_scope() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    let liboqs: Vec<_> = findings
+        .iter()
+        .filter(|f| f.message.contains("liboqs"))
+        .collect();
+    assert_eq!(
+        liboqs.len(),
+        6,
+        "expected exactly 6 liboqs findings (STFL excluded); got: {:#?}",
+        liboqs
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id, f.location.line))
+            .collect::<Vec<_>>()
+    );
+    assert!(
+        !liboqs.iter().any(|f| f.message.contains("STFL")),
+        "OQS_SIG_STFL_new must not be classified by a liboqs rule"
+    );
+}

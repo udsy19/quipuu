@@ -105,3 +105,27 @@ void mbedtls_pk(void) {
     mbedtls_pk_context pk;
     mbedtls_pk_setup(&pk, mbedtls_pk_info_from_type(MBEDTLS_PK_RSA));
 }
+
+/* CPP-060 / CRYPTO-461 — liboqs stack-form ML-KEM-768 */
+void liboqs_kem_stack(uint8_t *pk, uint8_t *sk, uint8_t *ct, uint8_t *ss, uint8_t *ss2) {
+    OQS_KEM_ml_kem_768_keypair(pk, sk);
+    OQS_KEM_ml_kem_768_encaps(ct, ss, pk);
+    OQS_KEM_ml_kem_768_decaps(ss2, ct, sk);
+}
+
+/* CPP-061 / CRYPTO-464 — liboqs stack-form ML-DSA-65 */
+void liboqs_sig_stack(uint8_t *pk, uint8_t *sk, uint8_t *msg, size_t msglen, uint8_t *sig, size_t *siglen) {
+    OQS_SIG_ml_dsa_65_keypair(pk, sk);
+    OQS_SIG_ml_dsa_65_sign(sig, siglen, msg, msglen, sk);
+}
+
+/* CPP-062 / CRYPTO-467 — liboqs heap-form KEM, algorithm as a macro argument */
+void liboqs_kem_heap(void) {
+    OQS_KEM *kem = OQS_KEM_new(OQS_KEM_alg_ml_kem_768);
+}
+
+/* Out of scope: OQS_SIG_STFL_* is the stateful hash-signature API (LMS/XMSS),
+   a firmware-signing population this project does not target. Must not fire. */
+void liboqs_stfl_out_of_scope(void) {
+    OQS_SIG_STFL *sig = OQS_SIG_STFL_new("LMS_SHA256_H10_W8");
+}

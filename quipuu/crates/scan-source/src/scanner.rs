@@ -1836,11 +1836,53 @@ const C_CALLEE_APIS: &[(&str, &str)] = &[
     ("crypto_sign_keypair", "nacl-api.crypto_sign_keypair"),
     ("mbedtls_rsa_init", "mbedtls.mbedtls_rsa_init"),
     ("mbedtls_pk_setup", "mbedtls.mbedtls_pk_setup"),
+    // liboqs "stack" API generation: algorithm baked into the function
+    // name (OQS_KEM_ml_kem_768_keypair), unlike the "heap"/generic API
+    // below whose algorithm is a runtime string argument. Backlog #Y33.
+    // Bounded to the six NIST-selected parameter sets crossed with their
+    // base operation suffixes; `_derand`/`_with_ctx_str` variants and the
+    // wider liboqs algorithm zoo are out of scope on the same standing
+    // rejection as the heap-form item.
+    // All nine map to one shared api per family; `match_c_callee` captures
+    // the callee text itself as `args.fn` so classify differentiates the
+    // parameter set the same way Go's `crypto/mlkem.KeyOp` does.
+    ("OQS_KEM_ml_kem_512_keypair", "liboqs.OQS_KEM_stack"),
+    ("OQS_KEM_ml_kem_512_encaps", "liboqs.OQS_KEM_stack"),
+    ("OQS_KEM_ml_kem_512_decaps", "liboqs.OQS_KEM_stack"),
+    ("OQS_KEM_ml_kem_768_keypair", "liboqs.OQS_KEM_stack"),
+    ("OQS_KEM_ml_kem_768_encaps", "liboqs.OQS_KEM_stack"),
+    ("OQS_KEM_ml_kem_768_decaps", "liboqs.OQS_KEM_stack"),
+    ("OQS_KEM_ml_kem_1024_keypair", "liboqs.OQS_KEM_stack"),
+    ("OQS_KEM_ml_kem_1024_encaps", "liboqs.OQS_KEM_stack"),
+    ("OQS_KEM_ml_kem_1024_decaps", "liboqs.OQS_KEM_stack"),
+    ("OQS_SIG_ml_dsa_44_keypair", "liboqs.OQS_SIG_stack"),
+    ("OQS_SIG_ml_dsa_44_sign", "liboqs.OQS_SIG_stack"),
+    ("OQS_SIG_ml_dsa_44_verify", "liboqs.OQS_SIG_stack"),
+    ("OQS_SIG_ml_dsa_65_keypair", "liboqs.OQS_SIG_stack"),
+    ("OQS_SIG_ml_dsa_65_sign", "liboqs.OQS_SIG_stack"),
+    ("OQS_SIG_ml_dsa_65_verify", "liboqs.OQS_SIG_stack"),
+    ("OQS_SIG_ml_dsa_87_keypair", "liboqs.OQS_SIG_stack"),
+    ("OQS_SIG_ml_dsa_87_sign", "liboqs.OQS_SIG_stack"),
+    ("OQS_SIG_ml_dsa_87_verify", "liboqs.OQS_SIG_stack"),
+    // liboqs "heap"/generic API: the algorithm is a runtime string passed
+    // via the `OQS_{KEM,SIG}_alg_*` macros — tree-sitter sees the macro
+    // name as a bare identifier argument. `populate_args` below captures it
+    // as `alg`.
+    ("OQS_KEM_new", "liboqs.OQS_KEM_new"),
+    ("OQS_SIG_new", "liboqs.OQS_SIG_new"),
 ];
 
 fn match_c_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
     let api = lookup(C_CALLEE_APIS, callee)?;
-    Some((api.into(), HashMap::new()))
+    let mut args = HashMap::new();
+    // liboqs stack-form: the parameter set is baked into the function name
+    // (there being no per-parameter-set api target, unlike the heap form),
+    // so the classify layer reads `args.fn` the same way
+    // `crypto/mlkem.KeyOp` does for Go's stdlib mlkem.
+    if api == "liboqs.OQS_KEM_stack" || api == "liboqs.OQS_SIG_stack" {
+        args.insert("fn".into(), ArgValue::Str(callee.to_string()));
+    }
+    Some((api.into(), args))
 }
 
 fn match_rust_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
@@ -2163,6 +2205,15 @@ fn populate_args(
             // SSL_CTX_set_cipher_list(ctx, cipher_str) — arg 1 is a string
             if let Some(s) = nth_arg_string(args_node, 1, source) {
                 out.insert("cipher_str".into(), ArgValue::Str(s));
+            }
+        }
+        (Language::C | Language::Cpp, "liboqs.OQS_KEM_new" | "liboqs.OQS_SIG_new") => {
+            // OQS_KEM_new(OQS_KEM_alg_ml_kem_768) / OQS_SIG_new(OQS_SIG_alg_ml_dsa_65)
+            // — arg 0 is the algorithm-name macro, a bare identifier.
+            // `nth_arg_call_ident` already falls back to a plain identifier
+            // when the argument isn't a call, which is exactly this shape.
+            if let Some(alg) = nth_arg_call_ident(args_node, 0, source) {
+                out.insert("alg".into(), ArgValue::Str(alg));
             }
         }
         (

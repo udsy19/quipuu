@@ -403,3 +403,168 @@ when.api = "^mbedtls\\.mbedtls_pk_setup$"
 algorithm_id = "rsa-unattributed"
 severity_hint = "auto"
 message = "mbedTLS mbedtls_pk_setup called. Quantum-vulnerable if RSA or EC key type."
+
+# ============================================================================
+# liboqs — "stack" API generation (algorithm baked into the function name,
+# e.g. OQS_KEM_ml_kem_768_keypair), distinct from the "generic"/"heap" API
+# below (OQS_KEM_new(OQS_KEM_alg_ml_kem_768)) that takes the algorithm as a
+# runtime string. Backlog #Y33: liboqs ships both generations per algorithm
+# and neither had a rule. Scoped to the six NIST-selected parameter sets
+# (ml_kem_{512,768,1024}, ml_dsa_{44,65,87}) crossed with their base
+# operation suffixes, per the standing rejection of the wider liboqs
+# algorithm zoo (BIKE, Classic McEliece, FrodoKEM, HQC, NTRU, legacy
+# kyber/dilithium names) and of OQS_SIG_STFL_* (stateful hash signatures,
+# firmware-signing population, not this project's user). `_derand` and
+# `_with_ctx_str` variants are excluded by the trailing `$` anchor, same as
+# the six names above them — the crossing this backlog item asked for, not
+# the full liboqs symbol surface.
+# ============================================================================
+
+[[extract]]
+id = "CPP-060"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#match? @fn "^OQS_KEM_ml_kem_(512|768|1024)_(keypair|encaps|decaps)$"))
+"""
+captures = { fn = "ident" }
+api = "liboqs.OQS_KEM_stack"
+description = "liboqs stack-form ML-KEM API — OQS_KEM_<param-set>_{keypair,encaps,decaps}(...), algorithm baked into the function name."
+
+[[classify]]
+id = "CRYPTO-460"
+when.api = "^liboqs\\.OQS_KEM_stack$"
+when.args.fn = { regex = "^OQS_KEM_ml_kem_512_" }
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "liboqs stack-form ML-KEM-512 ({fn}) — FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-461"
+when.api = "^liboqs\\.OQS_KEM_stack$"
+when.args.fn = { regex = "^OQS_KEM_ml_kem_768_" }
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "liboqs stack-form ML-KEM-768 ({fn}) — FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-462"
+when.api = "^liboqs\\.OQS_KEM_stack$"
+when.args.fn = { regex = "^OQS_KEM_ml_kem_1024_" }
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "liboqs stack-form ML-KEM-1024 ({fn}) — FIPS 203, quantum-resistant."
+
+[[extract]]
+id = "CPP-061"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#match? @fn "^OQS_SIG_ml_dsa_(44|65|87)_(keypair|sign|verify)$"))
+"""
+captures = { fn = "ident" }
+api = "liboqs.OQS_SIG_stack"
+description = "liboqs stack-form ML-DSA API — OQS_SIG_<param-set>_{keypair,sign,verify}(...), algorithm baked into the function name."
+
+[[classify]]
+id = "CRYPTO-463"
+when.api = "^liboqs\\.OQS_SIG_stack$"
+when.args.fn = { regex = "^OQS_SIG_ml_dsa_44_" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "liboqs stack-form ML-DSA-44 ({fn}) — FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-464"
+when.api = "^liboqs\\.OQS_SIG_stack$"
+when.args.fn = { regex = "^OQS_SIG_ml_dsa_65_" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "liboqs stack-form ML-DSA-65 ({fn}) — FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-465"
+when.api = "^liboqs\\.OQS_SIG_stack$"
+when.args.fn = { regex = "^OQS_SIG_ml_dsa_87_" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "liboqs stack-form ML-DSA-87 ({fn}) — FIPS 204, quantum-resistant."
+
+# ============================================================================
+# liboqs — "heap"/generic API generation (OQS_KEM_new / OQS_SIG_new), the
+# algorithm passed as a runtime string via the OQS_{KEM,SIG}_alg_* macros
+# (e.g. `#define OQS_KEM_alg_ml_kem_768 "ML-KEM-768"`). tree-sitter sees the
+# macro name as a bare identifier argument, not the expanded string literal.
+# ============================================================================
+
+[[extract]]
+id = "CPP-062"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "OQS_KEM_new")
+  arguments: (argument_list (identifier) @alg))
+"""
+captures = { fn = "ident", alg = "ident" }
+api = "liboqs.OQS_KEM_new"
+description = "liboqs heap-form KEM API — OQS_KEM_new(OQS_KEM_alg_<param-set>) allocates by algorithm-name macro."
+
+[[classify]]
+id = "CRYPTO-466"
+when.api = "^liboqs\\.OQS_KEM_new$"
+when.args.alg = { regex = "^OQS_KEM_alg_ml_kem_512$" }
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "liboqs OQS_KEM_new({alg}) — ML-KEM-512, FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-467"
+when.api = "^liboqs\\.OQS_KEM_new$"
+when.args.alg = { regex = "^OQS_KEM_alg_ml_kem_768$" }
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "liboqs OQS_KEM_new({alg}) — ML-KEM-768, FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-468"
+when.api = "^liboqs\\.OQS_KEM_new$"
+when.args.alg = { regex = "^OQS_KEM_alg_ml_kem_1024$" }
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "liboqs OQS_KEM_new({alg}) — ML-KEM-1024, FIPS 203, quantum-resistant."
+
+[[extract]]
+id = "CPP-063"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "OQS_SIG_new")
+  arguments: (argument_list (identifier) @alg))
+"""
+captures = { fn = "ident", alg = "ident" }
+api = "liboqs.OQS_SIG_new"
+description = "liboqs heap-form SIG API — OQS_SIG_new(OQS_SIG_alg_<param-set>) allocates by algorithm-name macro."
+
+[[classify]]
+id = "CRYPTO-469"
+when.api = "^liboqs\\.OQS_SIG_new$"
+when.args.alg = { regex = "^OQS_SIG_alg_ml_dsa_44$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "liboqs OQS_SIG_new({alg}) — ML-DSA-44, FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-470"
+when.api = "^liboqs\\.OQS_SIG_new$"
+when.args.alg = { regex = "^OQS_SIG_alg_ml_dsa_65$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "liboqs OQS_SIG_new({alg}) — ML-DSA-65, FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-471"
+when.api = "^liboqs\\.OQS_SIG_new$"
+when.args.alg = { regex = "^OQS_SIG_alg_ml_dsa_87$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "liboqs OQS_SIG_new({alg}) — ML-DSA-87, FIPS 204, quantum-resistant."
