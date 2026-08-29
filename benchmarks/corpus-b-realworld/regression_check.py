@@ -143,7 +143,9 @@ def main() -> int:
         # sufficient for the main regression signal).
         all_findings_path = SCRIPT_DIR / "results" / "all_findings.json"
         if all_findings_path.exists():
-            all_findings = json.loads(all_findings_path.read_text())
+            from dump_findings import load_dump
+
+            all_findings = load_dump(all_findings_path)["findings"]
             from collections import Counter
             rule_counts = Counter(f["rule_id"] for f in all_findings)
             print()

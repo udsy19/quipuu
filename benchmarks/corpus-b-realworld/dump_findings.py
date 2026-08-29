@@ -1,15 +1,24 @@
 #!/usr/bin/env python3
-"""dump_findings.py — re-scan the corpus and write a flat JSON list of every
-finding for the precision audit.
+"""dump_findings.py — re-scan the corpus and write every finding for the audit.
 
-Output: results/all_findings.json — an array of
-  { project, ecosystem, rule_id, algorithm_id, severity, file, line, message, snippet }
-records, one per finding across the whole corpus.
+Output: results/all_findings.json —
+  {"corpus": {...}, "projects": [...], "findings": [...]}
+
+`findings` is the flat list the precision audit labels, one record per finding:
+  { project, ecosystem, rule_id, algorithm_id, severity, file, line, message }
 
 `file` is recorded **relative to the clone root**, as `<ecosystem>/<name>/<path>`,
 so the artifact is identical no matter where the clones live. Absolute paths in a
 committed artifact record one operator's home directory, not a corpus, and cannot
 be diffed across machines; main() exits non-zero if any survives.
+
+`projects` carries one row per manifest project with its integrity state and its
+finding count, so a project that was never checked out is distinguishable from
+one that was scanned in full and genuinely contains no cryptography. The dump
+refuses to run at all unless every project passes `corpus_integrity.py`;
+--allow-degraded-corpus overrides that and stamps the output `partial`, which
+`load_dump()` then refuses to read, so no figure from it can be quoted as a
+whole-corpus number by accident.
 
 The clone root, the binary and the output path all default to the in-repo layout
 and are overridable, because the corpus is routinely cloned outside the repo:
@@ -30,6 +39,8 @@ try:
     import tomllib as toml_lib
 except ImportError:
     import tomli as toml_lib
+
+import corpus_integrity
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_BINARY = SCRIPT_DIR.parent.parent / "quipuu/target/release/quipuu"
@@ -73,6 +84,22 @@ def relativise(path: str, clone: Path, eco: str, name: str) -> str:
     return str(Path(eco) / name / rel)
 
 
+def load_dump(path: Path) -> dict:
+    """Read a dump written by this script.
+
+    Refuses a dump stamped `partial`: it was taken over a corpus that did not
+    match the integrity baseline, so no whole-corpus figure may be computed
+    from it.
+    """
+    data = json.loads(Path(path).read_text())
+    if data.get("corpus", {}).get("partial"):
+        raise SystemExit(
+            f"{path} was dumped over a degraded corpus; re-clone and re-dump "
+            f"before computing anything from it"
+        )
+    return data
+
+
 def scan_one(project: dict, binary: Path, clones: Path) -> list[dict]:
     p = project["project"]
     name = p["name"]
@@ -82,15 +109,8 @@ def scan_one(project: dict, binary: Path, clones: Path) -> list[dict]:
     if not clone.is_dir():
         return []
 
-    hints = project.get("scan_hints", {})
-    scan_paths = hints.get("scan_paths") or [""]
-    resolved = []
-    for sp in scan_paths:
-        target = clone / sp if sp else clone
-        if target.exists():
-            resolved.append(target)
-    if not resolved:
-        resolved = [clone]
+    # No fallback to the repository root: see corpus_integrity.resolve_scan_paths.
+    resolved, _missing = corpus_integrity.resolve_scan_paths(clone, project)
 
     findings: list[dict] = []
     for target in resolved:
@@ -148,7 +168,13 @@ def main() -> int:
     ap.add_argument("--clones", default=DEFAULT_CLONES, type=Path,
                     help="Root directory holding cloned projects")
     ap.add_argument("--out", default=DEFAULT_OUT, type=Path,
-                    help="Where to write the flat findings array")
+                    help="Where to write the dump")
+    ap.add_argument(
+        "--allow-degraded-corpus",
+        action="store_true",
+        help="Dump anyway when the integrity check fails, and stamp the output "
+             "partial so load_dump() refuses it",
+    )
     args = ap.parse_args()
 
     if not args.bin.exists():
@@ -158,13 +184,44 @@ def main() -> int:
         print(f"missing clone root: {args.clones}", file=sys.stderr)
         return 1
 
+    integrity = corpus_integrity.check(args.clones)
+    corpus_integrity.report(integrity, stream=sys.stderr)
+    degraded = bool(corpus_integrity.failed(integrity))
+    if degraded and not args.allow_degraded_corpus:
+        print(
+            "refusing to dump findings over a corpus that does not match the "
+            "committed baseline; re-clone, or pass --allow-degraded-corpus and "
+            "quote no whole-corpus figure from the result",
+            file=sys.stderr,
+        )
+        return 2
+    state_by_id = {r["canonical_id"]: r for r in integrity}
+
     out: list[dict] = []
+    projects: list[dict] = []
     entries = load_manifest()
     for i, entry in enumerate(entries):
         project = load_project(Path(entry["file_path"]))
-        fs = scan_one(project, args.bin, args.clones)
+        canonical = project["project"]["canonical_id"]
+        row = state_by_id[canonical]
+        if row["state"] in ("absent", "empty", "unscannable"):
+            # Never scan a project we know has no working tree or no declarable
+            # scope: a zero here is the exact ambiguity this dump removes.
+            fs: list[dict] = []
+        else:
+            fs = scan_one(project, args.bin, args.clones)
         out.extend(fs)
-        print(f"[{i + 1:>3}/{len(entries)}] {project['project']['canonical_id']}: {len(fs)} findings")
+        projects.append(
+            {
+                "canonical_id": canonical,
+                "ecosystem": project["project"]["ecosystem"],
+                "integrity": row["state"],
+                "head_sha": row["head_sha"],
+                "files_scanned": row["files_scanned"],
+                "findings": len(fs),
+            }
+        )
+        print(f"[{i + 1:>3}/{len(entries)}] {canonical}: {len(fs)} findings ({row['state']})")
 
     # A single absolute path makes the whole artifact machine-specific, which
     # is the defect this script was fixed to stop producing. Fail rather than
@@ -180,9 +237,30 @@ def main() -> int:
             print(f"  {path}", file=sys.stderr)
         return 1
 
+    scanned = sum(
+        1 for p in projects if p["integrity"] not in ("absent", "empty", "unscannable")
+    )
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(out, indent=2))
-    print(f"\nWrote {len(out)} findings to {args.out}")
+    args.out.write_text(
+        json.dumps(
+            {
+                "corpus": {
+                    "name": "corpus-b-realworld",
+                    "manifest_projects": len(entries),
+                    "projects_scanned": scanned,
+                    "partial": degraded,
+                    "binary": str(args.bin),
+                },
+                "projects": projects,
+                "findings": out,
+            },
+            indent=2,
+        )
+    )
+    print(
+        f"\nWrote {len(out)} findings from {scanned}/{len(entries)} "
+        f"scanned projects to {args.out}"
+    )
     return 0
 
 

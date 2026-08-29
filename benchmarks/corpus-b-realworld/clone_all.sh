@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# clone_all.sh — Clone all 125 Corpus B projects at pinned commit SHAs
+# clone_all.sh — Clone all 150 Corpus B projects at pinned commit SHAs
+#
+# 150 manifest entries resolve to 140 repositories: 10 entries are monorepo
+# siblings and are symlinked to the clone they share.
 #
 # Usage:
 #   ./clone_all.sh [--dest <directory>] [--ecosystem <name>] [--dry-run]
@@ -162,9 +165,14 @@ for toml in $TOML_GLOB; do
       url_seen_set "$url" "$clone_path"
       CLONED=$((CLONED + 1))
     else
-      echo "    [warn] checkout failed for $sha — leaving at HEAD"
-      url_seen_set "$url" "$clone_path"
-      CLONED=$((CLONED + 1))
+      # The clone above used --no-checkout, so a failed checkout leaves the
+      # working tree EMPTY. Every corpus figure then counts this project as
+      # "scanned, zero findings". Forty-six projects sat in exactly that state
+      # because their pinned SHA was not a commit in the repository at all.
+      # This must be loud and must fail the run.
+      echo "    [ERROR] checkout failed for $sha — working tree is EMPTY." >&2
+      echo "            Fix the commit_sha in the project file; do not scan this corpus." >&2
+      ERRORS=$((ERRORS + 1))
     fi
   else
     echo "    [ERROR] git clone failed for $url" >&2
@@ -176,8 +184,15 @@ echo ""
 echo "============================================"
 echo "Done. Cloned: $CLONED  Skipped: $SKIPPED  Errors: $ERRORS"
 echo "============================================"
+if [[ "$ERRORS" -gt 0 ]]; then
+  echo "$ERRORS project(s) are not at their pinned commit and some may have an" >&2
+  echo "empty working tree. Run corpus_integrity.py before scanning anything." >&2
+fi
 
 # Signal to the EXIT trap that the script reached the end cleanly and the
 # index tempdir is now safe to remove. Without this, subshells exiting would
 # wipe the index mid-loop on bash 3.2 (macOS).
 : > "$URL_INDEX_DONE_SENTINEL"
+
+# A partially-cloned corpus must not look like a successful one to a caller.
+if [[ "$ERRORS" -gt 0 ]]; then exit 1; fi

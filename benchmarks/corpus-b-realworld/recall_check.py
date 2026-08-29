@@ -186,9 +186,14 @@ def main() -> int:
     gt = ground_truth(args.clones)
     scoped = go_scan_paths()
 
-    # `dump_findings.py` writes `file` as `<ecosystem>/<name>/<path>`.
+    # `dump_findings.py` writes `file` as `<ecosystem>/<name>/<path>`. Going
+    # through load_dump() rather than json.load() means a dump taken over a
+    # degraded corpus is refused here too: recall has the same denominator
+    # problem precision has.
+    from dump_findings import load_dump
+
     found = set()
-    for f in json.load(open(args.dump)):
+    for f in load_dump(Path(args.dump))["findings"]:
         if f["ecosystem"] != "go-modules":
             continue
         parts = f["file"].split("/", 2)

@@ -1,0 +1,917 @@
+# corpus-integrity.toml — the census `corpus_integrity.py` checks against.
+#
+# Regenerate with `corpus_integrity.py --clones <dir> --write` ONLY after the
+# corpus has been deliberately re-pinned, and commit the diff alongside the
+# manifest change that caused it. A silent regeneration turns the check into
+# a no-op, which is the exact failure it exists to prevent.
+#
+# files_scanned/bytes_scanned are counted over the declared scan_paths, not
+# over the repository, so a project whose scope moves fails as `drift` even
+# when its HEAD is right.
+
+[baseline]
+recorded_at = "2026-08-29"
+total_projects = 150
+unscannable_projects = 1
+files_scanned_total = 108271
+bytes_scanned_total = 1965771861
+
+[[project]]
+canonical_id = "crates-io:age"
+head_sha = "9fdb1256415935a4425b6b607ea843ff85b854ae"
+files_scanned = 30
+bytes_scanned = 94288
+
+[[project]]
+canonical_id = "crates-io:argon2"
+head_sha = "b2cef1796b73cd4a288a93877d1be7a28218535a"
+files_scanned = 8
+bytes_scanned = 69047
+
+[[project]]
+canonical_id = "crates-io:ed25519-dalek"
+head_sha = "c1d6fef6b58dc0cfb43b9fb5efb8cb0b5fffde6c"
+files_scanned = 1
+bytes_scanned = 254
+
+[[project]]
+canonical_id = "crates-io:hmac"
+head_sha = "8f03db9cca5711ac1497ec14eee91f799875e663"
+files_scanned = 5
+bytes_scanned = 14002
+
+[[project]]
+canonical_id = "crates-io:hyper-rustls"
+head_sha = "69787a759da8b9c07553e0c999a6a0fa73f9ac6a"
+files_scanned = 5
+bytes_scanned = 37450
+
+[[project]]
+canonical_id = "crates-io:jsonwebtoken"
+head_sha = "e681247d61f5dc3a0f6e5138094f1b15a5aebdb0"
+files_scanned = 23
+bytes_scanned = 158806
+
+[[project]]
+canonical_id = "crates-io:k256"
+head_sha = "4e994842d812097cc51926cf183be3ffb435e677"
+files_scanned = 26
+bytes_scanned = 370901
+
+[[project]]
+canonical_id = "crates-io:md-5"
+head_sha = "a71566a89f78720dbdaf4aed9883760870e8ef90"
+files_scanned = 6
+bytes_scanned = 17410
+
+[[project]]
+canonical_id = "crates-io:openssl"
+head_sha = "db9c9e2f5db2ad7b45fd894e8d297ee15bfd0c7c"
+files_scanned = 58
+bytes_scanned = 1247568
+
+[[project]]
+canonical_id = "crates-io:p256"
+head_sha = "4e994842d812097cc51926cf183be3ffb435e677"
+files_scanned = 17
+bytes_scanned = 172760
+
+[[project]]
+canonical_id = "crates-io:p384"
+head_sha = "4e994842d812097cc51926cf183be3ffb435e677"
+files_scanned = 12
+bytes_scanned = 128811
+
+[[project]]
+canonical_id = "crates-io:pbkdf2"
+head_sha = "b2cef1796b73cd4a288a93877d1be7a28218535a"
+files_scanned = 5
+bytes_scanned = 32394
+
+[[project]]
+canonical_id = "crates-io:ring"
+head_sha = "7d3dbbb41f19f130ce15a84d69ee28748836b1bb"
+files_scanned = 232
+bytes_scanned = 1595061
+
+[[project]]
+canonical_id = "crates-io:rsa"
+head_sha = "4a6006f6e78daedf28e160ee3f3745c3f14505d4"
+files_scanned = 32
+bytes_scanned = 257506
+
+[[project]]
+canonical_id = "crates-io:rustls"
+head_sha = "b6c235b1ed2e64ba8d44257bb9037c935bc9f4ba"
+files_scanned = 101
+bytes_scanned = 1444351
+
+[[project]]
+canonical_id = "crates-io:rustls-native-certs"
+head_sha = "9d1f11e5da42f061c9a5aebbcde48a1b843afff2"
+files_scanned = 4
+bytes_scanned = 20760
+
+[[project]]
+canonical_id = "crates-io:rustls-pemfile"
+head_sha = "b6c235b1ed2e64ba8d44257bb9037c935bc9f4ba"
+files_scanned = 0
+bytes_scanned = 0
+
+[[project]]
+canonical_id = "crates-io:rustls-pki-types"
+head_sha = "23bc39f3ab01698d32651aac990a9dc4412a588a"
+files_scanned = 25
+bytes_scanned = 129767
+
+[[project]]
+canonical_id = "crates-io:rustls-webpki"
+head_sha = "734a03bec1a79649991effff1ef724288eff2b6e"
+files_scanned = 24
+bytes_scanned = 387920
+
+[[project]]
+canonical_id = "crates-io:scrypt"
+head_sha = "b2cef1796b73cd4a288a93877d1be7a28218535a"
+files_scanned = 11
+bytes_scanned = 39294
+
+[[project]]
+canonical_id = "crates-io:sha-1"
+head_sha = "a71566a89f78720dbdaf4aed9883760870e8ef90"
+files_scanned = 8
+bytes_scanned = 32361
+
+[[project]]
+canonical_id = "crates-io:sha2"
+head_sha = "a71566a89f78720dbdaf4aed9883760870e8ef90"
+files_scanned = 25
+bytes_scanned = 102750
+
+[[project]]
+canonical_id = "crates-io:tokio-rustls"
+head_sha = "182345793062971bec711c2d773e75a08767eeeb"
+files_scanned = 6
+bytes_scanned = 64813
+
+[[project]]
+canonical_id = "crates-io:webpki"
+head_sha = "734a03bec1a79649991effff1ef724288eff2b6e"
+files_scanned = 24
+bytes_scanned = 387920
+
+[[project]]
+canonical_id = "crates-io:x25519-dalek"
+head_sha = "2ddda07333e5028698d8618428c783264ae38b40"
+files_scanned = 2
+bytes_scanned = 15215
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/Mbed-TLS/mbedtls"
+head_sha = "522e2e4651db0758dcc7f5da6737239ce45cab22"
+files_scanned = 70
+bytes_scanned = 2326820
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/apple/swift-crypto"
+head_sha = "47d3869a7291f085c1fb9fb1e6d3b97a793f45c6"
+files_scanned = 106
+bytes_scanned = 806200
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/aws/aws-encryption-sdk-c"
+head_sha = "b29a222841794772d513794bb1bca9f3a929b7cf"
+files_scanned = 52
+bytes_scanned = 481998
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/aws/aws-lc"
+head_sha = "408de5ef2cfca137ded81190156822102135e4d7"
+files_scanned = 1378
+bytes_scanned = 133470219
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/curl/curl"
+head_sha = "72766ecf8ab41a3384f8e1e1dc8b00c554322b78"
+files_scanned = 48
+bytes_scanned = 1005422
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/facebookresearch/CrypTen"
+head_sha = "775868a02d6dac50774ce376a55b01fbd8bd85b6"
+files_scanned = 18
+bytes_scanned = 107126
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/google/boringssl"
+head_sha = "9e1c47255154b026b7662b307f2fc669b7dee509"
+files_scanned = 2894
+bytes_scanned = 69130914
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/jedisct1/libsodium"
+head_sha = "09dc85e866602f95873a4c0a6499e20d1029229d"
+files_scanned = 13
+bytes_scanned = 40953
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/microsoft/SymCrypt"
+head_sha = "286762b7730e2b780678f5ab11fef2b1bad639e0"
+files_scanned = 210
+bytes_scanned = 4743254
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/microsoft/SymCrypt-OpenSSL"
+head_sha = "d73b1e9ebf589f5c0098810e74e9556b2bef776a"
+files_scanned = 71
+bytes_scanned = 860382
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/nabla-c0d3/sslyze"
+head_sha = "3bd5094dec1dfbaac1a03957c35ba5e487f5b890"
+files_scanned = 81
+bytes_scanned = 2037924
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/nodejs/node"
+head_sha = "c66ae4f2cbf36eea1952ed491210b9fb3a5d7079"
+files_scanned = 88
+bytes_scanned = 1129451
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/open-quantum-safe/liboqs"
+head_sha = "8979276ad1eb008215aa78a3c56b3649f604bbb1"
+files_scanned = 6210
+bytes_scanned = 58878542
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/open-quantum-safe/liboqs-python"
+head_sha = "0f9e50bea240792b802a6e56f5e4d33a9ec0a6b0"
+files_scanned = 4
+bytes_scanned = 57836
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/open-quantum-safe/liboqs-rust"
+head_sha = "a40e1d3ae9cb5eeafb9541b53fbd1a844d86c4ad"
+files_scanned = 4
+bytes_scanned = 43669
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/open-quantum-safe/oqs-provider"
+head_sha = "72e7dae5aab022167aa7ae8f5afdb9667d848104"
+files_scanned = 17
+bytes_scanned = 710017
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/openssl/openssl"
+head_sha = "594f5e09e733a07613d2cc88c70a160cdab3a6a9"
+files_scanned = 1878
+bytes_scanned = 27440217
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/pq-crystals/dilithium"
+head_sha = "d35ba3fe5449bee3e6d43e1f296c3ca818bd36be"
+files_scanned = 68
+bytes_scanned = 345187
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/pq-crystals/kyber"
+head_sha = "4768bd37c02f9c40a46cb49d4d1f4d5e612bb882"
+files_scanned = 72
+bytes_scanned = 305277
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/pyca/cryptography"
+head_sha = "148ea72502d7502852187c3db252427343b28754"
+files_scanned = 104
+bytes_scanned = 1132249
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/rustpq/pqcrypto"
+head_sha = "a63b4bcc0ef768f03d145e0913103bc75dc69223"
+files_scanned = 24
+bytes_scanned = 462455
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/sphincsplus/sphincsplus"
+head_sha = "7ec789ace6874d875f4bb84cb61b81155398167e"
+files_scanned = 115
+bytes_scanned = 426674
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/tink-crypto/tink-go"
+head_sha = "ca6ac4c9d045f0bcfbf4c85900e3989b65be5a77"
+files_scanned = 339
+bytes_scanned = 4891245
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/tink-crypto/tink-java"
+head_sha = "1b3d38a0e6577da5d52eac64a4b3c50b4b0ce1f5"
+files_scanned = 615
+bytes_scanned = 4195876
+
+[[project]]
+canonical_id = "crypto-adjacent:github.com/wolfSSL/wolfssl"
+head_sha = "480e16303a05ca6bbf6acefb96033d70d64aa495"
+files_scanned = 421
+bytes_scanned = 96900319
+
+[[project]]
+canonical_id = "go-modules:github.com/aws/aws-sdk-go"
+head_sha = "070853e88d22854d2355c2543d0958a5f76ad407"
+files_scanned = 5509
+bytes_scanned = 324694247
+
+[[project]]
+canonical_id = "go-modules:github.com/aws/aws-sdk-go-v2"
+head_sha = "750e42a6493c92739684c3b99b99dba175bf6260"
+files_scanned = 50590
+bytes_scanned = 726226103
+
+[[project]]
+canonical_id = "go-modules:github.com/cloudflare/circl"
+head_sha = "352600b0a4b2380815cef55fc690c65049c7e56b"
+files_scanned = 380
+bytes_scanned = 49369759
+
+[[project]]
+canonical_id = "go-modules:github.com/containerd/containerd"
+head_sha = "a9eb76fb198ed3efe7b2419c7fd7874582f1831c"
+files_scanned = 277
+bytes_scanned = 1618204
+
+[[project]]
+canonical_id = "go-modules:github.com/coredns/coredns"
+head_sha = "31643259cf0cf4072e71aba4266e86cb840398c1"
+files_scanned = 27
+bytes_scanned = 110610
+
+[[project]]
+canonical_id = "go-modules:github.com/dgrijalva/jwt-go"
+head_sha = "9742bd7fca1c67ba2eb793750f56ee3094d1b04f"
+files_scanned = 51
+bytes_scanned = 127745
+
+[[project]]
+canonical_id = "go-modules:github.com/gin-gonic/gin"
+head_sha = "dcaa4296d111981ffb31ac3eba90bb63e1eb5ab9"
+files_scanned = 130
+bytes_scanned = 870626
+
+[[project]]
+canonical_id = "go-modules:github.com/go-jose/go-jose"
+head_sha = "e37f31a2de27ccfb006124f217fa1152f1d202e9"
+files_scanned = 90
+bytes_scanned = 888428
+
+[[project]]
+canonical_id = "go-modules:github.com/golang-jwt/jwt"
+head_sha = "1a11d3724e63105d751decf9adbdc90165137b45"
+files_scanned = 77
+bytes_scanned = 239166
+
+[[project]]
+canonical_id = "go-modules:github.com/grafana/grafana"
+head_sha = "7ffc1f51e6b508a996b37294d09d5cd3b55b52d3"
+files_scanned = 80
+bytes_scanned = 250006
+
+[[project]]
+canonical_id = "go-modules:github.com/hashicorp/consul"
+head_sha = "6fee149946ffa325bd1bb96f8d0e19e088794387"
+files_scanned = 55
+bytes_scanned = 474591
+
+[[project]]
+canonical_id = "go-modules:github.com/hashicorp/vault"
+head_sha = "ea4c16fa6f3b90fb7db3dacf02213d271e0d4813"
+files_scanned = 144
+bytes_scanned = 2386655
+
+[[project]]
+canonical_id = "go-modules:github.com/jackc/pgx"
+head_sha = "1bc0029fc113f2d23152ede1ede0ead739846677"
+files_scanned = 33
+bytes_scanned = 533580
+
+[[project]]
+canonical_id = "go-modules:github.com/labstack/echo"
+head_sha = "e552b4de75b640bc622411fe01eed33f7704c8a0"
+files_scanned = 150
+bytes_scanned = 1581622
+
+[[project]]
+canonical_id = "go-modules:github.com/lestrrat-go/jwx"
+head_sha = "58b17e258d3241791fba553a0758b2c47c0a5e82"
+files_scanned = 285
+bytes_scanned = 2304924
+
+[[project]]
+canonical_id = "go-modules:github.com/minio/minio"
+head_sha = "7aac2a2c5b7c882e68c1ce017d8256be2feea27f"
+files_scanned = 15
+bytes_scanned = 112580
+
+[[project]]
+canonical_id = "go-modules:github.com/moby/moby"
+head_sha = "50f190f54bb919b85a99624ae59decc050bbf3a3"
+files_scanned = 20
+bytes_scanned = 107294
+
+[[project]]
+canonical_id = "go-modules:github.com/ory/hydra"
+head_sha = "4174065ffb052799890f7480f5360a877a67ffc1"
+files_scanned = 135
+bytes_scanned = 765977
+
+[[project]]
+canonical_id = "go-modules:github.com/prometheus/prometheus"
+head_sha = "5c816f70b15e480b028b80f281cfa414f5639153"
+files_scanned = 604
+bytes_scanned = 4087833
+
+[[project]]
+canonical_id = "go-modules:github.com/redis/go-redis"
+head_sha = "18837034a1b96d331567d4fea23b303fd8bf2800"
+files_scanned = 536
+bytes_scanned = 6006324
+
+[[project]]
+canonical_id = "go-modules:go.etcd.io/etcd"
+head_sha = "7531e2efabb512dcd9a432a9d207f95706596efc"
+files_scanned = 301
+bytes_scanned = 1767903
+
+[[project]]
+canonical_id = "go-modules:go.mongodb.org/mongo-driver"
+head_sha = "359ddb6bcdbc2fdb4f3b30e979a84a3dfa997399"
+files_scanned = 171
+bytes_scanned = 1249228
+
+[[project]]
+canonical_id = "go-modules:golang.org/x/crypto"
+head_sha = "afebf4cb4efb2b854282e03160da67120707f8f7"
+files_scanned = 137
+bytes_scanned = 2186493
+
+[[project]]
+canonical_id = "go-modules:k8s.io/client-go"
+head_sha = "394ed525a635cb5f2850b9cbf9f056b3ac87a4ff"
+files_scanned = 2395
+bytes_scanned = 16207680
+
+[[project]]
+canonical_id = "go-modules:k8s.io/kubernetes"
+head_sha = "451fe361bf80a3e3b54e2fa53d23850c0d6267cf"
+files_scanned = 127
+bytes_scanned = 1150134
+
+[[project]]
+canonical_id = "maven:com.amazonaws:aws-encryption-sdk-java"
+head_sha = "4963baba980d0081da06b673b28452889ff6c41b"
+files_scanned = 87
+bytes_scanned = 692959
+
+[[project]]
+canonical_id = "maven:com.amazonaws:aws-java-sdk-kms"
+head_sha = "d866126817fcc10595a3e7cd4b40efe626f05a7c"
+files_scanned = 438
+bytes_scanned = 4933520
+
+[[project]]
+canonical_id = "maven:com.auth0:java-jwt"
+head_sha = "021af9996ac5fb68d3799da64a6a053285880cda"
+files_scanned = 135
+bytes_scanned = 804265
+
+[[project]]
+canonical_id = "maven:com.azure:azure-security-keyvault-keys"
+head_sha = "af8c11bdcf1271504feeb50fd10292407754c67e"
+files_scanned = 139
+bytes_scanned = 1352550
+
+[[project]]
+canonical_id = "maven:com.google.crypto.tink:tink"
+head_sha = "1f4cd38874ec0be85f5aa55ba86d95d18c3fd965"
+files_scanned = 536
+bytes_scanned = 3549888
+
+[[project]]
+canonical_id = "maven:com.nimbusds:nimbus-jose-jwt"
+head_sha = "47d66f2775c392964788aa6389a46fac84f976cd"
+files_scanned = 188
+bytes_scanned = 946304
+
+[[project]]
+canonical_id = "maven:com.squareup.okhttp3:okhttp"
+head_sha = "6abc678ad07aefe055cb1afb6fd897c34a988eb9"
+files_scanned = 147
+bytes_scanned = 1121240
+
+[[project]]
+canonical_id = "maven:com.unboundid:unboundid-ldapsdk"
+head_sha = "cab6672f8ac284805956006bb1496f73c5e3e746"
+files_scanned = 1474
+bytes_scanned = 24712633
+
+[[project]]
+canonical_id = "maven:commons-codec:commons-codec"
+head_sha = "931c2fa4672688a58eeec1a98599202759a160b7"
+files_scanned = 89
+bytes_scanned = 1033736
+
+[[project]]
+canonical_id = "maven:io.jsonwebtoken:jjwt-api"
+head_sha = "83fc82e232c7b12582a2bb4aa181b818d8282631"
+files_scanned = 168
+bytes_scanned = 851520
+
+[[project]]
+canonical_id = "maven:io.netty:netty-handler"
+head_sha = "ec35cbeff85c12137e70ca25b77988606ecca33d"
+files_scanned = 378
+bytes_scanned = 2848503
+
+[[project]]
+canonical_id = "maven:org.apache.directory.api:api-ldap-codec-standalone"
+head_sha = "7150b2dd594c9e26b0857f17e3f5575575aeac9c"
+files_scanned = 3545
+bytes_scanned = 14458912
+
+[[project]]
+canonical_id = "maven:org.apache.httpcomponents.client5:httpclient5"
+head_sha = "afba680b24370b85430e5314512fb2e955dd1b88"
+files_scanned = 423
+bytes_scanned = 2468852
+
+[[project]]
+canonical_id = "maven:org.apache.shiro:shiro-crypto-core"
+head_sha = "744128df61c5f6342b891d4ef53f79858f1d6398"
+files_scanned = 5
+bytes_scanned = 11604
+
+[[project]]
+canonical_id = "maven:org.apache.tomcat.embed:tomcat-embed-core"
+head_sha = "adf68bd617912052c8936583c65fa58d0dbf89dc"
+files_scanned = 1108
+bytes_scanned = 9879749
+
+[[project]]
+canonical_id = "maven:org.bitbucket.b_c:jose4j"
+head_sha = "c66ffa2859db44a86f064d2251e639204ceabbb7"
+files_scanned = 139
+bytes_scanned = 533412
+
+[[project]]
+canonical_id = "maven:org.bouncycastle:bcpkix-jdk18on"
+head_sha = "e0dce82d34bde9a2ec9d9fa387709f0e85220761"
+files_scanned = 836
+bytes_scanned = 3283422
+
+[[project]]
+canonical_id = "maven:org.bouncycastle:bcprov-jdk18on"
+head_sha = "e0dce82d34bde9a2ec9d9fa387709f0e85220761"
+files_scanned = 3033
+bytes_scanned = 17717761
+
+[[project]]
+canonical_id = "maven:org.conscrypt:conscrypt-openjdk-uber"
+head_sha = "9eb3e108de8f576fad6e45fbc6026bbc8f0d4f38"
+files_scanned = 193
+bytes_scanned = 1486895
+
+[[project]]
+canonical_id = "maven:org.cryptacular:cryptacular"
+head_sha = "6dd03096c0f6b2afc7de3451b3074609f4323fee"
+files_scanned = 131
+bytes_scanned = 448665
+
+[[project]]
+canonical_id = "maven:org.eclipse.jetty:jetty-server"
+head_sha = "b4fba9219e5a53043b648f64ac85900029474765"
+files_scanned = 309
+bytes_scanned = 3091084
+
+[[project]]
+canonical_id = "maven:org.eclipse.parsson:parsson"
+head_sha = "2d01f006047e05cef49d13abe5ab25d66108f71a"
+files_scanned = 31
+bytes_scanned = 234397
+
+[[project]]
+canonical_id = "maven:org.opensaml:opensaml-xmlsec-api"
+head_sha = "4dafd1bfad2d99a1793218c26507548218849af1"
+files_scanned = 258
+bytes_scanned = 740413
+
+[[project]]
+canonical_id = "maven:org.springframework.security:spring-security-crypto"
+head_sha = "43f958e0587e07bcb322194ce2acf9ad921a5b88"
+files_scanned = 60
+bytes_scanned = 226118
+
+[[project]]
+canonical_id = "maven:software.amazon.awssdk:s3"
+head_sha = "0fe664eed0349eb2698cfa9a066abbce67ae766d"
+files_scanned = 221
+bytes_scanned = 1326846
+
+[[project]]
+canonical_id = "npm:axios"
+head_sha = "227c788eb702ee88791451eb53e76ef3dca67f8a"
+files_scanned = 449
+bytes_scanned = 3253078
+
+[[project]]
+canonical_id = "npm:bcryptjs"
+head_sha = "1211e9a2213e0b3ee232a204b3ce899beebce31a"
+files_scanned = 29
+bytes_scanned = 119270
+
+[[project]]
+canonical_id = "npm:chalk"
+head_sha = "aa06bb5ac3f14df9fda8cfb54274dfc165ddfdef"
+files_scanned = 34
+bytes_scanned = 406295
+
+[[project]]
+canonical_id = "npm:commander"
+head_sha = "ba6d13ddb4243e5913367734f8c159089ffe7834"
+files_scanned = 216
+bytes_scanned = 988138
+
+[[project]]
+canonical_id = "npm:cookie"
+head_sha = "f86808f562122b3129b03c8ecb46e14bc7234738"
+files_scanned = 26
+bytes_scanned = 284063
+
+[[project]]
+canonical_id = "npm:crypto-js"
+head_sha = "ac34a5a584337b33a2e567f50d96819a96ac44bf"
+files_scanned = 117
+bytes_scanned = 437175
+
+[[project]]
+canonical_id = "npm:debug"
+head_sha = "f405ade8a4b7a0dc353e0f7390c1be90060f3621"
+files_scanned = 13
+bytes_scanned = 50158
+
+[[project]]
+canonical_id = "npm:elliptic"
+head_sha = "9b77436a59cc35eccf4ffb848259c8762a492ee7"
+files_scanned = 41
+bytes_scanned = 4285212
+
+[[project]]
+canonical_id = "npm:express"
+head_sha = "a08da78e64a7fdc610d453fb7771754091d8ed3b"
+files_scanned = 213
+bytes_scanned = 706609
+
+[[project]]
+canonical_id = "npm:glob"
+head_sha = "cac5faf8af111b743bbf6a13f44b294140e6e711"
+files_scanned = 81
+bytes_scanned = 1373481
+
+[[project]]
+canonical_id = "npm:helmet"
+head_sha = "1b861b407e5d6535a605a38ad2acd0c590b24d80"
+files_scanned = 105
+bytes_scanned = 445419
+
+[[project]]
+canonical_id = "npm:jose"
+head_sha = "5d8071266e5fd70aef4a0d4133a0e8c6944373b7"
+files_scanned = 313
+bytes_scanned = 1267821
+
+[[project]]
+canonical_id = "npm:jsonwebtoken"
+head_sha = "02688b9821325b32abc33c4250c646fe6c1477bd"
+files_scanned = 84
+bytes_scanned = 242949
+
+[[project]]
+canonical_id = "npm:jsrsasign"
+head_sha = "5d677193b72a3d67b387b6fe2d070a22ff4e7876"
+files_scanned = 543
+bytes_scanned = 16804076
+
+[[project]]
+canonical_id = "npm:lodash"
+head_sha = "a02353279093cca0fea1c8cc468ffbf03bb3485b"
+files_scanned = 160
+bytes_scanned = 4618732
+
+[[project]]
+canonical_id = "npm:ms"
+head_sha = "4ff48cec099f0514c3e9bbca18706c9c21122bfb"
+files_scanned = 23
+bytes_scanned = 189206
+
+[[project]]
+canonical_id = "npm:node-forge"
+head_sha = "7a43db987bd0ecdc5b41f6d73f58ba6ca5bf9ae1"
+files_scanned = 158
+bytes_scanned = 1961474
+
+[[project]]
+canonical_id = "npm:node-rsa"
+head_sha = "54798624ba5b15521763c6d1ca69b93115a61d67"
+files_scanned = 106
+bytes_scanned = 547322
+
+[[project]]
+canonical_id = "npm:oauth"
+head_sha = "939fd2540b197f3c4afe17a37918bc0225988888"
+files_scanned = 24
+bytes_scanned = 143405
+
+[[project]]
+canonical_id = "npm:openpgp"
+head_sha = "2ac0048404b74a3595d503125b53f3b3d0486bec"
+files_scanned = 91
+bytes_scanned = 825266
+
+[[project]]
+canonical_id = "npm:passport"
+head_sha = "217018dbc46dcd4118dd6f2c60c8d97010c587f8"
+files_scanned = 61
+bytes_scanned = 745245
+
+[[project]]
+canonical_id = "npm:react"
+head_sha = "d9158919c598836c47fc61c1ba5f4d79d8fea69a"
+files_scanned = 86
+bytes_scanned = 527340
+
+[[project]]
+canonical_id = "npm:semver"
+head_sha = "cb1ca1d5480a6c07c12ac31ba5f2071ed530c4ed"
+files_scanned = 121
+bytes_scanned = 498734
+
+[[project]]
+canonical_id = "npm:ssh2"
+head_sha = "318d447ce3aca26e1ac73b63767b82a29b02467b"
+files_scanned = 147
+bytes_scanned = 1062517
+
+[[project]]
+canonical_id = "npm:tweetnacl"
+head_sha = "e6141a20553498697e9e7d92fbc4517994caff52"
+files_scanned = 76
+bytes_scanned = 3247626
+
+[[project]]
+canonical_id = "pypi:authlib"
+head_sha = "2e7224cf79ac8557495dbf2a2e9dc47e4332e6ec"
+files_scanned = 484
+bytes_scanned = 1865240
+
+[[project]]
+canonical_id = "pypi:bcrypt"
+head_sha = "252a22e4ce2dac0deee9ed13df16c7aa8c3df857"
+files_scanned = 23
+bytes_scanned = 91422
+
+[[project]]
+canonical_id = "pypi:boto3"
+head_sha = "466b532a9e8ece22127c2f266cb622ef1deb640e"
+files_scanned = 2311
+bytes_scanned = 5769837
+
+[[project]]
+canonical_id = "pypi:botocore"
+head_sha = "87fdaf576b2ca2067bccfc02a4aa028849828c69"
+files_scanned = 5746
+bytes_scanned = 133828969
+
+[[project]]
+canonical_id = "pypi:certifi"
+head_sha = "d46de621787c609158579929f44b91ce731d01b8"
+files_scanned = 21
+bytes_scanned = 250151
+
+[[project]]
+canonical_id = "pypi:cffi"
+head_sha = "7a3b39e2fbbaa0511789a3231964f61f77fb28a9"
+files_scanned = 203
+bytes_scanned = 2218672
+
+[[project]]
+canonical_id = "pypi:charset-normalizer"
+head_sha = "4f454b08304f02d00662ef561754c1ca730aa125"
+files_scanned = 94
+bytes_scanned = 446915
+
+[[project]]
+canonical_id = "pypi:cryptography"
+head_sha = "148ea72502d7502852187c3db252427343b28754"
+files_scanned = 111
+bytes_scanned = 489131
+
+[[project]]
+canonical_id = "pypi:ecdsa"
+head_sha = "bff40c6cf2340148d410d5b3def0e949c547caf1"
+files_scanned = 81
+bytes_scanned = 793545
+
+[[project]]
+canonical_id = "pypi:idna"
+head_sha = "862150e12779792900343b48a1223beb5e2b62f7"
+files_scanned = 34
+bytes_scanned = 1903363
+
+[[project]]
+canonical_id = "pypi:jose"
+head_sha = "018b310ddb8b50dcfd09a0c152117835a21dd656"
+files_scanned = 66
+bytes_scanned = 294474
+
+[[project]]
+canonical_id = "pypi:oauthlib"
+head_sha = "b3f9edffed6b370e3eb92721cea0da22ec7e18b9"
+files_scanned = 263
+bytes_scanned = 1682354
+
+[[project]]
+canonical_id = "pypi:paramiko"
+head_sha = "d60d5c17d78f344b51ed651e796d2931133a9b22"
+files_scanned = 195
+bytes_scanned = 1254037
+
+[[project]]
+canonical_id = "pypi:pyOpenSSL"
+head_sha = "a34aa1de7e2050d3a83cef74d8265662237f8ba1"
+files_scanned = 56
+bytes_scanned = 657924
+
+[[project]]
+canonical_id = "pypi:pyasn1"
+head_sha = "907afbf7098352c56e98382660a6c7976e98fe50"
+files_scanned = 160
+bytes_scanned = 864841
+
+[[project]]
+canonical_id = "pypi:pycryptodome"
+head_sha = "d12264940c40417915fb85acb8c787ad9da58969"
+files_scanned = 1109
+bytes_scanned = 53690841
+
+[[project]]
+canonical_id = "pypi:pyjwt"
+head_sha = "7144e4534c34810f4525dc4578a32addd8212cff"
+files_scanned = 92
+bytes_scanned = 427204
+
+[[project]]
+canonical_id = "pypi:pynacl"
+head_sha = "676db55a7cd96ace2b0f3b97a4ad0ebd55f523aa"
+files_scanned = 761
+bytes_scanned = 38014501
+
+[[project]]
+canonical_id = "pypi:python-dateutil"
+head_sha = "48bd1af97e71baf8e96fce5b663d589caac8f147"
+files_scanned = 97
+bytes_scanned = 905350
+
+[[project]]
+canonical_id = "pypi:requests"
+head_sha = "d64b9ad4bf1c14e21e0df3f0f4320fec81180e91"
+files_scanned = 128
+bytes_scanned = 4451377
+
+[[project]]
+canonical_id = "pypi:rsa"
+head_sha = "42b0e14ffbeeb9d99d1037e6440a2cc61780e4ea"
+files_scanned = 61
+bytes_scanned = 272254
+
+[[project]]
+canonical_id = "pypi:s3transfer"
+head_sha = "5d3babcd09eae9b500f21f925fc5f5d0dd79daa7"
+files_scanned = 152
+bytes_scanned = 945391
+
+[[project]]
+canonical_id = "pypi:setuptools"
+head_sha = "84ed5913724df5a12dc804e1d5efe12508e706d2"
+files_scanned = 547
+bytes_scanned = 4802640
+
+[[project]]
+canonical_id = "pypi:six"
+head_sha = "c8e394065cd541a16c040515dc0afb85cf22a7c3"
+files_scanned = 16
+bytes_scanned = 135086
+
+[[project]]
+canonical_id = "pypi:urllib3"
+head_sha = "b6447295fff7b38fdffc67e0df9712d60cef3cc3"
+files_scanned = 163
+bytes_scanned = 1861136

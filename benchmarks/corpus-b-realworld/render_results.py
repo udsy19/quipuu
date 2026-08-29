@@ -268,11 +268,12 @@ def main() -> int:
         "CRYPTO-417": "aes-256-ecb",
     }
     # Read all_findings.json to count post-fix routing.
-    import json as _json
+    from dump_findings import load_dump
+
     af_path = SCRIPT_DIR / "results" / "all_findings.json"
     p13_counts = {}
     if af_path.exists():
-        for f in _json.loads(af_path.read_text()):
+        for f in load_dump(af_path)["findings"]:
             if f["rule_id"] in p13_rules:
                 p13_counts[f["rule_id"]] = p13_counts.get(f["rule_id"], 0) + 1
 

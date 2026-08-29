@@ -15,9 +15,10 @@ Corpus B is a stratified sample of **150 real open-source projects** spanning si
 ```
 corpus-b-realworld/
   README.md             — this file
-  manifest.toml         — machine-readable list of all 125 projects
+  manifest.toml         — machine-readable list of all 150 projects
   clone_all.sh          — clone every project at its pinned SHA
-  verify.sh             — verify every clone matches its pinned SHA
+  corpus_integrity.py   — census every checkout against corpus-integrity.toml
+  corpus-integrity.toml — the committed census the check compares against
   ecosystems/
     pypi/               — 25 PyPI projects + README.md
     npm/                — 25 npm projects + README.md
@@ -56,10 +57,22 @@ selection_rank = <integer>
 substituted_for = ""  # non-empty if repo was renamed/moved
 
 [scan_hints]
-scan_paths = [...]
-exclude_paths = [...]
+scan_paths = [...]          # the ONLY field the harness reads
+exclude_paths = [...]       # declared but never consumed — see below
 expected_languages = [...]
+unscannable = "reason"      # optional; see "Unscannable projects"
 ```
+
+**`scan_paths` is the scan scope and nothing else is.** `exclude_paths` and
+`expected_languages` are descriptive: no script in this directory reads them,
+and the scanner is never passed an exclusion derived from them. A subtree is
+out of scope only by not being under a `scan_paths` entry. Two claims in
+`RUST_COVERAGE_GAPS.md` were written on the opposite assumption and are
+corrected there.
+
+An absent or empty `scan_paths` means "scan the whole repository", which is a
+declaration. A `scan_paths` entry that does not exist on disk is a defect, not
+a declaration, and `corpus_integrity.py` fails the run for it.
 
 ---
 
@@ -89,7 +102,29 @@ Every project has a `commit_sha` pinned via:
 git ls-remote <url> HEAD
 ```
 
-The SHA is the HEAD of the default branch at the time of corpus creation (June 2026). This ensures reproducible scanning results.
+The SHA is the HEAD of the default branch at the time of corpus creation (June 2026).
+
+**This did not, until 2026-08-29, ensure reproducible scanning results, and it
+still only half does.** Two facts, both measured against the clones on disk:
+
+1. **46 of the 150 pins were not commits in the repository the project clones.**
+   Ten of the 46 were the pinned or current SHA of a *different* project in this
+   same corpus — the pins were shuffled across project files at construction, not
+   lost since. `clone_all.sh` clones `--no-checkout`, so the checkout of a SHA the
+   remote has never heard of failed, the script printed `[warn] leaving at HEAD`
+   and counted the project as cloned, and the project was left with an empty
+   working tree that every corpus figure counted as "scanned, zero findings".
+   All 46 are now re-pinned to the commit actually checked out, each carrying the
+   unreachable SHA it replaces in a comment above it.
+
+2. **149 of the 150 checkouts are `--depth 1`.** A shallow clone of a moving
+   default branch cannot check out a pin that is not its tip, so re-running
+   `clone_all.sh` on a fresh machine today will not reproduce these pins either.
+   Fixing that means fetching the pinned SHA directly rather than depth-1
+   cloning the branch; it is not fixed here, and `corpus_integrity.py` will say
+   so loudly (`off-sha`) rather than let the difference pass silently.
+
+Run `corpus_integrity.py` after cloning and before quoting any figure.
 
 **Monorepo entries** (multiple projects in one repository) share the same `url` and `commit_sha` but have different `scan_paths` in `[scan_hints]` to scope the scanner to the relevant crate/module/artifact.
 
@@ -100,7 +135,7 @@ The SHA is the HEAD of the default branch at the time of corpus creation (June 2
 ```bash
 cd benchmarks/corpus-b-realworld
 
-# Clone all 125 projects into ./clones/
+# Clone all 150 projects into ./clones/
 ./clone_all.sh
 
 # Clone only one ecosystem
@@ -115,25 +150,55 @@ cd benchmarks/corpus-b-realworld
 
 **Requirements**: `git`, `python3` (3.11+ for built-in `tomllib`)
 
-The script automatically detects monorepos and creates symlinks instead of re-cloning. Clones are checked out to the pinned `commit_sha`.
+The script automatically detects monorepos and creates symlinks instead of re-cloning. Clones are checked out to the pinned `commit_sha`. **The 150 manifest entries resolve to 140 repositories**: 10 entries are monorepo siblings and are symlinked to the clone they share. A failed checkout is now an error that fails the script, not a warning.
 
 ---
 
-## Verifying Clones
+## Verifying the Corpus
 
-After cloning, run the verifier to confirm each clone matches its pinned SHA:
+Nothing in this directory may produce a number before the corpus has been
+censused:
 
 ```bash
-./verify.sh
-
-# Verify one ecosystem
-./verify.sh --ecosystem pypi
-
-# Write JSON report
-./verify.sh --report verify-report.json
+python3 corpus_integrity.py --clones DIR              # exit 1 on any failure
+python3 corpus_integrity.py --clones DIR --write      # re-record the baseline
 ```
 
-Exit code `0` means all clones match. Exit code `1` means at least one clone is missing or at the wrong SHA. The JSON report lists per-project `ok`/`missing`/`mismatch` status.
+For each manifest project it records `(head_sha, files_scanned, bytes_scanned)`
+over **exactly the paths `scan_paths` would hand to the scanner**, compares them
+against the committed `corpus-integrity.toml`, and names every failure:
+
+| state | meaning |
+|---|---|
+| `absent` | no clone directory, or no `.git` in it |
+| `empty` | `.git` present, working tree has no tracked files — the checkout never happened |
+| `unpinnable` | `commit_sha` is not a commit in this repository; the project can never be restored from the manifest |
+| `scope-missing` | a declared `scan_path` is not on disk |
+| `off-sha` | HEAD is a real commit, but not the pinned one |
+| `drift` | right commit, wrong census — untracked build output, a partial checkout, a truncated file |
+| `unscannable` | a recorded, named exclusion (see below); passes |
+| `ok` | passes |
+
+`scan_corpus.py`, `dump_findings.py` and `recall_check.py` all run this first
+and **refuse to emit a total when it fails**. `--allow-degraded-corpus` stamps
+the output `partial`, and `load_dump()` then refuses to read it, so a figure
+taken over a broken corpus cannot be quoted as a whole-corpus figure by
+accident. `verify.sh` did the pin half of this, was documented as optional, was
+not in the pipeline, and is deleted: it could not have caught either of the two
+failures above.
+
+### Unscannable projects
+
+`scan_hints.unscannable = "<reason>"` records a project that is in the corpus —
+so the denominator stays 150 — but has no scannable scope, and states why on the
+project file. It exists so that "we know this cannot be scoped, here is the
+reason" is never expressed as an empty `scan_paths`, which means "scan the whole
+repository". One project is currently declared unscannable:
+`crates-io:rustls-pemfile`, whose crate was split back out of the rustls
+workspace upstream. Until 2026-08-29 the harness answered its missing scope by
+scanning the whole rustls workspace and recording it as this project — 140
+findings, a superset of the 16 that `crates-io:rustls` reports from the same
+clone, which `crates-io/rustls` symlinks to.
 
 ---
 
@@ -146,7 +211,7 @@ The following projects were originally identified by a different name/URL but we
 | npm | `node-forge.toml` | `digitalbazaar/node-forge` → `digitalbazaar/forge` (renamed) |
 | npm | `jsrsasign.toml` | `nicowillis/jsrsasign` → `kjur/jsrsasign` (wrong owner) |
 | npm | `oauth.toml` | `oauthjs/node-oauth` → `ciaranj/node-oauth` (wrong org) |
-| crates-io | `rustls-pemfile.toml` | Was separate repo; now merged into `rustls/rustls` monorepo |
+| crates-io | `rustls-pemfile.toml` | Was separate repo; merged into `rustls/rustls`, then split back out upstream — **no longer present at the pinned commit**, and declared `unscannable` |
 | crypto-adjacent | `sslyze.toml` | `philipl/sslyze` → `nabla-c0d3/sslyze` (incorrect user) |
 | crypto-adjacent | `liboqs-python.toml` | `open-quantum-safe/oqs-python` → `open-quantum-safe/liboqs-python` (renamed) |
 | crypto-adjacent | `oqs-rs.toml` | `liboqs-rust/oqs-rs` → `open-quantum-safe/liboqs-rust` (moved) |
@@ -157,10 +222,11 @@ The following projects were originally identified by a different name/URL but we
 
 ## Reproducibility Commitment
 
-- All commit SHAs were verified with `git ls-remote` at corpus creation time.
+- Commit SHAs were **claimed** to be verified with `git ls-remote` at corpus creation time. They were not: 46 of the 150 named a commit that is not in the repository the project clones. Corrected 2026-08-29 — see "Pinned Commit SHAs" above.
+- `scan_paths` were **not** checked against any tree at construction: 15 of the 92 projects declaring one named a path that does not exist at the pinned commit, and 9 of those 15 are at exactly the commit they pin, so the paths were wrong when they were written rather than stale since. Repaired 2026-08-29.
 - Download statistics are informational only (for ranking); they do not affect scan results.
 - The corpus schema is stable for Corpus B v1.0.0; any future changes will increment the version in `manifest.toml`.
-- Do not modify `.toml` files without updating `commit_sha` via a fresh `git ls-remote` call.
+- Do not modify `.toml` files without re-running `corpus_integrity.py --write` and committing the baseline diff alongside.
 
 ---
 

@@ -8,7 +8,7 @@ Generated: 2026-06-16. Read-only analysis of 18 zero-finding crates-io projects.
 
 | Project | Verdict | Brief note |
 |---|---|---|
-| ring | LEGITIMATE | `scan_hints` scopes to `src/`; library-definition only there. Tests (which do call `Ed25519KeyPair::generate_pkcs8`) are explicitly excluded via `exclude_paths`. |
+| ring | LEGITIMATE | `scan_hints` scopes to `src/`; library-definition only there. Tests (which do call `Ed25519KeyPair::generate_pkcs8`) are outside that scope. Corrected 2026-08-29: they are **not** excluded via `exclude_paths` — the harness never reads that field. `scan_paths` is the whole of the scope. |
 | argon2 | LEGITIMATE (scan-scope) | `scan_hints` scopes to `argon2/src/` in a mono-repo; consumer calls are in sibling crates (`pbkdf2/`, `yescrypt/`) outside scan path. |
 | ed25519-dalek | LEGITIMATE | Clone contains only `README.md` (archived repo). Nothing to scan. |
 | hmac | LEGITIMATE (scan-scope) | `scan_hints` scopes to `hmac/src/`; consumer-style tests (`Hmac<sha2::Sha256>`) live in `hmac/hmac/tests/` outside scan path. |
@@ -89,7 +89,7 @@ let signing_key = KeyPair::generate_for(RCGEN_SIGNATURE_ALG).unwrap();
 
 ### BUG-D: `ServerConfig::builder` absent from scanner (tokio-rustls)
 
-**Root cause.** Scanner has `ClientConfig::builder` but not `ServerConfig::builder`. The `examples/server.rs` is outside `exclude_paths` (only `tests/` is excluded).
+**Root cause.** Scanner has `ClientConfig::builder` but not `ServerConfig::builder`. Corrected 2026-08-29: `examples/server.rs` is outside the scanned scope because `scan_paths = ["src/"]`, not because of `exclude_paths`, which the harness never reads. The missing rule is the gap either way; the reason given here was wrong.
 
 **tokio-rustls** — `examples/server.rs:48`:
 ```rust

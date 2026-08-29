@@ -17,6 +17,13 @@ Usage:
 Exit codes:
     0  All scans completed (may include per-project errors recorded in JSON)
     1  Binary not found / corpus directory missing / fatal I/O
+    2  The corpus does not match the committed integrity baseline
+
+Before anything is scanned, `corpus_integrity.py` censuses all 150 checkouts
+against `corpus-integrity.toml`. A project whose working tree was never checked
+out reports zero findings, which is indistinguishable downstream from a project
+that was scanned in full and contains no cryptography — so the run is refused
+rather than silently producing a total over a denominator it does not have.
 
 This is intentionally simple: each project gets one quipuu invocation
 with --source --deps. We never run any code from the cloned repos (P4).
@@ -37,6 +44,8 @@ try:
     import tomllib as toml_lib
 except ImportError:
     import tomli as toml_lib
+
+import corpus_integrity
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 
@@ -89,6 +98,7 @@ def scan_one(
     project: dict,
     clone_root: Path,
     include_safe: bool,
+    integrity: str = "ok",
 ) -> dict:
     """Run quipuu against one project; return a result dict.
 
@@ -102,32 +112,34 @@ def scan_one(
     canonical_id = p_info["canonical_id"]
 
     clone_path = clone_root / ecosystem / name
-    if not clone_path.is_dir():
-        # Record the clone by its position in the corpus, not by its absolute
-        # path: the clone root moves between machines and an absolute path
-        # committed under results/ names an operator's home directory.
+    if integrity in ("absent", "empty", "unscannable"):
+        # Deliberately not "ok with 0 findings". Those two readings are what
+        # every aggregate downstream has to be able to tell apart, and for six
+        # months it could not: 46 checkouts sat empty and were counted as
+        # scanned. Record the clone by its position in the corpus, not by its
+        # absolute path — the clone root moves between machines and an
+        # absolute path committed under results/ names an operator's home
+        # directory.
         rel = f"{ecosystem}/{name}"
+        status = "unscannable" if integrity == "unscannable" else "not_checked_out"
         return {
             "canonical_id": canonical_id,
             "ecosystem": ecosystem,
-            "status": "missing_clone",
+            "status": status,
+            "integrity": integrity,
             "clone_path": rel,
+            "scan_paths": [],
             "total_findings": 0,
             "audible_findings": 0,
             "suppressed_findings": 0,
             "duration_seconds": 0.0,
-            "errors": [f"clone path does not exist: {rel}"],
+            "errors": [f"corpus integrity: {integrity} at {rel}"],
         }
 
-    hints = project.get("scan_hints", {})
-    scan_paths = hints.get("scan_paths") or [""]
-    resolved = []
-    for sp in scan_paths:
-        target = clone_path / sp if sp else clone_path
-        if target.exists():
-            resolved.append(target)
-    if not resolved:
-        resolved = [clone_path]
+    # No fallback to the repository root. A declared scan_path that is not on
+    # disk is a `scope-missing` integrity failure, which the gate in main()
+    # has already refused; it is never silently replaced by the whole tree.
+    resolved, _missing = corpus_integrity.resolve_scan_paths(clone_path, project)
 
     sample_findings: list[dict] = []
     total = 0
@@ -257,6 +269,7 @@ def scan_one(
     return {
         "canonical_id": canonical_id,
         "ecosystem": ecosystem,
+        "integrity": integrity,
         "scan_paths": [str(r.relative_to(clone_path)) or "." for r in resolved],
         "total_findings": total,
         "audible_findings": audible,
@@ -297,6 +310,12 @@ def main() -> int:
         help="Pass --include-safe through to quipuu (default: do not)",
     )
     parser.add_argument(
+        "--allow-degraded-corpus",
+        action="store_true",
+        help="Scan anyway when the integrity check fails, and stamp the summary "
+        "as partial (no figure taken from it is a whole-corpus figure)",
+    )
+    parser.add_argument(
         "--limit",
         type=int,
         default=None,
@@ -313,6 +332,19 @@ def main() -> int:
     out.mkdir(parents=True, exist_ok=True)
     per_proj_dir = out / "per-project"
     per_proj_dir.mkdir(exist_ok=True)
+
+    integrity_rows = corpus_integrity.check(clones)
+    corpus_integrity.report(integrity_rows)
+    degraded = bool(corpus_integrity.failed(integrity_rows))
+    if degraded and not args.allow_degraded_corpus:
+        print(
+            "refusing to scan a corpus that does not match the committed "
+            "baseline; re-clone, or pass --allow-degraded-corpus and quote no "
+            "whole-corpus figure from the result",
+            file=sys.stderr,
+        )
+        return 2
+    integrity_by_id = {r["canonical_id"]: r["state"] for r in integrity_rows}
 
     binary = Path(args.bin) if args.bin else discover_quipuu()
     print(f"Using quipuu binary: {binary}")
@@ -337,7 +369,13 @@ def main() -> int:
         canonical = project["project"]["canonical_id"]
         print(f"[{scanned_count + 1:>3}/{len(manifest_entries)}] {canonical} ... ", end="", flush=True)
         scanned_count += 1
-        result = scan_one(binary, project, clones, args.include_safe)
+        result = scan_one(
+            binary,
+            project,
+            clones,
+            args.include_safe,
+            integrity_by_id.get(canonical, "absent"),
+        )
         status = result["status"]
         n = result["total_findings"]
         sec = result["duration_seconds"]
@@ -359,6 +397,7 @@ def main() -> int:
             eco,
             {
                 "projects_scanned": 0,
+                "projects_not_scanned": 0,
                 "projects_with_findings": 0,
                 "projects_with_errors": 0,
                 "total_findings": 0,
@@ -368,6 +407,8 @@ def main() -> int:
             },
         )
         agg["projects_scanned"] += 1
+        if r["status"] in ("not_checked_out", "unscannable"):
+            agg["projects_not_scanned"] += 1
         if r["total_findings"] > 0:
             agg["projects_with_findings"] += 1
         if r["errors"]:
@@ -377,17 +418,28 @@ def main() -> int:
         agg["suppressed_findings"] += r["suppressed_findings"]
         agg["total_duration_seconds"] += r["duration_seconds"]
 
+    not_scanned = [
+        {"canonical_id": r["canonical_id"], "status": r["status"]}
+        for r in results
+        if r["status"] in ("not_checked_out", "unscannable")
+    ]
     summary = {
         "corpus": "corpus-b-realworld",
         "include_safe": args.include_safe,
-        "total_projects_scanned": len(results),
+        "partial": degraded,
+        "manifest_projects": len(manifest_entries),
+        "total_projects_scanned": len(results) - len(not_scanned),
+        "projects_not_scanned": not_scanned,
         "total_elapsed_seconds": round(total_elapsed, 2),
         "by_ecosystem": by_eco,
         "top_10_by_findings": sorted(
             results, key=lambda r: r["total_findings"], reverse=True
         )[:10],
         "projects_with_zero_findings": [
-            r["canonical_id"] for r in results if r["total_findings"] == 0
+            r["canonical_id"]
+            for r in results
+            if r["total_findings"] == 0
+            and r["status"] not in ("not_checked_out", "unscannable")
         ],
         "projects_with_errors": [
             {"canonical_id": r["canonical_id"], "errors": r["errors"][:3]}
@@ -400,13 +452,17 @@ def main() -> int:
     summary_path.write_text(json.dumps(summary, indent=2))
     print()
     print("=" * 60)
-    print(f"Done. {len(results)} projects scanned in {total_elapsed:.1f}s.")
+    print(
+        f"Done. {len(results) - len(not_scanned)}/{len(manifest_entries)} "
+        f"projects scanned in {total_elapsed:.1f}s."
+    )
     print(f"Summary: {summary_path}")
     for eco, agg in by_eco.items():
         print(
             f"  {eco}: {agg['projects_scanned']} projects, "
             f"{agg['total_findings']} findings "
             f"({agg['projects_with_findings']} non-zero, "
+            f"{agg['projects_not_scanned']} not scanned, "
             f"{agg['projects_with_errors']} errored)"
         )
     return 0
