@@ -2595,3 +2595,54 @@ fn go_operation_sites_are_all_detected() {
     expect(40, "CRYPTO-017", "dsa-unattributed");
     expect(41, "CRYPTO-017", "dsa-unattributed");
 }
+
+// Backlog #Y20: `circl`'s eddilithium{2,3} hybrid schemes AND-combine an
+// Ed25519/ECDSA signature with a Dilithium/ML-DSA one in the same
+// Sign/Verify function. Telling a team that already adopted the hybrid
+// scheme to "replace with ML-DSA", with no mention of the co-located PQC
+// call two lines away, is an active false statement — not merely an
+// incomplete one — so the message must name it instead.
+#[test]
+fn go_ed25519_op_names_a_colocated_circl_pqc_call() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("go/circl_hybrid.go"))
+        .expect("scan succeeds");
+
+    let ed25519_sign = findings
+        .iter()
+        .find(|f| f.rule_id == "CRYPTO-021" && f.message.contains("Sign operation"))
+        .expect("ed25519.Sign finding");
+    assert!(
+        ed25519_sign
+            .message
+            .contains("also calls ML-DSA (circl dilithium) at line"),
+        "expected co-location note, got: {}",
+        ed25519_sign.message
+    );
+
+    let ed25519_verify = findings
+        .iter()
+        .find(|f| f.rule_id == "CRYPTO-021" && f.message.contains("Verify operation"))
+        .expect("ed25519.Verify finding");
+    assert!(
+        ed25519_verify
+            .message
+            .contains("also calls ML-DSA (circl dilithium) at line"),
+        "expected co-location note, got: {}",
+        ed25519_verify.message
+    );
+
+    // A plain ECDSA op in a function with no PQC co-occurrence keeps its
+    // original message, unmodified — the note is empty, not just present.
+    let plain_ecdsa = findings
+        .iter()
+        .find(|f| f.rule_id == "CRYPTO-015")
+        .expect("ecdsa.VerifyASN1 finding");
+    assert!(
+        !plain_ecdsa.message.contains("also calls"),
+        "unrelated ecdsa op should not carry a co-location note: {}",
+        plain_ecdsa.message
+    );
+}

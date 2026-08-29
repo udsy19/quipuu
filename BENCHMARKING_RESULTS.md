@@ -2462,3 +2462,54 @@ and now checks 3 more findings — `crates/scan-source/tests/fixtures/go/operati
 and `classify_rules_never_publish_a_parameter_their_when_clause_contradicts` both pass against the
 new rules. `regression_check.py` not re-run — pure addition of 2 findings, floors are lower bounds
 and cannot fall.
+
+## Go ed25519/ecdsa messages now name a co-located circl PQC call — 2026-08-29 (`#Y20`, first change)
+
+**Measurement tuple:** corpus B (150 manifest projects) · `--source --deps --include-safe` ·
+profile `nist-default` · release binary built from this cycle's tree · dumps
+`work/dsa1_post.json` (1244, the population `state/precision.json`'s 94.7 % is anchored on) →
+`work/y20_post.json` (1244). Script: `work/y20_precision.py`.
+
+**What was wrong.** No rule pack has ever targeted `cloudflare/circl`'s post-quantum signature
+packages (`sign/dilithium`, `sign/mldsa`, `sign/slhdsa`) — confirmed by grep across all seven
+non-JS rule packs. The one place `circl` *is* touched is worse than a miss: its
+`eddilithium2`/`eddilithium3` hybrid schemes AND-combine an Ed25519 signature with a
+Dilithium/ML-DSA one in the same `Sign`/`Verify` function
+(`circl/sign/eddilithium2/eddilithium.go:82-111`), but `CRYPTO-021`'s existing message ("Ed25519
+{fn} operation … Replace with ML-DSA-65") named only the classical half, telling a team that
+already adopted the hybrid scheme to do a migration they already did.
+
+**The fix.** `scanner.rs` gains `collect_go_pq_aliases` (maps a file's local import aliases for
+`circl/sign/{dilithium,mldsa,slhdsa}` to a human-readable family name) and
+`find_go_pq_colocation` (at an `ed25519.Op`/`ecdsa.Op` call site, walks the enclosing
+function/method for a sibling `Sign*`/`Verify*` call on one of those aliases). When found, a new
+`pq_note` extract arg is appended to the existing `CRYPTO-021`/`CRYPTO-015` message templates in
+`go.toml` (`{pq_note}`); when not found it is the empty string, so every other Go finding's
+message is untouched. No new rule, no new algorithm_id, no severity change — this degrades a
+misleading message on a call the precision audit already scores TP, it does not change what is
+detected.
+
+**Corpus effect: 0 findings added, 0 removed, 0 reclassified by algorithm_id/severity — exactly 2
+rows' `message` text changed**, both `circl/sign/eddilithium2/eddilithium.go` (`CRYPTO-021`,
+`ed25519`, High): line 88 (`ed25519.Sign`) now names `mode2.SignTo` at line 83, line 107
+(`ed25519.Verify`) now names `mode2.Verify` at line 100 — the real co-located Dilithium2/ML-DSA-44
+calls in `SignTo`/`Verify`, read directly against the source. `y20_precision.py` asserts the site
+set, and every row's `algorithm_id`/`severity`, are byte-identical between the two dumps, then
+asserts the message-drift set is exactly these two rows — not just "some rows changed".
+
+**Precision: 94.7 % → 94.7 % (+0.0 pp, no findings moved TP/FP status).** This is a message-quality
+fix the precision audit cannot see by its own terms: the two calls genuinely are Ed25519
+sign/verify operations, so they were already scored TP correctly. `state/precision.json` is
+untouched.
+
+**Held:** `cargo build --release --workspace` clean; `cargo test --workspace` all passing, 1 new
+test (`go_ed25519_op_names_a_colocated_circl_pqc_call`, `crates/scan-source/tests/scan_test.rs`)
+against a new fixture (`crates/scan-source/tests/fixtures/go/circl_hybrid.go`) that also asserts an
+unrelated `ecdsa` op in a function with no PQC co-occurrence keeps its message unmodified.
+`regression_check.py` not re-run — no finding was added, removed, or reclassified by
+algorithm_id/severity, and none of its floors read `message` text.
+
+**Not attempted this cycle, unchanged in rank.** `#Y20`'s second, larger item — porting the JS
+pack's arg-literal ML-DSA/ML-KEM/SLH-DSA matching to the Go pack against `circl` directly, so a
+plain (non-hybrid) `circl` call is detected at all — is a new-rule feature, sized larger than this
+change, and was not started.

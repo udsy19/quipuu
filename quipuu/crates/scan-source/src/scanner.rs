@@ -267,7 +267,20 @@ fn run_extract(source: &[u8], language: Language) -> Result<ExtractedFile, ScanE
     let mut matches = Vec::new();
     let root = tree.root_node();
     let bare_bindings = collect_bare_bindings(root, source, language);
-    walk(root, source, language, &mut matches, 0, &bare_bindings);
+    let pq_aliases = if language == Language::Go {
+        collect_go_pq_aliases(root, source)
+    } else {
+        HashMap::new()
+    };
+    walk(
+        root,
+        source,
+        language,
+        &mut matches,
+        0,
+        &bare_bindings,
+        &pq_aliases,
+    );
     let imports = collect_imports(root, source, language);
     Ok(ExtractedFile { matches, imports })
 }
@@ -331,6 +344,100 @@ fn collect_bare_bindings(
         Language::Python => collect_python_bare_bindings(root, source),
         _ => HashMap::new(),
     }
+}
+
+/// `circl`'s post-quantum signature package import paths, mapped to a
+/// human-readable family name. Go only. Backlog `#Y20`: the corpus's only
+/// live PQC signature package (`cloudflare/circl`) is invisible to every
+/// rule pack, and the one place it *is* touched — the `eddilithium{2,3}`
+/// hybrid schemes — combines it with `ed25519`/`ecdsa` in the same
+/// function, so [`find_go_pq_colocation`] needs to recognise these package
+/// paths to soften the classical-only message. This is deliberately not a
+/// standalone PQC-detection rule (that is `#Y20`'s larger, unscoped item).
+fn go_pq_signature_family(import_path: &str) -> Option<&'static str> {
+    if import_path.contains("circl/sign/dilithium") {
+        Some("ML-DSA (circl dilithium)")
+    } else if import_path.contains("circl/sign/mldsa") {
+        Some("ML-DSA (circl mldsa)")
+    } else if import_path.contains("circl/sign/slhdsa") {
+        Some("SLH-DSA (circl slhdsa)")
+    } else {
+        None
+    }
+}
+
+/// Local package aliases in this Go file that resolve to one of `circl`'s
+/// post-quantum signature packages (see [`go_pq_signature_family`]), mapped
+/// to that family's human-readable name. Empty for every file that doesn't
+/// import one — the common case, so [`find_go_pq_colocation`] can skip the
+/// search entirely.
+fn collect_go_pq_aliases(root: Node<'_>, source: &[u8]) -> HashMap<String, String> {
+    let mut out = HashMap::new();
+    walk_all(root, &mut |node| {
+        if node.kind() != "import_spec" {
+            return;
+        }
+        let Some(path_node) = node.child_by_field_name("path") else {
+            return;
+        };
+        let path = string_literal_value(path_node, source);
+        let Some(family) = go_pq_signature_family(&path) else {
+            return;
+        };
+        let local = node
+            .child_by_field_name("name")
+            .map(|n| node_text(n, source))
+            .unwrap_or_else(|| path.rsplit('/').next().unwrap_or(&path).to_string());
+        out.insert(local, family.to_string());
+    });
+    out
+}
+
+/// Does the enclosing function/method also call `Sign`/`SignTo`/`Verify` on
+/// one of `pq_aliases`? If so, a classical ed25519/ecdsa operation-site
+/// finding at `call` is only half the story — see backlog `#Y20`: `circl`'s
+/// `eddilithium2`/`eddilithium3` AND-combine an Ed25519 signature with a
+/// Dilithium/ML-DSA one in the same `Sign`/`Verify` function, and telling a
+/// team that already adopted the hybrid scheme to "replace with ML-DSA" is
+/// an active false statement, not just an incomplete one.
+fn find_go_pq_colocation(
+    call: Node<'_>,
+    source: &[u8],
+    pq_aliases: &HashMap<String, String>,
+) -> Option<(String, u32)> {
+    if pq_aliases.is_empty() {
+        return None;
+    }
+    let mut scope = call.parent()?;
+    while !matches!(scope.kind(), "function_declaration" | "method_declaration") {
+        scope = scope.parent()?;
+    }
+    let mut found = None;
+    walk_all(scope, &mut |node| {
+        if found.is_some() || node.id() == call.id() || node.kind() != "call_expression" {
+            return;
+        }
+        let Some(function) = node.child_by_field_name("function") else {
+            return;
+        };
+        if function.kind() != "selector_expression" {
+            return;
+        }
+        let Some(operand) = function.child_by_field_name("operand") else {
+            return;
+        };
+        let Some(family) = pq_aliases.get(&node_text(operand, source)) else {
+            return;
+        };
+        let Some(field) = function.child_by_field_name("field") else {
+            return;
+        };
+        let method = node_text(field, source);
+        if method.starts_with("Sign") || method.starts_with("Verify") {
+            found = Some((family.clone(), (node.start_position().row + 1) as u32));
+        }
+    });
+    found
 }
 
 fn walk_all<'a>(node: Node<'a>, f: &mut impl FnMut(Node<'a>)) {
@@ -550,6 +657,7 @@ fn walk(
     out: &mut Vec<RawMatch>,
     depth: usize,
     bare_bindings: &HashMap<String, String>,
+    pq_aliases: &HashMap<String, String>,
 ) {
     if depth >= MAX_AST_DEPTH {
         return;
@@ -568,7 +676,9 @@ fn walk(
             | "invocation_expression"
             | "object_creation_expression"
     );
-    if is_call_like && let Some(m) = match_call(node, source, language, bare_bindings) {
+    if is_call_like
+        && let Some(m) = match_call(node, source, language, bare_bindings, pq_aliases)
+    {
         out.push(m);
     }
     // Java enum-constant references like `SignatureAlgorithm.RS256` are
@@ -626,7 +736,15 @@ fn walk(
     }
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
-        walk(child, source, language, out, depth + 1, bare_bindings);
+        walk(
+            child,
+            source,
+            language,
+            out,
+            depth + 1,
+            bare_bindings,
+            pq_aliases,
+        );
     }
 }
 
@@ -636,6 +754,7 @@ fn match_call(
     source: &[u8],
     language: Language,
     bare_bindings: &HashMap<String, String>,
+    pq_aliases: &HashMap<String, String>,
 ) -> Option<RawMatch> {
     let kind = call.kind();
 
@@ -704,6 +823,21 @@ fn match_call(
     };
 
     populate_args(language, &api, args, source, &mut args_map);
+
+    // Backlog #Y20: soften an ed25519/ecdsa operation-site message when the
+    // same function also calls a circl PQC signature package — see
+    // `find_go_pq_colocation`.
+    if language == Language::Go && (api == "crypto/ed25519.Op" || api == "crypto/ecdsa.Op") {
+        let note = find_go_pq_colocation(call, source, pq_aliases)
+            .map(|(family, line)| {
+                format!(
+                    " This function also calls {family} at line {line} — the classical \
+                     component alone is insufficient to forge a signature accepted by this code."
+                )
+            })
+            .unwrap_or_default();
+        args_map.insert("pq_note".into(), ArgValue::Str(note));
+    }
 
     let start = call.start_position();
     Some(RawMatch {

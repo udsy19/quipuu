@@ -214,7 +214,7 @@ id = "CRYPTO-015"
 when.api = "^crypto/ecdsa\\.Op$"
 algorithm_id = "ecdsa-unattributed"
 severity_hint = "auto"
-message = "ECDSA operation via crypto/ecdsa.{fn} on a key received rather than generated here — the curve is not statically knowable at this call site. Quantum-vulnerable at every curve — replace with ML-DSA."
+message = "ECDSA operation via crypto/ecdsa.{fn} on a key received rather than generated here — the curve is not statically knowable at this call site. Quantum-vulnerable at every curve — replace with ML-DSA.{pq_note}"
 
 # ============================================================================
 # crypto/dsa — classical (non-elliptic) DSA. GenerateKey takes an already-
@@ -310,7 +310,7 @@ id = "CRYPTO-021"
 when.api = "^crypto/ed25519\\.Op$"
 algorithm_id = "ed25519"
 severity_hint = "auto"
-message = "Ed25519 {fn} operation — quantum-vulnerable to Shor. Replace with ML-DSA-65."
+message = "Ed25519 {fn} operation — quantum-vulnerable to Shor. Replace with ML-DSA-65.{pq_note}"
 
 # ============================================================================
 # crypto/tls — TLS config
