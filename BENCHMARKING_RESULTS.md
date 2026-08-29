@@ -3600,3 +3600,56 @@ rather than the corpus.
 **Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
 --all-targets -- -D warnings` clean; `cargo test --workspace` all passing (119 `scan-source`
 integration tests, was 118).
+
+## `#Y21` second item: BouncyCastle C# operation-site PQC classes gain coverage — 2026-08-29
+
+**Closed this cycle: `#Y21`'s second, larger item**, standing open since cycle 24 (first item —
+BC's keygen classes — closed then). `csharp.toml` had rules for `MLKemKeyGenerationParameters`/
+`MLDsaKeyGenerationParameters` (a key being *generated*) but none for the classes that perform the
+KEM/signature *operation* — `MLKemEncapsulator`, `MLKemDecapsulator`, `MLDsaSigner` — confirmed via
+`grep -n "MLKemEncapsulator\|MLKemDecapsulator\|MLDsaSigner" crates/core/data/rules/csharp.toml`
+returning nothing before this change.
+
+**Ship-gated on the same verification step `#Y21`'s first item required, not skipped here.** The
+exact class names and constructor shapes were read directly from `bcgit/bc-csharp`'s
+`crypto/src/crypto/{kems,signers}/` tree via `gh api`, not assumed from the keygen classes' shape:
+`MLKemEncapsulator(MLKemParameters parameters)`, `MLKemDecapsulator(MLKemParameters parameters)`,
+and `MLDsaSigner(MLDsaParameters parameters, bool deterministic)` each take the same
+`MLKemParameters`/`MLDsaParameters` static field directly as a constructor argument the keygen
+classes already resolve — `new MLKemEncapsulator(MLKemParameters.ml_kem_768)`, `new
+MLDsaSigner(MLDsaParameters.ml_dsa_65, false)`. `MLDsaSigner`'s constructor itself rejects any
+HashML-DSA (`_with_sha512`) parameter set (throws if `PreHashOid != null`), confirmed by reading
+its doc comment, so unlike the keygen arm no such suffix needs an arm here.
+
+`csharp.toml` gains three new `[[extract]]`/`[[classify]]` blocks, twelve classify arms total
+(`CRYPTO-826..837`, one triad of parameter-set arms plus one unattributed-fallback arm per class),
+mirroring the existing keygen arm's shape exactly — same member-access capture, same
+literal-vs-variable degrade-to-sentinel behaviour. `scanner.rs`'s `CSHARP_CTOR_APIS` table gains
+three entries and `populate_args` gains one new match arm capturing the sole constructor argument
+(index 0, not index 1 as the keygen classes use — their `random` parameter comes first, these
+classes have no such argument) — reusing the existing `nth_csharp_arg_member_access_name` helper,
+no new extraction mechanism.
+
+`tests/fixtures/csharp/Pqc.cs` gains three operation-site call sites (one per class); new assertions
+in the existing `scans_csharp_bouncycastle_mlkem_and_mldsa` test take it from 4/4 to 7/7 detected on
+the fixture.
+
+**Corpus effect: 0 findings added, 0 removed, 0 reclassified — a falsification, not a
+re-derivation.** Full 150-project pre/post dump (`work/y21_before.json` ↔ `work/y21_after.json`,
+both 1655 findings; script `work/y21_precision.py`; pre-change binary built from commit `adb0c5e` in
+a throwaway worktree). Corpus B has no C#/NuGet ecosystem at all — confirmed directly, its six
+ecosystem directories are `crates-io`, `crypto-adjacent`, `go-modules`, `maven`, `npm`, `pypi` — and
+the 27 stray `.cs` files scattered through its mixed-language repos reference neither BouncyCastle
+nor any of the three new class names, checked via `grep` before this run rather than assumed. Same
+shape `#Y29`, `#Y44`, and `#Y47` already documented: the fix is real, the corpus has nothing that
+exercises it either way.
+
+**Precision 97.06% held, exactly, `work/y21_precision.py`.** The script reproduces the anchored
+97.06% on the pre dump before asserting the diff is empty; an empty diff cannot move a TP/FP ratio
+in either estimator, so this is coverage added at precision held, verified against the fixture
+rather than the corpus.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (119 `scan-source`
+integration tests, unchanged count — new assertions were added to an existing test rather than a
+new `#[test]` fn).
