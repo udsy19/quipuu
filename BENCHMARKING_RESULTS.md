@@ -2513,3 +2513,67 @@ algorithm_id/severity, and none of its floors read `message` text.
 pack's arg-literal ML-DSA/ML-KEM/SLH-DSA matching to the Go pack against `circl` directly, so a
 plain (non-hybrid) `circl` call is detected at all — is a new-rule feature, sized larger than this
 change, and was not started.
+
+## Java PQC service names — JAV-010/JAV-090 gain ML-KEM/ML-DSA arms, new javax.crypto.KEM rule — 2026-08-29 (`#Y8`, first change)
+
+**Measurement tuple:** corpus B (150 manifest projects) · `--source --deps --include-safe` ·
+profile `nist-default` · pre-change binary built from a worktree at `d64f3f4` (the commit
+`state/precision.json`'s 94.7 % is anchored on) → post-change binary built from this cycle's tree.
+Dumps `work/y8_pre.json` (1244) → `work/y8_post.json` (1244).
+
+**What was wrong.** `java.security.KeyPairGenerator.getInstance` (`JAV-010`) and
+`java.security.Signature.getInstance` (`JAV-090`) both anchored their `algo` regex at
+`^"?RSA"?$`/`^"?EC"?$`/`^"?DSA"?$` — every JDK 24+ (JEP 496/497) PQC algorithm name fell through
+silently, and `javax.crypto.KEM.getInstance` had no extract rule at all, so a call naming
+`ML-KEM-768` produced zero findings either way. **JEP 527 reaches GA on 2026-09-15** and enables
+`X25519MLKEM768` by default for every `javax.net.ssl` application with no source change, so the
+population of Java codebases quipuu reads is about to include PQC by default. A sweep of every
+Java classify regex for an arm loose enough to *misclassify* a PQC name (the `circl`/`crypto_sign_keypair`
+failure mode) found none — every miss here is a clean drop, not a wrong label.
+
+**The fix.** `java.toml` gains six new arms on `JAV-010` (`ml-kem-512`/`768`/`1024`,
+`ml-dsa-44`/`65`/`87`) and three on `JAV-090` (`ml-dsa-44`/`65`/`87` — `Signature` has no KEM
+surface). A new extract rule, `JAV-040`, targets `KEM.getInstance(algo)` with three classify arms
+(`ml-kem-512`/`768`/`1024`). `scanner.rs`'s `JAVA_CALLEE_APIS` table gains the
+`KEM.getInstance` → `javax.crypto.KEM.getInstance` row (the callee-dispatch table the Java matcher
+actually reads, not the TOML query alone — same shape as the Go/Python callee tables), and
+`populate_java_args` gains `javax.crypto.KEM.getInstance` to the arm that captures the first
+string-literal argument as `algo`. All twelve new algorithm ids already exist in
+`algorithm-table.toml` (added for the WebCrypto PQC arms); no new algorithm-table row.
+
+**Not attempted, said out loud.** `#Y8`'s third listed arm — BC's `SLH-DSA*` family, Java's only
+SLH-DSA surface — is not included. BC's exact JCA algorithm-name spelling for SLH-DSA parameter
+sets was not read from BC's own source or javadoc this cycle; per the backlog's `#Y21` caution
+(BC C# class names, same problem in a sibling language), a classify regex should not be written
+against an unverified class/algorithm-name spelling. Left for a follow-up that reads BC's source
+or javadoc directly before writing the regex.
+
+**Corpus effect: 0 findings added, 0 removed, 0 reclassified.** Row-identity diff on
+`(project, rule_id, file, line)` between `y8_pre.json` and `y8_post.json`: both 1244 rows,
+byte-identical. Corpus B's `maven` stratum contains no call site naming an ML-KEM/ML-DSA/KEM
+algorithm today — reported plainly rather than implying a coverage gain that didn't materialise,
+per `#Y8`'s own measure instruction ("reported even if zero").
+
+**Precision: 94.7 % → 94.7 % (+0.0 pp).** An unchanged finding set cannot move a TP/FP ratio;
+`state/precision.json` is untouched.
+
+**Verified with a planted fixture, since the corpus has none.** A 16-site probe
+(`/tmp/java_pqc_probe/PqcProbe.java`, not committed — scratch) covering all twelve new arms plus an
+unrelated `KeyPairGenerator.getInstance("RSA")` control: all twelve PQC arms fire with the correct
+`rule_id`/`algorithm_id` at the correct line, the RSA control still fires `CRYPTO-210`
+unchanged, and no PQC arm fired on the RSA call or vice versa. Also run against
+`work/eco-0829-cycle8/KemProbe.java` (the fixture the ecosystem lens built when it found this gap):
+`KEM.getInstance("ML-KEM-768")` now fires `CRYPTO-228`/`ml-kem-768`, where it previously produced
+nothing.
+
+**Held:** `cargo build --release --workspace` clean; fmt clean; `clippy --all-targets --release -D
+warnings` clean; `cargo test --workspace` all passing, 1 new test
+(`scans_java_pqc_keypairgenerator_and_signature_and_kem`, `crates/scan-source/tests/scan_test.rs`)
+against a new fixture (`crates/scan-source/tests/fixtures/java/Pqc.java`) asserting four of the
+twelve new arms by rule_id and algorithm_id. `every_classify_rule_targets_an_api_the_extractor_can_emit`
+passes against the new rules (confirmed the new `javax.crypto.KEM.getInstance` api is derivable
+from `JAVA_CALLEE_APIS`, the same table `api_surface()` reads). `regression_check.py` not re-run —
+pure addition with 0 corpus effect, and none of its floors name a Java PQC rule.
+
+**Still open, unchanged in rank.** `#Y8`'s BC SLH-DSA arm (needs a primary-source class-name read
+first); `#Y20`'s second item (Go `circl` arg-literal port); the `ecdh.*` two-site Go recall gap.
