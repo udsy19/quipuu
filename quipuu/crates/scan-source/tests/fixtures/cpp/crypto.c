@@ -18,6 +18,25 @@ void openssl_rsa_2048(void) {
     RSA_generate_key_ex(rsa, 2048, NULL, NULL);
 }
 
+/* CPP-002 / CRYPTO-403 — legacy RSA_generate_key, bits in position 1 */
+void openssl_rsa_legacy_weak(void) {
+    RSA *rsa = RSA_generate_key(1024, 3, NULL, NULL);
+}
+
+/* CPP-002 — wrapped in a wolfssl-style assertion that requires the call to
+ * FAIL; must not be reported (SiteContext::TestAssertion excludes it). */
+void openssl_rsa_legacy_expected_to_fail(void) {
+    RSA *rsa;
+    ExpectNull(rsa = RSA_generate_key(2048, 0, NULL, NULL));
+}
+
+/* CPP-002 — wrapped in the sibling macro that requires the call to SUCCEED;
+ * must still be reported as a true positive. */
+void openssl_rsa_legacy_expected_to_succeed(void) {
+    RSA *rsa;
+    ExpectNotNull(rsa = RSA_generate_key(2048, 3, NULL, NULL));
+}
+
 /* CPP-010 / CRYPTO-410 — DES cipher */
 void openssl_evp_des(void) {
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();

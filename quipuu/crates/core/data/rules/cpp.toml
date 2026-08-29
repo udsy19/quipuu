@@ -51,6 +51,69 @@ severity_hint = "auto"
 message = "RSA_generate_key_ex(bits={bits}). Larger key does NOT protect against Shor's algorithm."
 
 # ============================================================================
+# OpenSSL — RSA_generate_key (legacy, pre-3.0, no `_ex`)
+#
+# `RSA_generate_key(bits, e, callback, cb_arg)` puts bits in argument
+# position 1, not 2 — the opposite of `_ex`'s `(rsa, bits, e, cb)`. wolfssl's
+# own OpenSSL-compat test suite wraps both success and failure calls in its
+# `Expect{,Not}Null` macros; `is_test_assertion_callee` (scanner.rs) treats
+# only `ExpectNull` as low-signal, so a call the test requires to fail is
+# excluded via `site_context` while a call the test requires to succeed is
+# not.
+# ============================================================================
+
+[[extract]]
+id = "CPP-002"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "RSA_generate_key")
+  arguments: (argument_list . (number_literal) @bits))
+"""
+captures = { fn = "ident", bits = "literal_int" }
+api = "openssl.RSA_generate_key"
+description = "OpenSSL RSA_generate_key(bits, e, callback, cb_arg) — legacy RSA key generation, pre-3.0."
+
+[[classify]]
+id = "CRYPTO-403"
+when.api = "^openssl\\.RSA_generate_key$"
+when.args.bits = { lt = 2048 }
+when.site_context = ["Call"]
+algorithm_id = "rsa-undersized"
+severity_hint = "critical"
+message = "RSA_generate_key with {bits} bits — below 2048-bit floor."
+cwe = "CWE-326"
+
+[[classify]]
+id = "CRYPTO-404"
+when.api = "^openssl\\.RSA_generate_key$"
+when.args.bits = 2048
+when.site_context = ["Call"]
+algorithm_id = "rsa-2048"
+severity_hint = "auto"
+message = "RSA_generate_key(bits=2048). Quantum-vulnerable: NIST IR 8547 deprecates after 2030."
+
+[[classify]]
+id = "CRYPTO-405"
+when.api = "^openssl\\.RSA_generate_key$"
+when.args.bits = { ge = 4096 }
+when.site_context = ["Call"]
+algorithm_id = "rsa-4096"
+severity_hint = "auto"
+message = "RSA_generate_key(bits={bits}). Larger key does NOT protect against Shor's algorithm."
+
+# Catch-all: bits in (2048, 4096), e.g. 3072 — a real literal outside the
+# three named bands above. Same convention as CRYPTO-593 (openssl crate,
+# Rust): without it the finding silently disappears.
+[[classify]]
+id = "CRYPTO-406"
+when.api = "^openssl\\.RSA_generate_key$"
+when.site_context = ["Call"]
+algorithm_id = "rsa-unattributed"
+severity_hint = "auto"
+message = "RSA_generate_key(bits={bits}). Quantum-vulnerable to Shor regardless of key size."
+
+# ============================================================================
 # OpenSSL EVP — EVP_EncryptInit_ex
 # ============================================================================
 

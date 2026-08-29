@@ -3236,3 +3236,61 @@ scope-splitting instruction; still open.
 --all-targets -- -D warnings` clean; `cargo test --workspace` all passing (108 `scan-source`
 tests, was 107 — `go_stdlib_mlkem_is_classified` new, `go_tls_hybrid_groups_are_classified`
 extended with the `tls.MLKEM1024` case).
+
+## `#Y29`'s C/C++ arm, re-shipped: legacy `RSA_generate_key` gains coverage and a
+   fail-required suppression — corpus B cannot see either half — 2026-08-29
+
+**Closed this cycle: `#Y29`'s C/C++ arm, this time with the fix the prior attempt named.**
+`RSA_generate_key(bits, e, callback, cb_arg)` — the pre-3.0 OpenSSL spelling, bits in argument
+position 0 rather than `_ex`'s position 1 — gains `C_CALLEE_APIS`/`populate_args` wiring
+(`scanner.rs`) and `CRYPTO-403`–`406` (`cpp.toml`), mirroring `CRYPTO-400`–`402`'s undersized /
+2048 / ≥4096 bands plus a `CRYPTO-406` catch-all for a literal outside all three (e.g. 3072),
+same convention as the openssl-crate Rust arm's `CRYPTO-593`.
+
+**The fix the prior attempt (cycle 27) named as the blocker, actually built.** wolfssl's own
+OpenSSL-compat test suite wraps a call it requires to SUCCEED in `ExpectNotNull(...)` and a call
+it requires to FAIL in `ExpectNull(...)` — same macro family, opposite semantics — and the prior
+cycle's arm reported both as TP, five of which are FP by this project's own labelling rule ("a
+call inside an assertion that requires it to fail is not a real operation"). `is_test_assertion_
+callee`'s C/C++ arm now recognises `ExpectNull` specifically (not `ExpectNotNull` — that would
+have suppressed the genuine successes right alongside the failures), and `CRYPTO-403`–`406` opt
+into `when.site_context = ["Call"]` to make the exclusion take effect.
+
+**A precondition this needed that the prior attempt didn't touch: C/C++ callee-table matches
+had never computed a `SiteContext` at all.** The shared call-dispatch path used by Go, Python,
+JS/TS, C, C++ and Rust hardcoded `site_context: SiteContext::Call` unconditionally; `classify_
+site_context` — the parent-chain walk that actually detects `TestAssertion`, `MapEntry`, etc. —
+was wired in only for Java's method-invocation path and Go's string-literal path. Every C/C++
+`when.site_context` filter, had one ever been written, would have been silently inert. Fixed by
+walking from the callee's first real argument (mirroring the literal-node walk Go/Java's callers
+already use) for `Language::C | Language::Cpp` specifically, falling back to the old hardcoded
+`Call` when there is no argument to walk from — identical output to before for every existing
+cpp.toml rule, none of which declares `when.site_context`. Two new fixture cases in `cpp/
+crypto.c` and `scan_test.rs` (`scans_c_rsa_generate_key_legacy`, `expect_null_suppresses_but_
+expect_not_null_does_not`) pin both the coverage and the discrimination: an `ExpectNull`-wrapped
+call must not be reported, the `ExpectNotNull`-wrapped sibling one line below it must be.
+
+**Corpus effect: zero.** Pre/post 150-project dump (`work/y33_pre.json` / `y33_post.json`,
+149/150 scanned both runs — one project's working tree is empty independent of this change):
+**1419 findings both runs, multiset-identical across every field** (project, rule, algorithm_id,
+severity, file, line, message) — 0 added, 0 removed, 0 reclassified. `y33_pre.json` is itself
+byte-identical to `work/y32_post.json`, the population the recorded 96.52% is anchored on, so
+this is a genuine falsification of "this change reaches nothing corpus B scans," not an
+assumption. Root cause, checked by hand: wolfssl's `scan_hints.exclude_paths` in `benchmarks/
+corpus-b-realworld/ecosystems/crypto-adjacent/wolfssl.toml` excludes `tests/`, which is exactly
+where every `RSA_generate_key` call site in that project lives (`tests/api/test_ossl_rsa.c`,
+`test_evp_pkey.c`) — confirmed directly by scanning the excluded file with the built binary: 8
+TP (`CRYPTO-404`/`406`), 5 correctly-suppressed `ExpectNull` sites, 0 false positives, exactly as
+designed. aws-lc's one legacy call site (`tool-openssl/crl_test.cc`, not `_ex`) sits outside its
+`scan_paths` (`crypto/`, `ssl/`, `include/openssl/`) entirely; the only two occurrences of the
+identifier inside aws-lc's scanned paths are the function's own definition and declaration, not
+calls. Same shape as `#W1`'s `--certs` gate and cycle 23's `CurvePreferences`: the corpus is not
+the instrument for this rule family, and the fixture tree is.
+
+**Precision: held at 96.52%, provably rather than assumed** — the finding-set identity above
+means no TP/FP ratio could have moved. Not re-derived from labels because there is nothing to
+re-derive: the audited population is unchanged.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (110 `scan-source`
+tests, was 108).

@@ -847,6 +847,22 @@ fn match_call(
         args_map.insert("pq_note".into(), ArgValue::Str(note));
     }
 
+    // C/C++ callee-table matches (RSA_generate_key & co) previously hardcoded
+    // `Call` unconditionally, so `when.site_context` filtering — the
+    // mechanism that already suppresses Go/Java test-assertion FPs — had no
+    // effect for this pack. Walking up from the first real argument (mirrors
+    // the literal-node walk `classify_site_context`'s other callers use)
+    // correctly classifies a call passed straight to a wolfssl-style
+    // `ExpectNull(...)` wrapper as `TestAssertion`, and falls back to `Call`
+    // — identical to the old behavior — when there is no argument to walk
+    // from. Other languages are unchanged.
+    let site_context = match language {
+        Language::C | Language::Cpp => nth_real_arg(args, 0)
+            .map(|n| classify_site_context(n, source, language))
+            .unwrap_or(quipuu_core::SiteContext::Call),
+        _ => quipuu_core::SiteContext::Call,
+    };
+
     let start = call.start_position();
     Some(RawMatch {
         api,
@@ -855,7 +871,7 @@ fn match_call(
         offset: call.start_byte() as u32,
         symbol: callee_text,
         snippet: node_text(call, source),
-        site_context: quipuu_core::SiteContext::Call,
+        site_context,
     })
 }
 
@@ -1801,6 +1817,10 @@ fn match_webcrypto_callee(callee: &str) -> Option<&'static str> {
 /// C/C++ function identifier → api name.
 const C_CALLEE_APIS: &[(&str, &str)] = &[
     ("RSA_generate_key_ex", "openssl.RSA_generate_key_ex"),
+    // Legacy pre-3.0 spelling, no `_ex` suffix and no output-parameter RSA*:
+    // `RSA_generate_key(bits, e, callback, cb_arg)` returns the key instead
+    // of taking it as arg 0, so bits moves from position 1 to position 0.
+    ("RSA_generate_key", "openssl.RSA_generate_key"),
     ("EVP_EncryptInit_ex", "openssl.EVP_EncryptInit_ex"),
     ("EVP_DigestInit_ex", "openssl.EVP_DigestInit_ex"),
     ("SSL_CTX_set_cipher_list", "openssl.SSL_CTX_set_cipher_list"),
@@ -2116,6 +2136,12 @@ fn populate_args(
         (Language::C | Language::Cpp, "openssl.RSA_generate_key_ex") => {
             // RSA_generate_key_ex(rsa, bits, e, cb) — bits is arg 1 (0-indexed)
             if let Some(bits) = nth_arg_int(args_node, 1, source) {
+                out.insert("bits".into(), ArgValue::Int(bits));
+            }
+        }
+        (Language::C | Language::Cpp, "openssl.RSA_generate_key") => {
+            // RSA_generate_key(bits, e, callback, cb_arg) — bits is arg 0
+            if let Some(bits) = nth_arg_int(args_node, 0, source) {
                 out.insert("bits".into(), ArgValue::Int(bits));
             }
         }
@@ -2983,6 +3009,13 @@ fn is_test_assertion_callee(callee: &str, language: Language) -> bool {
             head,
             "assert_eq" | "assert_ne" | "assert" | "debug_assert_eq" | "debug_assert_ne"
         ),
+        // `ExpectNotNull` is deliberately absent: wolfssl's own test suite
+        // wraps genuine, successful crypto calls in it (e.g.
+        // `ExpectNotNull(rsa = RSA_generate_key(2048, ...))`), so treating it
+        // as low-signal would suppress true positives. `ExpectNull` wraps a
+        // call the test requires to FAIL (invalid params, unsupported build),
+        // which is the same "asserted to fail" shape PyJWT's `pytest.raises`
+        // wrapping already gets scored FP for by hand — see `#Y29`.
         Language::C | Language::Cpp => matches!(
             head,
             "EXPECT_EQ"
@@ -2993,6 +3026,7 @@ fn is_test_assertion_callee(callee: &str, language: Language) -> bool {
                 | "ASSERT_TRUE"
                 | "EXPECT_STREQ"
                 | "ASSERT_STREQ"
+                | "ExpectNull"
         ),
         Language::CSharp => matches!(
             head,

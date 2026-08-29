@@ -684,6 +684,55 @@ fn scans_c_rsa_generate_key_ex_weak() {
     );
 }
 
+/// Legacy `RSA_generate_key(bits, e, cb, cb_arg)` puts bits in argument
+/// position 1 (`_ex` puts it in position 2) and must still be caught.
+#[test]
+fn scans_c_rsa_generate_key_legacy() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-403" && f.algorithm_id == "rsa-undersized"),
+        "expected CRYPTO-403 (undersized legacy RSA_generate_key); got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
+/// wolfssl's own OpenSSL-compat test suite wraps `RSA_generate_key` calls it
+/// requires to FAIL in `ExpectNull(...)`, and calls it requires to SUCCEED in
+/// `ExpectNotNull(...)`. Only the former is low-signal — the latter is a
+/// genuine, successful key generation and must still be reported.
+#[test]
+fn expect_null_suppresses_but_expect_not_null_does_not() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    let rsa_findings: Vec<_> = findings
+        .iter()
+        .filter(|f| f.rule_id == "CRYPTO-404" && f.algorithm_id == "rsa-2048")
+        .collect();
+    assert_eq!(
+        rsa_findings.len(),
+        1,
+        "expected exactly one CRYPTO-404 (the ExpectNotNull success case); got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id, f.location.line))
+            .collect::<Vec<_>>()
+    );
+}
+
 /// `CRYPTO-430` fires on a cipher-suite string that *enables* a broken
 /// primitive, and it may not name which one.
 ///
