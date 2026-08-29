@@ -1,68 +1,83 @@
 {
   "corpus": "corpus-b-realworld",
   "include_safe": true,
-  "total_projects_scanned": 150,
-  "total_elapsed_seconds": 281.1,
+  "partial": false,
+  "manifest_projects": 150,
+  "total_projects_scanned": 149,
+  "projects_not_scanned": [
+    {
+      "canonical_id": "crates-io:rustls-pemfile",
+      "status": "unscannable"
+    }
+  ],
+  "total_elapsed_seconds": 230.0,
   "by_ecosystem": {
     "pypi": {
       "projects_scanned": 25,
+      "projects_not_scanned": 0,
       "projects_with_findings": 15,
       "projects_with_errors": 0,
       "total_findings": 77,
       "audible_findings": 77,
       "suppressed_findings": 0,
-      "total_duration_seconds": 8.850000000000001
+      "total_duration_seconds": 8.9
     },
     "npm": {
       "projects_scanned": 25,
+      "projects_not_scanned": 0,
       "projects_with_findings": 6,
       "projects_with_errors": 0,
       "total_findings": 127,
       "audible_findings": 127,
       "suppressed_findings": 0,
-      "total_duration_seconds": 5.090000000000001
+      "total_duration_seconds": 6.59
     },
     "maven": {
       "projects_scanned": 25,
-      "projects_with_findings": 19,
+      "projects_not_scanned": 0,
+      "projects_with_findings": 18,
       "projects_with_errors": 0,
-      "total_findings": 366,
-      "audible_findings": 366,
+      "total_findings": 81,
+      "audible_findings": 81,
       "suppressed_findings": 0,
-      "total_duration_seconds": 44.05
+      "total_duration_seconds": 21.349999999999998
     },
     "crates-io": {
       "projects_scanned": 25,
-      "projects_with_findings": 14,
-      "projects_with_errors": 0,
-      "total_findings": 226,
-      "audible_findings": 226,
+      "projects_not_scanned": 1,
+      "projects_with_findings": 13,
+      "projects_with_errors": 1,
+      "total_findings": 86,
+      "audible_findings": 86,
       "suppressed_findings": 0,
-      "total_duration_seconds": 2.0300000000000007
+      "total_duration_seconds": 1.6000000000000005
     },
     "go-modules": {
       "projects_scanned": 25,
+      "projects_not_scanned": 0,
       "projects_with_findings": 20,
       "projects_with_errors": 0,
       "total_findings": 485,
       "audible_findings": 485,
       "suppressed_findings": 0,
-      "total_duration_seconds": 172.91000000000003
+      "total_duration_seconds": 143.16
     },
     "crypto-adjacent": {
       "projects_scanned": 25,
+      "projects_not_scanned": 0,
       "projects_with_findings": 12,
       "projects_with_errors": 0,
-      "total_findings": 198,
-      "audible_findings": 198,
+      "total_findings": 200,
+      "audible_findings": 200,
       "suppressed_findings": 0,
-      "total_duration_seconds": 47.87
+      "total_duration_seconds": 48.179999999999986
     }
   },
   "top_10_by_findings": [
     {
       "canonical_id": "go-modules:github.com/lestrrat-go/jwx",
       "ecosystem": "go-modules",
+      "integrity": "ok",
       "scan_paths": [
         "jwa",
         "jwe",
@@ -73,7 +88,7 @@
       "total_findings": 195,
       "audible_findings": 195,
       "suppressed_findings": 0,
-      "duration_seconds": 0.68,
+      "duration_seconds": 0.51,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -165,155 +180,16 @@
       ]
     },
     {
-      "canonical_id": "crates-io:rustls-pemfile",
-      "ecosystem": "crates-io",
-      "scan_paths": [
-        "."
-      ],
-      "total_findings": 140,
-      "audible_findings": 140,
-      "suppressed_findings": 0,
-      "duration_seconds": 0.44,
-      "exit_code": 0,
-      "status": "ok",
-      "errors": [],
-      "sample_findings": [
-        {
-          "algorithm_id": "tls-client-config",
-          "count": 62
-        },
-        {
-          "algorithm_id": "tls-server-config",
-          "count": 48
-        },
-        {
-          "algorithm_id": "unknown",
-          "count": 24
-        },
-        {
-          "algorithm_id": "ecdsa-unattributed",
-          "count": 6
-        }
-      ]
-    },
-    {
-      "canonical_id": "maven:org.eclipse.jetty:jetty-server",
-      "ecosystem": "maven",
-      "scan_paths": [
-        "."
-      ],
-      "total_findings": 119,
-      "audible_findings": 119,
-      "suppressed_findings": 0,
-      "duration_seconds": 13.52,
-      "exit_code": 0,
-      "status": "ok",
-      "errors": [],
-      "sample_findings": [
-        {
-          "algorithm_id": "unknown",
-          "count": 92
-        },
-        {
-          "algorithm_id": "sha-1",
-          "count": 15
-        },
-        {
-          "algorithm_id": "crypto-provider-registration",
-          "count": 6
-        },
-        {
-          "algorithm_id": "ecdsa-unattributed",
-          "count": 4
-        },
-        {
-          "algorithm_id": "md5",
-          "count": 1
-        }
-      ]
-    },
-    {
-      "canonical_id": "maven:com.google.crypto.tink:tink",
-      "ecosystem": "maven",
-      "scan_paths": [
-        "."
-      ],
-      "total_findings": 93,
-      "audible_findings": 93,
-      "suppressed_findings": 0,
-      "duration_seconds": 5.42,
-      "exit_code": 0,
-      "status": "ok",
-      "errors": [],
-      "sample_findings": [
-        {
-          "algorithm_id": "ecdsa-unattributed",
-          "count": 20
-        },
-        {
-          "algorithm_id": "rsa-unattributed",
-          "count": 15
-        },
-        {
-          "algorithm_id": "aes-unattributed",
-          "count": 12
-        },
-        {
-          "algorithm_id": "ed25519",
-          "count": 7
-        },
-        {
-          "algorithm_id": "rsa-3072",
-          "count": 7
-        }
-      ]
-    },
-    {
-      "canonical_id": "maven:com.nimbusds:nimbus-jose-jwt",
-      "ecosystem": "maven",
-      "scan_paths": [
-        "src/main/java"
-      ],
-      "total_findings": 78,
-      "audible_findings": 78,
-      "suppressed_findings": 0,
-      "duration_seconds": 0.25,
-      "exit_code": 0,
-      "status": "ok",
-      "errors": [],
-      "sample_findings": [
-        {
-          "algorithm_id": "sha-256",
-          "count": 8
-        },
-        {
-          "algorithm_id": "aes-unattributed-gcm",
-          "count": 7
-        },
-        {
-          "algorithm_id": "ecdsa-p256",
-          "count": 6
-        },
-        {
-          "algorithm_id": "ecdsa-p384",
-          "count": 6
-        },
-        {
-          "algorithm_id": "ecdsa-p521",
-          "count": 6
-        }
-      ]
-    },
-    {
       "canonical_id": "go-modules:github.com/go-jose/go-jose",
       "ecosystem": "go-modules",
+      "integrity": "ok",
       "scan_paths": [
         "."
       ],
       "total_findings": 77,
       "audible_findings": 77,
       "suppressed_findings": 0,
-      "duration_seconds": 0.22,
+      "duration_seconds": 0.16,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -343,6 +219,7 @@
     {
       "canonical_id": "crypto-adjacent:github.com/google/boringssl",
       "ecosystem": "crypto-adjacent",
+      "integrity": "ok",
       "scan_paths": [
         "crypto",
         "ssl",
@@ -351,7 +228,7 @@
       "total_findings": 65,
       "audible_findings": 65,
       "suppressed_findings": 0,
-      "duration_seconds": 3.3,
+      "duration_seconds": 2.95,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -409,13 +286,14 @@
     {
       "canonical_id": "npm:jsonwebtoken",
       "ecosystem": "npm",
+      "integrity": "ok",
       "scan_paths": [
         "."
       ],
       "total_findings": 64,
       "audible_findings": 64,
       "suppressed_findings": 0,
-      "duration_seconds": 0.05,
+      "duration_seconds": 0.09,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -445,6 +323,7 @@
     {
       "canonical_id": "crypto-adjacent:github.com/aws/aws-lc",
       "ecosystem": "crypto-adjacent",
+      "integrity": "ok",
       "scan_paths": [
         "crypto",
         "ssl",
@@ -453,7 +332,7 @@
       "total_findings": 60,
       "audible_findings": 60,
       "suppressed_findings": 0,
-      "duration_seconds": 4.56,
+      "duration_seconds": 3.89,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -503,6 +382,7 @@
     {
       "canonical_id": "go-modules:github.com/hashicorp/vault",
       "ecosystem": "go-modules",
+      "integrity": "ok",
       "scan_paths": [
         "builtin/logical/pki",
         "vault/seal",
@@ -511,7 +391,7 @@
       "total_findings": 50,
       "audible_findings": 50,
       "suppressed_findings": 0,
-      "duration_seconds": 0.7,
+      "duration_seconds": 0.46,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -553,6 +433,196 @@
           "count": 1
         }
       ]
+    },
+    {
+      "canonical_id": "crypto-adjacent:github.com/tink-crypto/tink-go",
+      "ecosystem": "crypto-adjacent",
+      "integrity": "ok",
+      "scan_paths": [
+        "aead",
+        "hybrid",
+        "signature",
+        "jwt"
+      ],
+      "total_findings": 48,
+      "audible_findings": 48,
+      "suppressed_findings": 0,
+      "duration_seconds": 0.91,
+      "exit_code": 0,
+      "status": "ok",
+      "errors": [],
+      "sample_findings": [
+        {
+          "algorithm_id": "aes-unattributed",
+          "count": 2
+        },
+        {
+          "algorithm_id": "ecdh-p384",
+          "count": 6
+        },
+        {
+          "algorithm_id": "ecdh-p256",
+          "count": 5
+        },
+        {
+          "algorithm_id": "ecdh-p521",
+          "count": 5
+        },
+        {
+          "algorithm_id": "x25519",
+          "count": 2
+        },
+        {
+          "algorithm_id": "aes-unattributed",
+          "count": 1
+        },
+        {
+          "algorithm_id": "ed25519",
+          "count": 5
+        },
+        {
+          "algorithm_id": "rsa-3072",
+          "count": 2
+        },
+        {
+          "algorithm_id": "ecdh-p256",
+          "count": 1
+        },
+        {
+          "algorithm_id": "ecdh-p384",
+          "count": 1
+        },
+        {
+          "algorithm_id": "ecdh-p521",
+          "count": 1
+        },
+        {
+          "algorithm_id": "sha-256",
+          "count": 6
+        },
+        {
+          "algorithm_id": "ecdsa-p256",
+          "count": 5
+        },
+        {
+          "algorithm_id": "ecdh-p256",
+          "count": 2
+        },
+        {
+          "algorithm_id": "rsa-pkcs1-sha256",
+          "count": 2
+        },
+        {
+          "algorithm_id": "ecdh-p384",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "canonical_id": "npm:jsrsasign",
+      "ecosystem": "npm",
+      "integrity": "ok",
+      "scan_paths": [
+        "."
+      ],
+      "total_findings": 43,
+      "audible_findings": 43,
+      "suppressed_findings": 0,
+      "duration_seconds": 1.43,
+      "exit_code": 0,
+      "status": "ok",
+      "errors": [],
+      "sample_findings": [
+        {
+          "algorithm_id": "3des",
+          "count": 25
+        },
+        {
+          "algorithm_id": "aes-unattributed",
+          "count": 18
+        }
+      ]
+    },
+    {
+      "canonical_id": "go-modules:github.com/aws/aws-sdk-go-v2",
+      "ecosystem": "go-modules",
+      "integrity": "ok",
+      "scan_paths": [
+        "."
+      ],
+      "total_findings": 28,
+      "audible_findings": 28,
+      "suppressed_findings": 0,
+      "duration_seconds": 110.99,
+      "exit_code": 0,
+      "status": "ok",
+      "errors": [],
+      "sample_findings": [
+        {
+          "algorithm_id": "rsa-undersized",
+          "count": 11
+        },
+        {
+          "algorithm_id": "sha-1",
+          "count": 7
+        },
+        {
+          "algorithm_id": "md5",
+          "count": 4
+        },
+        {
+          "algorithm_id": "ecdsa-p256",
+          "count": 2
+        },
+        {
+          "algorithm_id": "rsa-4096",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "canonical_id": "go-modules:golang.org/x/crypto",
+      "ecosystem": "go-modules",
+      "integrity": "ok",
+      "scan_paths": [
+        "ssh",
+        "argon2",
+        "bcrypt",
+        "pbkdf2"
+      ],
+      "total_findings": 25,
+      "audible_findings": 25,
+      "suppressed_findings": 0,
+      "duration_seconds": 0.29,
+      "exit_code": 0,
+      "status": "ok",
+      "errors": [],
+      "sample_findings": [
+        {
+          "algorithm_id": "ecdsa-p256",
+          "count": 7
+        },
+        {
+          "algorithm_id": "ed25519",
+          "count": 6
+        },
+        {
+          "algorithm_id": "aes-unattributed",
+          "count": 5
+        },
+        {
+          "algorithm_id": "rsa-3072",
+          "count": 2
+        },
+        {
+          "algorithm_id": "3des",
+          "count": 1
+        },
+        {
+          "algorithm_id": "unknown",
+          "count": 1
+        }
+      ]
     }
   ],
   "projects_with_zero_findings": [
@@ -585,6 +655,7 @@
     "npm:passport",
     "npm:helmet",
     "npm:cookie",
+    "maven:io.jsonwebtoken:jjwt-api",
     "maven:com.squareup.okhttp3:okhttp",
     "maven:commons-codec:commons-codec",
     "maven:com.amazonaws:aws-java-sdk-kms",
@@ -621,5 +692,12 @@
     "crypto-adjacent:github.com/aws/aws-encryption-sdk-c",
     "crypto-adjacent:github.com/rustpq/pqcrypto"
   ],
-  "projects_with_errors": []
+  "projects_with_errors": [
+    {
+      "canonical_id": "crates-io:rustls-pemfile",
+      "errors": [
+        "corpus integrity: unscannable at crates-io/rustls-pemfile"
+      ]
+    }
+  ]
 }

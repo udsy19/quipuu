@@ -1937,3 +1937,168 @@ It did not. The diff adds only inherited-metadata keys:
 Verified: **zero `.rs` files and zero files under `crates/core/data/` changed** in
 this commit. No dependency version moved. Precision therefore stands at **86.5%**,
 carried forward rather than re-derived.
+
+---
+
+## The corpus scope the manifest declared, and the corpus scope it scanned — 2026-08-29
+
+**Measurement tuple:** corpus B (150 manifest projects, 140 repositories, 10 symlinked monorepo
+siblings) · `--source --deps --include-safe` · profile `nist-default` · release build, unchanged
+this cycle · 2 cores of an AMD EPYC 9354P, 7 GB RAM · dumps `work/n1_post.json` (1399 — the
+artifact behind every figure published at `019c0a3`) → `work/c15_dump.json` (1056).
+
+**Nothing in detection changed.** The diff touches `benchmarks/` and documentation only; no path
+in the precision gate's `DETECTION_PATHS`, no `.rs` file, no rule TOML. `cargo build --release
+--workspace` recompiled nothing. What moved is which trees the harness hands to the scanner.
+
+### The two silent substitutions
+
+`scan_corpus.py` and `dump_findings.py` resolved `scan_hints.scan_paths` like this:
+
+```python
+for sp in scan_paths:
+    target = clone_path / sp if sp else clone_path
+    if target.exists():
+        resolved.append(target)
+if not resolved:
+    resolved = [clone_path]
+```
+
+A declared path that is not on disk was dropped. When **none** of a project's declared paths
+existed, the whole repository was scanned instead — and the result recorded `status: "ok"`.
+Separately, a project whose working tree was never checked out recorded zero findings, which is
+indistinguishable downstream from a project scanned in full that contains no cryptography.
+
+Censused against the clones on disk, before the repair:
+
+| | |
+|---|---|
+| manifest projects | 150 |
+| real clone directories (10 entries are symlinks) | 140 |
+| clones that are `--depth 1` | **149 of 150** |
+| pins that are not a commit in the repository they clone | **46** |
+| projects declaring `scan_paths` | 92 |
+| projects with at least one declared path not on disk | **15** |
+| of those 15, projects sitting at exactly the commit they pin | **9** |
+
+The last row is the one that matters most: those nine scopes were wrong when they were written,
+not stale since. `unboundid-ldapsdk` is an Ant project and has never had `src/main/java/`; the
+`crates-io` entry named `age` clones `str4d/age`, which is a Go repository containing no Rust and
+no `age/src/`.
+
+### What the widening was worth
+
+| | before | after |
+|---|---|---|
+| Findings, `--include-safe` | 1399 | **1056** |
+| Findings from the 135 projects whose scope was untouched | 1039 | **1039, row-for-row identical** |
+| Findings from the 15 projects whose scope was repaired | 360 | **17** |
+| `DEP-001` dependency-manifest findings | 131 | **13** |
+| `DEP-001` as a share of the corpus | 9.4 % | **1.2 %** |
+
+The row-for-row identity is the falsifier, not a remark: detection is byte-identical this cycle,
+so a project outside the 15 repaired cannot move, and `work/c15_precision.py` exits non-zero if
+one does. It did not.
+
+Four projects supplied the whole of the difference:
+
+| project | before | after | why |
+|---|---|---|---|
+| `crates-io:rustls-pemfile` | 140 | **0** | crate split back out of the rustls workspace upstream; the fallback scanned the entire workspace and recorded it as this project — a superset of the findings `crates-io:rustls` reports from the same clone, which `crates-io/rustls` symlinks to. Now declared `unscannable`. |
+| `maven:org.eclipse.jetty:jetty-server` | 119 | **1** | Jetty 12 moved the core modules under `jetty-core/`; the fallback scanned all of `jetty-ee8/9/10/11`, the demos and the test trees |
+| `maven:com.google.crypto.tink:tink` | 93 | **6** | Tink renamed `java/` to `java_src/`; the fallback scanned the C++, Go, Python and Bazel trees too |
+| `crypto-adjacent:…/sphincsplus` | 4 | **6** | repair in the other direction: `avx2/` never existed, and the AVX2 implementations are split per hash function (`sha2-avx2/`, `shake-avx2/`) |
+
+`DEP-001` reads a dependency manifest and is the near-100 %-correct-by-construction rule in the
+pack, so the widening was loading the audited population with the easiest findings we ship,
+gathered from the root `Cargo.toml` and `pom.xml` files the declared scopes were written to
+exclude.
+
+### Precision, recomputed on the population that now exists
+
+Same labels, same two-stratum estimator, same surviving-subset rule. The script reproduces the
+recorded 88.3 % and the published 90.9 % on the pre dump before it reports anything else, and
+does so at both figures exactly.
+
+| estimator | pre (1399) | post (1056) | delta |
+|---|---|---|---|
+| of record — stratum A held at its 87.1 % constant | 88.3 % | **88.6 %** | +0.4 pp |
+| corrected — stratum A read from its own labels | 90.9 % | **88.8 %** | **−2.1 pp** |
+
+**The published figure falls, and that is the finding.** 49 of stratum A's 150 labelled rows no
+longer resolve, because the trees they sat in left the corpus: 21 in `rustls-pemfile`, 17 in
+`jetty-server`, 11 in `tink`. **48 of the 49 are labelled TP** — the widened scans were finding
+real cryptography, they were just finding it in trees the corpus had declared it would not look
+at, and those trees are easier than the ones it declared. Stratum A's audited sample falls
+126 → 77 and its measured precision with it, 91.7 % → 87.5 %.
+
+| | stratum A | stratum B | weighted |
+|---|---|---|---|
+| findings | 462 | 594 | 1056 |
+| weight | 0.438 | 0.562 | |
+| audited | 77 | 88 | 165 |
+| TP / FP / DEPENDS | 63 / 9 / 5 | 79 / 9 / 0 | 142 / 18 / 5 |
+| precision | 87.5 % | 89.8 % | **88.8 % (95 % CI 83.9–93.7)** |
+
+The 5 `DEPENDS` rows are 3.0 % of the sample and are excluded from both sides. Scoring them all
+as false positives gives **86.3 %**; all as true positives, **89.1 %**.
+
+**This is a change of population, not a sample of it.** The dropped rows were not dropped at
+random — each was dropped exactly because its tree left the corpus — so 88.8 % and 90.9 % are
+comparable in their arithmetic and not in what they estimate. The honest statement is that the
+90.9 % published at `019c0a3` was measured over a population 24.5 % of which the corpus had
+declared out of scope.
+
+### Speed, re-taken on the scope that now exists
+
+`python3 scan_corpus.py --clones DIR --bin PATH --out results/ --include-safe`, one run,
+2026-08-29. **149 of 150 projects scanned in 230.0 s**, one recorded `unscannable`, none errored.
+Median **170 ms**, mean **1532 ms**, p90 **1.35 s**, max **111.0 s**; **132 of 150 finish in
+under a second**. `aws-sdk-go-v2` (111.0 s), `aws-sdk-go` (24.0 s) and `wolfssl` (17.4 s) are
+66.7 % of the wall-clock between them. `dump_findings.py` reached **1056** on the same binary,
+flags and corpus by independent count, agreeing with `scan_corpus.py` ecosystem by ecosystem.
+
+### Recall, unmoved
+
+**303 of 407 in-scope Go `crypto/*` call sites = 74.4 %**, whole-tree **303 of 1054 = 28.7 %**,
+constructors **301 of 325 = 92.6 %** — every figure identical to the one published at `019c0a3`.
+The four Go projects whose scopes were repaired (`consul`, `minio`, `moby`, `containerd`)
+contribute no findings and no in-scope ground-truth sites either way, so neither the numerator
+nor the denominator moved. Re-run with
+`python3 recall_check.py --clones DIR --dump results/all_findings.json`.
+
+### Three regression floors were holding the widening in place
+
+`regression_check.py` fails on this corpus with its old floors: `maven` 81 against a floor of
+292, `crates-io` 86 against 214, and rule `CRYPTO-560` 17 against 50. None is a detection
+regression. The corpus reported **79** `CRYPTO-560` sites and **62** of them were the rustls
+workspace counted a second time under the `rustls-pemfile` name, which symlinks to the same
+clone `crates-io:rustls` already scans. Every floor is re-taken at 5 % below this run, with the
+value it replaced kept beside it. Two of the old floors could not have failed at all —
+`crypto-adjacent` was floored at 6 against 200 observed, which is the shape of gate that let
+46 empty working trees pass for months. Re-run after the re-take: **12 of 12 floors met**, all
+12 printed as checked lines rather than inferred from an exit code.
+
+### What is fixed, and what is only now visible
+
+`corpus_integrity.py` censuses `(head_sha, files_scanned, bytes_scanned)` per project over
+exactly the paths the scanner walks, and `scan_corpus.py`, `dump_findings.py` and
+`recall_check.py` all refuse to emit a total when it fails. The 46 unreachable pins are re-pinned
+and the 15 broken scopes repaired, so the check passes 150/150 with one project recorded
+`unscannable`. Falsified before it was trusted: pointing one project's `scan_paths` at a
+directory that does not exist makes `corpus_integrity.py` exit 1 naming it `scope-missing`, and
+`dump_findings.py` exit 2 without writing an artifact.
+
+**Still open, and stated rather than fixed:** 149 of the 150 checkouts are `--depth 1`, so
+`clone_all.sh` on a fresh machine will not restore these pins either — it clones the tip of a
+moving default branch. `corpus_integrity.py` reports that as `off-sha` rather than letting it
+pass, which converts an invisible failure into a loud one; it does not make the corpus
+reproducible. `README.md` invites a third party to "verify the numbers yourself", and until the
+harness fetches the pinned sha directly that invitation is not one they can fully accept: they
+can reproduce these numbers on this corpus, but they cannot reconstruct this corpus from the
+manifest. The caveat is stated beside the invitation.
+
+**No `PRECISION:` line is emitted for this run.** The change touches no detection path, and the
+figure moved because the population changed, not because a sample of it did. `state/precision.json`
+still holds **88.3 %**, taken over a population 24.5 % of which this cycle removed; the estimator
+of record now reads **88.6 %** on the corpus that exists. Re-anchoring it is a human's decision.
