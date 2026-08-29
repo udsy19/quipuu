@@ -16,14 +16,14 @@ name = "quipuu"
 path = "src/main.rs"
 
 [dependencies]
-quipuu-core = { path = "../core" }
-quipuu-scan-source = { path = "../scan-source" }
-quipuu-scan-network = { path = "../scan-network" }
-quipuu-scan-certs = { path = "../scan-certs" }
-quipuu-scan-deps = { path = "../scan-deps" }
-quipuu-cbom = { path = "../cbom" }
-quipuu-report = { path = "../report" }
-quipuu-tui = { path = "../tui" }
+quipuu-core = { path = "../core", version = "0.1.0" }
+quipuu-scan-source = { path = "../scan-source", version = "0.1.0" }
+quipuu-scan-network = { path = "../scan-network", version = "0.1.0" }
+quipuu-scan-certs = { path = "../scan-certs", version = "0.1.0" }
+quipuu-scan-deps = { path = "../scan-deps", version = "0.1.0" }
+quipuu-cbom = { path = "../cbom", version = "0.1.0" }
+quipuu-report = { path = "../report", version = "0.1.0" }
+quipuu-tui = { path = "../tui", version = "0.1.0" }
 serde.workspace = true
 serde_json.workspace = true
 toml.workspace = true

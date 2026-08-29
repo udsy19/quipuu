@@ -12,7 +12,7 @@ categories.workspace = true
 description = "CycloneDX 1.6/1.7 CBOM emitter and validator for quipuu."
 
 [dependencies]
-quipuu-core = { path = "../core" }
+quipuu-core = { path = "../core", version = "0.1.0" }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
@@ -20,4 +20,4 @@ jsonschema.workspace = true
 uuid.workspace = true
 
 [dev-dependencies]
-quipuu-scan-source = { path = "../scan-source" }
+quipuu-scan-source = { path = "../scan-source", version = "0.1.0" }

@@ -12,8 +12,8 @@ categories.workspace = true
 description = "TLS network probe — enumerates supported groups, cipher suites, signature algorithms."
 
 [dependencies]
-quipuu-core = { path = "../core" }
-quipuu-scan-certs = { path = "../scan-certs" }
+quipuu-core = { path = "../core", version = "0.1.0" }
+quipuu-scan-certs = { path = "../scan-certs", version = "0.1.0" }
 serde.workspace = true
 thiserror.workspace = true
 rustls.workspace = true

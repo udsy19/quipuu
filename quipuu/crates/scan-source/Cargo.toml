@@ -12,7 +12,7 @@ categories.workspace = true
 description = "Tree-sitter-based source scanner for quipuu."
 
 [dependencies]
-quipuu-core = { path = "../core" }
+quipuu-core = { path = "../core", version = "0.1.0" }
 serde.workspace = true
 thiserror.workspace = true
 tree-sitter.workspace = true

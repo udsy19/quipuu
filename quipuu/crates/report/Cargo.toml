@@ -12,7 +12,7 @@ categories.workspace = true
 description = "HTML, SARIF 2.1.0, and JSON report emitters for quipuu."
 
 [dependencies]
-quipuu-core = { path = "../core" }
+quipuu-core = { path = "../core", version = "0.1.0" }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
@@ -21,4 +21,4 @@ askama = { workspace = true, features = ["derive"] }
 sha2.workspace = true
 
 [dev-dependencies]
-quipuu-scan-source = { path = "../scan-source" }
+quipuu-scan-source = { path = "../scan-source", version = "0.1.0" }

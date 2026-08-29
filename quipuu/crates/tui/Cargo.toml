@@ -12,8 +12,8 @@ categories.workspace = true
 description = "quipuu tui crate (scaffold)."
 
 [dependencies]
-quipuu-core = { path = "../core" }
-quipuu-cbom = { path = "../cbom" }
+quipuu-core = { path = "../core", version = "0.1.0" }
+quipuu-cbom = { path = "../cbom", version = "0.1.0" }
 serde.workspace = true
 thiserror.workspace = true
 ratatui.workspace = true
