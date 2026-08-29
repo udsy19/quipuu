@@ -15,9 +15,7 @@ This folder is the **single source of truth** for every load-bearing technical a
 | `05-x509-pqc/` | Full classical + PQC OID tables (RFC 9881, 9909, 9935), x509-parser coverage, SHA-1 cert deprecation. |
 | `06-hndl-threat-model/` | HNDL framings (NSA, NIST, ENISA, NCSC, M-23-02), Mosca's inequality, data-shelf-life taxonomy, the 5-axis QuantumRiskScore. |
 | `07-sarif/` | SARIF 2.1.0 minimum fields, GitHub/GitLab ingestion quirks, working example for a single finding. |
-| `08-competitors/` | IBM CBOMkit, cryptobom-forge, BF-CBOM, SandboxAQ, PANW, Qtonic, Zerberus, Acubed, CryptoScan/CSNP, foxguard. Wedge axes — confirmed vs. eroded. |
 | `09-regulatory/` | OMB M-23-02, NSM-10, CNSA 2.0, CISA, UK NCSC, EU CRA, NIS2, BSI, ANSSI, Australia ASD ISM-1917, India CERT-In BOM v2.0, PCI DSS, NYDFS — what's binding today. |
-| `10-design-partners/` | Cloudflare, Google, Apple PQ3 / iOS 26, AWS, Microsoft, Meta, IBM, Signal, JPMorgan PQC programs. Shortlist of who'd adopt quipuu. |
 | `11-decisions/` | The **decisions register** — 13 Why → Evidence → Decision entries that the build should follow. Start here. Also contains `verify-resolution.md` (5 follow-ups closed) and `data/` (operational TOML files quipuu ships with). |
 | `11-decisions/data/` | **The actual data files quipuu ships with** — `algorithm-table.toml` (67 algorithms), `oid-table.toml` (57 OIDs), `default-policy.toml` (NIST IR 8547 IPD defaults), `rules/go.toml`, `rules/python.toml`. All parse, all cross-references resolve. |
 | `sources/` | Canonical primary sources downloaded locally: CycloneDX schemas, official CBOM example, NIST FIPS 203/204/205 PDFs, NIST IR 8547 IPD PDF, SP 800-131A Rev 3 IPD PDF, CBOMkit detection rules, IANA TLS registries. |
@@ -42,9 +40,7 @@ This folder is the **single source of truth** for every load-bearing technical a
 | X.509 + PQC OIDs | RFC 9881 / 9909 / 9935 confirmed; composite drafts pending IANA | High for finalized, Medium for drafts |
 | HNDL framings | 5 primary-source agreements documented | High |
 | SARIF 2.1.0 | OASIS spec + GitHub/GitLab quirks documented | High |
-| Competitor landscape | 13 vendors surveyed; wedge re-evaluated | Medium-High (vendor pages are marketing fog) |
 | Regulatory drivers | 22 jurisdictions/regs reviewed; one binding hard deadline globally | High |
-| Design-partner shortlist | 11 enterprise/OSS programs surveyed | Medium (depends on public disclosures) |
 
 ## Outstanding work
 

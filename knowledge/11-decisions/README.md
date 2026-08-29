@@ -99,7 +99,7 @@ Every load-bearing build decision for quipuu, in **Why → Evidence → Decision
 
 ## D-07 — Detection-rule format: declarative TOML, two-layer (extract → classify)
 
-**Why:** Rules are the moat. The format must be human-editable, AST-aware, embeddable in the binary, AND let third parties extend without recompiling.
+**Why:** The rules are the part of the product a user is most likely to read and extend. The format must be human-editable, AST-aware, embeddable in the binary, AND let third parties extend without recompiling.
 
 **Evidence:**
 - `knowledge/03-detection-patterns`: cryptobom-forge's YAML rule layer is **classification only** (operates on extracted tuples). IBM Sonar-cryptography uses an in-code Java builder DSL — code, not data. CBOMkit's published rule schema (saved at `knowledge/sources/cryptobom-forge-cryptocheck_schema.json`) is the closest published prior art and is small (1.8 KB).
@@ -188,18 +188,18 @@ Severity bands: ≥75 Critical, 50–74 High, 25–49 Medium, 10–24 Low, <10 S
 
 ---
 
-## D-12 — Wedge framing: position on "the long tail", not "the cliff"
+## D-12 — Scope framing: the long tail, not the cliff
 
-**Why:** Browser PQC is *already deployed*. The "quantum cliff" narrative is partially closed and increasingly dated. We need positioning that survives the next news cycle.
+**Why:** Browser PQC is *already deployed*. The "quantum cliff" framing describes a problem that is partly solved, so it does not describe what this scanner is for. The scope decision has to name the half that is still open.
 
 **Evidence:**
 - Adoption telemetry: Cloudflare >50% of human web traffic PQC-encrypted Oct 2025; >65% April 2026. Chrome 131+, Firefox 132+, iOS 26 default-on. OpenSSL 3.5 (Apr 2025) ships native ML-KEM/ML-DSA/SLH-DSA.
 - Same source: signature migration (ECDSA, P-256 auth paths) is the universal **unsolved** problem. KEM is solved.
 - NIST NCCoE SP 1800-38B explicitly states *"no single product finds all vulnerable crypto."* (NCCoE SP 1800-38B).
 - Meta has the most sophisticated internal monitoring (FBCrypto + Crypto Visibility) and *admits* it misses shadow dependencies.
-- Competitive landscape: foxguard (Rust, source + TLS config + CBOM) is the closest open-source threat. None of {IBM CBOMkit, cryptobom-forge, SandboxAQ, PANW, QSecure, QuantumXC, Qtonic, Zerberus, Acubed, CryptoScan/CSNP} ship the full {source + net + cert + dep + risk + binary} bundle in one tool.
+- Tool landscape: existing scanners cover one or two of {source, net, cert, dep, risk, binary}. None surveyed covers all six in one pass, which is the same gap the NCCoE sentence names.
 
-**Decision:** Reposition the headline. Old: *"the nmap of cryptography"* (still unclaimed, keep as tagline). New thesis: **"Browsers solved the easy half. The other half — your internal services, your dependency tree, your certificates, your forgotten cron jobs — is where the long tail lives. quipuu finds it in one pass."** Lean on the NCCoE quote in marketing copy. Track foxguard.
+**Decision:** State the scope as the long tail, not the cliff: **"Browsers solved the easy half. The other half — your internal services, your dependency tree, your certificates, your forgotten cron jobs — is where the long tail lives. quipuu finds it in one pass."** This is what fixes the scanner's four modes at source, deps, certs and TLS rather than at source alone.
 
 ---
 
@@ -235,5 +235,5 @@ Severity bands: ≥75 Critical, 50–74 High, 25–49 Medium, 10–24 Low, <10 S
 | D-09 | x509-parser 0.18+ + ship our own PQC OID table | 05-x509-pqc |
 | D-10 | 5-axis additive QuantumRiskScore | 06-hndl-threat-model |
 | D-11 | SARIF defaults + SHA-256 partial-fingerprints | 07-sarif |
-| D-12 | Reposition: "long tail", not "cliff" | 10-design-partners |
-| D-13 | Rename — "quipuu" collides with existing tools | 08-competitors |
+| D-12 | Scope framing: "long tail", not "cliff" | 09-regulatory |
+| D-13 | Working name: keep "quipuu" (V-05) | verify-resolution.md |

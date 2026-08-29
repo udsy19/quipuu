@@ -37,9 +37,7 @@ This is the **log** of the research passes that informed the build. The actual r
 | 05 X.509 PQC | High | RFC 9881 / 9909 / 9935 confirmed; composite drafts flagged. |
 | 06 HNDL threat model | High | Primary-source agreements documented; Rufino 2025 limitation acknowledged. |
 | 07 SARIF | High | OASIS spec + GitHub/GitLab quirks documented; working example included. |
-| 08 Competitors | Medium-High | Marketing pages are fog; technical claims verified where possible. |
 | 09 Regulatory | High | 22 jurisdictions reviewed; only one binding hard deadline globally. |
-| 10 Design partners | Medium | Depends on public engineering disclosures. |
 
 ## Outstanding items
 
@@ -48,7 +46,7 @@ All initial `[VERIFY]` items resolved in `knowledge/11-decisions/verify-resoluti
 - ✅ MLKEM768 standalone IANA codepoint — registered (513).
 - ✅ `rustls-post-quantum` latest — 0.2.4 (2025-09-23, superseded by rustls core).
 - ✅ Composite ML-DSA codepoints — still TBD; pure ML-DSA/SLH-DSA registered.
-- ✅ foxguard walkthrough — confirmed 6/10 wedge axes hold; collaboration play identified.
+- ✅ foxguard walkthrough — no counterpart for the network, certificate, risk-scoring or IR 8547 modes.
 - ✅ Working name — `quipuu` available on crates.io, no real collision; keep.
 
 Standing watch item:

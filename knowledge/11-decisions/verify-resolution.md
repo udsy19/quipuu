@@ -73,7 +73,7 @@ All `Recommended: N` (drafts not yet RFC). Codepoints formally allocated.
 
 ## V-04 — foxguard direct feature walkthrough
 
-**Question (competitive landscape):** Direct feature-matrix walkthrough of foxguard's current GitHub head.
+**Question:** Which capabilities does foxguard, the nearest open-source Rust PQC-aware scanner, already have, and which of quipuu's planned modes have no counterpart there?
 
 **Source:** [github.com/0sec-labs/foxguard](https://github.com/0sec-labs/foxguard) README, fetched 2026-06-12. **267 stars.**
 
@@ -97,17 +97,9 @@ All `Recommended: N` (drafts not yet RFC). Codepoints formally allocated.
 | Distribution | single static binary (`cargo install foxguard`, install.sh) | same |
 | Open source | Yes | Yes |
 
-**Verdict — wedge holds, narrower than the original spec assumed:**
+**Answer:** foxguard is a SAST/SCA tool that includes PQC findings, not a CBOM-first tool. It is ahead on source-language breadth (11 vs 2 at v1) and has taint tracking, which v1 does not. It has no network probe, no X.509 scan, no HTML report, ordinal severity rather than a risk score, and no NIST IR 8547 mapping.
 
-- foxguard is **the** open-source Rust security scanner with PQC awareness. It is not a CBOM-first tool; it is a SAST/SCA tool that happens to include PQC findings. 267 stars suggests modest but real traction.
-- **Gaps quipuu fills cleanly:** network/TLS, X.509, auditor-grade HTML, risk scoring (vs ordinal severity), NIST IR 8547 mapping, CycloneDX 1.7.
-- **foxguard's strengths over us:** 11 languages (vs 2 at v1), taint tracking, existing momentum.
-
-**Strategic posture:** Don't compete on language coverage in v1 — foxguard has us there. Compete on (a) the **non-code estate** (network + certs + deps as first-class), (b) **report and risk-scoring quality**, (c) **CBOM 1.7 + round-trip compatibility with CBOMkit**. Marketing line: *"foxguard scans your code. quipuu scans your estate."*
-
-**One-line collaboration possibility:** foxguard outputs CycloneDX 1.6 CBOM; quipuu can **consume** that CBOM as one of its inputs (`--in-cbom foxguard-output.json`) and add the network/cert/risk layer on top. Day-one ecosystem play.
-
-Full feature matrix added; wedge axes re-confirmed.
+**Impact on the build:** the four modes with no counterpart here — network, certs, risk scoring, IR 8547 mapping — are the ones v1 has to get right, because they are the ones a reader cannot get from the nearest alternative. Language breadth is not a v1 goal. foxguard emits CycloneDX 1.6, so a `--in-cbom` input path would let its output be an input to the cert/network/risk layers; recorded as possible, not scheduled.
 
 ---
 
@@ -139,7 +131,7 @@ Full feature matrix added; wedge axes re-confirmed.
 | V-01 | MLKEM768 standalone in IANA registry? | YES (codepoints 512/513/514) | iana-tls-supported-groups.csv |
 | V-02 | rustls-post-quantum latest version? | 0.2.4 (2025-09-23, superseded by rustls core) | crates.io API |
 | V-03 | Composite ML-DSA TLS codepoints assigned? | NO (still TBD1–TBD15, draft -10) | datatracker.ietf.org |
-| V-04 | foxguard feature matrix? | Confirmed; wedge holds in 6/10 axes | github.com/0sec-labs/foxguard README |
+| V-04 | foxguard feature matrix? | Confirmed; no counterpart for net/cert/risk/IR-8547 | github.com/0sec-labs/foxguard README |
 | V-05 | Working name available? | YES — keeping quipuu | crates.io API + GitHub search |
 
 All `[VERIFY]` items now resolved. The build is unblocked.

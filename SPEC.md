@@ -307,5 +307,5 @@ After that, iterate per §12 (CBOM emitter → risk engine → HTML report → T
 | §7 CBOM | 01-cbom-schema | D-01, D-02, D-03 |
 | §8 SARIF | 07-sarif | D-11 |
 | §11 CLI | — | — |
-| Positioning | 08-competitors, 10-design-partners | D-12 |
-| Working name | 08-competitors | D-13 |
+| Scope framing | 11-decisions | D-12 |
+| Working name | 11-decisions | D-13 |
