@@ -3359,3 +3359,46 @@ tests, was 110 — `scans_python_pycryptodome_des` new, fixture
 floor check would spend ~6 minutes re-deriving a value the row-identity diff above already pins.
 The `--policy nsa-cnsa2` divergence still describes an earlier finding count; `scan-network` and
 `scan-certs` are untouched.
+
+## `#Y33`: liboqs stack-form C API gains coverage — 2026-08-29
+
+**Closed this cycle: `#Y33`.** liboqs ships crypto in two API generations: the "stack" form
+bakes the parameter set into the function name (`OQS_KEM_ml_kem_768_keypair`) and the "heap"
+form takes it as a runtime `OQS_{KEM,SIG}_alg_*` macro argument to `OQS_KEM_new`/`OQS_SIG_new`.
+Neither had a rule, so any liboqs caller using either generation produced zero findings.
+`cpp.toml` gains sixteen `[[classify]]` entries (`CPP-060..063`, `CRYPTO-460..471`) covering
+nine stack-form `C_CALLEE_APIS` rows per family (`ml_kem_{512,768,1024}` ×
+keypair/encaps/decaps, `ml_dsa_{44,65,87}` × keypair/sign/verify) plus the two heap-form rows,
+scoped to the six NIST-selected parameter sets per the standing rejection of the wider liboqs
+algorithm zoo and of `OQS_SIG_STFL_*` (stateful hash signatures, a firmware-signing population
+outside this project's scope).
+
+**Corpus effect: zero.** Full 150-project re-dump (`work/y33_new_post.json`, 1460 findings,
+149/150 projects scanned) against the last recorded state (`work/y34_post.json`'s 1460 findings
+once the already-diagnosed `crates-io:rustls-pemfile` harness-bug duplicate is excluded, per
+`#Y34`'s own note above), script `work/y33_precision.py`. Row-identity diff: **0 added, 0
+removed** — none of the sixteen new rule ids fire anywhere in the corpus, checked directly
+against the full post dump rather than inferred from the unchanged total. The reason is in the
+manifest, not the scanner: `benchmarks/corpus-b-realworld/ecosystems/crypto-adjacent/liboqs.toml`
+scopes the clone to `scan_hints.scan_paths = ["src/kem/", "src/sig/", "src/common/"]` and
+explicitly excludes `tests/` — and every `OQS_KEM_new`/`OQS_SIG_new`/stack-form call site in the
+liboqs clone lives under `tests/` (`tests/test_kem.c`, `tests/kat_sig.c`,
+`tests/example_sig.c:106`'s literal `OQS_SIG_new(OQS_SIG_alg_ml_dsa_65)`, etc.) — `src/kem/` and
+`src/sig/` hold the *implementations* the stack-form names identify, not calls to them. The three
+other liboqs-family corpus entries (`oqs-provider`, `liboqs-rust`, `liboqs-python`) wrap the C
+API through their own bindings and call neither the stack- nor heap-form C functions directly.
+Same shape this project's own `crypto/tls.Config.CurvePreferences` measurement already
+established: a real, correctly-scoped rule can measure zero on this corpus because the corpus's
+scan-path restrictions and binding layers, not the rule, determine what is visible — report the
+zero rather than read it as the rule not working. Not measurable on corpus B; the fixture tree
+(`tests/fixtures/cpp/crypto.c`, exercised by the four new `scan_test.rs` cases) is this rule
+family's instrument.
+
+**Precision: 96.78% → 96.78% (flat), `work/y33_precision.py`**, which asserts both dumps total
+1460 findings, asserts zero added/removed rows, and asserts zero hits on the sixteen new rule
+ids before printing anything — a coverage-only addition with nothing to (re)audit, the same
+shape cycle 23's `CurvePreferences` PQC arms took.
+
+**Held:** `cargo build --release --workspace` clean; `cargo test --workspace` all passing (115
+`scan-source` tests, was 111 — four new liboqs cases added against
+`tests/fixtures/cpp/crypto.c`).
