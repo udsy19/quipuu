@@ -3169,3 +3169,70 @@ from the diagnosis instead of rediscovering it.
 reverted in the same commit, not left half-wired). `every_classify_rule_targets_an_api_the_extractor_can_emit`
 and `classify_rules_never_publish_a_parameter_their_when_clause_contradicts` both re-checked green
 against the shipped Rust arm.
+
+## `#Y30` part (a): Go's own stdlib `crypto/mlkem` gains coverage — the zero-dependency path `circl` left invisible
+
+**The gap.** `ecosystem` cycle 10 probed `stdlib_pqc.go` (Go 1.24's `crypto/mlkem`, Go 1.27's
+`crypto/mldsa`) and found 0 of 4 stdlib PQC call sites detected, while the RSA control fired —
+a real miss. Reading `go.toml` directly confirmed the cause: `circl` — a third-party dependency
+requiring a `go.mod` change — has full `mldsa{44,65,87}`/`mlkem{512,768,1024}` coverage
+(`CRYPTO-070`–`078`), but the Go standard library's own zero-dependency ML-KEM package, which
+needs nothing beyond the Go 1.24 toolchain already installed, matched nothing at all. A reader of
+the commit history would reasonably conclude Go PQC key generation was covered; it was covered
+only for the higher-friction adoption path.
+
+**What shipped (part (a), the cheap half — `mldsa`'s nested-call-argument extraction is a
+distinct, more expensive mechanism, filed back to the backlog rather than bundled in).**
+`GO_CALLEE_APIS` (`scanner.rs`) gains six rows: `mlkem.GenerateKey768`/`GenerateKey1024`/
+`New{Encapsulation,Decapsulation}Key{768,1024}` → a new `crypto/mlkem.KeyOp` api. Unlike circl's
+per-parameter-set package layout, stdlib puts the parameter set in the function name (one
+`mlkem` package), so `match_go_callee` captures `args.fn` — the function name itself — the same
+way the existing `*.Op` apis capture it for messaging, except here the classify layer reads it
+to pick the algorithm id: `CRYPTO-092`/`093` match the `768$`/`1024$` suffix. Same commit: the
+`tls.MLKEM1024` `CurvePreferences` arm (`CRYPTO-047`) — Go 1.27's pure, non-hybrid ML-KEM-1024
+group — which needed no new mechanism, only an arm the existing extract query never had.
+
+**Corpus effect, full 150-project re-dump, pre- and post-change binaries, `--source --deps
+--include-safe`: 19 findings added, 0 removed, 0 reclassified.** All 19 hand-verified TP by
+opening the cited `file:line`:
+
+- `go-modules/golang.org/x/crypto/ssh/mlkem.go:34,109` — the `ssh` package's own
+  mlkem768+curve25519 hybrid key exchange (draft-kampanakis-curdle-ssh-pq-ke-05), real
+  `NewDecapsulationKey768`/`NewEncapsulationKey768` calls on live handshake material.
+- `crypto-adjacent/boringssl/ssl/test/runner/key_agreement.go:345,360,386,401` — the TLS test
+  runner's ML-KEM-768/1024 KEM implementation, real key generation and (de)capsulation, no
+  assertion requires any of these to fail.
+- `crypto-adjacent/tink-go/hybrid/internal/xwing/xwing.go:58,90` — Tink's X-Wing hybrid KEM
+  (ML-KEM-768 + X25519), real encapsulate/decapsulate.
+- `crypto-adjacent/tink-go/hybrid/internal/hpke/mlkem_kem.go:45,52,66,72` — Tink's HPKE
+  ML-KEM-768/1024 KEM adapter.
+- `crypto-adjacent/tink-go/hybrid/hpke/key.go:139,145,189,198` and
+  `public_key_manager_test.go:340,350` — key (de)serialization and construction from real key
+  material into a real ML-KEM key object; the test file's `t.Fatalf` on error is ordinary error
+  handling on the success path, not the "assertion requires this call to fail" shape this
+  project's own labelling rule scores FP.
+
+**All three reachable projects — `golang.org/x/crypto`, `boringssl`, `tink-go` — are in the
+restored stratum (`c11_stratumB.json`), not the held stratum**, so this is a genuinely *measured*
+movement, not the "held stratum cannot move" shape `#T2a`/the JOSE-dispatch/`#W1`/`#W3` cycles
+kept landing in. **Precision 96.39% → 96.52% (+0.125pp, `work/y32_precision.py`)**, which
+reproduces the anchored 96.39% from `state/precision.json` before computing anything else, then
+folds the 19 audited findings into stratum B (`264/9` → `283/9` of 798).
+
+**Recall not moved.** `recall_check.py`'s ground truth for `mlkem.GenerateKey768`/`GenerateKey1024`
+only matches those two literal function names, and the reachable `go-modules` site
+(`x/crypto/ssh/mlkem.go`) calls `New{En,De}capsulationKey768`, not `GenerateKey`, so in-scope Go
+recall stays 401/401 (100.0%) — unaffected, not regressed. The `New*Key` shapes are a real gap in
+the recall *instrument* now, not in detection; not fixed here, since expanding the ground-truth
+regex is the recall harness's scope, not this rule pack's.
+
+**Not shipped: `#Y30` part (b), `mldsa.GenerateKey(mldsa.MLDSA{44,65,87}())`.** The parameter set
+is a nested call expression passed as an argument, which no existing extract mechanism in any of
+the seven packs handles — `populate_args` would need a new arm resolving an argument node to the
+callee identifier of a nested `call_expression`. Priced separately per the backlog's own
+scope-splitting instruction; still open.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (108 `scan-source`
+tests, was 107 — `go_stdlib_mlkem_is_classified` new, `go_tls_hybrid_groups_are_classified`
+extended with the `tls.MLKEM1024` case).

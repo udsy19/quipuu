@@ -132,7 +132,8 @@ fn go_tls_hybrid_groups_are_classified() {
         ("CRYPTO-044", "x25519-mlkem768", 16),
         ("CRYPTO-045", "secp256r1-mlkem768", 17),
         ("CRYPTO-046", "secp384r1-mlkem1024", 18),
-        ("CRYPTO-048", "x25519-kyber768-draft00", 27),
+        ("CRYPTO-047", "ml-kem-1024", 19),
+        ("CRYPTO-048", "x25519-kyber768-draft00", 28),
     ] {
         let f = findings
             .iter()
@@ -152,9 +153,35 @@ fn go_tls_hybrid_groups_are_classified() {
     assert!(
         findings
             .iter()
-            .any(|f| f.rule_id == "CRYPTO-032" && f.location.line == Some(19)),
+            .any(|f| f.rule_id == "CRYPTO-032" && f.location.line == Some(20)),
         "tls.X25519 alongside the hybrids must still report CRYPTO-032",
     );
+}
+
+/// Go's own `crypto/mlkem` (stdlib, Go 1.24) — backlog `#Y30` part (a).
+/// `circl`'s third-party mlkem768/1024 packages already fire (`CRYPTO-076..078`
+/// above); before this, the zero-dependency stdlib package fired on nothing.
+#[test]
+fn go_stdlib_mlkem_is_classified() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let path = fixtures_root().join("go/stdlib_mlkem.go");
+    let findings = scanner.scan_path(&path).expect("scan succeeds");
+
+    for (rule, algorithm_id, line) in [
+        ("CRYPTO-092", "ml-kem-768", 11),
+        ("CRYPTO-093", "ml-kem-1024", 15),
+        ("CRYPTO-092", "ml-kem-768", 19),
+        ("CRYPTO-093", "ml-kem-1024", 23),
+    ] {
+        assert!(
+            findings.iter().any(|f| f.rule_id == rule
+                && f.algorithm_id == algorithm_id
+                && f.location.line == Some(line)),
+            "expected {rule}/{algorithm_id} at line {line} in stdlib_mlkem.go, got {:#?}",
+            findings,
+        );
+    }
 }
 
 #[test]

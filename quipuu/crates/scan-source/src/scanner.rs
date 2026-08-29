@@ -1072,6 +1072,19 @@ const GO_CALLEE_APIS: &[(&str, &str)] = &[
     // sets, disambiguated by the `id` argument rather than the package
     // name; see populate_args below for the capture.
     ("slhdsa.GenerateKey", "circl/sign/slhdsa.GenerateKey"),
+    // crypto/mlkem — Go's own stdlib ML-KEM (Go 1.24), zero-dependency next
+    // to circl's third-party equivalent above. Unlike circl's per-package-
+    // per-parameter-set layout, stdlib puts the parameter set in the
+    // function name (one "mlkem" package): GenerateKey768/1024 are key
+    // generation, New{Encapsulation,Decapsulation}Key768/1024 rebuild a key
+    // from an encoded seed/point — both are real key-establishment sites,
+    // not just the constructor. Backlog `#Y30` part (a).
+    ("mlkem.GenerateKey768", "crypto/mlkem.KeyOp"),
+    ("mlkem.GenerateKey1024", "crypto/mlkem.KeyOp"),
+    ("mlkem.NewDecapsulationKey768", "crypto/mlkem.KeyOp"),
+    ("mlkem.NewDecapsulationKey1024", "crypto/mlkem.KeyOp"),
+    ("mlkem.NewEncapsulationKey768", "crypto/mlkem.KeyOp"),
+    ("mlkem.NewEncapsulationKey1024", "crypto/mlkem.KeyOp"),
 ];
 
 /// Exact-match lookup in one of the callee → api tables.
@@ -1174,10 +1187,15 @@ fn match_go_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> 
     }
     // The *.Op apis have no parameter set to capture; the message names the
     // specific function called instead (Sign vs. VerifyASN1 vs. EncryptOAEP).
+    // `crypto/mlkem.KeyOp` is the odd one out: unlike the others, its `fn`
+    // capture IS the parameter set (768 vs. 1024 is baked into the function
+    // name, there being only one `mlkem` package), so the classify layer
+    // reads `args.fn` rather than a package name.
     if (api == "crypto/rsa.Op"
         || api == "crypto/ecdsa.Op"
         || api == "crypto/ed25519.Op"
-        || api == "crypto/dsa.Op")
+        || api == "crypto/dsa.Op"
+        || api == "crypto/mlkem.KeyOp")
         && let Some(fn_name) = callee.split('.').nth(1)
     {
         args.insert("fn".into(), ArgValue::Str(fn_name.into()));

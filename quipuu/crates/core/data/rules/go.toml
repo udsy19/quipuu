@@ -449,6 +449,17 @@ algorithm_id = "secp384r1-mlkem1024"
 severity_hint = "auto"
 message = "TLS group SecP384r1MLKEM1024 — hybrid secp384r1 + ML-KEM-1024 (FIPS 203). Meets the CNSA 2.0 ML-KEM parameter set."
 
+# Pure (non-hybrid) ML-KEM-1024 — new in Go 1.27, backlog #Y30's same-commit
+# fall-through. Same extract, no new classify mechanism: the group name was
+# simply missing from the arm list above.
+[[classify]]
+id = "CRYPTO-047"
+when.api = "^crypto/tls\\.Config\\.CurvePreferences$"
+when.args.curve = "MLKEM1024"
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "TLS group MLKEM1024 — pure ML-KEM-1024 (FIPS 203, non-hybrid, Go 1.27+). Migrated key-establishment config."
+
 [[classify]]
 id = "CRYPTO-048"
 when.api = "^crypto/tls\\.Config\\.CurvePreferences$"
@@ -846,6 +857,44 @@ when.args.pkg = "mlkem1024"
 algorithm_id = "ml-kem-1024"
 severity_hint = "auto"
 message = "circl ML-KEM-1024 key generation ({pkg}.{fn}) — FIPS 203, quantum-resistant."
+
+# crypto/mlkem — Go's own stdlib ML-KEM (Go 1.24), zero-dependency next to
+# circl above. Backlog #Y30 part (a): circl needs a go.mod change, stdlib
+# needs only the toolchain, and the lower-friction path was the one this
+# pack could not see. Unlike circl's per-parameter-set package, stdlib's
+# parameter set is baked into the function name (one "mlkem" package), so
+# the capture reads @fn, not @pkg. NewEncapsulationKey/NewDecapsulationKey
+# rebuild a key from an encoded seed/point — still a real key-establishment
+# site, listed alongside GenerateKey rather than left as a lower-value
+# deserialization-only gap.
+[[extract]]
+id = "GO-074"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "mlkem")
+    field: (field_identifier) @fn (#match? @fn "^(GenerateKey768|GenerateKey1024|NewDecapsulationKey768|NewDecapsulationKey1024|NewEncapsulationKey768|NewEncapsulationKey1024)$")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "crypto/mlkem.KeyOp"
+description = "ML-KEM (Go 1.24 crypto/mlkem stdlib) key generation and (de)serialization."
+
+[[classify]]
+id = "CRYPTO-092"
+when.api = "^crypto/mlkem\\.KeyOp$"
+when.args.fn = { regex = "768$" }
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "crypto/mlkem ML-KEM-768 ({fn}) — FIPS 203, quantum-resistant, Go stdlib (1.24+)."
+
+[[classify]]
+id = "CRYPTO-093"
+when.api = "^crypto/mlkem\\.KeyOp$"
+when.args.fn = { regex = "1024$" }
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "crypto/mlkem ML-KEM-1024 ({fn}) — FIPS 203, quantum-resistant, Go stdlib (1.24+)."
 
 [[extract]]
 id = "GO-073"

@@ -16,6 +16,7 @@ func migratedServer() *tls.Config {
 			tls.X25519MLKEM768,
 			tls.SecP256r1MLKEM768,
 			tls.SecP384r1MLKEM1024,
+			tls.MLKEM1024,
 			tls.X25519,
 		},
 	}
