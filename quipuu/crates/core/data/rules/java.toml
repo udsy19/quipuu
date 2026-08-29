@@ -237,6 +237,129 @@ algorithm_id = "ml-dsa-87"
 severity_hint = "auto"
 message = "KeyPairGenerator.getInstance('{algo}') — FIPS 204, quantum-resistant. Migrated signature call site."
 
+# --- PQC: FIPS 205, BouncyCastle's own JCA names (BC has no JDK-native ------
+# SLH-DSA provider; names read from bcgit/bc-java
+# prov/.../jcajce/provider/asymmetric/SLHDSA.java's Mappings class, not
+# guessed — see #Y21's sibling caution against unverified BC class/algorithm
+# names). Each parameter-set arm also accepts BC's "-WITH-<hash>" pre-hash
+# suffix (HashSLH-DSA variant): the suffix changes how the message is
+# digested before signing, not which of the twelve FIPS 205 parameter sets
+# is in use, so both spellings resolve to the same algorithm_id.
+[[classify]]
+id = "CRYPTO-770"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHA2-128S(-WITH-SHA256)?\"?$" }
+algorithm_id = "slh-dsa-sha2-128s"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-771"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHA2-128F(-WITH-SHA256)?\"?$" }
+algorithm_id = "slh-dsa-sha2-128f"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-772"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHA2-192S(-WITH-SHA512)?\"?$" }
+algorithm_id = "slh-dsa-sha2-192s"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-773"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHA2-192F(-WITH-SHA512)?\"?$" }
+algorithm_id = "slh-dsa-sha2-192f"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-774"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHA2-256S(-WITH-SHA512)?\"?$" }
+algorithm_id = "slh-dsa-sha2-256s"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-775"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHA2-256F(-WITH-SHA512)?\"?$" }
+algorithm_id = "slh-dsa-sha2-256f"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-776"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHAKE-128S(-WITH-SHAKE128)?\"?$" }
+algorithm_id = "slh-dsa-shake-128s"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-777"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHAKE-128F(-WITH-SHAKE128)?\"?$" }
+algorithm_id = "slh-dsa-shake-128f"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-778"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHAKE-192S(-WITH-SHAKE256)?\"?$" }
+algorithm_id = "slh-dsa-shake-192s"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-779"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHAKE-192F(-WITH-SHAKE256)?\"?$" }
+algorithm_id = "slh-dsa-shake-192f"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-780"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHAKE-256S(-WITH-SHAKE256)?\"?$" }
+algorithm_id = "slh-dsa-shake-256s"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-781"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHAKE-256F(-WITH-SHAKE256)?\"?$" }
+algorithm_id = "slh-dsa-shake-256f"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+# BC's two family-generic names ("SLH-DSA", "HASH-SLH-DSA") name no
+# parameter set at all — anchored so they cannot also match the
+# parameter-set-specific arms above (those all have extra trailing text).
+[[classify]]
+id = "CRYPTO-782"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA\"?$" }
+algorithm_id = "slh-dsa-unattributed"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 205, quantum-resistant, but the parameter set is not stated at this call site (BC's family-generic 'SLH-DSA' name)."
+
+[[classify]]
+id = "CRYPTO-783"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?HASH-SLH-DSA\"?$" }
+algorithm_id = "slh-dsa-unattributed"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — FIPS 205 pre-hash variant, quantum-resistant, but the parameter set is not stated at this call site (BC's family-generic 'HASH-SLH-DSA' name)."
+
 # `KeyPairGenerator.getInstance(keyType)` with `keyType` a variable (netty's
 # `pkitesting/Algorithms.java` is the corpus's own example) matches none of
 # CRYPTO-210..223 above — none of their regexes match the variable's
@@ -864,6 +987,123 @@ when.args.algo = { regex = "(?i)^\"?ML-DSA-87\"?$" }
 algorithm_id = "ml-dsa-87"
 severity_hint = "auto"
 message = "Signature.getInstance('{algo}') — FIPS 204, quantum-resistant. Migrated signature call site."
+
+# --- PQC: FIPS 205, BouncyCastle's own JCA names (same source and same -----
+# WITH-<hash> pre-hash suffix handling as the KeyPairGenerator arms above;
+# see that block's comment for why the names are trusted).
+[[classify]]
+id = "CRYPTO-784"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHA2-128S(-WITH-SHA256)?\"?$" }
+algorithm_id = "slh-dsa-sha2-128s"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-785"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHA2-128F(-WITH-SHA256)?\"?$" }
+algorithm_id = "slh-dsa-sha2-128f"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-786"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHA2-192S(-WITH-SHA512)?\"?$" }
+algorithm_id = "slh-dsa-sha2-192s"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-787"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHA2-192F(-WITH-SHA512)?\"?$" }
+algorithm_id = "slh-dsa-sha2-192f"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-788"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHA2-256S(-WITH-SHA512)?\"?$" }
+algorithm_id = "slh-dsa-sha2-256s"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-789"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHA2-256F(-WITH-SHA512)?\"?$" }
+algorithm_id = "slh-dsa-sha2-256f"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-790"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHAKE-128S(-WITH-SHAKE128)?\"?$" }
+algorithm_id = "slh-dsa-shake-128s"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-791"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHAKE-128F(-WITH-SHAKE128)?\"?$" }
+algorithm_id = "slh-dsa-shake-128f"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-792"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHAKE-192S(-WITH-SHAKE256)?\"?$" }
+algorithm_id = "slh-dsa-shake-192s"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-793"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHAKE-192F(-WITH-SHAKE256)?\"?$" }
+algorithm_id = "slh-dsa-shake-192f"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-794"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHAKE-256S(-WITH-SHAKE256)?\"?$" }
+algorithm_id = "slh-dsa-shake-256s"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-795"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-DSA-SHAKE-256F(-WITH-SHAKE256)?\"?$" }
+algorithm_id = "slh-dsa-shake-256f"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 205, quantum-resistant. Migrated signature call site."
+
+# BC's two family-generic names, plus the two aliases it registers only for
+# Signature ("SLHDSA" -> "SLH-DSA", "HASHWITHSLHDSA" -> "HASH-SLH-DSA").
+[[classify]]
+id = "CRYPTO-796"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SLH-?DSA\"?$" }
+algorithm_id = "slh-dsa-unattributed"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 205, quantum-resistant, but the parameter set is not stated at this call site (BC's family-generic 'SLH-DSA' name)."
+
+[[classify]]
+id = "CRYPTO-797"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?HASH-?(WITH-?)?SLH-?DSA\"?$" }
+algorithm_id = "slh-dsa-unattributed"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — FIPS 205 pre-hash variant, quantum-resistant, but the parameter set is not stated at this call site (BC's family-generic 'HASH-SLH-DSA' name)."
 
 # `Signature.getInstance(algorithmIdentifier)` with a variable argument (the
 # same netty `pkitesting/Algorithms.java` call site as CRYPTO-234's

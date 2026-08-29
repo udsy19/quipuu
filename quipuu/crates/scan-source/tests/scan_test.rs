@@ -379,6 +379,9 @@ fn scans_java_pqc_keypairgenerator_and_signature_and_kem() {
         ("CRYPTO-219", "ml-dsa-65"),  // KeyPairGenerator.getInstance("ML-DSA-65")
         ("CRYPTO-225", "ml-dsa-65"),  // Signature.getInstance("ML-DSA-65")
         ("CRYPTO-228", "ml-kem-768"), // KEM.getInstance("ML-KEM-768")
+        ("CRYPTO-770", "slh-dsa-sha2-128s"), // KeyPairGenerator.getInstance("SLH-DSA-SHA2-128S", "BC")
+        ("CRYPTO-782", "slh-dsa-unattributed"), // KeyPairGenerator.getInstance("SLH-DSA", "BC")
+        ("CRYPTO-790", "slh-dsa-shake-128s"), // Signature.getInstance("SLH-DSA-SHAKE-128S", "BC")
     ];
     for (rule_id, algorithm_id) in want {
         assert!(

@@ -26,4 +26,19 @@ public class Pqc {
     public static void kem() throws Exception {
         KEM kem = KEM.getInstance("ML-KEM-768");
     }
+
+    // JAV-010 / CRYPTO-770 — SLH-DSA-SHA2-128S keypair generation (BouncyCastle)
+    public static void slhDsaKeypair() throws Exception {
+        KeyPairGenerator g = KeyPairGenerator.getInstance("SLH-DSA-SHA2-128S", "BC");
+    }
+
+    // JAV-010 / CRYPTO-782 — SLH-DSA family-generic name, no parameter set stated
+    public static void slhDsaKeypairUnattributed() throws Exception {
+        KeyPairGenerator g = KeyPairGenerator.getInstance("SLH-DSA", "BC");
+    }
+
+    // JAV-090 / CRYPTO-790 — SLH-DSA-SHAKE-128S signature
+    public static void slhDsaSignature() throws Exception {
+        Signature s = Signature.getInstance("SLH-DSA-SHAKE-128S", "BC");
+    }
 }

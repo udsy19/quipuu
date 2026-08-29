@@ -2859,3 +2859,63 @@ test). `every_probe_group_algorithm_id_is_a_key_exchange_primitive`,
 new sentinel row. The pinned P2 (network-disabled error) and P4 (rejects code execution)
 invariant tests are untouched and pass; P1–P4 are unaffected — the diff changes which identity
 a network finding asserts, not whether or when a network probe runs.
+
+## `#Y8`'s third arm — BouncyCastle's SLH-DSA JCA names, read from source before writing the regex
+
+**What was missing.** `#Y8`'s first two arms (`91fde60`, `1961ffb`) taught `JAV-010`
+(`KeyPairGenerator.getInstance`) and `JAV-090` (`Signature.getInstance`) the JDK-native
+ML-KEM/ML-DSA names; the third — BouncyCastle's SLH-DSA (FIPS 205) family, the JDK's own
+`java.security` provider has no SLH-DSA implementation at all — was explicitly deferred both
+times: *"its exact JCA algorithm-name spelling was not read from BC's source or javadoc this
+cycle, and per `#Y21`'s sibling caution … a classify regex should not target an unverified
+name."*
+
+**The names, read from the primary source, not guessed.** `#Y21` named the risk directly: a
+web-search summary of BC's C# class names could not be verified and was left blocked rather
+than shipped. For this arm, `gh api` reached `bcgit/bc-java` directly —
+`prov/src/main/java/org/bouncycastle/jcajce/provider/asymmetric/SLHDSA.java`'s `Mappings`
+class is the provider registration itself, not a description of it. It registers two
+family-generic names (`SLH-DSA`, `HASH-SLH-DSA`, the latter for the pre-hash variant), twelve
+parameter-set names (`SLH-DSA-{SHA2,SHAKE}-{128,192,256}{S,F}`), and twelve more
+`-WITH-<hash>` pre-hash variants of those same twelve parameter sets — identical for
+`KeyPairGenerator` and `Signature`, except two aliases (`SLHDSA`, `HASHWITHSLHDSA`) BC
+registers only under `Signature`.
+
+**Fix.** `java.toml` gains 28 classify arms (`CRYPTO-770`–`797`, 14 on each of `JAV-010` and
+`JAV-090`): twelve match a parameter-set name with its optional `-WITH-<hash>` suffix folded
+into the same regex — the suffix changes how the message is pre-hashed, not which of the
+twelve FIPS 205 parameter sets is in use, so both spellings resolve to the same
+`algorithm_id` — and two match the family-generic names to the existing `slh-dsa-unattributed`
+sentinel (already in `algorithm-table.toml` from the Go `circl` rules; no new algorithm-table
+row). All twelve parameter-set `algorithm_id`s already exist from the same source. Placed
+before `CRYPTO-234`/`235` (the non-literal fallback), matching every other arm's ordering.
+
+**Verified against a planted probe, not just read.** `KeyPairGenerator.getInstance("SLH-DSA-SHA2-128S")`,
+`("SLH-DSA-SHAKE-256F-WITH-SHAKE256")`, `("SLH-DSA")`, `("HASH-SLH-DSA")` and the `Signature`
+equivalents plus both aliases (`"SLHDSA"`, `"HASHWITHSLHDSA"`) — all 8 fire the correct rule
+and `algorithm_id`. Promoted three of these to `tests/fixtures/java/Pqc.java` and
+`scans_java_pqc_keypairgenerator_and_signature_and_kem` (104 `scan-source` tests, was 101).
+
+**Corpus effect: 0, verified structurally rather than assumed from `#Y8`'s prior null
+result.** A script walked every maven project's declared `scan_hints.scan_paths` (respecting
+`exclude_paths`, matching `corpus_integrity.resolve_scan_paths`'s own semantics) and grepped
+for `getInstance("SLH-DSA...` / `"HASH-SLH-DSA...` / `"SLHDSA"` / `"HASHWITHSLHDSA"` — zero
+hits anywhere in scope. `bcpkix-jdk18on` and `bcprov-jdk18on` (BC's own libraries, the only
+two corpus projects with real SLH-DSA call sites at all) call it only from `pkix/src/test/`,
+`tls/`, and `prov/src/test/` — every one of those paths is outside the declared scan scope.
+Confirmed rather than assumed: a fresh full-corpus `dump_findings.py` run (`work/y29_post.json`,
+1377 findings) is **byte-identical** to the pre-change dump (`work/scannet_fix_post.json`,
+1377) on `(project, rule_id, algorithm_id, file, line, message)` — 0 removed, 0 added, 0
+reclassified. **Precision: 96.2% → 96.2% (95% CI 94.5–97.9), unmoved** — same labelled set.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets --release -- -D warnings` clean; `cargo test --workspace` all passing (3 new
+assertions in the existing PQC fixture test, 0 new test functions).
+`classify_rules_never_publish_a_parameter_their_when_clause_contradicts` and
+`every_classify_rule_targets_an_api_the_extractor_can_emit` both re-checked green against all
+28 new arms. `regression_check.py` not re-run — the dump is asserted byte-identical to the
+prior one, which is a stronger claim than any floor it checks.
+
+**`#Y8` is now closed — all three arms landed.** `#Y21` (BC's C# PQC classes) remains open and
+blocked on the same class of primary-source read this entry just performed for Java, not yet
+attempted for `bc-csharp`.
