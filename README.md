@@ -214,7 +214,7 @@ not the machine named above, and `BENCHMARKING_RESULTS.md` reported the same run
 claiming the scanner got 16× slower; we are retracting a number that described 141 projects,
 under one flag set, on an unnamed machine, and presenting one that names all three.
 
-Audit-validated precision: **96.52%** (95% CI: 94.9%–98.1%) — measured 2026-08-29 on **517 audited findings** out of 1419, every one labelled by opening its cited `file:line`. Methodology, the full label set and per-finding verdicts are in `BENCHMARKING_RESULTS.md`, `PRECISION_AUDIT_V4.md` and `PRECISION_AUDIT_V3.md`.
+Audit-validated precision: **96.78%** (95% CI: 95.3%–98.2%) — measured 2026-08-29 on **558 audited findings** out of 1460, every one labelled by opening its cited `file:line`. Methodology, the full label set and per-finding verdicts are in `BENCHMARKING_RESULTS.md`, `PRECISION_AUDIT_V4.md` and `PRECISION_AUDIT_V3.md`.
 
 **Coverage was added the same day with no change to this figure.** `circl` — Go's own PQC library, and the only place in the 150-project corpus that calls ML-DSA/ML-KEM/SLH-DSA directly — previously matched zero rules in any pack. `go.toml` gained rules for `circl`'s `mldsa{44,65,87}` and `mlkem{512,768,1024}` packages (the parameter set is which package is imported, not an argument) and `slhdsa.GenerateKey`'s `id` argument (one package, twelve parameter sets). 6 new findings, all hand-verified true positive, entirely inside `circl`'s own tree — no other corpus project imports these packages. Full accounting in `BENCHMARKING_RESULTS.md`, "circl (Go's own PQC library) gains its own rules."
 
@@ -309,12 +309,12 @@ quipuu scan .
 | HNDL flagging | Yes (certificate key establishment; scope stated under Output formats) | No | No | No | No |
 | Local-only, no account | Yes | No (SaaS) | No (SaaS) | Partial | Partial |
 | Single binary | Yes | No | No | No | No |
-| CycloneDX 1.7 CBOM | Yes | No | No | Yes | No |
+| CycloneDX 1.7 CBOM | Yes | No | No | No | No |
 | SARIF output | Yes | Yes | Yes | No | Yes |
 | MCP server | Yes | No | No | No | No |
 | Auditable open rule format | Yes (TOML) | No (binary) | Yes (QL) | No | Yes (YAML) |
 | Languages (crypto-specific) | 7 | 7+ | 7+ | Java only | Any |
-| Published precision (crypto findings) | 96.52% (517 audited rows, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
+| Published precision (crypto findings) | 96.78% (558 audited rows, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
 | Published recall | 100.0% (Go stdlib, 401/401 in-scope sites) | Not published | Not published | Not published | Not published |
 | Scan speed | 170ms median project; 230s for the 150-project corpus (2 cores) | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
 
