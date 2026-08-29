@@ -2263,6 +2263,18 @@ const CSHARP_CTOR_APIS: &[(&str, &str)] = &[
         "MLDsaKeyGenerationParameters",
         "Org.BouncyCastle.Crypto.Parameters.MLDsaKeyGenerationParameters.new",
     ),
+    (
+        "MLKemEncapsulator",
+        "Org.BouncyCastle.Crypto.Kems.MLKemEncapsulator.new",
+    ),
+    (
+        "MLKemDecapsulator",
+        "Org.BouncyCastle.Crypto.Kems.MLKemDecapsulator.new",
+    ),
+    (
+        "MLDsaSigner",
+        "Org.BouncyCastle.Crypto.Signers.MLDsaSigner.new",
+    ),
 ];
 
 fn match_csharp_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
@@ -2412,6 +2424,23 @@ fn populate_args(
             // variable is always possible, so this can legitimately capture
             // nothing.
             if let Some(paramset) = nth_csharp_arg_member_access_name(args_node, 1, source) {
+                out.insert("paramset".into(), ArgValue::Str(paramset));
+            }
+        }
+        (
+            Language::CSharp,
+            "Org.BouncyCastle.Crypto.Kems.MLKemEncapsulator.new"
+            | "Org.BouncyCastle.Crypto.Kems.MLKemDecapsulator.new"
+            | "Org.BouncyCastle.Crypto.Signers.MLDsaSigner.new",
+        ) => {
+            // new MLKemEncapsulator(MLKemParameters.ml_kem_768)
+            // new MLKemDecapsulator(MLKemParameters.ml_kem_768)
+            // new MLDsaSigner(MLDsaParameters.ml_dsa_65, false)
+            // — arg 0 is the sole parameters argument in every constructor
+            // (bc-csharp's crypto/src/crypto/{kems,signers}/ read directly,
+            // not assumed from the keygen shape above); an OID-lookup
+            // overload or a variable can still capture nothing.
+            if let Some(paramset) = nth_csharp_arg_member_access_name(args_node, 0, source) {
                 out.insert("paramset".into(), ArgValue::Str(paramset));
             }
         }

@@ -1,7 +1,9 @@
 // Fixture: BouncyCastle.Cryptography ML-KEM / ML-DSA calls (release-2.7.0+),
 // quipuu scanner tests.
 using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto.Kems;
 using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Crypto.Signers;
 using Org.BouncyCastle.Security;
 
 public class PqcFixture
@@ -40,5 +42,26 @@ public class PqcFixture
         var generator = new MLDsaKeyPairGenerator();
         generator.Init(new MLDsaKeyGenerationParameters(random, MLDsaParameters.ml_dsa_87_with_sha512));
         var keyPair = generator.GenerateKeyPair();
+    }
+
+    // CSH-055 / CRYPTO-827 — ML-KEM-768 encapsulation, operation site
+    public static void MlKemEncapsulate(MLKemPublicKeyParameters pub)
+    {
+        var encapsulator = new MLKemEncapsulator(MLKemParameters.ml_kem_768);
+        encapsulator.Init(pub);
+    }
+
+    // CSH-056 / CRYPTO-830 — ML-KEM-512 decapsulation, operation site
+    public static void MlKemDecapsulate(MLKemPrivateKeyParameters priv)
+    {
+        var decapsulator = new MLKemDecapsulator(MLKemParameters.ml_kem_512);
+        decapsulator.Init(priv);
+    }
+
+    // CSH-057 / CRYPTO-836 — ML-DSA-87 sign/verify, operation site
+    public static void MlDsaSignVerify(MLDsaPrivateKeyParameters priv)
+    {
+        var signer = new MLDsaSigner(MLDsaParameters.ml_dsa_87, false);
+        signer.Init(true, priv);
     }
 }

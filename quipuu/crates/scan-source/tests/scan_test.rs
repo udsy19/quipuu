@@ -1171,6 +1171,9 @@ fn scans_csharp_bouncycastle_mlkem_and_mldsa() {
         ("CRYPTO-664", "ml-kem-unattributed"), // parameter set read from a variable
         ("CRYPTO-666", "ml-dsa-65"), // new MLDsaKeyGenerationParameters(random, MLDsaParameters.ml_dsa_65)
         ("CRYPTO-667", "ml-dsa-87"), // MLDsaParameters.ml_dsa_87_with_sha512 — same parameter set, pre-hashed
+        ("CRYPTO-827", "ml-kem-768"), // new MLKemEncapsulator(MLKemParameters.ml_kem_768)
+        ("CRYPTO-830", "ml-kem-512"), // new MLKemDecapsulator(MLKemParameters.ml_kem_512)
+        ("CRYPTO-836", "ml-dsa-87"), // new MLDsaSigner(MLDsaParameters.ml_dsa_87, false)
     ];
     for (rule_id, algorithm_id) in want {
         assert!(
