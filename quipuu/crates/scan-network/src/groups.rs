@@ -40,17 +40,22 @@ pub fn builtin_groups() -> Vec<ProbeGroup> {
             legacy: false,
             kx_group: Some(kx_group::X25519),
         },
+        // NamedGroup entries come from the TLS `supported_groups` extension,
+        // which negotiates key exchange only — never a signature algorithm.
+        // Do not "fix" these back to `ecdsa-*`: that id is `primitive =
+        // "signature"` in the algorithm table and asserts a capability this
+        // probe never observes.
         ProbeGroup {
             codepoint: 0x0017,
             name: "secp256r1",
-            algorithm_id: "ecdsa-p256",
+            algorithm_id: "ecdh-p256",
             legacy: false,
             kx_group: Some(kx_group::SECP256R1),
         },
         ProbeGroup {
             codepoint: 0x0018,
             name: "secp384r1",
-            algorithm_id: "ecdsa-p384",
+            algorithm_id: "ecdh-p384",
             legacy: false,
             kx_group: Some(kx_group::SECP384R1),
         },
@@ -59,7 +64,7 @@ pub fn builtin_groups() -> Vec<ProbeGroup> {
         ProbeGroup {
             codepoint: 0x0019,
             name: "secp521r1",
-            algorithm_id: "ecdsa-p521",
+            algorithm_id: "ecdh-p521",
             legacy: false,
             kx_group: None,
         },
@@ -122,4 +127,47 @@ pub fn builtin_groups() -> Vec<ProbeGroup> {
             kx_group: None,
         },
     ]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use quipuu_core::{AlgorithmTable, Primitive};
+
+    /// A `NamedGroup` is always a key-exchange mechanism, never a signature
+    /// algorithm — the TLS `supported_groups` extension and the
+    /// `signature_algorithms` extension are disjoint. Every `algorithm_id`
+    /// this module attributes a probe to must resolve in the algorithm table
+    /// and carry a primitive consistent with that: key agreement, KEM, or a
+    /// hybrid combiner. Catches the `ecdsa-p256`-for-`secp256r1` mislabel
+    /// class if it recurs.
+    #[test]
+    fn every_probe_group_algorithm_id_is_a_key_exchange_primitive() {
+        let algorithms = AlgorithmTable::from_builtin().expect("builtin algorithm table loads");
+        for group in builtin_groups() {
+            let record = algorithms.get(group.algorithm_id).unwrap_or_else(|| {
+                panic!(
+                    "ProbeGroup {} attributes to unknown algorithm id `{}`",
+                    group.name, group.algorithm_id
+                )
+            });
+            let primitive = record.primitive.unwrap_or_else(|| {
+                panic!(
+                    "ProbeGroup {} (`{}`) has no primitive in the algorithm table",
+                    group.name, group.algorithm_id
+                )
+            });
+            assert!(
+                matches!(
+                    primitive,
+                    Primitive::KeyAgree | Primitive::Kem | Primitive::Combiner
+                ),
+                "ProbeGroup {} (`{}`) has primitive {:?}, not a key-exchange primitive — \
+                 a TLS supported group can never be a signature algorithm",
+                group.name,
+                group.algorithm_id,
+                primitive
+            );
+        }
+    }
 }

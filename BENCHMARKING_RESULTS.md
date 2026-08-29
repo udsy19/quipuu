@@ -2175,3 +2175,36 @@ site that already resolved a literal argument, and neither adds new extraction w
 same `bits`/`curve_fn` captures GO-001/GO-010 already compute). Go line-exact recall unmoved: the
 fix subtracts nothing and the recall instrument counts constructor sites the extractor reaches at
 all, which was already true before this fix (it counted the call site, just under no algorithm id).
+
+## A TLS `supported_groups` entry is a key-exchange group, not a signature — 2026-08-29 (`#T2a`)
+
+`crates/scan-network/src/groups.rs` mapped the classical EC groups it probes — `secp256r1`,
+`secp384r1`, `secp521r1` — to `algorithm_id`s `ecdsa-p256`/`ecdsa-p384`/`ecdsa-p521`. Those ids
+carry `primitive = "signature"` in the algorithm table (`algorithm-table.toml:323-350`); the
+correctly-shaped `ecdh-p256`/`ecdh-p384`/`ecdh-p521` rows (`primitive = "key-agree"`) already
+existed and were unreferenced by any emitter. A live TLS handshake that only ever negotiated key
+exchange was reported and CBOM'd as a signature algorithm — the same wrong-finding-on-a-real-line
+class the `#S1`/`#T2b` fixes closed elsewhere, in a third crate.
+
+**Fix: three `algorithm_id` string edits, a comment explaining why they must not be reverted, and
+a new invariant test.** `groups::tests::every_probe_group_algorithm_id_is_a_key_exchange_primitive`
+loads the builtin algorithm table and asserts every `ProbeGroup`'s `algorithm_id` resolves to a
+record whose `primitive` is `key-agree`, `kem`, or `combiner` — the only primitives a TLS
+`NamedGroup` can ever be. Verified it fails by reintroducing the old `ecdsa-p256` mapping
+(`primitive: Signature` panic), then restored the fix.
+
+**Corpus-B effect: none, and it is architecturally unreachable to be otherwise.**
+`scan-network`'s probe table is only exercised by `--net`/`--allow-network`; `dump_findings.py`
+runs `--source --deps` only (`scan_corpus.py:29`, `dump_findings.py:121-122`), so `groups.rs` is
+dead code on the corpus-B path. Re-ran the full 150-project dump on the rebuilt binary anyway
+rather than asserting the null result: **1085 → 1085 findings, 0 added, 0 removed**, every
+`(project, rule_id, file, line, algorithm_id, severity)` tuple identical to the pre-fix dump
+(`work/y3_dump.json` vs `work/net_fix_dump.json`). **Precision unchanged at 90.4 % (95 % CI
+86.2–94.6)** — the currently-anchored figure, reproduced rather than reasserted.
+
+**What this fix does not do, said out loud:** it does not make any PQC group probeable — all six
+ML-KEM/hybrid groups still report `kx_group: None` (`ring` has no ML-KEM kx group; the
+`aws-lc-rs` provider swap that would fix that is `#Y5`, a separate `needs-human-approval` item).
+It only stops the classical groups from asserting a primitive they never exercised. No live-host
+verification was run this cycle (no `--allow-network` target was authorized); the fix is verified
+statically, against the algorithm table, which is sufficient for the defect it closes.
