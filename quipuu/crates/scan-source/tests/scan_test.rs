@@ -425,6 +425,50 @@ fn scans_java_pqc_keypairgenerator_and_signature_and_kem() {
 }
 
 #[test]
+fn scans_java_bouncycastle_lightweight_pqc_classes() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/BcLightweight.java"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-230", "rsa-unattributed"), // new RSAKeyPairGenerator() — classical control
+        ("CRYPTO-811", "ml-kem-unattributed"), // new MLKEMKeyPairGenerator()
+        ("CRYPTO-812", "ml-dsa-unattributed"), // new MLDSAKeyPairGenerator()
+        ("CRYPTO-813", "slh-dsa-unattributed"), // new SLHDSAKeyPairGenerator()
+        ("CRYPTO-814", "ml-kem-unattributed"), // new MLKEMGenerator(null)
+        ("CRYPTO-815", "ml-kem-unattributed"), // new MLKEMExtractor(null)
+        ("CRYPTO-816", "ml-dsa-unattributed"), // new MLDSASigner()
+        ("CRYPTO-817", "slh-dsa-unattributed"), // new SLHDSASigner()
+        ("CRYPTO-818", "ml-dsa-unattributed"), // new HashMLDSASigner()
+        ("CRYPTO-819", "slh-dsa-unattributed"), // new HashSLHDSASigner()
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in BC lightweight-API fixture; findings: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+    assert_eq!(
+        findings.len(),
+        want.len(),
+        "expected exactly {} findings (one per class instantiation), got {:#?}",
+        want.len(),
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
 fn scans_java_ssl_parameters_set_named_groups() {
     let b = load_builtins().unwrap();
     let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");

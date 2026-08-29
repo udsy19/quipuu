@@ -485,7 +485,7 @@ id = "JAV-030"
 language = "java"
 query = """
 (object_creation_expression
-  type: (type_identifier) @cls (#match? @cls "^(RSAKeyPairGenerator|AESEngine|GCMBlockCipher|BouncyCastleProvider)$"))
+  type: (type_identifier) @cls (#match? @cls "^(RSAKeyPairGenerator|AESEngine|GCMBlockCipher|BouncyCastleProvider|MLKEMKeyPairGenerator|MLDSAKeyPairGenerator|SLHDSAKeyPairGenerator|MLKEMGenerator|MLKEMExtractor|MLDSASigner|SLHDSASigner|HashMLDSASigner|HashSLHDSASigner)$"))
 """
 captures = { cls = "ident" }
 api = "org.bouncycastle.{cls}"
@@ -518,6 +518,76 @@ when.api = "^org\\.bouncycastle\\.BouncyCastleProvider$"
 algorithm_id = "crypto-provider-registration"
 severity_hint = "low"
 message = "BouncyCastle provider registered. This selects an implementation, not an algorithm — it names none. Inventory all BC API usages reachable from here."
+
+# BC's lightweight-API PQC classes (org.bouncycastle.crypto.* since 2026-04,
+# org.bouncycastle.pqc.crypto.* before it — the bare class name is the same
+# in both locations, so this rule reads unchanged across the relocation).
+# None of the nine take a parameter set as a constructor literal — it is
+# supplied at runtime via a KeyGenerationParameters object passed to init()
+# — so every arm degrades to the family sentinel, the same shape the JCA
+# KeyPairGenerator/KEM fallbacks above use for a non-literal argument.
+[[classify]]
+id = "CRYPTO-811"
+when.api = "^org\\.bouncycastle\\.MLKEMKeyPairGenerator$"
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "BouncyCastle MLKEMKeyPairGenerator instantiated — FIPS 203, quantum-resistant, but the parameter set is chosen via KeyGenerationParameters at init(), not this call."
+
+[[classify]]
+id = "CRYPTO-812"
+when.api = "^org\\.bouncycastle\\.MLDSAKeyPairGenerator$"
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "BouncyCastle MLDSAKeyPairGenerator instantiated — FIPS 204, quantum-resistant, but the parameter set is chosen via KeyGenerationParameters at init(), not this call."
+
+[[classify]]
+id = "CRYPTO-813"
+when.api = "^org\\.bouncycastle\\.SLHDSAKeyPairGenerator$"
+algorithm_id = "slh-dsa-unattributed"
+severity_hint = "auto"
+message = "BouncyCastle SLHDSAKeyPairGenerator instantiated — FIPS 205, quantum-resistant, but the parameter set is chosen via KeyGenerationParameters at init(), not this call."
+
+[[classify]]
+id = "CRYPTO-814"
+when.api = "^org\\.bouncycastle\\.MLKEMGenerator$"
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "BouncyCastle MLKEMGenerator instantiated — FIPS 203 encapsulation, quantum-resistant, but the parameter set comes from the key it is constructed with, not this call."
+
+[[classify]]
+id = "CRYPTO-815"
+when.api = "^org\\.bouncycastle\\.MLKEMExtractor$"
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "BouncyCastle MLKEMExtractor instantiated — FIPS 203 decapsulation, quantum-resistant, but the parameter set comes from the key it is constructed with, not this call."
+
+[[classify]]
+id = "CRYPTO-816"
+when.api = "^org\\.bouncycastle\\.MLDSASigner$"
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "BouncyCastle MLDSASigner instantiated — FIPS 204 signature, quantum-resistant, but the parameter set comes from the key it is initialised with, not this call."
+
+[[classify]]
+id = "CRYPTO-817"
+when.api = "^org\\.bouncycastle\\.SLHDSASigner$"
+algorithm_id = "slh-dsa-unattributed"
+severity_hint = "auto"
+message = "BouncyCastle SLHDSASigner instantiated — FIPS 205 signature, quantum-resistant, but the parameter set comes from the key it is initialised with, not this call."
+
+[[classify]]
+id = "CRYPTO-818"
+when.api = "^org\\.bouncycastle\\.HashMLDSASigner$"
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "BouncyCastle HashMLDSASigner instantiated — FIPS 204 pre-hash signature, quantum-resistant, but the parameter set comes from the key it is initialised with, not this call."
+
+[[classify]]
+id = "CRYPTO-819"
+when.api = "^org\\.bouncycastle\\.HashSLHDSASigner$"
+algorithm_id = "slh-dsa-unattributed"
+severity_hint = "auto"
+message = "BouncyCastle HashSLHDSASigner instantiated — FIPS 205 pre-hash signature, quantum-resistant, but the parameter set comes from the key it is initialised with, not this call."
 
 # ============================================================================
 # Java JWT-library enum constants (jjwt, java-jwt, nimbus-jose-jwt, jose4j)

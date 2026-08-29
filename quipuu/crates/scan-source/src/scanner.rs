@@ -1743,6 +1743,27 @@ const JAVA_CTOR_APIS: &[(&str, &str)] = &[
         "BouncyCastleProvider",
         "org.bouncycastle.BouncyCastleProvider",
     ),
+    // Lightweight-API PQC classes. Bare class name is unchanged across the
+    // 2026-04 relocation from org.bouncycastle.pqc.crypto.* to
+    // org.bouncycastle.crypto.*, so one table row covers both.
+    (
+        "MLKEMKeyPairGenerator",
+        "org.bouncycastle.MLKEMKeyPairGenerator",
+    ),
+    (
+        "MLDSAKeyPairGenerator",
+        "org.bouncycastle.MLDSAKeyPairGenerator",
+    ),
+    (
+        "SLHDSAKeyPairGenerator",
+        "org.bouncycastle.SLHDSAKeyPairGenerator",
+    ),
+    ("MLKEMGenerator", "org.bouncycastle.MLKEMGenerator"),
+    ("MLKEMExtractor", "org.bouncycastle.MLKEMExtractor"),
+    ("MLDSASigner", "org.bouncycastle.MLDSASigner"),
+    ("SLHDSASigner", "org.bouncycastle.SLHDSASigner"),
+    ("HashMLDSASigner", "org.bouncycastle.HashMLDSASigner"),
+    ("HashSLHDSASigner", "org.bouncycastle.HashSLHDSASigner"),
 ];
 
 fn match_java_ctor(class_name: &str) -> Option<(String, HashMap<String, ArgValue>)> {

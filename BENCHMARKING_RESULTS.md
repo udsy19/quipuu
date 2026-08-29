@@ -3402,3 +3402,59 @@ shape cycle 23's `CurvePreferences` PQC arms took.
 **Held:** `cargo build --release --workspace` clean; `cargo test --workspace` all passing (115
 `scan-source` tests, was 111 — four new liboqs cases added against
 `tests/fixtures/cpp/crypto.c`).
+
+## `#Y39`: BouncyCastle lightweight-API PQC classes gain coverage — 2026-08-29
+
+**Closed this cycle: `#Y39`.** `java.toml`'s only BouncyCastle `new Foo()` rule (`JAV-030`)
+matched four classical classes (`RSAKeyPairGenerator`, `AESEngine`, `GCMBlockCipher`,
+`BouncyCastleProvider`) and none of BC's nine PQC lightweight-API classes
+(`MLKEMKeyPairGenerator`, `MLDSAKeyPairGenerator`, `SLHDSAKeyPairGenerator`, `MLKEMGenerator`,
+`MLKEMExtractor`, `MLDSASigner`, `SLHDSASigner`, `HashMLDSASigner`, `HashSLHDSASigner`), so any
+call to any of the nine produced zero findings. The alternation is a bare `type_identifier`
+match with no package qualifier, so it reads unchanged across BC's 2026-04 relocation from
+`org.bouncycastle.pqc.crypto.*` to `org.bouncycastle.crypto.*`. `JAV_CTOR_APIS` gains nine rows
+and `java.toml` gains `CRYPTO-811..819`. None of the nine classes take a parameter set as a
+constructor literal — it is supplied at runtime via a `KeyGenerationParameters`/key object
+passed to `init()` or the constructor — so every arm degrades to the family sentinel
+(`ml-kem-unattributed` / `ml-dsa-unattributed` / `slh-dsa-unattributed`), the same shape the
+existing JCA `KeyPairGenerator`/`KEM` fallbacks use for a non-literal algorithm argument.
+Fixture `tests/fixtures/java/BcLightweight.java` (nine PQC sites plus a classical control) goes
+1/10 detected → 10/10; new test `scans_java_bouncycastle_lightweight_pqc_classes`.
+
+**Corpus effect: 55 findings added, 0 removed, 0 reclassified, both in `c11_stratumB.json`'s
+restored stratum** (`maven:org.bouncycastle:bcprov-jdk18on` 54, `maven:org.bouncycastle:
+bcpkix-jdk18on` 1). Full 150-project pre/post dump (`work/y39_before.json` 1460 →
+`work/y39_after.json` 1515, script `work/y39_precision.py`). All 55 hand-verified TP by opening
+the cited `file:line` — every one a real `new <Class>()` site inside BC's own implementation:
+`core/.../hpke/MLKEM.java`, `core/.../util/OtherInfoGenerator.java`, `core/.../pqc/crypto/xwing/
+XWing{KeyPairGenerator,KEMGenerator,KEMExtractor}.java`, the four `prov/.../jcajce/provider/
+asymmetric/{mlkem,mldsa,slhdsa}/*Spi.java` families, and `pkix/.../cert/plants/bc/
+BcMTCSigners.java:55`. 0 FP, 0 DEPENDS. Population share is small enough (55 of 1515) that no
+project outside the two BC libraries themselves calls these classes yet — expected, since BC's
+own lightweight API is what a caller reaches for only after the JCA `Signature`/`KeyPairGenerator`
+wrapper already tested above, and no corpus project has migrated that deep yet.
+
+**Not fully closed, flagged for a later cycle:** several `SignatureSpi`/`HashSignatureSpi`
+constructors pass a literal `SLHDSAParameters.sha2_128s`-style parameter set to their own
+`super()` call alongside `new SLHDSASigner()` — the parameter set is visible one argument over
+from the site this rule captures, but `SLHDSASigner()` itself takes no arguments, so attributing
+it would mean reading a sibling argument in the *enclosing* call, not this one. Left as the
+conservative `slh-dsa-unattributed`/`ml-dsa-unattributed` sentinel rather than guessed.
+
+**Precision: 96.78% → 97.06% (+0.281pp), `work/y39_precision.py`**, which reproduces the
+anchored 96.78% on the pre dump before computing anything else. All 55 new rows fold into
+stratum B's TP tally (283→338 TP, FP unchanged at 9) — the same "brand-new row, not a
+reclassification, so it cannot collide with the original sample" reasoning `#Y30`/`#Y34` already
+used, this time landing in stratum B instead of stratum A because both BC projects are in the
+46-project restored stratum. The script also prints the weight-shift-only reading (96.79%) for
+comparison.
+
+| | before | after (folded) | after (weight-shift only) |
+|---|---|---|---|
+| stratum A | 656 findings, TP=257 FP=9 (untouched) | 656, unchanged | 656, unchanged |
+| stratum B | 798 findings, TP=283 FP=9 | 853 findings, TP=338 FP=9 | 853, unchanged |
+| **weighted** | **96.78%** (95.3–98.2) | **97.06%** (95.7–98.4) | 96.79% (95.3–98.3) |
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (116 `scan-source`
+tests, was 115).
