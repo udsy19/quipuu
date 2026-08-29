@@ -5,9 +5,10 @@
 # LAYER 2: [[classify]] — given extracted (api, arg0, arg1, ...) tuples, emit
 #          a finding with algorithm_id and severity hints.
 #
-# The classify layer is intentionally schema-compatible with the CBOMkit
-# cryptobom-forge rule files (knowledge/sources/cryptobom-forge-cryptocheck_*.{yml,json})
-# so we round-trip with their algorithm taxonomy.
+# The classify layer's tuple-based pattern draws on cryptobom-forge's
+# (Santandersecurityresearch/cryptobom-forge, not CBOMkit) rule files
+# (knowledge/sources/cryptobom-forge-cryptocheck_*.{yml,json}) as prior art;
+# the two schemas use different field names and are not file-format compatible.
 #
 # Field reference:
 #   [[extract]]
