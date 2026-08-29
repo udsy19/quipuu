@@ -676,9 +676,7 @@ fn walk(
             | "invocation_expression"
             | "object_creation_expression"
     );
-    if is_call_like
-        && let Some(m) = match_call(node, source, language, bare_bindings, pq_aliases)
-    {
+    if is_call_like && let Some(m) = match_call(node, source, language, bare_bindings, pq_aliases) {
         out.push(m);
     }
     // Java enum-constant references like `SignatureAlgorithm.RS256` are
