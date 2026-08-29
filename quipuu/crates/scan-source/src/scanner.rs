@@ -1871,6 +1871,7 @@ const RUST_CALLEE_APIS: &[(&str, &str)] = &[
     ("Sha512::digest", "rustcrypto.Sha512.digest"),
     ("ChaCha20Poly1305::new", "rustcrypto.ChaCha20Poly1305.new"),
     ("RsaPrivateKey::new", "rsa.RsaPrivateKey.new"),
+    ("Rsa::generate", "openssl.Rsa.generate"),
     ("SigningKey::generate", "ed25519_dalek.SigningKey.generate"),
     ("SigningKey::new", "rsa.SigningKey.new"),
     ("ClientConfig::builder", "rustls.ClientConfig.builder"),
@@ -2136,6 +2137,12 @@ fn populate_args(
         (Language::Rust, "rsa.RsaPrivateKey.new") => {
             // RsaPrivateKey::new(rng, bits) — bits is arg 1
             if let Some(bits) = nth_arg_int(args_node, 1, source) {
+                out.insert("bits".into(), ArgValue::Int(bits));
+            }
+        }
+        (Language::Rust, "openssl.Rsa.generate") => {
+            // Rsa::generate(bits) — single positional argument
+            if let Some(bits) = nth_arg_int(args_node, 0, source) {
                 out.insert("bits".into(), ArgValue::Int(bits));
             }
         }

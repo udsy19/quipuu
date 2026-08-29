@@ -409,3 +409,56 @@ when.api = "^pbkdf2\\.pbkdf2_hmac$"
 algorithm_id = "pbkdf2-unattributed"
 severity_hint = "low"
 message = "pbkdf2_hmac::<...> — PBKDF2 with unrecognized hash. Confirm hash + iteration count meet NIST SP 800-132."
+
+# ============================================================================
+# openssl crate — Rsa::generate(bits)
+# ============================================================================
+
+[[extract]]
+id = "RST-070"
+language = "rust"
+query = """
+(call_expression
+  function: (scoped_identifier
+    path: (identifier) @cls (#eq? @cls "Rsa")
+    name: (identifier) @fn (#eq? @fn "generate"))
+  arguments: (arguments
+    (integer_literal) @bits))
+"""
+captures = { cls = "ident", fn = "ident", bits = "literal_int" }
+api = "openssl.Rsa.generate"
+description = "openssl crate Rsa::generate(bits) — RSA key generation."
+
+[[classify]]
+id = "CRYPTO-590"
+when.api = "^openssl\\.Rsa\\.generate$"
+when.args.bits = { lt = 2048 }
+algorithm_id = "rsa-undersized"
+severity_hint = "critical"
+message = "openssl::rsa::Rsa::generate({bits} bits) — below 2048-bit floor."
+cwe = "CWE-326"
+
+[[classify]]
+id = "CRYPTO-591"
+when.api = "^openssl\\.Rsa\\.generate$"
+when.args.bits = 2048
+algorithm_id = "rsa-2048"
+severity_hint = "auto"
+message = "openssl::rsa::Rsa::generate(2048 bits) — quantum-vulnerable: NIST IR 8547 deprecates 2030."
+
+[[classify]]
+id = "CRYPTO-592"
+when.api = "^openssl\\.Rsa\\.generate$"
+when.args.bits = { ge = 4096 }
+algorithm_id = "rsa-4096"
+severity_hint = "auto"
+message = "openssl::rsa::Rsa::generate({bits} bits) — larger key does NOT protect against Shor."
+
+# Catch-all: a variable bit-size argument is exactly as likely here as in the
+# rsa crate (CRYPTO-543). Without this rule the finding silently disappears.
+[[classify]]
+id = "CRYPTO-593"
+when.api = "^openssl\\.Rsa\\.generate$"
+algorithm_id = "rsa-unattributed"
+severity_hint = "auto"
+message = "openssl::rsa::Rsa::generate(bit_size) — bit size is a runtime variable; cannot statically verify it meets the 2048-bit floor. Quantum-vulnerable to Shor in any case."

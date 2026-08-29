@@ -3103,3 +3103,69 @@ tests, was 106). `every_classify_rule_targets_an_api_the_extractor_can_emit` re-
 in the original filing as separate scope, not bundled into this estimate. The Conscrypt/Android
 named-group spelling gap surfaced above. `#Y20`'s remaining scope, the duplicate-site dump
 artifact, and `#Y27` (`needs-human-approval`) are all unchanged from the prior cycle's note.
+
+## `#Y29` (Rust half only): the `openssl` crate's `Rsa::generate` gains coverage — the C/C++ half is dropped, with the reason measured, not assumed
+
+**The gap.** `competitors` cycle 12 probed `RSA_generate_key`-family calls with a runtime-variable
+bit-size argument across all seven language packs and found Python/JS/Java/C# correctly degrade to
+an `*-unattributed` finding while C++ and Rust score **zero** — for the identical semantic call,
+literal argument included. Reading both rule packs directly confirmed the cause: `cpp.toml` names
+only `RSA_generate_key_ex` (the pre-3.0 `RSA_generate_key`, without `_ex`, has no arm at all —
+deprecated since OpenSSL 1.1.0 but not removed until 3.0, still present in codebases pinned to
+1.0.x/1.1.x); `rust.toml` names only the pure-Rust `rsa` crate's `RsaPrivateKey::new` (the
+`openssl` crate's `Rsa::generate` — one of the most widely depended-on Rust bindings to libssl —
+has no arm at all).
+
+**Both arms were implemented, corpus-tested, and hand-labelled — then only one shipped.**
+`RUST_CALLEE_APIS` gains `Rsa::generate` → `openssl.Rsa.generate` (`scanner.rs`); `populate_args`
+gains a match arm extracting `bits` from arg 0 (the sole positional argument, unlike
+`RsaPrivateKey::new`'s leading `rng` argument). `rust.toml` gains `CRYPTO-590`–`593`, mirroring
+`CRYPTO-540`–`543` exactly (undersized / 2048 / ≥4096 / non-literal catch-all). The C/C++ arm was
+built the same way — `C_CALLEE_APIS` gains `RSA_generate_key`, `cpp.toml` gains `CRYPTO-403`–`406`
+mirroring `CRYPTO-400`–`402` plus a catch-all.
+
+**Corpus effect, both arms, hand-labelled at the cited `file:line`:** `grep -rl` for
+`Rsa::generate` and `RSA_generate_key(` (excluding `_ex`) across `work/corpus-clones/` finds call
+sites only in `crates-io/openssl` and `crypto-adjacent/{aws-lc,wolfssl}` — no other of the 150
+corpus projects can be reached by either new callee-table row (`boringssl`/`swift-crypto`/`nodejs`
+contain only the function *definition*). Scanned those three directories directly,
+`--source --include-safe`, pre-change (`a246594`) vs. post-change binary:
+
+| | Rust (`crates-io/openssl`) | C/C++ (`aws-lc` + `wolfssl`) |
+|---|---|---|
+| Findings added | 25 | 18 |
+| TP | 25 | 13 |
+| FP | 0 | 5 |
+
+**The Rust 25 are all `Rsa::generate(N).unwrap()` in the crate's own tests/examples/doctests** — a
+real, successful key generation at every site (spot-checked `pkcs12.rs:348`, `md_ctx.rs:424`,
+`pkey_ctx.rs:1273` directly; a `verify_fail` test name refers to a later signature check, not key
+generation, which always succeeds there).
+
+**The C/C++ 5 FP are one shape, and it is the shape `PRECISION_AUDIT_V4.md` already named:** every
+one is `ExpectNull(RSA_generate_key(...))` in wolfssl's own test suite
+(`tests/api/test_ossl_rsa.c:331`–`334`, bits `-1`/`RSA_MIN_SIZE-1`/`RSA_MAX_SIZE+1`/exponent `0`;
+`:667`, guarded by the `#else` of `#ifdef WOLFSSL_KEY_GEN` — this build path asserts key generation
+is *unsupported*). Per this project's own labelling rule ("a call the surrounding assertion
+requires to fail produces no key... FP"), none of these five ever generates a key. Every other
+wolfssl/aws-lc row is `ExpectNotNull(rsa = RSA_generate_key(...))` — a real call — TP.
+
+**Measured effect on the anchored estimator, both arms combined: 96.18% → 95.60% (-0.59pp). Rust
+alone: 96.18% → 96.39% (+0.21pp).** `crates-io/openssl` and `wolfssl` are both stratum A (neither
+is in `c11_stratumB.json`'s 30 restored projects); `aws-lc` is stratum B. Folding the audited
+counts for each new finding into its stratum (`work/y31_precision.py`, which reproduces the
+anchored 96.2% from `state/precision.json` before computing anything else) gives a real,
+measured regression for the combined change — the kind this project's own gate rule calls "an
+automatic block, no matter how good the rest of the diff looks" — driven entirely by the 5 C/C++
+false positives. **Only the Rust half ships in this commit.** The C/C++ half needs a
+`SiteContext`-style "wrapped in a test helper that asserts failure" suppression — the same shape
+Java's `is_test_assertion_callee` already handles for `assertThrows`-style wrappers, extended to
+C's `Expect*` test macros — before it can ship without cost; filed back to the backlog as the
+remaining half of `#Y29`, with the five exact `file:line`s named above so the next attempt starts
+from the diagnosis instead of rediscovering it.
+
+**Held:** `cargo build --release --workspace` clean; `cargo test --workspace` all passing (107
+`scan-source` tests, unchanged — the C/C++ fixture and test that accompanied the dropped arm were
+reverted in the same commit, not left half-wired). `every_classify_rule_targets_an_api_the_extractor_can_emit`
+and `classify_rules_never_publish_a_parameter_their_when_clause_contradicts` both re-checked green
+against the shipped Rust arm.

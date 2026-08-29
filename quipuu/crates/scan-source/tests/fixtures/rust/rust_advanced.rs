@@ -31,4 +31,9 @@ fn shapes(mut rng: impl rand::CryptoRng + rand::RngCore) {
     let _ = SigningKey::<Sha256>::new(priv_key.clone()); // CRYPTO-544
     let _ = SigningKey::<Sha384>::new(priv_key.clone()); // CRYPTO-545
     let _ = SigningKey::<Sha512>::new(priv_key);         // CRYPTO-546
+
+    // #Y29: openssl crate Rsa::generate — same non-literal-argument gap as
+    // BUG-B, one crate over (competitors cycle 12).
+    let _ = openssl::rsa::Rsa::generate(2048).unwrap(); // CRYPTO-591
+    let _ = openssl::rsa::Rsa::generate(bits as u32).unwrap(); // CRYPTO-593 catch-all
 }

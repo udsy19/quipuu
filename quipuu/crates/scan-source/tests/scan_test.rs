@@ -1783,6 +1783,31 @@ fn phase10_rust_rsa_variable_bits_emits_catchall() {
 }
 
 #[test]
+fn y29_rust_openssl_rsa_generate_literal_and_variable_bits() {
+    // #Y29: `openssl` crate's `Rsa::generate` had no arm at all, so a
+    // codebase using it for RSA keygen produced zero findings for either
+    // shape — the same non-literal-argument gap BUG-B fixed for the `rsa`
+    // crate's RsaPrivateKey::new, one crate over.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/rust_advanced.rs"))
+        .expect("scan succeeds");
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-591" && f.algorithm_id == "rsa-2048"),
+        "expected CRYPTO-591 for openssl::rsa::Rsa::generate(2048), got: {:?}",
+        findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
+    );
+    let cr593 = findings
+        .iter()
+        .find(|f| f.rule_id == "CRYPTO-593")
+        .expect("CRYPTO-593 catch-all must fire for variable bits");
+    assert_eq!(cr593.algorithm_id, "rsa-unattributed");
+}
+
+#[test]
 fn phase10_rust_rcgen_keypair_generate_for() {
     // BUG-C: rcgen::KeyPair::generate_for is the rustls-webpki test-utils
     // key generator; previously unrecognized.
