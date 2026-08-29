@@ -2691,3 +2691,47 @@ per the row-identity assertion above.
 
 **Not attempted, unchanged in rank.** `#Y8`'s BC SLH-DSA arm; `#Y20`'s Go `circl` arg-literal port;
 the `ecdh.*` two-site Go recall gap; the duplicate-site dump artifact named above.
+
+## The `ecdh.*` two-site Go recall gap was in the ground-truth builder, not the scanner — 2026-08-29
+
+**What the six missed sites actually were.** Every prior recall run named the same shape: the
+`ecdh.P256`/`ecdh.P384`/`ecdh.X25519` constructor rows in `recall_check.py`'s output each missed 2
+of their in-scope sites, unchanged across four cycles despite touching neither the scanner nor those
+rules. Read directly, all six missed "sites" are `benchmarks/corpus-b-realworld/recall_check.py`'s
+own ground truth matching the wrong line — e.g. `jwx/jwe/jwe_test.go:1755` is
+`key, err := ecdh.P256().GenerateKey(rand.Reader)`, correctly found by the scanner and correctly in
+the ground truth; line 1756 is `require.NoError(t, err, \`ecdh.P256().GenerateKey should succeed\`)`
+— a Go test restating the call inside a backtick string literal, purely as an assertion message. The
+ground-truth regex (`\becdh\.P256\s*\(`) matches that string's text the same as it matches real code,
+because the builder only strips `//` line comments before matching, not backtick spans. So the
+"missing" site was never code; it was the tool quoting itself in a failure message. All six instances
+across `jwx/jws/jws_test.go`, `jwx/jwk/jwk_test.go` and `jwx/jwe/jwe_test.go` are this exact pattern —
+confirmed by reading each cited line directly, not inferred from the shape of the first one.
+
+**The fix, in the harness, not detection.** `recall_check.py` gains `BACKTICK_SPAN =
+re.compile(r"\`[^\`]*\`")`, applied to each line before the API regexes run, the same place and same
+shape as the existing `//`-comment strip. `benchmarks/corpus-b-realworld/dump_findings.py`,
+`go.toml` and `scanner.rs` are untouched — this cycle changes what the instrument counts as a call
+site, not what the scanner detects.
+
+**Measured, not asserted.** `recall_check.py --clones /opt/cryptoscope/work/corpus-clones --dump
+work/y26_post.json` (the 1371-finding dump `#Y25`+`#Y26` produced, above — no Go rule or finding
+moved since `dsa1_post.json`, so the same dump scores both the old and new ground truth):
+
+| | before this fix | after this fix |
+|---|---|---|
+| whole-tree Go ground truth | 1054 | **1048** |
+| in-scope Go ground truth | 407 | **401** |
+| in-scope recall | 401/407 = 98.5% | **401/401 = 100.0%** |
+| constructor recall | 319/325 = 98.2% | **319/319 = 100.0%** |
+| whole-tree recall | 401/1054 = 38.0% | **401/1048 = 38.3%** |
+
+Every API row in `recall_check.py`'s per-API table now reads 100.0%, 0 missed. Confirmed the fix is
+exactly six sites and no others: `git diff` on the ground-truth output before/after touches only the
+three `ecdh.*` rows; no other API's site count moved.
+
+**Held:** this is a benchmark-script change, not detection or scanning code — `cargo build --release
+--workspace` and `cargo test --workspace` are unaffected and pass unchanged. `regression_check.py`
+and the precision estimator are also unaffected: neither reads `recall_check.py`.
+
+README `:245`–`:260` and `:315` updated to the corrected figures.

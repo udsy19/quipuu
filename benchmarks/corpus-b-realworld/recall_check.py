@@ -85,6 +85,12 @@ APIS = [
 ]
 COMPILED = [(re.compile(p), lab) for p, lab in APIS]
 
+# Go test files routinely restate a call inside a backtick string literal —
+# `require.NoError(t, err, `foo.Bar() should succeed`)` — which is prose, not
+# a second call site. Strip single-line backtick spans before matching so the
+# ground truth does not count a test's own assertion message as a call.
+BACKTICK_SPAN = re.compile(r"`[^`]*`")
+
 # Require the matching stdlib import, so `foo.md5.New` and a same-named local
 # package do not enter the ground truth as call sites we then score ourselves
 # against.
@@ -157,7 +163,7 @@ def ground_truth(clones: Path) -> list[tuple[str, str, int, str]]:
                     continue
                 imports = {m for pkg, m in IMPORT_PKG.items() if m in text}
                 for i, line in enumerate(text.split("\n"), 1):
-                    stripped = line.split("//")[0]
+                    stripped = BACKTICK_SPAN.sub("", line.split("//")[0])
                     for rx, label in COMPILED:
                         if rx.search(stripped):
                             if IMPORT_PKG[label.split(".")[0]] not in imports:
