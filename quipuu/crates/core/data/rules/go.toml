@@ -217,6 +217,54 @@ severity_hint = "auto"
 message = "ECDSA operation via crypto/ecdsa.{fn} on a key received rather than generated here — the curve is not statically knowable at this call site. Quantum-vulnerable at every curve — replace with ML-DSA."
 
 # ============================================================================
+# crypto/dsa — classical (non-elliptic) DSA. GenerateKey takes an already-
+# parameterised *dsa.PrivateKey with no prime/subprime size at the call site,
+# and Sign/Verify carry no parameter either — same "unattributed" shape ecdsa's
+# operation sites use above, sharing the `dsa-unattributed` sentinel Java's
+# KeyPairGenerator.getInstance("DSA") already publishes (java.toml CRYPTO-212).
+# ============================================================================
+
+[[extract]]
+id = "GO-012"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "dsa")
+    field: (field_identifier) @fn (#eq? @fn "GenerateKey")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "crypto/dsa.GenerateKey"
+description = "DSA key generation via crypto/dsa.GenerateKey — the parameter size lives in a separate dsa.GenerateParameters call, not here."
+
+[[classify]]
+id = "CRYPTO-016"
+when.api = "^crypto/dsa\\.GenerateKey$"
+algorithm_id = "dsa-unattributed"
+severity_hint = "auto"
+message = "DSA key generation via crypto/dsa.GenerateKey — deprecated for new use (FIPS 186-5) and broken by Shor at every parameter size. Replace with ML-DSA-65."
+
+[[extract]]
+id = "GO-013"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "dsa")
+    field: (field_identifier) @fn (#match? @fn "^(Sign|Verify)$")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "crypto/dsa.Op"
+description = "DSA sign/verify operation."
+
+[[classify]]
+id = "CRYPTO-017"
+when.api = "^crypto/dsa\\.Op$"
+algorithm_id = "dsa-unattributed"
+severity_hint = "auto"
+message = "DSA {fn} operation — broken by Shor and already deprecated classically (FIPS 186-5). Replace with ML-DSA-65."
+
+# ============================================================================
 # crypto/ed25519 / crypto/ecdh
 # ============================================================================
 

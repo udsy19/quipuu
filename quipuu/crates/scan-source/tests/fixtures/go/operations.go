@@ -4,12 +4,14 @@
 package main
 
 import (
+	"crypto/dsa"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/md5"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
+	"math/big"
 )
 
 func ecdsaOps(priv *ecdsa.PrivateKey, pub *ecdsa.PublicKey, hash, sig []byte) {
@@ -31,4 +33,10 @@ func ed25519Ops(priv ed25519.PrivateKey, pub ed25519.PublicKey, message, sig []b
 func hashSums(data []byte) {
 	_ = md5.Sum(data)
 	_ = sha1.Sum(data)
+}
+
+func dsaOps(priv *dsa.PrivateKey, pub *dsa.PublicKey, hash []byte, r, s *big.Int) {
+	_ = dsa.GenerateKey(priv, rand.Reader)
+	_, _, _ = dsa.Sign(rand.Reader, priv, hash)
+	_ = dsa.Verify(pub, hash, r, s)
 }

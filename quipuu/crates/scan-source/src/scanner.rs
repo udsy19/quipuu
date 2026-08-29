@@ -812,6 +812,15 @@ const GO_CALLEE_APIS: &[(&str, &str)] = &[
     ("ecdsa.VerifyASN1", "crypto/ecdsa.Op"),
     ("ed25519.Sign", "crypto/ed25519.Op"),
     ("ed25519.Verify", "crypto/ed25519.Op"),
+    // crypto/dsa — classical (non-elliptic) DSA. GenerateKey takes an
+    // already-parameterised *dsa.PrivateKey (the prime/subprime size lives in
+    // a separate dsa.GenerateParameters call this pack does not track), and
+    // Sign/Verify carry no parameter either, so all three degrade straight to
+    // the `dsa-unattributed` sentinel Java's KeyPairGenerator.getInstance
+    // ("DSA") already publishes.
+    ("dsa.GenerateKey", "crypto/dsa.GenerateKey"),
+    ("dsa.Sign", "crypto/dsa.Op"),
+    ("dsa.Verify", "crypto/dsa.Op"),
 ];
 
 /// Exact-match lookup in one of the callee → api tables.
@@ -901,7 +910,10 @@ fn match_go_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> 
     }
     // The *.Op apis have no parameter set to capture; the message names the
     // specific function called instead (Sign vs. VerifyASN1 vs. EncryptOAEP).
-    if (api == "crypto/rsa.Op" || api == "crypto/ecdsa.Op" || api == "crypto/ed25519.Op")
+    if (api == "crypto/rsa.Op"
+        || api == "crypto/ecdsa.Op"
+        || api == "crypto/ed25519.Op"
+        || api == "crypto/dsa.Op")
         && let Some(fn_name) = callee.split('.').nth(1)
     {
         args.insert("fn".into(), ArgValue::Str(fn_name.into()));

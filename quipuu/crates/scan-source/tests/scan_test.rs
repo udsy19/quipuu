@@ -2572,19 +2572,26 @@ fn go_operation_sites_are_all_detected() {
     };
 
     // ecdsa.Sign / SignASN1 / VerifyASN1 — curve unknown at the call site.
-    expect(16, "CRYPTO-015", "ecdsa-unattributed");
-    expect(17, "CRYPTO-015", "ecdsa-unattributed");
     expect(18, "CRYPTO-015", "ecdsa-unattributed");
+    expect(19, "CRYPTO-015", "ecdsa-unattributed");
+    expect(20, "CRYPTO-015", "ecdsa-unattributed");
 
     // rsa.SignPKCS1v15 / VerifyPKCS1v15 — key size unknown at the call site.
-    expect(22, "CRYPTO-006", "rsa-unattributed");
-    expect(23, "CRYPTO-006", "rsa-unattributed");
+    expect(24, "CRYPTO-006", "rsa-unattributed");
+    expect(25, "CRYPTO-006", "rsa-unattributed");
 
     // ed25519.Sign / Verify — no parameter set to lose.
-    expect(27, "CRYPTO-021", "ed25519");
-    expect(28, "CRYPTO-021", "ed25519");
+    expect(29, "CRYPTO-021", "ed25519");
+    expect(30, "CRYPTO-021", "ed25519");
 
     // md5.Sum / sha1.Sum — the one-shot form, distinct from md5.New/sha1.New.
-    expect(32, "CRYPTO-052", "md5");
-    expect(33, "CRYPTO-053", "sha-1");
+    expect(34, "CRYPTO-052", "md5");
+    expect(35, "CRYPTO-053", "sha-1");
+
+    // dsa.GenerateKey / Sign / Verify — no parameter is ever stated at any of
+    // these call sites (the prime/subprime size lives in a separate
+    // dsa.GenerateParameters call this pack does not track).
+    expect(39, "CRYPTO-016", "dsa-unattributed");
+    expect(40, "CRYPTO-017", "dsa-unattributed");
+    expect(41, "CRYPTO-017", "dsa-unattributed");
 }
