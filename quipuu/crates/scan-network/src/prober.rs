@@ -328,9 +328,14 @@ fn group_not_probed_finding(target: &str, g: &ProbeGroup) -> Finding {
     } else {
         " (Tier-2 backend swap to aws-lc-rs deferred to v0.2)"
     };
+    // The handshake was never attempted for this group — nothing was
+    // observed about whether the target offers or negotiates it. Attributing
+    // to `g.algorithm_id` here would publish a CBOM component (e.g.
+    // x25519-mlkem768) for a mechanism nobody checked for; the sentinel
+    // carries the specific group name and codepoint in the message instead.
     Finding {
         rule_id: "NET-900".into(),
-        algorithm_id: g.algorithm_id.into(),
+        algorithm_id: "tls-group-not-probed".into(),
         location: loc(target, g.name),
         message: format!(
             "group {} (0x{:04X}) catalogued but not probed{}",
@@ -442,5 +447,30 @@ mod tests {
         assert!(s.opts.connect_timeout >= Duration::from_secs(1));
         assert!(s.opts.handshake_timeout >= Duration::from_secs(1));
         assert!(s.opts.enumerate_groups);
+    }
+
+    #[test]
+    fn not_probed_finding_never_asserts_the_catalogued_algorithm_id() {
+        // A group with `kx_group: None` was never handshaked — no observation
+        // was made about whether the target offers or negotiates it, so the
+        // finding must not publish the catalogued group's own algorithm id
+        // (e.g. x25519-mlkem768) as a CBOM component. Regression for the
+        // defect where NET-900 asserted a specific PQC identity on a
+        // capability gap rather than a network observation.
+        for g in builtin_groups()
+            .into_iter()
+            .filter(|g| g.kx_group.is_none())
+        {
+            let finding = group_not_probed_finding("example.com:443", &g);
+            assert_eq!(
+                finding.algorithm_id, "tls-group-not-probed",
+                "not-probed group {} must use the generic sentinel, not its own catalogued id",
+                g.name
+            );
+            assert!(
+                finding.message.contains(g.name),
+                "the specific group name must still be carried in the message"
+            );
+        }
     }
 }

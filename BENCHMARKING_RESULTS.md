@@ -2802,3 +2802,52 @@ existing `*-unattributed` operation-site rules for RSA/ECDSA/DSA already accept 
 same `circl` import-alias machinery and the reachability/parameter-contradiction gates cover
 the new rules' correctness). `regression_check.py` not re-run — pure addition confined to one
 project, confirmed by grep rather than by a 9-minute full re-dump.
+
+## `scan-network`'s not-probed placeholder stopped asserting an unobserved PQC identity — 2026-08-29 (`#Y5`, part a)
+
+**What was wrong.** `crates/scan-network/src/groups.rs` catalogues six PQC/hybrid TLS groups
+(`X25519MLKEM768`, `SecP256r1MLKEM768`, `SecP384r1MLKEM1024`, `MLKEM512/768/1024`) and one
+legacy draft codepoint whose `kx_group` is `None` — the active `ring` `CryptoProvider` has no
+`SupportedKxGroup` impl for any of them, so the handshake for that group is never attempted.
+`group_not_probed_finding` (NET-900) nonetheless emitted `algorithm_id: g.algorithm_id` — the
+group's own catalogued id, e.g. `x25519-mlkem768` — on a finding that observed nothing about
+the target. Every downstream consumer (CBOM emission, the risk engine) reads `algorithm_id` as
+an asserted component; nothing in the pipeline reads confidence to distinguish "the target
+handshaked with this group" from "we catalogued this group and never checked." A CBOM built
+from a `--allow-network` scan would list `x25519-mlkem768` as present on a server that was
+never actually observed negotiating it — the same class of defect as the `alg=none`/JOSE-enum
+false positives already removed from `scan-source`, now confirmed live in the network scanner.
+
+**Fix:** `group_not_probed_finding` now emits a new sentinel algorithm id,
+`tls-group-not-probed` (`crates/core/data/algorithm-table.toml`, `family = "TLS"`,
+`quantum_status = "QuantumSafe"`, not scored as vulnerable — same role as the existing
+`tls-handshake` sentinel), instead of the catalogued group's own id. The specific group name
+and codepoint are unchanged in the finding's message, so no information is lost; only the
+component identity a CBOM would publish changes. New regression test
+`not_probed_finding_never_asserts_the_catalogued_algorithm_id` iterates every `builtin_groups()`
+entry with `kx_group: None` and asserts the sentinel fires, not the catalogued id.
+
+**Also corrected in the same change, same root cause:** `Cargo.toml`'s comment above the
+`rustls`/`tokio-rustls` dependencies read "rustls 0.23 ships ML-KEM key exchange" — true of the
+crate, false of this build, which enables the `ring` feature and not `aws-lc-rs` (the only
+backend with an ML-KEM `SupportedKxGroup`). `README.md`'s architecture diagram and crate list
+both said `scan-network` does "ML-KEM group detection"; both now say classical groups are
+probed and PQC/hybrid groups are catalogued but not yet probed, matching what the binary
+actually does. `aws-lc-rs` backend swap (part b of `#Y5`) remains `needs-human-approval`,
+unchanged — it expands the trusted dependency surface in the crate carrying the P2 network
+invariant and was not attempted this cycle.
+
+**Corpus effect: none, and none possible.** Corpus B is scanned with `--source --deps
+--include-safe`; `scan-network` requires `--allow-network` naming a host and is not part of the
+benchmark harness (`corpus-b-realworld` never invokes it — see the standing
+corpus-B-cannot-see-network-or-certs limitation). The published precision figure is unaffected
+by this change and is not re-measured here.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets --release -- -D warnings` clean; `cargo test --workspace` all passing (1 new
+test). `every_probe_group_algorithm_id_is_a_key_exchange_primitive`,
+`every_classify_rule_targets_an_api_the_extractor_can_emit`, and
+`every_algorithm_emits_a_bom_valid_at_the_version_it_declares` all re-checked green against the
+new sentinel row. The pinned P2 (network-disabled error) and P4 (rejects code execution)
+invariant tests are untouched and pass; P1–P4 are unaffected — the diff changes which identity
+a network finding asserts, not whether or when a network probe runs.

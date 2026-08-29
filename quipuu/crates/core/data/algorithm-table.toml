@@ -1095,6 +1095,14 @@ quantum_status = "QuantumSafe"
 notes = "Generic sentinel for scan-network's default-handshake findings; the per-group probes provide algorithm-specific attribution. Not scored as vulnerable."
 
 [[algorithm]]
+id = "tls-group-not-probed"
+display_name = "TLS group catalogued, not probed"
+family = "TLS"
+primitive = "other"
+quantum_status = "QuantumSafe"
+notes = "Sentinel for scan-network's per-group enumeration when the active CryptoProvider (rustls/ring) has no `SupportedKxGroup` impl for a catalogued IANA group — the handshake was never attempted, so nothing was observed about whether the target offers or negotiates it. The specific group name and codepoint are carried in the finding message; asserting the catalogued group's own algorithm id (e.g. x25519-mlkem768) here would publish a CBOM component for a mechanism nobody checked for. Not scored as vulnerable."
+
+[[algorithm]]
 id = "ecdsa-unattributed"
 display_name = "ECDSA (curve not stated at the call site)"
 family = "ECDSA"

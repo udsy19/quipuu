@@ -283,7 +283,8 @@ quipuu scan .
        │                 OID → algorithm_id, weak signature detection
        │
        └── scan-network  rustls TLS prober (--allow-network only)
-                         per-group handshakes, ML-KEM group detection
+                         per-group handshakes; PQC/hybrid groups catalogued,
+                         not yet probed (ring backend has no ML-KEM impl)
                          │
                          └── core: algorithm table, QuantumRiskScore,
                                     NIST IR 8547 policy → findings ranked
@@ -338,7 +339,8 @@ crates/
 ├── scan-certs/     x509-parser PEM/DER scanning
 ├── scan-deps/      Manifest parsers: go.mod, Cargo.toml, requirements.txt,
 │                   package.json, pom.xml, *.csproj
-├── scan-network/   rustls TLS prober (ML-KEM group detection)
+├── scan-network/   rustls TLS prober (classical groups probed; PQC/hybrid
+│                   groups catalogued, not yet probed — ring has no ML-KEM)
 ├── cbom/           CycloneDX 1.6/1.7 emitter + embedded schema validator
 ├── report/         HTML (askama, compile-time), SARIF 2.1.0, JSON summary
 ├── tui/            ratatui interactive explorer
