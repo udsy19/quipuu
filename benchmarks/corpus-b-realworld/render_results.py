@@ -437,7 +437,7 @@ def main() -> int:
     w("```")
     w("cd benchmarks/corpus-b-realworld")
     w("./clone_all.sh                          # ~30-60 min, 150 repos")
-    w("./verify.sh                             # confirm SHA pins (optional)")
+    w("python3 corpus_integrity.py --clones DIR # census the checkouts; exits 1 on any failure")
     w("python3 scan_corpus.py                  # ~5-15 min")
     w("python3 render_results.py --out /tmp/run.md   # renders THIS run only")
     w("```")

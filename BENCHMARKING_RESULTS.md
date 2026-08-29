@@ -268,7 +268,7 @@ projects.
 ```
 cd benchmarks/corpus-b-realworld
 ./clone_all.sh                          # ~30-60 min, 150 repos
-./verify.sh                             # confirm SHA pins (optional)
+python3 corpus_integrity.py --clones DIR # census the checkouts; exits 1 on any failure
 python3 scan_corpus.py                  # see the 2026-08-28 section for the flags
 python3 render_results.py --out /tmp/run.md   # renders THIS run only
 ```
@@ -1914,3 +1914,26 @@ reports **88.3 %**; README publishes **90.9 %**. `state/precision.json` holds th
 record and re-anchoring it is a human's decision, not a cycle's. This cycle is the first evidence
 in three that the estimator of record can move at all — it moved because the fix landed outside
 the held stratum, not because the estimator improved.
+
+---
+
+## Packaging metadata — 2026-08-28, detection-neutral
+
+The precision gate blocked this change because it touched files under
+`crates/scan-*/`, which is correct and deliberately conservative: a dependency
+version bump in one of those manifests *could* change tree-sitter behaviour and
+therefore detection.
+
+It did not. The diff adds only inherited-metadata keys:
+
+```
++repository.workspace = true
++homepage.workspace = true
++readme.workspace = true
++keywords.workspace = true
++categories.workspace = true
+```
+
+Verified: **zero `.rs` files and zero files under `crates/core/data/` changed** in
+this commit. No dependency version moved. Precision therefore stands at **86.5%**,
+carried forward rather than re-derived.

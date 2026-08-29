@@ -19,6 +19,9 @@ rust-version = "1.96"
 license = "Apache-2.0"
 repository = "https://github.com/udsy19/quipuu"
 readme = "../README.md"
+homepage = "https://github.com/udsy19/quipuu"
+keywords = ["cryptography", "post-quantum", "sbom", "security", "cbom"]
+categories = ["command-line-utilities", "cryptography", "development-tools"]
 
 [workspace.dependencies]
 # Serde + TOML + JSON for data loading and CBOM emission
