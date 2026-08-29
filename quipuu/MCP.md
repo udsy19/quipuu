@@ -488,13 +488,13 @@ The server supports one prior major `contractVersion` for a minimum of 6 months 
 
 ## §9 Dependency notes
 
-### 9.1 OSS binary (this document)
+### 9.1 The binary (this document)
 
 The `quipuu mcp` subcommand runs entirely within the Rust workspace. No Python, no Node, no JVM. Invariant P1 holds by construction.
 
-### 9.2 Pro engine
+### 9.2 Callers above the MCP boundary
 
-The Pro tier wraps the OSS binary as a child process over stdio and adds an orchestration layer written in Python with Pydantic AI. LangGraph is the escape hatch for graph-structured agent workflows. The Pro engine never modifies the OSS binary's behavior; it only calls its MCP tools over stdio. All invariants (P1–P4) are preserved end-to-end because the LLM calls live exclusively in the Pro layer, not in any OSS code path.
+An orchestration or agent layer wraps the binary as a child process over stdio and calls the verbs in §3. It never modifies the binary's behaviour; the wire contract is the only surface it has. Invariants P1–P4 therefore hold end to end regardless of what the caller is: any LLM the caller uses lives on its side of the stdio boundary, never in a code path this document specifies.
 
 ### 9.3 Prototype
 
@@ -506,11 +506,11 @@ Agent clients connect to the same MCP server (`quipuu mcp`) over stdio, using th
 
 The following items are deferred and tracked here for completeness.
 
-1. **Hosted networked endpoint** [v0.2]: The Pro-side hosted service is a process that spawns the OSS binary as a child and proxies MCP calls over stdio. The networked endpoint itself is Pro infrastructure; the OSS binary remains stdio-only. Callerarchetype upgrade path requires defining a `callerArchetype` field in `initialize` metadata to allow the server to tune verbosity and page sizes per caller type (IDE plugin vs. CI agent vs. human-driven agent).
+1. **Hosted networked endpoint** [v0.2]: A hosted deployment is a process that spawns the binary as a child and proxies MCP calls over stdio. The networked endpoint lives in that process; the binary itself remains stdio-only. Callerarchetype upgrade path requires defining a `callerArchetype` field in `initialize` metadata to allow the server to tune verbosity and page sizes per caller type (IDE plugin vs. CI agent vs. human-driven agent).
 
 2. **callerArchetype** [v0.2]: Add `meta.callerArchetype` (`"ide" | "ci" | "agent" | "human"`) to the `initialize` handshake so the server can adapt default page sizes and progress notification frequency.
 
-3. **Layer-3 verification cost model** [v0.2]: For Pro callers, define a token-budget field in `query_findings` so the agent layer can request cost-bounded responses for LLM post-processing. No LLM calls happen inside the OSS binary (P1); this field only assists Pro-side orchestration.
+3. **Layer-3 verification cost model** [v0.2]: Define a token-budget field in `query_findings` so an agent caller can request cost-bounded responses for LLM post-processing. No LLM calls happen inside the binary (P1); the field only assists orchestration on the caller's side.
 
 4. **`contractVersion` backward compatibility negotiation** [v0.2]: `meta.requestedContractVersion` in `initialize` to let hosts pin to a prior major version during a migration window (see §8.3).
 

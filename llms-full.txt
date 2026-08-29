@@ -17,7 +17,7 @@
 
 - [quipuu/crates/core/schema/](quipuu/crates/core/schema/): JSON Schemas (Draft 2020-12)
 - 11 MCP verbs documented in quipuu/MCP.md §3
-- P3 enforced: provenance enum = ["deterministic"] only in OSS
+- P3 enforced: provenance enum = ["deterministic"], no other value is emitted
 
 ## Knowledge base
 
@@ -142,9 +142,9 @@ Transport: stdio JSON-RPC 2.0 only. No HTTP, no WebSocket, no TCP listener. Stat
 
 ---
 
-## Lite/Pro split
+## Where an agent layer may sit
 
-- OSS (Apache-2.0): the scanner binary, all four scan modes, all output formats, MCP server. No LLM calls. No phone-home. Fully offline.
-- Pro (commercial): orchestration layer (Python + Pydantic AI + LangGraph) wraps the OSS binary over stdio MCP. Adds: automated remediation PR generation, sandbox execution, drift monitoring, hosted service. LLM calls live exclusively in the Pro layer; all P1-P4 invariants are preserved end-to-end.
+- The binary (Apache-2.0) is the whole scanner: all four scan modes, all output formats, the MCP server. No LLM calls. No phone-home. Offline unless `--allow-network` names a host.
+- Any agent or orchestration layer runs outside the binary and reaches it only through the stdio MCP server (`quipuu mcp`). It drives the scanner; it cannot change what the scanner computes.
 
-The Pro engine never modifies the OSS binary's behavior; it only calls its MCP tools over stdio.
+That boundary is what makes P1-P4 hold end to end: detection is tree-sitter plus TOML rules, and nothing above the MCP boundary can reach into it.

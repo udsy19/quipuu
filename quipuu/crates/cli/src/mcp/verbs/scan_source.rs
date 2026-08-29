@@ -84,8 +84,8 @@ pub fn handle(params: Option<Value>, session: &mut SessionStore) -> Result<Value
             "provenance": "deterministic",
         }))
     } else {
-        // Blocking: return findings inline. Inject risk_score + severity
-        // so the Pro engine doesn't have to fall back to its heuristic.
+        // Blocking: return findings inline. Inject risk_score + severity so
+        // the caller does not have to fall back to a heuristic of its own.
         let stored = session.get(&scan_id).expect("just inserted");
         let findings_json: Vec<Value> = stored
             .findings

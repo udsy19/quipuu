@@ -17,7 +17,7 @@
 
 - [quipuu/crates/core/schema/](quipuu/crates/core/schema/): JSON Schemas (Draft 2020-12)
 - 11 MCP verbs documented in quipuu/MCP.md §3
-- P3 enforced: provenance enum = ["deterministic"] only in OSS
+- P3 enforced: provenance enum = ["deterministic"], no other value is emitted
 
 ## Knowledge base
 

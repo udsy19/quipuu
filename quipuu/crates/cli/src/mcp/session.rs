@@ -128,8 +128,8 @@ pub fn apply_policy_param(params: &Value, builtins: &mut Builtins) -> Result<(),
 // ── Risk-aware Finding serialization ──────────────────────────────────────────
 //
 // scan_source and get_scan_results both ship `Finding` objects to the wire.
-// The Pro engine needs the policy-aware QuantumRiskScore for planner gating;
-// without it, the engine falls back to a coarse per-algorithm heuristic.
+// A caller gating on risk needs the policy-aware QuantumRiskScore; without it
+// it can only fall back to a coarse per-algorithm heuristic of its own.
 // `finding_with_risk_to_json` injects `risk_score` + `severity` into the
 // serialized form so callers see a complete record.
 

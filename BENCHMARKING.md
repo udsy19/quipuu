@@ -305,7 +305,7 @@ Three things that could undermine the benchmarks:
 
 ## 12. What we do not benchmark, and why
 
-- **Quality of remediation PRs.** That's the Pro engine's job; the OSS scanner doesn't generate PRs. Benchmarking PR quality is a separate problem solved by the Pro engine's verification harness, not by the OSS scanner's benchmark suite.
+- **Quality of remediation PRs.** The scanner does not generate PRs, so there is nothing here to measure. Whatever consumes its output and proposes a change is a separate program with a separate harness.
 - **Long-term scalability.** A scanner that's fast on 100 projects might choke on 100,000. We measure throughput, not asymptotic complexity. (We may eventually add a "monorepo scale" axis, but not in v0.1.)
 - **UI quality.** Subjective. The HTML report is what it is; we measure that it's standards-compliant and reproducible, not "pretty."
 
