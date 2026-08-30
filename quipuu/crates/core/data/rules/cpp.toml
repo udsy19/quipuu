@@ -534,6 +534,17 @@ algorithm_id = "ml-kem-1024"
 severity_hint = "auto"
 message = "liboqs OQS_KEM_new({alg}) — ML-KEM-1024, FIPS 203, quantum-resistant."
 
+# Fallback for every other OQS_KEM_alg_* macro (HQC, BIKE, Classic McEliece,
+# FrodoKEM, NTRUPrime, ...) — ordered last so the ML-KEM arms above match
+# first. Extracted, not silently dropped: see kem-unattributed.
+[[classify]]
+id = "CRYPTO-897"
+when.api = "^liboqs\\.OQS_KEM_new$"
+when.args.alg = { regex = "." }
+algorithm_id = "kem-unattributed"
+severity_hint = "auto"
+message = "liboqs OQS_KEM_new({alg}) — post-quantum KEM, family not in the quipuu algorithm table. Recorded as an unattributed call site — classify it by hand."
+
 [[extract]]
 id = "CPP-063"
 language = "c"
@@ -671,6 +682,17 @@ when.args.alg = { regex = "^OQS_SIG_alg_slh_dsa_pure_shake_256f$" }
 algorithm_id = "slh-dsa-shake-256f"
 severity_hint = "auto"
 message = "liboqs OQS_SIG_new({alg}) — SLH-DSA-SHAKE-256f, FIPS 205, quantum-resistant."
+
+# Fallback for every other OQS_SIG_alg_* macro (MQOM and the rest of the NIST
+# PQC signature on-ramp candidates) — ordered last so the ML-DSA/SLH-DSA arms
+# above match first. Extracted, not silently dropped: see sig-unattributed.
+[[classify]]
+id = "CRYPTO-898"
+when.api = "^liboqs\\.OQS_SIG_new$"
+when.args.alg = { regex = "." }
+algorithm_id = "sig-unattributed"
+severity_hint = "auto"
+message = "liboqs OQS_SIG_new({alg}) — post-quantum signature, family not in the quipuu algorithm table. Recorded as an unattributed call site — classify it by hand."
 
 # ============================================================================
 # OpenSSL 3.0+ — generic keygen API (EVP_PKEY_CTX_new_from_name /

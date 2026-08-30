@@ -996,6 +996,36 @@ fips = "FIPS 206 (DRAFT)"
 undetectable = "Same as fn-dsa-512: no production OID, and CNSA 2.0 rules on it."
 
 # ============================================================================
+# PQC CANDIDATE FAMILIES — no algorithm-table row of their own (Backlog #Y56)
+# liboqs's generic OQS_KEM_new/OQS_SIG_new API names dozens of research
+# candidates (HQC, BIKE, Classic McEliece, FrodoKEM, NTRUPrime, MAYO, SNOVA,
+# CROSS, UOV, MQOM, ...) via an OQS_{KEM,SIG}_alg_* macro. Unlike
+# webcrypto-unattributed/jca-unattributed, the call site is unambiguously a
+# post-quantum primitive — liboqs implements nothing classical behind these
+# two functions — so QuantumSafe (this project's "could be classical, don't
+# guess vulnerable" marker) would be wrong. PqcDraft fits: none of these
+# families has a NIST FIPS number the way ML-KEM/ML-DSA/SLH-DSA do — HQC
+# included, selected 2025-03-11 with no published FIPS number as of this
+# cycle. Resolve by hand once a specific family matters enough for its own row.
+# ============================================================================
+
+[[algorithm]]
+id = "kem-unattributed"
+display_name = "Post-quantum KEM (algorithm family not in the quipuu table)"
+family = "PQC-candidate"
+primitive = "kem"
+quantum_status = "PqcDraft"
+notes = "liboqs's OQS_KEM_new(OQS_KEM_alg_<macro>) accepts any KEM the library ships, including candidates this table has no row for yet (HQC — NIST's selected backup KEM, default-on in liboqs since 0.16.0/2026-07-09 — plus BIKE, Classic McEliece, FrodoKEM, NTRUPrime). The call site is unambiguously post-quantum; only the specific family is unattributed. Resolve by hand, or add a dedicated row and classify arm once a family here ships in a production consumer."
+
+[[algorithm]]
+id = "sig-unattributed"
+display_name = "Post-quantum signature (algorithm family not in the quipuu table)"
+family = "PQC-candidate"
+primitive = "signature"
+quantum_status = "PqcDraft"
+notes = "liboqs's OQS_SIG_new(OQS_SIG_alg_<macro>) accepts any signature scheme the library ships, including candidates this table has no row for yet (MQOM and the other NIST PQC signature on-ramp candidates). The call site is unambiguously post-quantum; only the specific family is unattributed. Resolve by hand, or add a dedicated row and classify arm once a family here ships in a production consumer."
+
+# ============================================================================
 # STATEFUL HASH-BASED SIGNATURES — NIST SP 800-208
 #
 # Quantum-safe and deployed today in secure boot and firmware signing, which is

@@ -130,6 +130,19 @@ void liboqs_sig_heap_slh_dsa(void) {
     OQS_SIG *sig = OQS_SIG_new(OQS_SIG_alg_slh_dsa_pure_sha2_128s);
 }
 
+/* Backlog #Y56 — liboqs heap-form KEM/SIG, algorithm family not in the
+   quipuu table (HQC, NIST's selected backup KEM; MAYO, a signature
+   on-ramp candidate). Extracted and recorded, not silently dropped. */
+void liboqs_kem_heap_unattributed(void) {
+    OQS_KEM *hqc128 = OQS_KEM_new(OQS_KEM_alg_hqc_128);
+    OQS_KEM *hqc192 = OQS_KEM_new(OQS_KEM_alg_hqc_192);
+    OQS_KEM *hqc256 = OQS_KEM_new(OQS_KEM_alg_hqc_256);
+}
+
+void liboqs_sig_heap_unattributed(void) {
+    OQS_SIG *mayo = OQS_SIG_new(OQS_SIG_alg_mayo_1);
+}
+
 /* Out of scope: OQS_SIG_STFL_* is the stateful hash-signature API (LMS/XMSS),
    a firmware-signing population this project does not target. Must not fire. */
 void liboqs_stfl_out_of_scope(void) {

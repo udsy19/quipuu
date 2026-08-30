@@ -222,7 +222,12 @@ fn canonicalize_family(family: &str) -> Option<String> {
         // algorithm. "Signature" is the same case one step further in: the
         // primitive is known and the family is not, which is exactly what
         // the enum has no member for.
-        "TLS" | "JWT" | "WebCrypto" | "JCA" | "Provider" | "RNG" | "Signature" => return None,
+        // "PQC-candidate" (kem-unattributed/sig-unattributed — a liboqs
+        // OQS_{KEM,SIG}_alg_* macro naming a family this table has no row
+        // for, e.g. HQC, MAYO) is the same case: a real call site whose
+        // specific algorithm family the enum cannot name.
+        "TLS" | "JWT" | "WebCrypto" | "JCA" | "Provider" | "RNG" | "Signature"
+        | "PQC-candidate" => return None,
         // Identity mapping for everything else (RSASSA-PSS, ECDSA, EdDSA,
         // ECDH, DSA, AES, DES, 3DES, RC4, ChaCha20, MD5, SHA-1/2/3,
         // ML-KEM, ML-DSA, SLH-DSA).

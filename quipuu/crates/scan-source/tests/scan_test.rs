@@ -3108,9 +3108,10 @@ fn scans_c_liboqs_heap_form_kem() {
 
 /// `OQS_SIG_STFL_new` is the stateful hash-signature API (LMS/XMSS) — a
 /// separate, firmware-signing population this project has stood down on
-/// covering. It must not be picked up by any liboqs rule: exactly 7 liboqs
-/// findings total (3 stack-KEM, 2 stack-SIG, 1 heap-KEM, 1 heap-SIG SLH-DSA),
-/// none on its line.
+/// covering. It must not be picked up by any liboqs rule: exactly 11 liboqs
+/// findings total (3 stack-KEM, 2 stack-SIG, 1 heap-KEM, 1 heap-SIG SLH-DSA,
+/// 3 heap-KEM unattributed (HQC), 1 heap-SIG unattributed (MAYO)), none on
+/// the STFL line.
 #[test]
 fn liboqs_stfl_new_is_out_of_scope() {
     let b = load_builtins().unwrap();
@@ -3125,8 +3126,8 @@ fn liboqs_stfl_new_is_out_of_scope() {
         .collect();
     assert_eq!(
         liboqs.len(),
-        7,
-        "expected exactly 7 liboqs findings (STFL excluded); got: {:#?}",
+        11,
+        "expected exactly 11 liboqs findings (STFL excluded); got: {:#?}",
         liboqs
             .iter()
             .map(|f| (&f.rule_id, &f.algorithm_id, f.location.line))
@@ -3135,6 +3136,45 @@ fn liboqs_stfl_new_is_out_of_scope() {
     assert!(
         !liboqs.iter().any(|f| f.message.contains("STFL")),
         "OQS_SIG_STFL_new must not be classified by a liboqs rule"
+    );
+}
+
+/// Backlog `#Y56`: `OQS_KEM_new`/`OQS_SIG_new` extract any algorithm-name
+/// macro but previously classified only a closed enumerated list with no
+/// fallback arm, so HQC (NIST's own selected backup KEM, default-on in
+/// liboqs since 0.16.0) and other candidate families produced zero findings
+/// — not a degraded one — despite being visible to the extractor.
+#[test]
+fn scans_c_liboqs_heap_form_unattributed_fallback() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    let kem_unattributed = findings
+        .iter()
+        .filter(|f| f.rule_id == "CRYPTO-897" && f.algorithm_id == "kem-unattributed")
+        .count();
+    assert_eq!(
+        kem_unattributed,
+        3,
+        "expected 3 HQC OQS_KEM_new sites to degrade to kem-unattributed; got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-898" && f.algorithm_id == "sig-unattributed"),
+        "expected the MAYO OQS_SIG_new site to degrade to sig-unattributed; got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
     );
 }
 
