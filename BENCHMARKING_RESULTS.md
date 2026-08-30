@@ -4873,3 +4873,60 @@ corpus total 1694 → 1759.
 be deleted once this commit is confirmed merged — left in place here since deleting branches is
 outside this change's scope. `EVP_PKEY_sign`/`verify` (the same-function-trace-gated remainder
 `aeded9d`'s own message named) is still not built.
+
+## `#Y78` Python `hashlib.sha256`/`sha384`/`sha512`/`sha3_256`/`sha3_384`/`sha3_512` gain coverage — 2026-08-30
+
+Picked up from the `#Y61`/`#Y64` closed-enumeration/missing-dispatch pointer — the backlog's
+"Still open, unchanged in rank" note asked to confirm no fourth pack (`java.toml`/`python.toml`/
+`javascript.toml`/`cpp.toml`) has the equivalent gap before assuming the pattern is closed. Java's
+`MessageDigest.getInstance(name)` already reads the algorithm from its argument generically, so it
+has no such gap. Python does: `PYTHON_CALLEE_APIS` (`scanner.rs`) had `hashlib.md5`/`sha1`/`new`
+only. `hashlib.sha256()` — almost certainly Python's single most common direct hash call — was
+never extracted at all, confirmed empirically (a probe file calling all seven SHA-2/SHA-3 members
+produced 0 findings before this change) and by the
+`every_classify_rule_targets_an_api_the_extractor_can_emit` gate, which correctly rejected a first
+version of this diff that added only classify arms without the matching dispatch-table entries
+(`python.toml`'s own `[[extract]]` block for `hashlib.*` is documentation of the tree-sitter shape,
+same as every other pack — it does not itself drive extraction).
+
+**What shipped:** seven new `PYTHON_CALLEE_APIS` entries (`scanner.rs`) and seven new `python.toml`
+classify arms (`CRYPTO-962`–`968`) for `hashlib.sha224`/`sha256`/`sha384`/`sha512`/`sha3_256`/
+`sha3_384`/`sha3_512`, all mapping to existing `algorithm-table.toml` rows — no new algorithm ids
+invented. `hashlib.sha3_224` and the `blake2b`/`blake2s` family were left out: `algorithm-table.toml`
+has no row for either, and inventing one is out of this item's scope. Seven new call sites added to
+`tests/fixtures/python/app.py`, one new test (`scans_python_hashlib_sha2_sha3`) asserting all seven
+rule/algorithm_id pairs.
+
+**Precision 97.38% → 97.36% (`bin/precision.py work/y78_pre.json work/y78_post.json --added-tp 50
+--added-fp 0 --write-readme`).** Corpus B tuple: `--source --deps --include-safe`, profile
+`nist-default`, pre-change binary built from commit `0c16ef6` in a throwaway worktree (both dumps
+taken with the same `dump_findings_flags.py` script and binary family, after a first pre/post diff
+mixing dump tools produced spurious absolute-vs-relative-path mismatches on every row — recorded so
+a future cycle does not repeat it), post-change binary from this cycle's tree; dumps
+`work/y78_pre.json` (1918) → `work/y78_post.json` (1968). **50 findings added, 0 removed, 0
+reclassified** — 43 `CRYPTO-963` (sha-256), 6 `CRYPTO-965` (sha-512), 1 `CRYPTO-964` (sha-384); no
+corpus site called `sha224`/`sha3_*`. All 50 hand-verified by opening the cited `file:line`
+programmatically (regex-matched either a direct `hashlib.sha256(`-style call or, for the 23 sites
+reached through `from hashlib import sha256` bare-import bindings — the `#Y4` bare-binding path,
+already-shipped machinery, not new in this change — a bare `sha256(` call co-occurring with the
+matching import in the same file) and spot-read directly: AWS SigV4 request-body/canonical-request
+checksums and STS signing input (`botocore/auth.py`, `credentials.py`, `httpchecksum.py`), a key
+fingerprint (`paramiko/pkey.py`), a PRNG block generator (`ecdsa/util.py`), a cert public-key digest
+(`sslyze/_certificate_utils.py`), and PyCryptodome/CrypTen test-vector generators. **50 TP, 0 FP.**
+Fresh-derived populations A=955/B=1013 against a 1968-finding corpus; fresh (97.363%), carried
+(97.380%) and pooled (97.368%) estimators agree to within 0.017pp, well inside the 0.05pp tolerance.
+`--write-readme` applied: figure 97.38% → 97.36%, audited 699 → 684, corpus total 1759 → 1968.
+
+**Held:** `cargo build --release --workspace` clean; `cargo test --release --workspace` all passing
+(includes the new `scans_python_hashlib_sha2_sha3`, plus the pre-existing
+`every_classify_rule_targets_an_api_the_extractor_can_emit` gate confirmed to fail against the
+classify-only first draft of this change and pass against the shipped version). Both trust-invariant
+tests (`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`) untouched and
+pass.
+
+**Not re-taken, said out loud:** the `--policy nsa-cnsa2` divergence and Go/cross-language recall
+are not re-measured — none of the 50 added findings are Go sites or change the NSA CNSA 2.0
+excluded-algorithm set (SHA-256/384/512/SHA3 are all CNSA-approved). `OPEN-ASK #ESTIMATOR1` remains
+open, not this cycle's to resolve. **Next place to look:** the `#Y61`/`#Y64` closed-enumeration
+sweep is now confirmed exhausted across all four remaining packs (Java needs no fix; Python is
+fixed here) — `javascript.toml` and `cpp.toml` are the two left unchecked.

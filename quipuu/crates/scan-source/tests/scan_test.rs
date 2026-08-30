@@ -819,6 +819,36 @@ fn scans_python_hashlib_named_import() {
 }
 
 #[test]
+fn scans_python_hashlib_sha2_sha3() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("python/app.py"))
+        .expect("scan succeeds");
+
+    for (rule_id, algorithm_id) in [
+        ("CRYPTO-962", "sha-224"),
+        ("CRYPTO-963", "sha-256"),
+        ("CRYPTO-964", "sha-384"),
+        ("CRYPTO-965", "sha-512"),
+        ("CRYPTO-966", "sha3-256"),
+        ("CRYPTO-967", "sha3-384"),
+        ("CRYPTO-968", "sha3-512"),
+    ] {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) via hashlib.* in Python fixture; findings: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+}
+
+#[test]
 fn scans_python_pycryptodome_des() {
     let b = load_builtins().unwrap();
     let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");

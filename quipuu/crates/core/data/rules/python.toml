@@ -281,6 +281,65 @@ algorithm_id = "sha-1"
 severity_hint = "critical"
 message = "hashlib.new('{name}') — SHA-1 is collision-broken (SHAttered, 2017)."
 
+# PY-040's `[[extract]]` block above is documentation of the tree-sitter shape,
+# same as every other pack — the actual extraction runs through `PYTHON_CALLEE_APIS`
+# (scanner.rs), which had entries for hashlib.md5/sha1/new only. hashlib.sha256()
+# and its SHA-2/SHA-3 siblings were never extracted at all, confirmed empirically
+# (0 findings on a probe file calling all seven before this change) and by the
+# `every_classify_rule_targets_an_api_the_extractor_can_emit` gate, which rejected
+# a first version of this diff that added only these classify arms. Same defect
+# class as #Y61/#Y64: a missing dispatch-table entry, not a missing classify arm.
+# Fixed by adding the seven `hashlib.*` entries to `PYTHON_CALLEE_APIS`.
+
+[[classify]]
+id = "CRYPTO-962"
+when.api = "^hashlib\\.sha224$"
+algorithm_id = "sha-224"
+severity_hint = "auto"
+message = "hashlib.sha224() — SHA-224 hash. Quantum-safe."
+
+[[classify]]
+id = "CRYPTO-963"
+when.api = "^hashlib\\.sha256$"
+algorithm_id = "sha-256"
+severity_hint = "auto"
+message = "hashlib.sha256() — SHA-256 hash. Quantum-safe."
+
+[[classify]]
+id = "CRYPTO-964"
+when.api = "^hashlib\\.sha384$"
+algorithm_id = "sha-384"
+severity_hint = "auto"
+message = "hashlib.sha384() — SHA-384 hash. Quantum-safe."
+
+[[classify]]
+id = "CRYPTO-965"
+when.api = "^hashlib\\.sha512$"
+algorithm_id = "sha-512"
+severity_hint = "auto"
+message = "hashlib.sha512() — SHA-512 hash. Quantum-safe."
+
+[[classify]]
+id = "CRYPTO-966"
+when.api = "^hashlib\\.sha3_256$"
+algorithm_id = "sha3-256"
+severity_hint = "auto"
+message = "hashlib.sha3_256() — SHA3-256 hash. Quantum-safe."
+
+[[classify]]
+id = "CRYPTO-967"
+when.api = "^hashlib\\.sha3_384$"
+algorithm_id = "sha3-384"
+severity_hint = "auto"
+message = "hashlib.sha3_384() — SHA3-384 hash. Quantum-safe."
+
+[[classify]]
+id = "CRYPTO-968"
+when.api = "^hashlib\\.sha3_512$"
+algorithm_id = "sha3-512"
+severity_hint = "auto"
+message = "hashlib.sha3_512() — SHA3-512 hash. Quantum-safe."
+
 # ssl — TLS context configuration
 
 [[extract]]

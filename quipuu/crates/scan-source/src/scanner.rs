@@ -1577,6 +1577,13 @@ const PYTHON_CALLEE_APIS: &[(&str, &str)] = &[
     ("hashlib.md5", "hashlib.md5"),
     ("hashlib.sha1", "hashlib.sha1"),
     ("hashlib.new", "hashlib.new"),
+    ("hashlib.sha224", "hashlib.sha224"),
+    ("hashlib.sha256", "hashlib.sha256"),
+    ("hashlib.sha384", "hashlib.sha384"),
+    ("hashlib.sha512", "hashlib.sha512"),
+    ("hashlib.sha3_256", "hashlib.sha3_256"),
+    ("hashlib.sha3_384", "hashlib.sha3_384"),
+    ("hashlib.sha3_512", "hashlib.sha3_512"),
     (
         "ed25519.Ed25519PrivateKey.generate",
         "cryptography.hazmat.ed25519.generate",
