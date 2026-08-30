@@ -404,6 +404,17 @@ algorithm_id = "rsa-3072"
 severity_hint = "auto"
 message = "pycryptodome RSA-{bits} — quantum-vulnerable regardless of key size."
 
+# bits is a runtime variable, e.g. RSA.generate(key_size) — same shape as
+# CRYPTO-104's paramiko-style fallback above. Without this arm the call
+# silently produced zero findings despite the extractor seeing the call.
+[[classify]]
+id = "CRYPTO-173"
+when.api = "^Crypto\\.PublicKey\\.RSA\\.generate$"
+when.args.bits_symbol = { regex = ".+" }
+algorithm_id = "rsa-unattributed"
+severity_hint = "auto"
+message = "pycryptodome RSA key size is runtime-variable ({bits_symbol}); cannot statically verify it meets the 2048-bit floor. Quantum-vulnerable in any case."
+
 # pycryptodome/pycryptodomex — Crypto.Cipher.DES / Crypto.Cipher.DES3
 # (Cryptodome.Cipher.* imports the identical class names, so the bare
 # `DES.new`/`DES3.new` callee text this rule keys on covers both namespaces.)

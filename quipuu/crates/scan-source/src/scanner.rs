@@ -2501,8 +2501,14 @@ fn populate_args(
             }
         }
         (Language::Python, "Crypto.PublicKey.RSA.generate") => {
+            // RSA.generate(bits) — bits is a variable when the caller reads
+            // it from config, e.g. RSA.generate(key_size). Same shape as
+            // hazmat's key_size below: no capture at all previously, so the
+            // call silently produced zero findings (CRYPTO-173 catches it).
             if let Some(bits) = nth_arg_int(args_node, 0, source) {
                 out.insert("bits".into(), ArgValue::Int(bits));
+            } else if let Some(name) = python_first_arg_identifier(args_node, source) {
+                out.insert("bits_symbol".into(), ArgValue::Str(name));
             }
         }
         (Language::Python, "cryptography.hazmat.rsa.generate_private_key") => {

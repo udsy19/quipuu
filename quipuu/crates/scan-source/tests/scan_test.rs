@@ -1822,6 +1822,33 @@ fn phase8_paramiko_variable_ec_curve_produces_finding() {
     );
 }
 
+/// Backlog `#Y58`: pycryptodome's `Crypto.PublicKey.RSA.generate(bits)` had no
+/// symbolic fallback of the kind `#Y58`'s hazmat/paramiko sibling (CRYPTO-104)
+/// already had — a config-driven key size (`RSA.generate(key_size)`) produced
+/// zero findings despite the extractor already seeing the call.
+#[test]
+fn phase8_pycryptodome_variable_rsa_bits_produces_finding() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("python/paramiko_style.py"))
+        .expect("scan succeeds");
+
+    let cr173 = findings.iter().find(|f| f.rule_id == "CRYPTO-173");
+    assert!(
+        cr173.is_some(),
+        "expected CRYPTO-173 for RSA.generate(key_size), got: {:?}",
+        findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
+    );
+    let f = cr173.unwrap();
+    assert_eq!(f.algorithm_id, "rsa-unattributed");
+    assert!(
+        f.message.contains("key_size"),
+        "message should name the variable: {}",
+        f.message
+    );
+}
+
 #[test]
 fn phase8_cryptojs_two_level_member_expression_detected() {
     // pre-fix: CryptoJS.AES.encrypt etc. produced zero findings because
