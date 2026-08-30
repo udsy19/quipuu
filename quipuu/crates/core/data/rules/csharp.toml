@@ -2,7 +2,7 @@
 #
 # Covers: System.Security.Cryptography factory methods:
 #   RSA.Create(), ECDsa.Create(), Aes.Create(), TripleDES.Create(),
-#   SHA256.Create(), SHA512.Create(), MD5.Create(), SHA1.Create(),
+#   SHA256.Create(), SHA384.Create(), SHA512.Create(), MD5.Create(), SHA1.Create(),
 #   RandomNumberGenerator (Create / GetBytes),
 #   RijndaelManaged (deprecated).
 #
@@ -173,6 +173,16 @@ when.api = "^System\\.Security\\.Cryptography\\.SHA512\\.Create$"
 algorithm_id = "sha-512"
 severity_hint = "auto"
 message = "SHA512.Create() — SHA-512 hash. Quantum-safe."
+
+# SHA384.Create() — `CSHARP_CALLEE_APIS` (scanner.rs) had no entry for it, so
+# the call site was never even extracted, though algorithm-table.toml already
+# carries a sha-384 row. Added there alongside this arm.
+[[classify]]
+id = "CRYPTO-633"
+when.api = "^System\\.Security\\.Cryptography\\.SHA384\\.Create$"
+algorithm_id = "sha-384"
+severity_hint = "auto"
+message = "SHA384.Create() — SHA-384 hash. Quantum-safe."
 
 # ============================================================================
 # MD5.Create()

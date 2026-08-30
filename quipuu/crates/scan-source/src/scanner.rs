@@ -2299,6 +2299,10 @@ const CSHARP_CALLEE_APIS: &[(&str, &str)] = &[
         "System.Security.Cryptography.SHA256.Create",
     ),
     (
+        "SHA384.Create",
+        "System.Security.Cryptography.SHA384.Create",
+    ),
+    (
         "SHA512.Create",
         "System.Security.Cryptography.SHA512.Create",
     ),

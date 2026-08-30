@@ -1234,6 +1234,22 @@ fn scans_csharp_sha256_create() {
 }
 
 #[test]
+fn scans_csharp_sha384_create() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("csharp/Crypto.cs"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-633" && f.algorithm_id == "sha-384"),
+        "expected CRYPTO-633 (SHA384.Create) in C# fixture"
+    );
+}
+
+#[test]
 fn scans_csharp_bouncycastle_mlkem_and_mldsa() {
     let b = load_builtins().unwrap();
     let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
