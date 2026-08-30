@@ -1411,6 +1411,28 @@ fn scans_csharp_sha384_create() {
 }
 
 #[test]
+fn scans_csharp_sha3_create() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("csharp/Crypto.cs"))
+        .expect("scan succeeds");
+
+    for (rule_id, algorithm_id) in [
+        ("CRYPTO-945", "sha3-256"),
+        ("CRYPTO-946", "sha3-384"),
+        ("CRYPTO-947", "sha3-512"),
+    ] {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in C# fixture"
+        );
+    }
+}
+
+#[test]
 fn scans_csharp_bouncycastle_mlkem_and_mldsa() {
     let b = load_builtins().unwrap();
     let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");

@@ -742,6 +742,16 @@ quantum_status = "QuantumSafe"
 oid = "2.16.840.1.101.3.4.2.8"
 
 [[algorithm]]
+id = "sha3-384"
+display_name = "SHA3-384"
+family = "SHA-3"
+primitive = "hash"
+classical_security_bits = 192
+nist_quantum_security_level = 3
+quantum_status = "QuantumSafe"
+oid = "2.16.840.1.101.3.4.2.9"
+
+[[algorithm]]
 id = "sha3-512"
 display_name = "SHA3-512"
 family = "SHA-3"

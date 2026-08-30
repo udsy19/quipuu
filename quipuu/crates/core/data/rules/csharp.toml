@@ -145,7 +145,7 @@ language = "csharp"
 query = """
 (invocation_expression
   function: (member_access_expression
-    expression: (identifier) @cls (#match? @cls "^SHA(1|256|384|512)$")
+    expression: (identifier) @cls (#match? @cls "^SHA(1|256|384|512|3_256|3_384|3_512)$")
     name: (identifier) @fn (#eq? @fn "Create")))
 """
 captures = { cls = "ident", fn = "ident" }
@@ -183,6 +183,31 @@ when.api = "^System\\.Security\\.Cryptography\\.SHA384\\.Create$"
 algorithm_id = "sha-384"
 severity_hint = "auto"
 message = "SHA384.Create() — SHA-384 hash. Quantum-safe."
+
+# SHA3_256/384/512.Create() — same shape as SHA384 above: `CSHARP_CALLEE_APIS`
+# had no entries for .NET's SHA3 classes, so the call sites were never
+# extracted. sha3-384 also needed a new algorithm-table.toml row; sha3-256
+# and sha3-512 already had one.
+[[classify]]
+id = "CRYPTO-945"
+when.api = "^System\\.Security\\.Cryptography\\.SHA3_256\\.Create$"
+algorithm_id = "sha3-256"
+severity_hint = "auto"
+message = "SHA3_256.Create() — SHA3-256 hash. Quantum-safe."
+
+[[classify]]
+id = "CRYPTO-946"
+when.api = "^System\\.Security\\.Cryptography\\.SHA3_384\\.Create$"
+algorithm_id = "sha3-384"
+severity_hint = "auto"
+message = "SHA3_384.Create() — SHA3-384 hash. Quantum-safe."
+
+[[classify]]
+id = "CRYPTO-947"
+when.api = "^System\\.Security\\.Cryptography\\.SHA3_512\\.Create$"
+algorithm_id = "sha3-512"
+severity_hint = "auto"
+message = "SHA3_512.Create() — SHA3-512 hash. Quantum-safe."
 
 # ============================================================================
 # MD5.Create()

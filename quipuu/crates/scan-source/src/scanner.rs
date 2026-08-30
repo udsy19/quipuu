@@ -2563,6 +2563,18 @@ const CSHARP_CALLEE_APIS: &[(&str, &str)] = &[
         "SHA512.Create",
         "System.Security.Cryptography.SHA512.Create",
     ),
+    (
+        "SHA3_256.Create",
+        "System.Security.Cryptography.SHA3_256.Create",
+    ),
+    (
+        "SHA3_384.Create",
+        "System.Security.Cryptography.SHA3_384.Create",
+    ),
+    (
+        "SHA3_512.Create",
+        "System.Security.Cryptography.SHA3_512.Create",
+    ),
     ("MD5.Create", "System.Security.Cryptography.MD5.Create"),
     (
         "RandomNumberGenerator.Create",

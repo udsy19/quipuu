@@ -4218,6 +4218,52 @@ No new rung-2 coverage item is filed this cycle to replace `#Y61` in rank; the n
 is that SHA3 gap, or the same closed-enumeration/missing-dispatch-entry pattern in whatever of
 go.toml/rust.toml remains unswept.
 
+## `#Y63`: C# `SHA3_256`/`SHA3_384`/`SHA3_512.Create()` gain coverage — `#Y61`'s own named gap
+
+Taken directly from `#Y61`'s closing pointer: "C#'s remaining `SHA3_256`/`SHA3_384`/`SHA3_512`
+classes are a different, larger gap." Confirmed unfixed before touching anything: a
+`SHA3_256.Create()` fixture line scored 0 findings on the release binary while the adjacent
+`SHA384.Create()` line scored 1.
+
+Same root cause as `#Y61`, times three: `CSHARP_CALLEE_APIS` (`scanner.rs`) had no entries for
+.NET's `SHA3_256`/`SHA3_384`/`SHA3_512` classes, so none of the three call sites were ever
+extracted. `sha3-256` and `sha3-512` already had `algorithm-table.toml` rows (added for `#Y59`'s
+Java digest sweep); `sha3-384` did not and needed a new one (`classical_security_bits = 192`,
+`nist_quantum_security_level = 3`, OID `2.16.840.1.101.3.4.2.9` — matching the classical `sha-384`
+row's security levels, per NIST FIPS 202). Three new `CSHARP_CALLEE_APIS` entries, three new
+classify arms (`CRYPTO-945`–`947`), and `CSH-020`'s extract-query regex widened from
+`^SHA(1|256|384|512)$` to also match `3_256|3_384|3_512` — that TOML query is documentation only
+(`#Y52`/`#Y61`), so this is a comment-accuracy fix, not a functional change on its own. Three new
+fixture call sites in `Crypto.cs` and one new test, `scans_csharp_sha3_create`, covering all three
+rule/algorithm_id pairs in one assertion loop.
+
+**Corpus effect: 0 findings added, 0 removed — a row-identical 1695-finding dump, both binaries.**
+`bin/precision.py work/y63_pre.json work/y63_post.json` (pre-change binary built from `2a8f02c` in
+a throwaway worktree, post-change binary this cycle's tree, both dumps taken back-to-back against
+the same `corpus-clones` checkout): 1695 → 1695, no delta. No C# project in corpus B calls any of
+the three SHA3 classes — the same "coverage without corpus demand" shape as `#Y43`/`#Y51`/`#Y55`/
+`#Y58`/`#Y61`.
+
+**Precision 97.11% (`bin/precision.py`), exactly matching the published anchor — a falsification,
+not a re-derivation.** Since 0 findings moved, there is nothing to fold into
+`state/estimator.json`. Re-running the tool against the README confirmed nothing needed writing
+(`--write-readme` reported "README already states this claim"). `corpus_integrity.py` was not
+separately re-run; the identical 1695-finding count on both binaries is itself the check that
+`OPEN-ASK #CORPUSDRIFT`'s oscillation did not move between these two dumps.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (129
+tests in `scan_test.rs`, one new: `scans_csharp_sha3_create`). The two trust-invariant tests
+(`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`) are untouched and
+pass.
+
+**Not re-taken, said out loud:** the `--policy nsa-cnsa2` divergence and Go line-exact recall are
+not re-measured — the finding set did not move at all, so neither number could plausibly have
+changed. `OPEN-ASK #ESTIMATOR1` and `OPEN-ASK #CORPUSDRIFT` both remain open and are not this
+cycle's to answer or resolve. No new rung-2 coverage item is filed this cycle to replace `#Y63` in
+rank; the next place to look is the same closed-enumeration/missing-dispatch-entry pattern in
+whatever of go.toml/rust.toml remains unswept, per `#Y61`'s and cycle 53's own pointer.
+
 ## `#Y62(a)`: OpenSSL `SSL_CTX_set1_groups_list`/`SSL_set1_groups_list` gain a TLS group-preference-list rule — 2026-08-30
 
 Taken from the backlog's own ranking: `#Y62` named a TLS group-preference-list gap open in three

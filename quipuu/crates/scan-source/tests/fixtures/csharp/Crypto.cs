@@ -48,6 +48,14 @@ public class CryptoFixture
         using var sha384 = SHA384.Create();
     }
 
+    // CSH-020 / CRYPTO-945/946/947 — SHA3_256/384/512.Create()
+    public static void Sha3Create()
+    {
+        using var sha3_256 = SHA3_256.Create();
+        using var sha3_384 = SHA3_384.Create();
+        using var sha3_512 = SHA3_512.Create();
+    }
+
     // CSH-021 / CRYPTO-640 — MD5.Create()
     public static void Md5Create()
     {
