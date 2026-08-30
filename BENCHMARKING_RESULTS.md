@@ -3492,8 +3492,9 @@ re-derivation.** Full 150-project pre/post dump (`work/y43_before.json` ↔ `wor
 both 1655 findings, byte-identical row sets on `(project, rule_id, file, line, algorithm_id,
 severity)`; script `work/y43_precision.py`). Neither dump matches the 1515 total the `#Y39` entry
 above recorded — both the pre-change binary (built from commit `33c8111` in a worktree) and the
-post-change binary read the same +140 environment drift `OPEN-ASK #CORPUSDRIFT` already named, so
-it cancels out of the diff and is not this cycle's to resolve (rule 7). No project in corpus B
+post-change binary read the same +140 environment drift already named as `OPEN-ASK #CORPUSDRIFT`
+(status: `ANSWERED — DEFERRED`, `03-Product/Backlog.md`), so it cancels out of the diff and is not
+this cycle's to resolve (rule 7). No project in corpus B
 calls any of the three classes — expected, since they are brand-new .NET 10 preview APIs with, per
 the ecosystem lens's own note, no measured corpus demand yet on either side of this change.
 
