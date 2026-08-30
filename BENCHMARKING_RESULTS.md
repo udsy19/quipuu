@@ -3706,3 +3706,32 @@ in either estimator, so this is coverage added at precision held, verified again
 --all-targets -- -D warnings` clean; `cargo test --workspace` all passing (119 `scan-source`
 integration tests, unchanged count — new assertions were added to an existing test rather than a
 new `#[test]` fn).
+
+## `#X9` part (a): LMS row's `undetectable` reason misinvoked P2 — 2026-08-30
+
+**Fixed a wrong justification, not a detection gap.** The `lms` row in `algorithm-table.toml`
+explained its lack of coverage as "we ship no source for the X.509 SPKI codepoints and P2 forbids
+fetching one" — but P2 governs the scanner binary's *runtime* network access, not what a developer
+vendors into the repository, where `knowledge/sources/` already carries FIPS 203/204/205 texts,
+NIST drafts, IANA registries, and CycloneDX schemas offline. The real reason LMS has no OID rule is
+simply that nobody has vendored the SPKI OID into `oid-table.toml` yet. Reworded to say exactly
+that. `hss`/`xmss`/`xmss-mt` need no edit of their own — their rows already read "As lms — no
+vendored OID," pointing at the corrected text rather than repeating the wrong one.
+
+`undetectable` is a pure documentation field (`quipuu_core::algorithm::AlgorithmRow`,
+`Option<String>`) read only by `crates/cli/tests/algorithm_reachability.rs` to check
+presence/absence — never matched, parsed, or compared for content by any scanner, classifier, or
+emitter. A prose change to it cannot move a finding by construction.
+
+**Corpus effect: 0 findings added, 0 removed, 0 reclassified, as a change to this field must
+produce.** Full 150-project pre/post dump (`work/x9a_before.json` ↔ `work/x9a_after.json`, both
+1515 findings from 149/150 projects; script `work/x9a_precision.py`; pre-change binary built from
+commit `4c92716` in a throwaway worktree) confirms a byte-identical row set.
+
+**Precision 97.06% held, exactly, `work/x9a_precision.py`.** The script reproduces the anchored
+97.06% on the pre dump before asserting the diff is empty; a doc-only field cannot move a TP/FP
+ratio in either direction, so this is a correctness fix to project documentation, verified against
+the corpus rather than derived from it.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing, unchanged counts.
