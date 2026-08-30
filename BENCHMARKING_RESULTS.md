@@ -4156,3 +4156,64 @@ rung-2 coverage item was filed this cycle to replace `#Y60` in rank — the next
 the same closed-enumeration-without-fallback pattern in whatever remains of go.toml/rust.toml/
 csharp.toml beyond the RSA-keygen and hash-selection sweep this cycle already did, or a rule
 pack not yet swept this way at all.
+
+## `#Y61`: C# `SHA384.Create()` gains coverage — a dispatch-table gap, not just a missing classify arm
+
+Found by taking `#Y60`'s own closing pointer literally rather than trusting its own sweep. `#Y60`
+stated that `csharp.toml`'s hash-selection call sites "already carry the equivalent catch-all or
+full enum," but the reasoning it gave (`RSA.Create()` is unattributed by construction) is about
+RSA keygen, not hash selection — the hash-selection claim was never actually checked against the
+JCA/OpenSSL digest set `#Y59`/`#Y60` had just closed for Java and node:crypto. It was not true.
+
+`csharp.toml`'s `CSH-020` classify rules cover `SHA1.Create()`/`SHA256.Create()`/`SHA512.Create()`,
+and `algorithm-table.toml` already carries a `sha-384` row, so `SHA384.Create()` looked at first
+like the same missing-classify-arm shape `#Y59`/`#Y60` closed. It is not quite that shape: C#'s
+extract layer is a Rust dispatch table (`CSHARP_CALLEE_APIS` in `scanner.rs`), not a tree-sitter
+query with a name capture — the `[[extract]]` TOML blocks are documentation only, a fact `#Y52`
+already recorded for a different file. `SHA384.Create()` had no entry in that table at all, so the
+call site was never extracted, let alone classified — a stricter failure than `#Y59`/`#Y60`'s
+Java/JS gap, where the extractor saw the site and only the classify arm was missing. Verified
+directly before touching anything: a `SHA384.Create()` fixture line scored 0 findings on the
+release binary while `SHA256.Create()` on the adjacent line scored 1.
+
+Fixed with one new `CSHARP_CALLEE_APIS` entry (`scanner.rs`) mapping `SHA384.Create` to
+`System.Security.Cryptography.SHA384.Create`, and one new classify arm (`CRYPTO-633`) in
+`csharp.toml` mirroring `CRYPTO-631`/`CRYPTO-632`'s existing shape exactly. One new fixture case in
+`Crypto.cs` and one new test, `scans_csharp_sha384_create`.
+
+**Corpus effect: 0 findings added, 0 removed — a row-identical 1673-finding dump, both binaries.**
+`bin/precision.py work/y61_pre.json work/y61_post.json` (pre-change binary built from `92080ad` in
+a throwaway worktree, post-change binary this cycle's tree, both dumps taken back-to-back against
+the same `corpus-clones` checkout): 1673 → 1673, no delta. No C# project in corpus B calls
+`SHA384.Create()` — the same "coverage without corpus demand" shape as `#Y43`/`#Y51`/`#Y55`/`#Y58`.
+
+**Precision 97.11% (`bin/precision.py`), a 0.04-point fall from the 97.15% published anchor —
+proven pre-existing drift, not this change's effect.** Since 0 findings moved, there is nothing to
+fold into `state/estimator.json`. The raw dump total itself jumped 1533 → 1673 between this
+measurement and `#Y60`'s — the already-tracked, deferred `OPEN-ASK #CORPUSDRIFT` recurring in the
+other direction (stratum A's population was 801 as of `#Y58`, fell to 661 by `#Y59`/`#Y60`, and is
+now back to 801). `corpus_integrity.py --clones work/corpus-clones` reports 150/150 populated and
+matching the committed baseline (1 pre-existing `unscannable`), so this is not a missing-project
+artifact. Confirmed identical on the *pre-change* binary alone: `bin/precision.py
+work/y61_pre.json work/y61_pre.json` (a pure no-op) reproduces the same 97.11%, proving the 0.04pp
+movement predates and is independent of this cycle's change — the same falsification method
+`#Y58` used for an analogous drift. README's headline, comparison table, and the "What that
+interval is" paragraph are updated in the same diff to 97.11% / 1673 / stratum populations 801+872,
+per rule 4 (a published figure with no tolerance band) and `bin/precision.py --write-readme`.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (128
+tests in `scan_test.rs`, one new: `scans_csharp_sha384_create`). The two trust-invariant tests
+(`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`) are untouched and
+pass.
+
+**Not re-taken, said out loud:** the `--policy nsa-cnsa2` divergence and Go line-exact recall are
+not re-measured — the finding set did not move at all, so neither number could plausibly have
+changed. `OPEN-ASK #ESTIMATOR1` and `OPEN-ASK #CORPUSDRIFT` both remain open and are not this
+cycle's to answer or resolve. C#'s remaining `SHA3_256`/`SHA3_384`/`SHA3_512` classes are a
+different, larger gap — `CSHARP_CALLEE_APIS`/`CSH-020`'s regex dispatches on a bare class name and
+would need a new entry per class rather than a widened enum, and `sha3-384` has no
+`algorithm-table.toml` row at all — named here rather than silently folded into this item's scope.
+No new rung-2 coverage item is filed this cycle to replace `#Y61` in rank; the next place to look
+is that SHA3 gap, or the same closed-enumeration/missing-dispatch-entry pattern in whatever of
+go.toml/rust.toml remains unswept.
