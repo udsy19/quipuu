@@ -214,7 +214,7 @@ not the machine named above, and `BENCHMARKING_RESULTS.md` reported the same run
 claiming the scanner got 16× slower; we are retracting a number that described 141 projects,
 under one flag set, on an unnamed machine, and presenting one that names all three.
 
-Audit-validated precision: **97.16%** (95% CI: 95.9%–98.5%) — measured 2026-08-30 on **634 audited findings** out of 1536, every one labelled by opening its cited `file:line`. Methodology, the full label set and per-finding verdicts are in `BENCHMARKING_RESULTS.md`, `PRECISION_AUDIT_V4.md` and `PRECISION_AUDIT_V3.md`.
+Audit-validated precision: **97.11%** (95% CI: 95.8%–98.4%) — measured 2026-08-30 on **634 audited findings** out of 1695, every one labelled by opening its cited `file:line`. Methodology, the full label set and per-finding verdicts are in `BENCHMARKING_RESULTS.md`, `PRECISION_AUDIT_V4.md` and `PRECISION_AUDIT_V3.md`.
 
 **This is a 0.05-point rise from the 97.11% published for the `SHA384.Create()` fix below, and it is coverage added, not a reanchor.** `cpp.toml` had no rules at all for OpenSSL's `SSL_CTX_set1_groups_list`/`SSL_set1_groups_list` — the TLS key-exchange group preference list, C's counterpart to `java.toml`'s `SSLParameters.setNamedGroups` (this fires on a classical-only group list written before ML-KEM existed, the same downgrade-detection direction, not the PQC-adoption direction every other C PQC rule fires in). A new structural matcher (`match_c_ssl_groups_list`, `scanner.rs`) splits the colon/tuple-separated string into one event per group name — mirroring the array-per-element shape `java.toml`'s extract already uses — and 11 new classify arms (`CRYPTO-909`–`CRYPTO-919`) reuse the same algorithm ids `java.toml`'s `setNamedGroups` arms already cover, though the literal group names differ (OpenSSL's own `P-256`/`P-384`/`P-521`, not Java's `secp256r1`/`secp384r1`/`secp521r1` — verified directly against OpenSSL's `SSL_CTX_set1_groups_list(3)` manpage). 3 new findings, all hand-verified true positive by opening the cited line, entirely inside `aws/aws-lc` and `google/boringssl`'s own TLS test suites — every one a real `SSL_CTX_set1_groups_list` call, guarded by `ASSERT_TRUE`, naming a classical-only group (`X25519`, `P-384`). The delta lands in stratum B, appended at audited weight rather than re-stratified. Full accounting in `BENCHMARKING_RESULTS.md`, "OpenSSL `SSL_CTX_set1_groups_list`/`SSL_set1_groups_list` gain a TLS group-preference-list rule."
 
@@ -351,7 +351,7 @@ quipuu scan .
 | MCP server | Yes | No | No | No | No |
 | Auditable open rule format | Yes (TOML) | No (binary) | Yes (QL) | No | Yes (YAML) |
 | Languages (crypto-specific) | 7 | 7+ | 7+ | Java, Python, Go (C# in development) | Any |
-| Published precision (crypto findings) | 97.16% (634 audited rows, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
+| Published precision (crypto findings) | 97.11% (634 audited rows, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
 | Published recall | 100.0% (Go stdlib, 401/401 in-scope sites) | Not published | Not published | Not published | Not published |
 | Scan speed | 170ms median project; 230s for the 150-project corpus (2 cores) | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
 

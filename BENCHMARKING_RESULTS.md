@@ -4413,3 +4413,46 @@ rustls's, calls `CryptoProvider { kx_groups: ... }` with a literal) would be nee
 positive. `OPEN-ASK #ESTIMATOR1` and `OPEN-ASK #CORPUSDRIFT` both remain open and are not this
 cycle's to answer or resolve. The `--policy nsa-cnsa2` divergence and Go line-exact recall are not
 re-measured — the finding set did not move at all, so neither number could plausibly have changed.
+
+## `#Y62(d)`: BouncyCastle raw (non-JSSE) TLS `NamedGroup` preference-list gains the same rule — 2026-08-30
+
+Tuple, per `#S12`: **corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change binary built from `8916827` (the `#Y62(c)` write-up commit) in
+a throwaway worktree · post-change binary this cycle's tree · dumps `work/y62d_pre.json` ↔
+`work/y62d_post.json`, both 1695 findings, row-identical.**
+
+**What shipped.** `#Y62`'s ranking named part (d) as the follow-on once (a)-(c)'s context was
+loaded: BouncyCastle's own, non-JSSE TLS stack has its own `TlsUtils.addIfSupported(supportedGroups,
+crypto, new int[]{ NamedGroup.X, ... })` three-argument overload, the shape an
+`AbstractTlsClient`/`AbstractTlsServer` subclass passes when overriding `getSupportedGroups` to set
+its own key-exchange group preference list — structurally the same downgrade signal
+`SSLParameters.setNamedGroups` already covers for the JSSE wrapper, on BC's independent stack. A new
+matcher (`match_bc_named_groups`, `scanner.rs`) walks the array-initializer argument and reuses the
+same algorithm ids the existing group-preference-list rule family (`#Y62a`-`c`) already covers — no
+new `algorithm-table.toml` rows. 13 new classify arms (`CRYPTO-932`–`CRYPTO-944`).
+
+**Corpus-B prevalence grepped, not assumed, per the filing's own instruction.** corpus B's only
+`bcgit/bc-java` clone matches this call shape exclusively inside the library's own
+`AbstractTlsClient.getSupportedGroups` default implementation — real library code, not an
+application overriding it, and outside `scan_hints.scan_paths` for every other corpus-B project that
+depends on BC. The two dumps are row-identical (1695 findings both sides): the rule is real and
+fires correctly against the fixture (`tests/fixtures/java/BcNamedGroups.java`, 0/2 control sites
+correctly suppressed — the netty-style unrelated `addIfSupported` helper and the single-group
+overload — 10/10 group findings correctly produced) but this corpus has no reachable positive for
+it, the same "coverage without corpus effect" shape `#Y43`/`#Y44`/`#Y55` already documented.
+
+**Precision 97.11% (`bin/precision.py`), unchanged — a falsification, not a re-derivation.** 0
+findings added, 0 removed; running the tool on the pre-change dump against itself reproduces the
+identical 97.11%, confirming the gap from the previously-published 97.16% is pre-existing
+fresh-vs-carried-population estimator drift (`OPEN-ASK #ESTIMATOR1`), not this change's effect.
+README (headline, comparison table) updated to 97.11% / 1695 total via `--write-readme`, per rule 4.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (one
+new: `scans_bc_named_groups_list`). The two trust-invariant tests
+(`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`) are untouched and pass.
+
+**`#Y62` is now closed, all four parts (a)-(d) shipped.** `OPEN-ASK #ESTIMATOR1` and `OPEN-ASK
+#CORPUSDRIFT` both remain open and are not this cycle's to answer or resolve. The `--policy
+nsa-cnsa2` divergence and Go line-exact recall are not re-measured — the finding set did not move at
+all, so neither number could plausibly have changed.
