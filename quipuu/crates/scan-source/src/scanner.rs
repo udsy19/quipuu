@@ -2351,6 +2351,50 @@ const CSHARP_CALLEE_APIS: &[(&str, &str)] = &[
         "MLKem.ImportFromPem",
         "System.Security.Cryptography.MLKem.ImportFromPem",
     ),
+    (
+        "MLDsa.ImportMLDsaPrivateKey",
+        "System.Security.Cryptography.MLDsa.ImportMLDsaPrivateKey",
+    ),
+    (
+        "MLDsa.ImportMLDsaPrivateSeed",
+        "System.Security.Cryptography.MLDsa.ImportMLDsaPrivateSeed",
+    ),
+    (
+        "MLDsa.ImportMLDsaPublicKey",
+        "System.Security.Cryptography.MLDsa.ImportMLDsaPublicKey",
+    ),
+    (
+        "MLDsa.ImportPkcs8PrivateKey",
+        "System.Security.Cryptography.MLDsa.ImportPkcs8PrivateKey",
+    ),
+    (
+        "MLDsa.ImportSubjectPublicKeyInfo",
+        "System.Security.Cryptography.MLDsa.ImportSubjectPublicKeyInfo",
+    ),
+    (
+        "MLDsa.ImportFromPem",
+        "System.Security.Cryptography.MLDsa.ImportFromPem",
+    ),
+    (
+        "SlhDsa.ImportSlhDsaPrivateKey",
+        "System.Security.Cryptography.SlhDsa.ImportSlhDsaPrivateKey",
+    ),
+    (
+        "SlhDsa.ImportSlhDsaPublicKey",
+        "System.Security.Cryptography.SlhDsa.ImportSlhDsaPublicKey",
+    ),
+    (
+        "SlhDsa.ImportPkcs8PrivateKey",
+        "System.Security.Cryptography.SlhDsa.ImportPkcs8PrivateKey",
+    ),
+    (
+        "SlhDsa.ImportSubjectPublicKeyInfo",
+        "System.Security.Cryptography.SlhDsa.ImportSubjectPublicKeyInfo",
+    ),
+    (
+        "SlhDsa.ImportFromPem",
+        "System.Security.Cryptography.SlhDsa.ImportFromPem",
+    ),
 ];
 
 /// C# `new Foo()` constructors.
@@ -2569,17 +2613,23 @@ fn populate_args(
             | "System.Security.Cryptography.SlhDsa.GenerateKey"
             | "System.Security.Cryptography.MLKem.ImportEncapsulationKey"
             | "System.Security.Cryptography.MLKem.ImportDecapsulationKey"
-            | "System.Security.Cryptography.MLKem.ImportPrivateSeed",
+            | "System.Security.Cryptography.MLKem.ImportPrivateSeed"
+            | "System.Security.Cryptography.MLDsa.ImportMLDsaPrivateKey"
+            | "System.Security.Cryptography.MLDsa.ImportMLDsaPrivateSeed"
+            | "System.Security.Cryptography.MLDsa.ImportMLDsaPublicKey"
+            | "System.Security.Cryptography.SlhDsa.ImportSlhDsaPrivateKey"
+            | "System.Security.Cryptography.SlhDsa.ImportSlhDsaPublicKey",
         ) => {
             // MLKem.GenerateKey(MLKemAlgorithm.MLKem768) — the sole argument is
             // a member access naming the static algorithm-set field. A variable
             // there captures nothing and the classify layer degrades to the
             // family sentinel, same shape as the BouncyCastle arm above.
-            // MLKem.Import{Encapsulation,Decapsulation}Key/ImportPrivateSeed
-            // take the same MLKemAlgorithm field as their first argument
-            // (learn.microsoft.com, net-10.0), so the same capture applies —
-            // arg 0 is the algorithm, arg 1 the key material, for all six APIs
-            // this arm now covers.
+            // MLKem.Import{Encapsulation,Decapsulation}Key/ImportPrivateSeed and
+            // their MLDsa/SlhDsa counterparts (MLDsaAlgorithm/SlhDsaAlgorithm,
+            // learn.microsoft.com, net-10.0, per backlog #Y55) take the same
+            // static algorithm-set field as their first argument, so the same
+            // capture applies — arg 0 is the algorithm, arg 1 the key material,
+            // for every API this arm now covers.
             if let Some(paramset) = nth_csharp_arg_member_access_name(args_node, 0, source) {
                 out.insert("paramset".into(), ArgValue::Str(paramset));
             }

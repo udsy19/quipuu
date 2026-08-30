@@ -64,4 +64,61 @@ public class PqcNativeFixture
     {
         using var kem = MLKem.ImportFromPem(source);
     }
+
+    // #Y55 — MLDsa/SlhDsa Import* key-loading paths, the exact remainder
+    // #Y51 named and left open.
+    public static void MlDsaImportMLDsaPrivateKey(byte[] source)
+    {
+        using var dsa = MLDsa.ImportMLDsaPrivateKey(MLDsaAlgorithm.MLDsa65, source);
+    }
+
+    public static void MlDsaImportMLDsaPrivateSeed(byte[] source)
+    {
+        using var dsa = MLDsa.ImportMLDsaPrivateSeed(MLDsaAlgorithm.MLDsa44, source);
+    }
+
+    public static void MlDsaImportMLDsaPublicKey(byte[] source)
+    {
+        using var dsa = MLDsa.ImportMLDsaPublicKey(MLDsaAlgorithm.MLDsa87, source);
+    }
+
+    public static void MlDsaImportPkcs8PrivateKey(byte[] source)
+    {
+        using var dsa = MLDsa.ImportPkcs8PrivateKey(source);
+    }
+
+    public static void MlDsaImportSubjectPublicKeyInfo(byte[] source)
+    {
+        using var dsa = MLDsa.ImportSubjectPublicKeyInfo(source);
+    }
+
+    public static void MlDsaImportFromPem(string source)
+    {
+        using var dsa = MLDsa.ImportFromPem(source);
+    }
+
+    public static void SlhDsaImportSlhDsaPrivateKey(byte[] source)
+    {
+        using var slh = SlhDsa.ImportSlhDsaPrivateKey(SlhDsaAlgorithm.SlhDsaShake192s, source);
+    }
+
+    public static void SlhDsaImportSlhDsaPublicKey(byte[] source)
+    {
+        using var slh = SlhDsa.ImportSlhDsaPublicKey(SlhDsaAlgorithm.SlhDsaSha2_256f, source);
+    }
+
+    public static void SlhDsaImportPkcs8PrivateKey(byte[] source)
+    {
+        using var slh = SlhDsa.ImportPkcs8PrivateKey(source);
+    }
+
+    public static void SlhDsaImportSubjectPublicKeyInfo(byte[] source)
+    {
+        using var slh = SlhDsa.ImportSubjectPublicKeyInfo(source);
+    }
+
+    public static void SlhDsaImportFromPem(string source)
+    {
+        using var slh = SlhDsa.ImportFromPem(source);
+    }
 }

@@ -3841,3 +3841,55 @@ does not close — out of this item's verified scope, not discovered and skipped
 **Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
 --all-targets -- -D warnings` clean; `cargo test --workspace` all passing (one new fixture test,
 `scans_csharp_mlkem_import_paths`).
+
+## `#Y55`: C# `MLDsa`/`SlhDsa` `Import*` key-loading paths gain coverage — 2026-08-30
+
+**Closes the exact remainder `#Y51` named and left open.** `#Y51` shipped `MLKem.Import*` coverage
+but scoped `MLDsa`/`SlhDsa` out because their import-method names were unverified at the time; two
+independent backlog lenses then closed that verification gap by two different routes that agree —
+one fetching `learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.{mldsa,slhdsa}`
+directly, the other reading CBOMkit's own `DotNetMLDsa.java`/`DotNetSlhDsa.java` in full. Both
+confirm: `MLDsa`'s algorithm-parameterized import methods are `ImportMLDsaPrivateKey`,
+`ImportMLDsaPrivateSeed`, and `ImportMLDsaPublicKey` (same `MLDsaAlgorithm` first-argument shape as
+`GenerateKey`); `SlhDsa`'s are `ImportSlhDsaPrivateKey` and `ImportSlhDsaPublicKey` — deliberately
+no `ImportSlhDsaPrivateSeed`, since FIPS 205 keys have no seed-expansion form, a real API asymmetry
+rather than an oversight. Both classes also carry the same no-algorithm-argument structural imports
+(`ImportPkcs8PrivateKey`/`ImportSubjectPublicKeyInfo`/`ImportFromPem`) `MLKem` already has, each
+always degrading to the family's `-unattributed` sentinel since the parameter set lives inside the
+encoded key material, not the call site. The citation `#Y51` gave for leaving this open (`P2`) was
+itself a misnomer: `P2` governs the *shipped scanner binary's* runtime network behavior, not
+whether the people building a rule pack may consult public API documentation.
+
+**First change:** 11 new rows in `scanner.rs`'s `CSHARP_CALLEE_APIS` table (6 `MLDsa`, 5 `SlhDsa`;
+there is no query engine — the `[[extract]]` TOML blocks are documentation, per `rules.rs`'s
+`every_classify_rule_targets_an_api_the_extractor_can_emit` gate) and the same `populate_args`
+match arm `#Y51` extended, now also covering `MLDsa.ImportMLDsaPrivateKey`/`ImportMLDsaPrivateSeed`/
+`ImportMLDsaPublicKey` and `SlhDsa.ImportSlhDsaPrivateKey`/`ImportSlhDsaPublicKey` with the same
+arg-0 paramset capture, unchanged. 44 new classify arms (`CRYPTO-853`..`896`) in `csharp.toml`:
+three `MLDsa` parameter sets × three algorithm-parameterized methods (12 arms + 3 unattributed
+fallbacks) plus three no-argument `MLDsa` imports (3 arms); twelve `SlhDsa` parameter sets × two
+algorithm-parameterized methods (24 arms + 2 unattributed fallbacks) plus three no-argument
+`SlhDsa` imports (3 arms).
+
+**Scope held to the same non-encrypted subset `#Y51` covered for `MLKem`.**
+`ImportEncryptedPkcs8PrivateKey`/`ImportFromEncryptedPem` are real `MLDsa`/`SlhDsa` entry points
+this item does not add — named rather than silently skipped, matching the scope the backlog filing
+itself specified.
+
+**Corpus effect: 0 findings added, 0 removed, 0 reclassified.** Full 150-project pre/post dump
+(`work/y55_pre.json` ↔ `work/y55_post.json`, both 1660 findings, row-identical; script
+`work/y55_precision.py`; pre-change binary built from commit `9bb9e03` in a throwaway worktree).
+Expected, not a surprise, and the same shape `#Y51`/`#Y43`/`#Y44` already documented: no known
+corpus-B consumer of this `.NET 10` preview surface yet. Verified instead against a planted
+fixture covering all 11 methods (`tests/fixtures/csharp/PqcNative.cs`, `cargo test
+scans_csharp_mldsa_slhdsa_import_paths`, 0/11 → 11/11 detected).
+
+**Precision: 97.09% held, exactly — a falsification, not a re-derivation.** `work/y55_precision.py`
+reproduces the anchored 97.09% (600 TP / 18 FP pooled) on the pre dump before printing anything
+else, then asserts the two dumps are row-identical. They are.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (one new fixture test,
+`scans_csharp_mldsa_slhdsa_import_paths`). The two trust-invariant tests
+(`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`) are untouched and
+pass.

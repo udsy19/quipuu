@@ -1254,6 +1254,44 @@ fn scans_csharp_mlkem_import_paths() {
 }
 
 #[test]
+fn scans_csharp_mldsa_slhdsa_import_paths() {
+    // #Y55 — the exact remainder #Y51 named and left open: MLDsa/SlhDsa have
+    // their own Import* key-loading surface, structurally identical to
+    // MLKem's, with zero coverage before this test.
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("csharp/PqcNative.cs"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-854", "ml-dsa-65"), // MLDsa.ImportMLDsaPrivateKey(MLDsaAlgorithm.MLDsa65, …)
+        ("CRYPTO-857", "ml-dsa-44"), // MLDsa.ImportMLDsaPrivateSeed(MLDsaAlgorithm.MLDsa44, …)
+        ("CRYPTO-863", "ml-dsa-87"), // MLDsa.ImportMLDsaPublicKey(MLDsaAlgorithm.MLDsa87, …)
+        ("CRYPTO-865", "ml-dsa-unattributed"), // MLDsa.ImportPkcs8PrivateKey(…)
+        ("CRYPTO-866", "ml-dsa-unattributed"), // MLDsa.ImportSubjectPublicKeyInfo(…)
+        ("CRYPTO-867", "ml-dsa-unattributed"), // MLDsa.ImportFromPem(…)
+        ("CRYPTO-876", "slh-dsa-shake-192s"), // SlhDsa.ImportSlhDsaPrivateKey(…SlhDsaShake192s, …)
+        ("CRYPTO-886", "slh-dsa-sha2-256f"), // SlhDsa.ImportSlhDsaPublicKey(…SlhDsaSha2_256f, …)
+        ("CRYPTO-894", "slh-dsa-unattributed"), // SlhDsa.ImportPkcs8PrivateKey(…)
+        ("CRYPTO-895", "slh-dsa-unattributed"), // SlhDsa.ImportSubjectPublicKeyInfo(…)
+        ("CRYPTO-896", "slh-dsa-unattributed"), // SlhDsa.ImportFromPem(…)
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in C# MLDsa/SlhDsa Import* fixture; findings: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+}
+
+#[test]
 fn end_to_end_rsa_keygen_scores_high() {
     // Walking-skeleton end-to-end demo: real file in, Finding out, score out.
     let b = load_builtins().unwrap();

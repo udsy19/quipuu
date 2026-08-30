@@ -961,3 +961,523 @@ when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.ImportFromPem$"
 algorithm_id = "ml-kem-unattributed"
 severity_hint = "auto"
 message = "MLKem.ImportFromPem(…) — FIPS 203, quantum-resistant, but the parameter set is carried inside the PEM-encoded key material and is not statically knowable at this call site."
+
+# MLDsa.Import*/SlhDsa.Import* — the exact remainder #Y51 named and left open
+# (P2 does not govern doc-fetching, per backlog #Y55's own citation
+# correction). Method names per learn.microsoft.com's MLDsa/SlhDsa class
+# pages, independently corroborated against CBOMkit's DotNetMLDsa.java/
+# DotNetSlhDsa.java: MLDsa's algorithm-parameterized import forms are
+# ImportMLDsaPrivateKey/ImportMLDsaPrivateSeed/ImportMLDsaPublicKey (same
+# MLDsaAlgorithm-first-argument shape as GenerateKey); SlhDsa's are
+# ImportSlhDsaPrivateKey/ImportSlhDsaPublicKey — deliberately no
+# ImportSlhDsaPrivateSeed, since FIPS 205 keys have no seed-expansion form.
+# Both classes also carry the same no-algorithm-argument structural imports
+# (ImportPkcs8PrivateKey/ImportSubjectPublicKeyInfo/ImportFromPem) MLKem
+# already has, always degrading to the family's unattributed sentinel.
+# Scope held to the same non-encrypted subset #Y51 covered for MLKem;
+# ImportEncryptedPkcs8PrivateKey/ImportFromEncryptedPem are real MLDsa/SlhDsa
+# entry points this item does not add, named rather than silently skipped.
+
+[[extract]]
+id = "CSH-064"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "MLDsa")
+    name: (identifier) @fn (#eq? @fn "ImportMLDsaPrivateKey"))
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "MLDsaAlgorithm")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", fn = "ident", paramcls = "ident", paramset = "ident" }
+api = "System.Security.Cryptography.MLDsa.ImportMLDsaPrivateKey"
+description = "MLDsa.ImportMLDsaPrivateKey(MLDsaAlgorithm.MLDsa65, source) — .NET 10+ first-party FIPS 204 ML-DSA private-key import."
+
+[[classify]]
+id = "CRYPTO-853"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.ImportMLDsaPrivateKey$"
+when.args.paramset = "MLDsa44"
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "MLDsa.ImportMLDsaPrivateKey(MLDsaAlgorithm.MLDsa44, …) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-854"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.ImportMLDsaPrivateKey$"
+when.args.paramset = "MLDsa65"
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "MLDsa.ImportMLDsaPrivateKey(MLDsaAlgorithm.MLDsa65, …) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-855"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.ImportMLDsaPrivateKey$"
+when.args.paramset = "MLDsa87"
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "MLDsa.ImportMLDsaPrivateKey(MLDsaAlgorithm.MLDsa87, …) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-856"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.ImportMLDsaPrivateKey$"
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "MLDsa.ImportMLDsaPrivateKey(…) with a non-literal parameter set — FIPS 204, quantum-resistant, but the parameter set is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-065"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "MLDsa")
+    name: (identifier) @fn (#eq? @fn "ImportMLDsaPrivateSeed"))
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "MLDsaAlgorithm")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", fn = "ident", paramcls = "ident", paramset = "ident" }
+api = "System.Security.Cryptography.MLDsa.ImportMLDsaPrivateSeed"
+description = "MLDsa.ImportMLDsaPrivateSeed(MLDsaAlgorithm.MLDsa65, source) — .NET 10+ first-party FIPS 204 ML-DSA seed-form private-key import."
+
+[[classify]]
+id = "CRYPTO-857"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.ImportMLDsaPrivateSeed$"
+when.args.paramset = "MLDsa44"
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "MLDsa.ImportMLDsaPrivateSeed(MLDsaAlgorithm.MLDsa44, …) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-858"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.ImportMLDsaPrivateSeed$"
+when.args.paramset = "MLDsa65"
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "MLDsa.ImportMLDsaPrivateSeed(MLDsaAlgorithm.MLDsa65, …) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-859"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.ImportMLDsaPrivateSeed$"
+when.args.paramset = "MLDsa87"
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "MLDsa.ImportMLDsaPrivateSeed(MLDsaAlgorithm.MLDsa87, …) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-860"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.ImportMLDsaPrivateSeed$"
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "MLDsa.ImportMLDsaPrivateSeed(…) with a non-literal parameter set — FIPS 204, quantum-resistant, but the parameter set is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-066"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "MLDsa")
+    name: (identifier) @fn (#eq? @fn "ImportMLDsaPublicKey"))
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "MLDsaAlgorithm")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", fn = "ident", paramcls = "ident", paramset = "ident" }
+api = "System.Security.Cryptography.MLDsa.ImportMLDsaPublicKey"
+description = "MLDsa.ImportMLDsaPublicKey(MLDsaAlgorithm.MLDsa65, source) — .NET 10+ first-party FIPS 204 ML-DSA public-key import."
+
+[[classify]]
+id = "CRYPTO-861"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.ImportMLDsaPublicKey$"
+when.args.paramset = "MLDsa44"
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "MLDsa.ImportMLDsaPublicKey(MLDsaAlgorithm.MLDsa44, …) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-862"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.ImportMLDsaPublicKey$"
+when.args.paramset = "MLDsa65"
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "MLDsa.ImportMLDsaPublicKey(MLDsaAlgorithm.MLDsa65, …) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-863"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.ImportMLDsaPublicKey$"
+when.args.paramset = "MLDsa87"
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "MLDsa.ImportMLDsaPublicKey(MLDsaAlgorithm.MLDsa87, …) — FIPS 204, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-864"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.ImportMLDsaPublicKey$"
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "MLDsa.ImportMLDsaPublicKey(…) with a non-literal parameter set — FIPS 204, quantum-resistant, but the parameter set is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-067"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "MLDsa")
+    name: (identifier) @fn (#eq? @fn "ImportPkcs8PrivateKey")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.MLDsa.ImportPkcs8PrivateKey"
+description = "MLDsa.ImportPkcs8PrivateKey(source) — .NET 10+ first-party FIPS 204 ML-DSA PKCS#8 private-key import; the parameter set is encoded in the key material, not the call site."
+
+[[classify]]
+id = "CRYPTO-865"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.ImportPkcs8PrivateKey$"
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "MLDsa.ImportPkcs8PrivateKey(…) — FIPS 204, quantum-resistant, but the parameter set is carried inside the PKCS#8 encoding and is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-068"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "MLDsa")
+    name: (identifier) @fn (#eq? @fn "ImportSubjectPublicKeyInfo")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.MLDsa.ImportSubjectPublicKeyInfo"
+description = "MLDsa.ImportSubjectPublicKeyInfo(source) — .NET 10+ first-party FIPS 204 ML-DSA SubjectPublicKeyInfo import; the parameter set is encoded in the key material, not the call site."
+
+[[classify]]
+id = "CRYPTO-866"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.ImportSubjectPublicKeyInfo$"
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "MLDsa.ImportSubjectPublicKeyInfo(…) — FIPS 204, quantum-resistant, but the parameter set is carried inside the SubjectPublicKeyInfo encoding and is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-069"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "MLDsa")
+    name: (identifier) @fn (#eq? @fn "ImportFromPem")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.MLDsa.ImportFromPem"
+description = "MLDsa.ImportFromPem(source) — .NET 10+ first-party FIPS 204 ML-DSA PEM import; the parameter set is encoded in the key material, not the call site."
+
+[[classify]]
+id = "CRYPTO-867"
+when.api = "^System\\.Security\\.Cryptography\\.MLDsa\\.ImportFromPem$"
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "MLDsa.ImportFromPem(…) — FIPS 204, quantum-resistant, but the parameter set is carried inside the PEM-encoded key material and is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-070"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "SlhDsa")
+    name: (identifier) @fn (#eq? @fn "ImportSlhDsaPrivateKey"))
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "SlhDsaAlgorithm")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", fn = "ident", paramcls = "ident", paramset = "ident" }
+api = "System.Security.Cryptography.SlhDsa.ImportSlhDsaPrivateKey"
+description = "SlhDsa.ImportSlhDsaPrivateKey(SlhDsaAlgorithm.SlhDsaSha2_128s, source) — .NET 10+ first-party FIPS 205 SLH-DSA private-key import."
+
+[[classify]]
+id = "CRYPTO-868"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPrivateKey$"
+when.args.paramset = "SlhDsaSha2_128s"
+algorithm_id = "slh-dsa-sha2-128s"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPrivateKey(SlhDsaAlgorithm.SlhDsaSha2_128s, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-869"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPrivateKey$"
+when.args.paramset = "SlhDsaSha2_128f"
+algorithm_id = "slh-dsa-sha2-128f"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPrivateKey(SlhDsaAlgorithm.SlhDsaSha2_128f, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-870"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPrivateKey$"
+when.args.paramset = "SlhDsaSha2_192s"
+algorithm_id = "slh-dsa-sha2-192s"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPrivateKey(SlhDsaAlgorithm.SlhDsaSha2_192s, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-871"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPrivateKey$"
+when.args.paramset = "SlhDsaSha2_192f"
+algorithm_id = "slh-dsa-sha2-192f"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPrivateKey(SlhDsaAlgorithm.SlhDsaSha2_192f, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-872"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPrivateKey$"
+when.args.paramset = "SlhDsaSha2_256s"
+algorithm_id = "slh-dsa-sha2-256s"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPrivateKey(SlhDsaAlgorithm.SlhDsaSha2_256s, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-873"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPrivateKey$"
+when.args.paramset = "SlhDsaSha2_256f"
+algorithm_id = "slh-dsa-sha2-256f"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPrivateKey(SlhDsaAlgorithm.SlhDsaSha2_256f, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-874"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPrivateKey$"
+when.args.paramset = "SlhDsaShake128s"
+algorithm_id = "slh-dsa-shake-128s"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPrivateKey(SlhDsaAlgorithm.SlhDsaShake128s, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-875"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPrivateKey$"
+when.args.paramset = "SlhDsaShake128f"
+algorithm_id = "slh-dsa-shake-128f"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPrivateKey(SlhDsaAlgorithm.SlhDsaShake128f, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-876"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPrivateKey$"
+when.args.paramset = "SlhDsaShake192s"
+algorithm_id = "slh-dsa-shake-192s"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPrivateKey(SlhDsaAlgorithm.SlhDsaShake192s, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-877"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPrivateKey$"
+when.args.paramset = "SlhDsaShake192f"
+algorithm_id = "slh-dsa-shake-192f"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPrivateKey(SlhDsaAlgorithm.SlhDsaShake192f, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-878"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPrivateKey$"
+when.args.paramset = "SlhDsaShake256s"
+algorithm_id = "slh-dsa-shake-256s"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPrivateKey(SlhDsaAlgorithm.SlhDsaShake256s, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-879"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPrivateKey$"
+when.args.paramset = "SlhDsaShake256f"
+algorithm_id = "slh-dsa-shake-256f"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPrivateKey(SlhDsaAlgorithm.SlhDsaShake256f, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-880"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPrivateKey$"
+algorithm_id = "slh-dsa-unattributed"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPrivateKey(…) with a non-literal parameter set — FIPS 205, quantum-resistant, but the parameter set is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-071"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "SlhDsa")
+    name: (identifier) @fn (#eq? @fn "ImportSlhDsaPublicKey"))
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "SlhDsaAlgorithm")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", fn = "ident", paramcls = "ident", paramset = "ident" }
+api = "System.Security.Cryptography.SlhDsa.ImportSlhDsaPublicKey"
+description = "SlhDsa.ImportSlhDsaPublicKey(SlhDsaAlgorithm.SlhDsaSha2_128s, source) — .NET 10+ first-party FIPS 205 SLH-DSA public-key import."
+
+[[classify]]
+id = "CRYPTO-881"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPublicKey$"
+when.args.paramset = "SlhDsaSha2_128s"
+algorithm_id = "slh-dsa-sha2-128s"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPublicKey(SlhDsaAlgorithm.SlhDsaSha2_128s, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-882"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPublicKey$"
+when.args.paramset = "SlhDsaSha2_128f"
+algorithm_id = "slh-dsa-sha2-128f"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPublicKey(SlhDsaAlgorithm.SlhDsaSha2_128f, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-883"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPublicKey$"
+when.args.paramset = "SlhDsaSha2_192s"
+algorithm_id = "slh-dsa-sha2-192s"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPublicKey(SlhDsaAlgorithm.SlhDsaSha2_192s, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-884"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPublicKey$"
+when.args.paramset = "SlhDsaSha2_192f"
+algorithm_id = "slh-dsa-sha2-192f"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPublicKey(SlhDsaAlgorithm.SlhDsaSha2_192f, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-885"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPublicKey$"
+when.args.paramset = "SlhDsaSha2_256s"
+algorithm_id = "slh-dsa-sha2-256s"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPublicKey(SlhDsaAlgorithm.SlhDsaSha2_256s, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-886"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPublicKey$"
+when.args.paramset = "SlhDsaSha2_256f"
+algorithm_id = "slh-dsa-sha2-256f"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPublicKey(SlhDsaAlgorithm.SlhDsaSha2_256f, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-887"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPublicKey$"
+when.args.paramset = "SlhDsaShake128s"
+algorithm_id = "slh-dsa-shake-128s"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPublicKey(SlhDsaAlgorithm.SlhDsaShake128s, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-888"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPublicKey$"
+when.args.paramset = "SlhDsaShake128f"
+algorithm_id = "slh-dsa-shake-128f"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPublicKey(SlhDsaAlgorithm.SlhDsaShake128f, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-889"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPublicKey$"
+when.args.paramset = "SlhDsaShake192s"
+algorithm_id = "slh-dsa-shake-192s"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPublicKey(SlhDsaAlgorithm.SlhDsaShake192s, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-890"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPublicKey$"
+when.args.paramset = "SlhDsaShake192f"
+algorithm_id = "slh-dsa-shake-192f"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPublicKey(SlhDsaAlgorithm.SlhDsaShake192f, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-891"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPublicKey$"
+when.args.paramset = "SlhDsaShake256s"
+algorithm_id = "slh-dsa-shake-256s"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPublicKey(SlhDsaAlgorithm.SlhDsaShake256s, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-892"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPublicKey$"
+when.args.paramset = "SlhDsaShake256f"
+algorithm_id = "slh-dsa-shake-256f"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPublicKey(SlhDsaAlgorithm.SlhDsaShake256f, …) — FIPS 205, quantum-resistant. Migrated signature call site."
+
+[[classify]]
+id = "CRYPTO-893"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSlhDsaPublicKey$"
+algorithm_id = "slh-dsa-unattributed"
+severity_hint = "auto"
+message = "SlhDsa.ImportSlhDsaPublicKey(…) with a non-literal parameter set — FIPS 205, quantum-resistant, but the parameter set is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-072"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "SlhDsa")
+    name: (identifier) @fn (#eq? @fn "ImportPkcs8PrivateKey")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.SlhDsa.ImportPkcs8PrivateKey"
+description = "SlhDsa.ImportPkcs8PrivateKey(source) — .NET 10+ first-party FIPS 205 SLH-DSA PKCS#8 private-key import; the parameter set is encoded in the key material, not the call site."
+
+[[classify]]
+id = "CRYPTO-894"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportPkcs8PrivateKey$"
+algorithm_id = "slh-dsa-unattributed"
+severity_hint = "auto"
+message = "SlhDsa.ImportPkcs8PrivateKey(…) — FIPS 205, quantum-resistant, but the parameter set is carried inside the PKCS#8 encoding and is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-073"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "SlhDsa")
+    name: (identifier) @fn (#eq? @fn "ImportSubjectPublicKeyInfo")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.SlhDsa.ImportSubjectPublicKeyInfo"
+description = "SlhDsa.ImportSubjectPublicKeyInfo(source) — .NET 10+ first-party FIPS 205 SLH-DSA SubjectPublicKeyInfo import; the parameter set is encoded in the key material, not the call site."
+
+[[classify]]
+id = "CRYPTO-895"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportSubjectPublicKeyInfo$"
+algorithm_id = "slh-dsa-unattributed"
+severity_hint = "auto"
+message = "SlhDsa.ImportSubjectPublicKeyInfo(…) — FIPS 205, quantum-resistant, but the parameter set is carried inside the SubjectPublicKeyInfo encoding and is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-074"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "SlhDsa")
+    name: (identifier) @fn (#eq? @fn "ImportFromPem")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.SlhDsa.ImportFromPem"
+description = "SlhDsa.ImportFromPem(source) — .NET 10+ first-party FIPS 205 SLH-DSA PEM import; the parameter set is encoded in the key material, not the call site."
+
+[[classify]]
+id = "CRYPTO-896"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.ImportFromPem$"
+algorithm_id = "slh-dsa-unattributed"
+severity_hint = "auto"
+message = "SlhDsa.ImportFromPem(…) — FIPS 205, quantum-resistant, but the parameter set is carried inside the PEM-encoded key material and is not statically knowable at this call site."
