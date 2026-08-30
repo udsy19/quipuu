@@ -4217,3 +4217,85 @@ would need a new entry per class rather than a widened enum, and `sha3-384` has 
 No new rung-2 coverage item is filed this cycle to replace `#Y61` in rank; the next place to look
 is that SHA3 gap, or the same closed-enumeration/missing-dispatch-entry pattern in whatever of
 go.toml/rust.toml remains unswept.
+
+## `#Y62(a)`: OpenSSL `SSL_CTX_set1_groups_list`/`SSL_set1_groups_list` gain a TLS group-preference-list rule — 2026-08-30
+
+Taken from the backlog's own ranking: `#Y62` named a TLS group-preference-list gap open in three
+languages that already detect the equivalent thing in a fourth (`java.toml`'s
+`SSLParameters.setNamedGroups`, which flags a classical-only group list as a silent-downgrade
+signal against JDK 27's default-on `X25519MLKEM768`). Part (a), OpenSSL's `SSL_CTX_set1_groups_list`
+/ `SSL_set1_groups_list`, was filed highest-confidence and "ready to implement" — the gap was
+confirmed by direct grep against `cpp.toml` before this cycle touched anything (no rule for either
+function existed) and the API shapes are OpenSSL's own manpages, not guessed.
+
+**What shipped.** `cpp.toml`'s classify layer only ever sees one extract event per real call site,
+so reusing the array-per-element shape `java.toml`'s `setNamedGroups` extract already uses (one
+finding per named group) needed a structural matcher, not a TOML query — the argument here is a
+single colon/tuple-separated *string*, not an array literal a tree-sitter query can iterate. New
+`match_c_ssl_groups_list` (`scanner.rs`) splits the string on `:` and `/` (OpenSSL's tuple
+separator), strips the `*` (predicted-keyshare), `?` (ignore-if-unknown) and `-` (remove) prefix
+characters the list grammar allows, and skips the `DEFAULT` pseudo-group — recovering the plain
+group name from every real list without resolving tuple/removal semantics, which would mean
+executing the build's own group-selection logic (P4). One `RawMatch` per surviving token, under a
+new api registered in `STRUCTURAL_APIS` (`openssl.SSL_CTX_set1_groups_list`, shared by both
+function names) so `every_classify_rule_targets_an_api_the_extractor_can_emit` stays satisfied.
+
+11 new classify arms (`CRYPTO-909`–`CRYPTO-919`) reuse the exact algorithm ids `java.toml`'s
+`setNamedGroups` arms already publish (`x25519-mlkem768`, `secp256r1-mlkem768`,
+`secp384r1-mlkem1024`, `x25519`, `x448`, `ecdh-p256`, `ecdh-p384`, `ecdh-p521`, `dh-2048`, `dh-3072`,
+`dh-4096`) — no new `algorithm-table.toml` rows needed. The literal group-name spellings are **not**
+a byte-for-byte copy of `java.toml`'s, verified directly against OpenSSL's own
+`SSL_CTX_set1_groups_list(3)` manpage (`docs.openssl.org`, fetched 2026-08-30) rather than assumed
+from the Java shape: OpenSSL's own NIST curve names are the dash form (`P-256`, `P-384`, `P-521`),
+not Java's lowercase `secp256r1`/`secp384r1`/`secp521r1`. The three ML-KEM hybrid names
+(`X25519MLKEM768`, `SecP256r1MLKEM768`, `SecP384r1MLKEM1024`) are identical strings in both
+ecosystems — they are IANA's own TLS `supported_groups` registry spellings, not an OpenSSL- or
+Java-specific convention. Verified against a planted fixture covering both call shapes
+(`SSL_CTX_set1_groups_list`/`SSL_set1_groups_list`), a tuple separator, the `*` prefix, an
+unenumerated name with a `?` prefix, and `DEFAULT`: `cargo test
+scans_c_ssl_groups_list_splits_the_colon_and_tuple_separated_names`, 0/5 → 5/5 on the five
+enumerated names, 0/2 on the two names that must not fire.
+
+**Corpus effect: 3 findings added, 0 removed, 0 reclassified.** `bin/precision.py
+work/y62_pre.json work/y62_post.json` (pre-change binary built from `d525afb` — the `#Y61` write-up
+commit — in a throwaway worktree, post-change binary this cycle's tree, both dumps taken
+back-to-back against the same `corpus-clones` checkout): 1533 → 1536. All 3 land inside
+`aws/aws-lc`'s and `google/boringssl`'s own TLS test suites — `ssl_handshake_test.cc:685` and
+`ssl_test.cc:9222` each call `SSL_CTX_set1_groups_list(ctx, "X25519")`, `ssl_version_test.cc:2379`
+calls `SSL_CTX_set1_groups_list(server_ctx_.get(), "P-384")` — every site read at the cited line and
+hand-verified true positive: each is a real, `ASSERT_TRUE`-guarded call configuring the actual TLS
+context under test with a classical-only group, not a call a test requires to fail. No other corpus
+project calls either function with a string literal.
+
+**Precision 97.16% (`bin/precision.py`, `--added-tp 3 --added-fp 0`), a 0.05-point rise from the
+97.11% published anchor — coverage added, not a reanchor.** All three estimators agree closely:
+stratified-fresh 97.158%, stratified-carried 97.155%, pooled Wilson 97.161% (spread 0.006pp, well
+inside the 0.05pp agreement tolerance). The delta lands entirely in stratum B: sample 262/271
+(stratum A, unchanged) and 354/363 (stratum B, up from 351/360). `state/estimator.json`'s `b_tp`
+corrected 351 → 354, mirroring `#Y54`/`#Y56`/`#Y57`/`#Y59`'s bookkeeping precedent — not a
+`change_estimator`/`reanchor_precision` C1 action; `state/precision.json`'s published anchor moves
+only via the gate reading this cycle's own `PRECISION:` line, not by direct edit here.
+
+**`OPEN-ASK #CORPUSDRIFT` recurred again, confirmed environmental.** Stratum A's population is 661
+in this measurement, against 801 as of `#Y61` — the same two-state oscillation self-doubt's third
+pass already characterised (801 → 661 → 661 → 801 across `#Y58`–`#Y61`); this measurement adds a
+fifth data point in the low state. Confirmed present in the *pre-change* binary against the same
+`corpus-clones` checkout, so this is not an effect of this cycle's change. README's headline,
+comparison table, and the "What that interval is" / "What the denominator excludes" paragraphs are
+updated in the same diff to 97.16% / 634 audited / 1536 total / populations 661+875, per rule 4 and
+`bin/precision.py --write-readme`.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (129
+tests in `scan_test.rs`, one new: `scans_c_ssl_groups_list_splits_the_colon_and_tuple_separated_names`).
+The two trust-invariant tests (`test_network_disabled_error`,
+`test_run_acvp_kats_rejects_code_execution`) are untouched and pass.
+
+**Not done, said out loud:** parts (b)–(d) of `#Y62` (OpenSSL's `SSL_CONF_cmd(ctx, "Groups", ...)`,
+rustls's `CryptoProvider.kx_groups` vec literal, and BouncyCastle's raw
+`org.bouncycastle.tls.NamedGroup`) remain open and unranked below this item, per the backlog's own
+ordering — part (c) explicitly still needs a prevalence grep against a real corpus before shipping,
+which this cycle did not do. `OPEN-ASK #ESTIMATOR1` and `OPEN-ASK #CORPUSDRIFT` both remain open and
+are not this cycle's to answer or resolve. The `--policy nsa-cnsa2` divergence and Go line-exact
+recall are not re-measured — the finding set changed by exactly 3 rows in one language pack, neither
+number could plausibly have moved.
