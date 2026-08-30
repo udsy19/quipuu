@@ -89,6 +89,12 @@
 
 **Implication for quipuu:** CISA explicitly names "cryptographic inventory" using "discovery tools across IT/OT/CI/CD" as the first technical action item — this is precisely quipuu's primary use case, cited by the top US cyber regulator.
 
+**Also (Executive Order 14306 §(f)(i), 2025-06-06):** EO 14306 required DHS/CISA to publish a PQC
+product-categories list by 2025-12-01. CISA published *"Product Categories for Technologies That
+Use Post-Quantum Cryptography Standards"* 53 days late, on 2026-01-23 — a procurement-category list
+organized by cryptographic function. Record-only: it sets no algorithm rules and imposes no new
+deadline of its own.
+
 ---
 
 ### 4. NIST NCCoE Migration to PQC Project (SP 1800-38)
@@ -329,6 +335,7 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 **Primary sources:**
 - ANSSI PQC page: https://cyber.gouv.fr/enjeux-technologiques/cryptographie-post-quantique/
 - 2023 Position Paper PDF: https://cyber.gouv.fr/sites/default/files/document/follow_up_position_paper_on_post_quantum_cryptography.pdf
+- ANSSI-PG-083 v3.00 (2026-03-20), the normative referential itself (successor to RGS Annex B1)
 
 **Three-phase transition roadmap:**
 - **Phase 1** (current): Hybridization as defense-in-depth
@@ -340,6 +347,14 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 **Algorithm stance:** Hybridization required for all PQC deployments except hash-based signatures (SLH-DSA, XMSS, LMS). Minimum: AES-256 / SHA2-384. National Certification Centre updated cryptographic approval policy March 2025.
 
 **Hard deadline:** 2027 for PQC requirement in ANSSI qualification process. No hard deadline for private-sector PQC adoption in binding French law.
+
+**Normative confirmation (ANSSI-PG-083 v3.00, 2026-03-20):** The referential's own normative text —
+not only ANSSI's FAQ, previously the only citation for this — states ML-KEM and ML-DSA are
+non-compliant at every NIST parameter set without hybridation, and sets an RSA/DH-modulus
+retirement schedule for 2030/2031 that independently matches BSI TR-02102-1's (§14, above).
+FrodoKEM-640 is named as referential-compliant when deployed hybrid. Dates and thresholds above are
+confirmed directly from the document; this paragraph paraphrases ANSSI's French-language text
+rather than quoting it verbatim.
 
 **Implication for quipuu:** Products seeking ANSSI qualification must demonstrate hybrid PQC implementation from 2027 — quipuu provides the audit trail.
 
