@@ -55,4 +55,14 @@ public class BcLightweight {
     public static void hashSlhDsaSign() {
         Object g = new HashSLHDSASigner();
     }
+
+    // JAV-030 / CRYPTO-958 — ML-DSA signing under BC's pre-finalization class name
+    public static void dilithiumSign() {
+        Object g = new DilithiumSigner();
+    }
+
+    // JAV-030 / CRYPTO-959 — SLH-DSA signing under BC's pre-finalization class name
+    public static void sphincsPlusSign() {
+        Object g = new SPHINCSPlusSigner();
+    }
 }

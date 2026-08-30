@@ -2255,6 +2255,10 @@ const JAVA_CTOR_APIS: &[(&str, &str)] = &[
     ("SLHDSASigner", "org.bouncycastle.SLHDSASigner"),
     ("HashMLDSASigner", "org.bouncycastle.HashMLDSASigner"),
     ("HashSLHDSASigner", "org.bouncycastle.HashSLHDSASigner"),
+    // Pre-FIPS-finalization signer names, still shipped alongside the
+    // FIPS-aligned classes above (#Y66).
+    ("DilithiumSigner", "org.bouncycastle.DilithiumSigner"),
+    ("SPHINCSPlusSigner", "org.bouncycastle.SPHINCSPlusSigner"),
 ];
 
 fn match_java_ctor(class_name: &str) -> Option<(String, HashMap<String, ArgValue>)> {

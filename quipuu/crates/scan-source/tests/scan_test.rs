@@ -479,6 +479,8 @@ fn scans_java_bouncycastle_lightweight_pqc_classes() {
         ("CRYPTO-817", "slh-dsa-unattributed"), // new SLHDSASigner()
         ("CRYPTO-818", "ml-dsa-unattributed"), // new HashMLDSASigner()
         ("CRYPTO-819", "slh-dsa-unattributed"), // new HashSLHDSASigner()
+        ("CRYPTO-958", "ml-dsa-unattributed"), // new DilithiumSigner()
+        ("CRYPTO-959", "slh-dsa-unattributed"), // new SPHINCSPlusSigner()
     ];
     for (rule_id, algorithm_id) in want {
         assert!(

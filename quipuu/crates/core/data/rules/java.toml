@@ -533,7 +533,7 @@ id = "JAV-030"
 language = "java"
 query = """
 (object_creation_expression
-  type: (type_identifier) @cls (#match? @cls "^(RSAKeyPairGenerator|AESEngine|GCMBlockCipher|BouncyCastleProvider|MLKEMKeyPairGenerator|MLDSAKeyPairGenerator|SLHDSAKeyPairGenerator|MLKEMGenerator|MLKEMExtractor|MLDSASigner|SLHDSASigner|HashMLDSASigner|HashSLHDSASigner)$"))
+  type: (type_identifier) @cls (#match? @cls "^(RSAKeyPairGenerator|AESEngine|GCMBlockCipher|BouncyCastleProvider|MLKEMKeyPairGenerator|MLDSAKeyPairGenerator|SLHDSAKeyPairGenerator|MLKEMGenerator|MLKEMExtractor|MLDSASigner|SLHDSASigner|HashMLDSASigner|HashSLHDSASigner|DilithiumSigner|SPHINCSPlusSigner)$"))
 """
 captures = { cls = "ident" }
 api = "org.bouncycastle.{cls}"
@@ -636,6 +636,26 @@ when.api = "^org\\.bouncycastle\\.HashSLHDSASigner$"
 algorithm_id = "slh-dsa-unattributed"
 severity_hint = "auto"
 message = "BouncyCastle HashSLHDSASigner instantiated — FIPS 205 pre-hash signature, quantum-resistant, but the parameter set comes from the key it is initialised with, not this call."
+
+# BC's pre-FIPS-finalization PQC signer names (org.bouncycastle.pqc.crypto.dilithium /
+# .sphincsplus, still shipped alongside the FIPS-aligned MLDSASigner/SLHDSASigner classes
+# above for callers who have not migrated the class name). Same standardized algorithms
+# under an older name, not a new algorithm family — resolves to the same sentinels, per
+# #Y66. Not FalconSigner (FN-DSA is not yet FIPS-final, same bar #Y43 set for
+# CompositeMLDsa) and not the five non-selected/broken schemes (PicnicSigner et al.).
+[[classify]]
+id = "CRYPTO-958"
+when.api = "^org\\.bouncycastle\\.DilithiumSigner$"
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "BouncyCastle DilithiumSigner instantiated — FIPS 204 signature under BC's pre-finalization class name, quantum-resistant, but the parameter set comes from the key it is initialised with, not this call."
+
+[[classify]]
+id = "CRYPTO-959"
+when.api = "^org\\.bouncycastle\\.SPHINCSPlusSigner$"
+algorithm_id = "slh-dsa-unattributed"
+severity_hint = "auto"
+message = "BouncyCastle SPHINCSPlusSigner instantiated — FIPS 205 signature under BC's pre-finalization class name, quantum-resistant, but the parameter set comes from the key it is initialised with, not this call."
 
 # ============================================================================
 # Java JWT-library enum constants (jjwt, java-jwt, nimbus-jose-jwt, jose4j)
