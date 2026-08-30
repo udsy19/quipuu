@@ -350,7 +350,7 @@ quipuu scan .
 | SARIF output | Yes | Yes | Yes | No | Yes |
 | MCP server | Yes | No | No | No | No |
 | Auditable open rule format | Yes (TOML) | No (binary) | Yes (QL) | No | Yes (YAML) |
-| Languages (crypto-specific) | 7 | 7+ | 7+ | Java, Python, Go (C# in development) | Any |
+| Languages (crypto-specific) | 7 | 7+ | 7+ | Java, Python, Go, C# (comprehensive rules merged 2026-08-26) | Any |
 | Published precision (crypto findings) | 97.11% (634 audited rows, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
 | Published recall | 100.0% (Go stdlib, 401/401 in-scope sites) | Not published | Not published | Not published | Not published |
 | Scan speed | 170ms median project; 230s for the 150-project corpus (2 cores) | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
@@ -391,7 +391,7 @@ All primary sources — NIST IR 8547 IPD, FIPS 203/204/205, CycloneDX 1.7 schema
 ## Roadmap
 
 - **Clear 85% at the lower CI bound.** Phase 18 reached an 84.5% point estimate but a 78.5% lower bound. Closing that gap means both raising the point estimate and shrinking the interval with a larger audited sample.
-- **Broader language coverage:** C# and C/C++ rule packs are skeletal today; Go and Java are the most complete. Expanding C# and C/C++ classify rules is the highest-leverage near-term coverage move.
+- **Broader language coverage:** C/C++ rule packs are the least developed today (84 classify arms vs. Java's 146, C#'s 112, and Go's 85 — C# grew from a skeletal 52 arms across cycles 43–51). Expanding C/C++ classify rules is the highest-leverage near-term coverage move.
 - **Community rule packs:** the TOML rule format is public and stable. The path to community contributions is a contributed-rules directory and a CI gate that runs new rules against the benchmark corpus before merge.
 - **Agentic remediation:** a companion engine that consumes the MCP output and proposes verified migration patches, gated on ACVP known-answer tests, oqs-provider interop, and semantic-preservation differential testing.
 - **Continuous CBOM drift monitoring:** weekly re-scans, CBOM diff between runs, and a one-paragraph alert per material change in your cryptographic inventory.
