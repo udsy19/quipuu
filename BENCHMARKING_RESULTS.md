@@ -4581,3 +4581,52 @@ unresolved; the "fresh populations" vs. "carried constants" spread on this measu
 **Next place to look:** the identical closed-enumeration/missing-dispatch-entry pattern in
 `rust.toml` — untouched by this sweep, `#Y61`'s pointer having named C# and this item having taken
 Go.
+
+## `#Y65`: RustCrypto `Md5`/`Sha1` crates gain coverage — 2026-08-30
+
+Found by taking `#Y64`'s own closing pointer: `rust.toml` was the one rule pack the
+closed-enumeration/missing-dispatch-entry sweep had not yet reached (C# done at `#Y61`/`#Y63`, Go
+done at `#Y64`). `RUST_CALLEE_APIS` (`scanner.rs`) and `rust.toml`'s `RST-020` extract block already
+covered the `sha2` crate's `Sha256`/`Sha384`/`Sha512` (`Type::new`/`Type::digest`, the RustCrypto
+`Digest`-trait shape) but had zero entries for the `md5` and `sha1` crates, which expose the
+identical `Md5`/`Sha1` types through the same trait — `algorithm_id`s `"md5"` and `"sha-1"` are
+already standard, used by every other language pack (`go.toml`, `csharp.toml`, `java.toml`,
+`python.toml`, `javascript.toml`, `cpp.toml`); Rust was the one pack with neither.
+
+**What shipped.** Four new `RUST_CALLEE_APIS` entries (`Md5::new`, `Md5::digest`, `Sha1::new`,
+`Sha1::digest`, all mapping to `rustcrypto.{Md5,Sha1}.digest`) and two new classify arms
+(`CRYPTO-956` md5, `CRYPTO-957` sha-1, `rust.toml`), `severity_hint = "critical"` matching the
+existing md5/sha1 treatment in every other rule pack (classically broken, `CWE-327`) rather than the
+`"auto"` hint the still-quantum-safe `sha2` family carries. The `RST-020` extract block's tree-sitter
+`query` field is confirmed unused for matching (`crates/scan-source/src/rules.rs` documents `[[extract]]`
+blocks as descriptive only — `RUST_CALLEE_APIS` is the actual emitter, checked by
+`every_classify_rule_targets_an_api_the_extractor_can_emit` against `api_surface()`), so a second
+`RST-021` extract block was added for documentation parity with the real dispatch table rather than
+widening `RST-020`'s regex, keeping the classically-broken pair visually and severity-distinct from
+the quantum-safe `sha2` block above it. `rust_advanced.rs` extended with four new call sites
+(`Md5::new`/`Md5::digest`/`Sha1::new`/`Sha1::digest`) and one new test,
+`rust_md5_sha1_crates_are_covered`.
+
+**Corpus effect: 12 findings added, 0 removed, 0 reclassified — all `sha-1`, no `md5` hit.** Every
+one hand-verified true positive by opening the cited `file:line`: 10 in `crates-io:rsa`
+(`src/pkcs1v15.rs:427,513,550` and `src/pss.rs:354,447,465,570,589,609,631`, all genuine
+`Sha1::new()`/`Sha1::digest()` calls in the crate's own PKCS#1v1.5/PSS SHA-1 test coverage) and 2 in
+`crates-io:openssl` (`openssl/src/sha.rs:359,370`, both `Sha1::new()` in RustCrypto-shape hash tests).
+No corpus-B project constructs an `md5` crate `Md5` value in scanned source, the same
+"coverage-without-corpus-demand" shape several prior items in this log document for a newly-added
+rule with no live corpus instance.
+
+**Precision 97.65% → 97.71%, +0.06pp (`bin/precision.py`, `--added-tp 12 --added-fp 0`).** The delta
+landed entirely in stratum A (no stratum-B split needed, unlike `#Y64`'s two-pass measurement).
+Fresh-derived populations A=746/B=941 against a 1687-finding corpus; `--write-readme` applied
+97.71% to the headline and comparison table.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (133
+tests in `scan_test.rs`, one new). Both trust-invariant tests (`test_network_disabled_error`,
+`test_run_acvp_kats_rejects_code_execution`) are untouched and pass.
+
+**Next place to look:** the closed-enumeration/missing-dispatch sweep named in `#Y61`'s original
+pointer is now exhausted across all three rule packs it named (C#, Go, Rust) — a future cycle should
+confirm no fourth pack (`java.toml`/`python.toml`/`javascript.toml`/`cpp.toml`) has an equivalent gap
+before assuming the pattern is fully closed.

@@ -214,7 +214,7 @@ not the machine named above, and `BENCHMARKING_RESULTS.md` reported the same run
 claiming the scanner got 16× slower; we are retracting a number that described 141 projects,
 under one flag set, on an unnamed machine, and presenting one that names all three.
 
-Audit-validated precision: **97.65%** (95% CI: 96.6%–98.7%) — measured 2026-08-30 on **773 audited findings** out of 1834, every one labelled by opening its cited `file:line`. Methodology, the full label set and per-finding verdicts are in `BENCHMARKING_RESULTS.md`, `PRECISION_AUDIT_V4.md` and `PRECISION_AUDIT_V3.md`.
+Audit-validated precision: **97.71%** (95% CI: 96.7%–98.8%) — measured 2026-08-30 on **785 audited findings** out of 1687, every one labelled by opening its cited `file:line`. Methodology, the full label set and per-finding verdicts are in `BENCHMARKING_RESULTS.md`, `PRECISION_AUDIT_V4.md` and `PRECISION_AUDIT_V3.md`.
 
 **This is a 0.54-point rise from the 97.11% published for the C# SHA3 fix below, and it is coverage added, not a reanchor — the largest single-cycle rise in this chain because the gap it closed was the largest.** `go.toml` had zero coverage for `crypto/sha256`/`crypto/sha512` — every `md5.New()`/`sha1.New()` call site was detected, but `sha256.New()`/`.Sum256()` (and the `.New224`/`.Sum224`/`.New384`/`.Sum384`/`.Sum512` siblings), the far more common call in real Go code, produced no finding at all. Eight new `GO_CALLEE_APIS` dispatch entries plus eight new classify arms (`CRYPTO-948`–`CRYPTO-955`) close it; unlike `md5`/`sha1`'s shared `New`/`Sum` api needing an `args.pkg` capture to disambiguate, each new function name already states its own digest size. **139 findings added, 0 removed, 0 reclassified — every one hand-verified true positive: the cited line was checked to contain the exact call syntax the rule claims (not inside a comment or string), and the citing file's own import block was checked to reference a `sha256`/`sha512`-named package**, across 20 projects and every corpus-B ecosystem except `pypi`/`npm` alone (`aws-sdk-go`, `x/crypto`, `kubernetes`, `etcd`, `grafana`, `prometheus`, `pgx`, BoringSSL/AWS-LC/age/tweetnacl's own Go test tooling, among others) — sha256 is used broadly enough that the delta spans both audit strata, requiring two sequential single-stratum measurement passes (73 landing in stratum A, 66 in stratum B) rather than one. Full accounting in `BENCHMARKING_RESULTS.md`, "`crypto/sha256`/`crypto/sha512` gain coverage."
 
@@ -353,7 +353,7 @@ quipuu scan .
 | MCP server | Yes | No | No | No | No |
 | Auditable open rule format | Yes (TOML) | No (binary) | Yes (QL) | No | Yes (YAML) |
 | Languages (crypto-specific) | 7 | 7+ | 7+ | Java, Python, Go, C# (comprehensive rules merged 2026-08-26) | Any |
-| Published precision (crypto findings) | 97.65% (773 audited rows, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
+| Published precision (crypto findings) | 97.71% (785 audited rows, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
 | Published recall | 100.0% (Go stdlib, 401/401 in-scope sites) | Not published | Not published | Not published | Not published |
 | Scan speed | 170ms median project; 230s for the 150-project corpus (2 cores) | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
 
