@@ -164,6 +164,53 @@ algorithm_id = "sha-256"
 severity_hint = "auto"
 message = "SHA-256 in createHash('{algo}'). Quantum-safe hash."
 
+# CRYPTO-310..312 covered md5/sha1/sha256, the three names in the original
+# fixture, but node:crypto's createHash resolves through OpenSSL and also
+# accepts sha224/sha384/sha512/sha3-256/sha3-512, all with rows already in
+# algorithm-table.toml (the same five names the equivalent Java rule closed —
+# see java.toml CRYPTO-899..903). A call with any of those five names
+# silently produced zero findings; same shape as `#Y56`/`#Y57`/`#Y58`/`#Y59`.
+
+[[classify]]
+id = "CRYPTO-904"
+when.api = "^node:crypto\\.createHash$"
+when.args.algo = { regex = "(?i)^['\"]?sha224['\"]?$" }
+algorithm_id = "sha-224"
+severity_hint = "auto"
+message = "SHA-224 in createHash('{algo}'). Quantum-safe hash."
+
+[[classify]]
+id = "CRYPTO-905"
+when.api = "^node:crypto\\.createHash$"
+when.args.algo = { regex = "(?i)^['\"]?sha384['\"]?$" }
+algorithm_id = "sha-384"
+severity_hint = "auto"
+message = "SHA-384 in createHash('{algo}'). Quantum-safe hash."
+
+[[classify]]
+id = "CRYPTO-906"
+when.api = "^node:crypto\\.createHash$"
+when.args.algo = { regex = "(?i)^['\"]?sha512['\"]?$" }
+algorithm_id = "sha-512"
+severity_hint = "auto"
+message = "SHA-512 in createHash('{algo}'). Quantum-safe hash."
+
+[[classify]]
+id = "CRYPTO-907"
+when.api = "^node:crypto\\.createHash$"
+when.args.algo = { regex = "(?i)^['\"]?sha3-256['\"]?$" }
+algorithm_id = "sha3-256"
+severity_hint = "auto"
+message = "SHA3-256 in createHash('{algo}'). Quantum-safe hash."
+
+[[classify]]
+id = "CRYPTO-908"
+when.api = "^node:crypto\\.createHash$"
+when.args.algo = { regex = "(?i)^['\"]?sha3-512['\"]?$" }
+algorithm_id = "sha3-512"
+severity_hint = "auto"
+message = "SHA3-512 in createHash('{algo}'). Quantum-safe hash."
+
 # ============================================================================
 # node:crypto — generateKeyPair
 # ============================================================================

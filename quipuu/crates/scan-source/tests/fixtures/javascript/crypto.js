@@ -40,6 +40,15 @@ function hashSha256() {
     const h = crypto.createHash("sha256");
 }
 
+// JST-010 / CRYPTO-904..908 — the remaining OpenSSL digest names createHash accepts
+function hashWiderDigests() {
+    const h1 = crypto.createHash("sha224");
+    const h2 = crypto.createHash("sha384");
+    const h3 = crypto.createHash("sha512");
+    const h4 = crypto.createHash("sha3-256");
+    const h5 = crypto.createHash("sha3-512");
+}
+
 // JST-020 / CRYPTO-320 — RSA generateKeyPair
 function keyPairRsa() {
     crypto.generateKeyPair("rsa", { modulusLength: 2048 }, (err, pub, priv) => {});
