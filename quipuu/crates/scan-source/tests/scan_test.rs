@@ -924,6 +924,63 @@ fn cipher_list_reads_the_exclusion_prefix_and_names_no_single_cipher() {
 }
 
 #[test]
+fn scans_c_ssl_groups_list_splits_the_colon_and_tuple_separated_names() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    let group_findings: Vec<_> = findings
+        .iter()
+        .filter(|f| f.rule_id.starts_with("CRYPTO-9") && (909..=919).contains(&rule_num(f)))
+        .collect();
+
+    for (algorithm_id, expected) in [
+        ("ecdh-p521", 1),       // P-521
+        ("ecdh-p256", 1),       // *P-256 — the keyshare-prediction prefix must be stripped
+        ("ecdh-p384", 1),       // P-384
+        ("x25519", 1),          // X25519
+        ("x25519-mlkem768", 1), // X25519MLKEM768
+    ] {
+        let n = group_findings
+            .iter()
+            .filter(|f| f.algorithm_id == algorithm_id)
+            .count();
+        assert_eq!(
+            n,
+            expected,
+            "expected {expected} finding(s) for {algorithm_id}, got {n}: {:#?}",
+            group_findings
+                .iter()
+                .map(|f| &f.algorithm_id)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    // `?curveSM2` (unknown name, ignorable prefix) and `DEFAULT` (the
+    // built-in-list pseudo-group) name no algorithm and must not fire — so
+    // the fixture's two calls produce exactly the 5 group findings above,
+    // nothing more.
+    assert_eq!(
+        group_findings.len(),
+        5,
+        "curveSM2 and DEFAULT must not add findings: {:#?}",
+        group_findings
+            .iter()
+            .map(|f| &f.algorithm_id)
+            .collect::<Vec<_>>()
+    );
+}
+
+fn rule_num(f: &quipuu_core::Finding) -> u32 {
+    f.rule_id
+        .strip_prefix("CRYPTO-")
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0)
+}
+
+#[test]
 fn scans_c_evp_digest_md5() {
     let b = load_builtins().unwrap();
     let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");

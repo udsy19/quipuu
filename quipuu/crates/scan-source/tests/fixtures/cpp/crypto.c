@@ -88,6 +88,20 @@ void openssl_cipher_list_excludes_rc4(void) {
     SSL_CTX_set_cipher_list(ctx, "DEFAULT:!RC4:!MD5:!EXPORT");
 }
 
+/* #Y62(a) / CRYPTO-909..919 — TLS group preference list, classical-only,
+   with a tuple separator and a predicted-keyshare prefix that must be
+   stripped before matching. */
+void openssl_groups_list_classical_only(void) {
+    SSL_CTX *ctx = SSL_CTX_new(TLS_method());
+    SSL_CTX_set1_groups_list(ctx, "P-521:*P-256/P-384:X25519");
+}
+
+/* #Y62(a) / CRYPTO-909 — the hybrid ML-KEM group, plus a `?`-ignorable
+   unknown name and the `DEFAULT` pseudo-group, neither of which may fire. */
+void openssl_groups_list_hybrid(SSL *ssl) {
+    SSL_set1_groups_list(ssl, "X25519MLKEM768:?curveSM2:DEFAULT");
+}
+
 /* CPP-040 / CRYPTO-440 — libsodium box keypair */
 void sodium_box_kp(void) {
     unsigned char pk[crypto_box_PUBLICKEYBYTES];

@@ -712,6 +712,16 @@ fn walk(
     {
         out.extend(ms);
     }
+    // OpenSSL `SSL_CTX_set1_groups_list(ctx, "P-521:X25519MLKEM768")` /
+    // `SSL_set1_groups_list(ssl, "...")` — the colon-separated TLS
+    // key-exchange group preference list, C's counterpart to Java's
+    // `setNamedGroups`/`jdk.tls.namedGroups` above. Backlog `#Y62(a)`.
+    if matches!(language, Language::C | Language::Cpp)
+        && kind == "call_expression"
+        && let Some(ms) = match_c_ssl_groups_list(node, source)
+    {
+        out.extend(ms);
+    }
     // Go runtime string-table dispatch: `switch alg { case "RS256": ... }`.
     // V3 corpus run: 22 of 25 Go projects produced zero findings because
     // golang-jwt, go-jose, lestrrat-go/jwx and similar libraries route
@@ -1038,6 +1048,62 @@ fn match_java_set_property_named_groups(call: Node<'_>, source: &[u8]) -> Option
     }
 }
 
+/// Match OpenSSL `SSL_CTX_set1_groups_list(ctx, "P-521:X25519MLKEM768")` /
+/// `SSL_set1_groups_list(ssl, "...")` — C's counterpart to
+/// `match_java_set_property_named_groups` above, both structurally (a
+/// delimited string, not an array) and semantically (TLS group-preference
+/// hardening config, not PQC adoption). Reuses the same `algorithm-table.toml`
+/// group ids java.toml's `setNamedGroups` classify arms already cover, under
+/// a new api so the classify rules stay pack-local (`cpp.toml`, backlog
+/// `#Y62(a)`).
+///
+/// OpenSSL's list grammar (`SSL_CTX_set1_groups_list(3)`) allows a `*`
+/// predicted-keyshare prefix, a `?` ignore-if-unknown prefix, a `-` remove
+/// prefix, `/` tuple separators alongside `:`, and the pseudo-name `DEFAULT`.
+/// Stripping the three prefix characters and skipping `DEFAULT` recovers the
+/// plain group name from every real list without resolving tuple semantics —
+/// interpreting `-` removal against an actual runtime default set would mean
+/// executing the build's own group-selection logic, which P4 forbids.
+fn match_c_ssl_groups_list(call: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch>> {
+    let function = call.child_by_field_name("function")?;
+    let fn_name = node_text(function, source);
+    if fn_name != "SSL_CTX_set1_groups_list" && fn_name != "SSL_set1_groups_list" {
+        return None;
+    }
+    let args = call.child_by_field_name("arguments")?;
+    let list_node = nth_real_arg(args, 1)?;
+    if list_node.kind() != "string_literal" {
+        return None;
+    }
+    let list_text = string_literal_value(list_node, source);
+    let start = list_node.start_position();
+    let mut results = Vec::new();
+    for token in list_text.split(['/', ':']) {
+        let group = token.trim_start_matches(['*', '?', '-']);
+        if group.is_empty() || group.eq_ignore_ascii_case("DEFAULT") {
+            continue;
+        }
+        let mut group_args = HashMap::new();
+        group_args.insert("group".into(), ArgValue::Str(group.to_string()));
+        group_args.insert("fn_name".into(), ArgValue::Str(fn_name.clone()));
+        results.push(RawMatch {
+            api: "openssl.SSL_CTX_set1_groups_list".into(),
+            args: group_args,
+            line: (start.row + 1) as u32,
+            offset: list_node.start_byte() as u32,
+            symbol: format!("{fn_name}({group})"),
+            snippet: node_text(call, source),
+            site_context: quipuu_core::SiteContext::Call,
+        });
+    }
+
+    if results.is_empty() {
+        None
+    } else {
+        Some(results)
+    }
+}
+
 /// Handle `new ClassName()` — Java and C#.
 fn match_object_creation(call: Node<'_>, source: &[u8], language: Language) -> Option<RawMatch> {
     // Java: object_creation_expression has a `type` field (type_identifier)
@@ -1191,6 +1257,8 @@ const STRUCTURAL_APIS: &[&str] = &[
     "crypto/tls.Config.MinVersion",
     // match_java_set_named_groups
     "javax.net.ssl.SSLParameters.setNamedGroups",
+    // match_c_ssl_groups_list
+    "openssl.SSL_CTX_set1_groups_list",
 ];
 
 /// The apis reached through `match_java_field_access` — a bare enum-constant
