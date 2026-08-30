@@ -3999,3 +3999,50 @@ question `OPEN-ASK #ESTIMATOR1` already covers, and is not this cycle's to answe
 new fixture test, `scans_c_rsa_generate_key_ex_midrange`). The two trust-invariant tests
 (`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`) are untouched and
 pass.
+
+## `#Y58`: pycryptodome `RSA.generate(bits)` gains a `rsa-unattributed` fallback for a runtime `bits`
+
+Found by generalizing `#Y56`/`#Y57`'s own pattern — a closed enumeration with no catch-all —
+across another API family, per `#Y57`'s own closing note ("a future cycle with research budget
+should look for the next rung-1/rung-2 item the same way this one did").
+
+`python.toml`'s `Crypto.PublicKey.RSA.generate` (pycryptodome) had three classify arms
+(`< 2048`, `== 2048`, `>= 3072`) that between them cover every possible *literal* bit count, but
+the extractor (`scanner.rs`'s `populate_args`) only ever captured `bits` when the argument was a
+literal integer — a config-driven call like `RSA.generate(key_size)` produced no capture at all,
+and therefore no finding, despite the call site being real and reachable. The sibling API one
+block up, `cryptography.hazmat.rsa.generate_private_key`, already had exactly this fallback
+(`key_size_symbol` → `CRYPTO-104`, the paramiko case) — pycryptodome's `RSA.generate` was the one
+API in this file missing it. Verified directly before touching anything:
+`RSA.generate(key_size)` scored 0 findings while an otherwise-identical `RSA.generate(3072)`
+scored 1 (`/tmp/pytest_probe/probe.py`, release binary).
+
+**First change:** `populate_args`'s `Crypto.PublicKey.RSA.generate` arm gains an `else if` branch
+capturing a bare identifier as `bits_symbol` (mirrors the existing `key_size_symbol`/`curve_symbol`
+pattern, reusing the existing `python_first_arg_identifier` helper — no new helper written). One
+new classify arm, `CRYPTO-173`, ordered last with no `bits` constraint, emitting
+`rsa-unattributed`. One new case in the existing `paramiko_style.py` fixture and one new test,
+`phase8_pycryptodome_variable_rsa_bits_produces_finding`.
+
+**Corpus effect: 0 findings added, 0 removed — a row-identical 1672-finding dump, both binaries.**
+Corpus B's own `pyca/cryptography` and PyPI clones have no `Crypto.PublicKey.RSA.generate` call
+site with a runtime `bits` argument; `RSA.generate` appears only with a literal in this corpus, so
+this is coverage for a real-world Python idiom (config- or CLI-driven key size, the same shape
+paramiko already exercises for hazmat) with no corpus demand on either side of the change — not
+unlike `#Y43`'s .NET native-class result. Full accounting below.
+
+**Precision: `bin/precision.py work/y58_pre.json work/y58_post.json` reports 97.10%, against the
+published 97.14% anchor (`state/precision.json`) — held, not moved.** The 0.04pp gap is entirely
+the pre-existing "fresh populations" vs. "carried constants" estimator drift `OPEN-ASK
+#ESTIMATOR1` already names: re-running `bin/precision.py` on the **unmodified pre-change dump
+against itself** (`y58_pre.json` vs `y58_pre.json`) reproduces the identical 97.10%/97.103%,
+proving the drift predates and is independent of this change. Since the corpus finding set did not
+move (0 added, 0 removed), the README's published 97.14% is left untouched per rule 7 — re-anchoring
+to the fresh-population figure is the same C1 decision `OPEN-ASK #ESTIMATOR1` is already waiting on,
+not this cycle's to make.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (one
+new fixture test, `phase8_pycryptodome_variable_rsa_bits_produces_finding`). The two
+trust-invariant tests (`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`)
+are untouched and pass.
