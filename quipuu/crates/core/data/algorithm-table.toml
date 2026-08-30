@@ -1020,7 +1020,7 @@ display_name = "LMS (Leighton-Micali Signature)"
 family = "LMS"
 primitive = "signature"
 quantum_status = "QuantumSafe"
-undetectable = "No LMS OID is vendored: we ship no source for the X.509 SPKI codepoints and P2 forbids fetching one, so nothing is asserted. Reachable the moment an OID lands in oid-table.toml."
+undetectable = "No LMS OID is vendored yet: the X.509 SPKI codepoints are not present in oid-table.toml, so nothing is asserted. This is a missing vendored source, not a P2 restriction — P2 governs the scanner binary's runtime network access, not what a developer vendors into the repository. Reachable the moment an OID lands in oid-table.toml."
 notes = "RFC 8554 / NIST SP 800-208. Stateful: a one-time key reused signs away the private key, so detection matters most in firmware-signing build systems. CNSA 2.0 approves LMS for software and firmware signing, SHA-256/192 preferred."
 
 [[algorithm]]
