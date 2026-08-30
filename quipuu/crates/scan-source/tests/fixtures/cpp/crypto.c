@@ -243,3 +243,23 @@ void openssl_kem_operation(EVP_PKEY_CTX *ctx, unsigned char *wrapped,
     EVP_PKEY_encapsulate(ctx, wrapped, wrapped_len, genkey, genkey_len);
     EVP_PKEY_decapsulate(ctx, unwrapped, unwrapped_len, wrapped, wrapped_len);
 }
+
+/* CPP-068, CRYPTO-973..991 — OpenSSL 3.5+'s EVP_SIGNATURE_fetch(libctx, name,
+   propq), the constructing call behind the generic message-signing operation
+   API (EVP_PKEY_sign_message_init/verify_message_init). Unlike that operation
+   pair, the fetch call names its algorithm as a literal string directly, so
+   it needs no cross-statement trace and correctly attributes both classical
+   (RSA/ECDSA/Ed25519/Ed448) and PQC (ML-DSA/SLH-DSA) fetches. Backlog #Y70,
+   scoped away from the originally-filed blanket sig-unattributed approach
+   because corpus evidence (eddsa_sig.c, cms_sd.c's cms_mdless_signing) shows
+   classical EdDSA also dispatches through sign_message_init/verify_message_init. */
+void openssl_signature_fetch(OSSL_LIB_CTX *libctx) {
+    EVP_SIGNATURE *rsa_sig = EVP_SIGNATURE_fetch(libctx, "RSA", NULL);
+    EVP_SIGNATURE *ecdsa_sig = EVP_SIGNATURE_fetch(libctx, "ECDSA", NULL);
+    EVP_SIGNATURE *ed25519_sig = EVP_SIGNATURE_fetch(libctx, "ED25519", NULL);
+    EVP_SIGNATURE *ed448_sig = EVP_SIGNATURE_fetch(libctx, "ED448", NULL);
+    EVP_SIGNATURE *mldsa44_sig = EVP_SIGNATURE_fetch(libctx, "ML-DSA-44", NULL);
+    EVP_SIGNATURE *mldsa65_sig = EVP_SIGNATURE_fetch(libctx, "ML-DSA-65", NULL);
+    EVP_SIGNATURE *mldsa87_sig = EVP_SIGNATURE_fetch(libctx, "ML-DSA-87", NULL);
+    EVP_SIGNATURE *slhdsa_sig = EVP_SIGNATURE_fetch(libctx, "SLH-DSA-SHAKE-256f", NULL);
+}

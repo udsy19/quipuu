@@ -1160,3 +1160,188 @@ when.api = "^openssl\\.EVP_PKEY_decapsulate$"
 algorithm_id = "kem-unattributed"
 severity_hint = "auto"
 message = "OpenSSL EVP_PKEY_decapsulate() — KEM decapsulation, parameter set fixed on the EVP_PKEY_CTX built earlier and not visible at this call. Recorded as an unattributed call site — classify it by hand."
+
+# ============================================================================
+# OpenSSL 3.5+ — EVP_SIGNATURE_fetch(libctx, name, propq), the constructing
+# call behind the generic message-signing operation API
+# (EVP_PKEY_sign_message_init/verify_message_init). That operation API itself
+# carries no algorithm argument — it is fixed on the EVP_SIGNATURE fetched
+# earlier, which this pack does not currently trace across statements — but
+# the fetch call names the algorithm as a literal string directly, the same
+# generic-name-argument shape EVP_PKEY_CTX_new_from_name already covers
+# above, and needs no trace to classify correctly. Backlog #Y70 as filed
+# proposed a blanket "sig-unattributed" for every sign_message_init/
+# verify_message_init call; corpus evidence rejects that — openssl/openssl's
+# own eddsa_sig.c documents Ed25519/Ed448 dispatching through the identical
+# API, and crypto/cms/cms_sd.c's cms_mdless_signing() routes CMS SignedData
+# through it for whichever "mdless" algorithm the signer's key actually is,
+# classical or PQC. Classifying at the fetch call instead of the operation
+# call sidesteps that misattribution and additionally recovers classical
+# RSA/ECDSA/EdDSA fetches this pack had no coverage for either.
+# ============================================================================
+
+[[extract]]
+id = "CPP-068"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "EVP_SIGNATURE_fetch")
+  arguments: (argument_list
+    (_)
+    (string_literal) @alg))
+"""
+captures = { fn = "ident", alg = "literal_string" }
+api = "openssl.EVP_SIGNATURE_fetch"
+description = "OpenSSL EVP_SIGNATURE_fetch(libctx, name, propq) — fetches a signature implementation by algorithm name string; feeds EVP_PKEY_sign_message_init/verify_message_init and the classic EVP_PKEY_sign_init_ex2/verify_init_ex2."
+
+[[classify]]
+id = "CRYPTO-973"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^RSA$" }
+algorithm_id = "rsa-unattributed"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — RSA signature implementation. Modulus size is not visible at this call; quantum-vulnerable to Shor regardless of size."
+
+[[classify]]
+id = "CRYPTO-974"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^ECDSA$" }
+algorithm_id = "ecdsa-unattributed"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — ECDSA signature implementation, curve not stated at this call. Quantum-vulnerable at every curve."
+
+[[classify]]
+id = "CRYPTO-975"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^ED25519$" }
+algorithm_id = "ed25519"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — Ed25519 signature implementation. Quantum-vulnerable to Shor."
+
+[[classify]]
+id = "CRYPTO-976"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^ED448$" }
+algorithm_id = "ed448"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — Ed448 signature implementation. Quantum-vulnerable to Shor."
+
+[[classify]]
+id = "CRYPTO-977"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^ML-DSA-44$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — ML-DSA-44, FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-978"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^ML-DSA-65$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — ML-DSA-65, FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-979"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^ML-DSA-87$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — ML-DSA-87, FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-980"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^SLH-DSA-SHA2-128s$" }
+algorithm_id = "slh-dsa-sha2-128s"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — SLH-DSA-SHA2-128s, FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-981"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^SLH-DSA-SHA2-128f$" }
+algorithm_id = "slh-dsa-sha2-128f"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — SLH-DSA-SHA2-128f, FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-982"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^SLH-DSA-SHA2-192s$" }
+algorithm_id = "slh-dsa-sha2-192s"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — SLH-DSA-SHA2-192s, FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-983"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^SLH-DSA-SHA2-192f$" }
+algorithm_id = "slh-dsa-sha2-192f"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — SLH-DSA-SHA2-192f, FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-984"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^SLH-DSA-SHA2-256s$" }
+algorithm_id = "slh-dsa-sha2-256s"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — SLH-DSA-SHA2-256s, FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-985"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^SLH-DSA-SHA2-256f$" }
+algorithm_id = "slh-dsa-sha2-256f"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — SLH-DSA-SHA2-256f, FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-986"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^SLH-DSA-SHAKE-128s$" }
+algorithm_id = "slh-dsa-shake-128s"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — SLH-DSA-SHAKE-128s, FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-987"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^SLH-DSA-SHAKE-128f$" }
+algorithm_id = "slh-dsa-shake-128f"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — SLH-DSA-SHAKE-128f, FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-988"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^SLH-DSA-SHAKE-192s$" }
+algorithm_id = "slh-dsa-shake-192s"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — SLH-DSA-SHAKE-192s, FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-989"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^SLH-DSA-SHAKE-192f$" }
+algorithm_id = "slh-dsa-shake-192f"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — SLH-DSA-SHAKE-192f, FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-990"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^SLH-DSA-SHAKE-256s$" }
+algorithm_id = "slh-dsa-shake-256s"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — SLH-DSA-SHAKE-256s, FIPS 205, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-991"
+when.api = "^openssl\\.EVP_SIGNATURE_fetch$"
+when.args.alg = { regex = "(?i)^SLH-DSA-SHAKE-256f$" }
+algorithm_id = "slh-dsa-shake-256f"
+severity_hint = "auto"
+message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — SLH-DSA-SHAKE-256f, FIPS 205, quantum-resistant."

@@ -2409,6 +2409,23 @@ const C_CALLEE_APIS: &[(&str, &str)] = &[
     // kem-unattributed. Backlog #Y69 (KEM half).
     ("EVP_PKEY_encapsulate", "openssl.EVP_PKEY_encapsulate"),
     ("EVP_PKEY_decapsulate", "openssl.EVP_PKEY_decapsulate"),
+    // The generic signature-operation entry points (EVP_PKEY_sign_message_init
+    // et al, backlog #Y70) carry no algorithm argument of their own — it lives
+    // on the EVP_SIGNATURE this pack does not currently trace back to its
+    // constructing call. What *is* directly attributable is that constructing
+    // call itself: EVP_SIGNATURE_fetch(libctx, name, propq) names the
+    // algorithm as a literal string, the same generic-name-argument shape as
+    // EVP_PKEY_CTX_new_from_name above, and is unconditionally correct to
+    // classify on its own — unlike EVP_PKEY_sign/verify, no trace is needed to
+    // avoid mislabeling, because the name IS the call's own argument, not a
+    // property of a ctx built earlier. #Y70 as originally filed proposed
+    // classifying every EVP_PKEY_sign_message_init/verify_message_init call as
+    // an unattributed PQC signature; corpus evidence (openssl/openssl's own
+    // eddsa_sig.c and cms_sd.c) shows classical Ed25519/Ed448 dispatch through
+    // that exact same API, so that would have mislabeled a real classical
+    // call site as PQC. Attributing at EVP_SIGNATURE_fetch instead sidesteps
+    // the defect and correctly classifies both classical and PQC fetches.
+    ("EVP_SIGNATURE_fetch", "openssl.EVP_SIGNATURE_fetch"),
 ];
 
 fn match_c_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
@@ -2884,6 +2901,13 @@ fn populate_args(
             // EVP_PKEY_Q_keygen(libctx, propq, type, ...) — arg 2 is the
             // algorithm name string.
             if let Some(alg) = nth_arg_string(args_node, 2, source) {
+                out.insert("alg".into(), ArgValue::Str(alg));
+            }
+        }
+        (Language::C | Language::Cpp, "openssl.EVP_SIGNATURE_fetch") => {
+            // EVP_SIGNATURE_fetch(libctx, algorithm, propq) — arg 1 is the
+            // algorithm name string.
+            if let Some(alg) = nth_arg_string(args_node, 1, source) {
                 out.insert("alg".into(), ArgValue::Str(alg));
             }
         }

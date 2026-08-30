@@ -3730,6 +3730,46 @@ fn scans_c_openssl_kem_operation_api() {
     }
 }
 
+/// Backlog `#Y70`: OpenSSL 3.5+'s `EVP_SIGNATURE_fetch(libctx, name, propq)`
+/// had zero coverage. The originally-filed approach would have classified
+/// every `EVP_PKEY_sign_message_init`/`verify_message_init` call as an
+/// unattributed PQC signature, but that operation API is also how classical
+/// Ed25519/Ed448 dispatch (`eddsa_sig.c`) and CMS's own generic signer
+/// (`cms_sd.c`'s `cms_mdless_signing`) route — attributing at the fetch call
+/// instead avoids mislabeling a classical call site as PQC and additionally
+/// covers RSA/ECDSA/Ed25519/Ed448 fetches this pack had no rule for at all.
+#[test]
+fn scans_c_openssl_signature_fetch() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-973", "rsa-unattributed"), // EVP_SIGNATURE_fetch(libctx, "RSA", NULL)
+        ("CRYPTO-974", "ecdsa-unattributed"), // EVP_SIGNATURE_fetch(libctx, "ECDSA", NULL)
+        ("CRYPTO-975", "ed25519"),          // EVP_SIGNATURE_fetch(libctx, "ED25519", NULL)
+        ("CRYPTO-976", "ed448"),            // EVP_SIGNATURE_fetch(libctx, "ED448", NULL)
+        ("CRYPTO-977", "ml-dsa-44"),        // EVP_SIGNATURE_fetch(libctx, "ML-DSA-44", NULL)
+        ("CRYPTO-978", "ml-dsa-65"),        // EVP_SIGNATURE_fetch(libctx, "ML-DSA-65", NULL)
+        ("CRYPTO-979", "ml-dsa-87"),        // EVP_SIGNATURE_fetch(libctx, "ML-DSA-87", NULL)
+        ("CRYPTO-991", "slh-dsa-shake-256f"), // EVP_SIGNATURE_fetch(libctx, "SLH-DSA-SHAKE-256f", NULL)
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in cpp/crypto.c; got: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+}
+
 /// Backlog `#Y47`: pyca/cryptography's own first-party ML-KEM/ML-DSA classes
 /// had no classify arm at all — `python.toml` recognized every classical
 /// primitive in the library but not the two it migrated to FIPS 203/204.

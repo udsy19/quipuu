@@ -4990,3 +4990,70 @@ would spend several minutes re-deriving a value this change cannot affect. `OPEN
 and `OPEN-ASK #CORPUSDRIFT` remain open, neither this cycle's to resolve. **The `#Y61`/`#Y64`
 closed-enumeration sweep is now confirmed exhausted for all seven rule packs** — C#, Go, Rust, Java
 (no gap), Python, and now JavaScript and C/C++ (no gap in either).
+
+## `#Y70`: OpenSSL `EVP_SIGNATURE_fetch` gains coverage — corrected in scope from the original filing
+
+Backlog `#Y70` proposed classifying OpenSSL 3.5+'s generic message-signing operation pair
+(`EVP_PKEY_sign_message_init`/`verify_message_init`) as an unattributed PQC signature, on the claim
+that the pair was "built specifically for ML-DSA's FIPS-204 Pure signing mode." Reading
+`crypto/evp/signature.c` in the vendored `openssl/openssl` clone directly shows this is wrong: the
+pair is a fully generic message-signing entry point selected by `ctx->operation ==
+EVP_PKEY_OP_SIGNMSG`, and `providers/implementations/signature/eddsa_sig.c`'s own doc comment lists
+`EVP_PKEY_sign_message_init()`/`verify_message_init()` as one of Ed25519/Ed448's own supported entry
+points — classical, non-PQC algorithms. `crypto/cms/cms_sd.c`'s `cms_mdless_signing()` confirms this
+in production code: it routes CMS SignedData through `EVP_PKEY_sign_message_init` for *whichever*
+"mdless" algorithm the signer's key actually is, EdDSA or ML-DSA alike. Shipping `#Y70` as filed —
+blanket `sig-unattributed` on every `sign_message_init`/`verify_message_init` call — would have
+mislabeled a real classical Ed25519/Ed448 call site as PQC, the exact failure mode `#Y69`'s own
+filing deliberately avoided by leaving `EVP_PKEY_sign`/`verify` uncovered ("also covers ordinary
+RSA/ECDSA and blanket-classifying it... would misdescribe an already-migrated PQC signature as an
+unattributed one").
+
+**What shipped instead:** the constructing call behind that operation pair,
+`EVP_SIGNATURE_fetch(libctx, name, propq)`, which names its algorithm as a literal string argument
+directly — the same generic-name shape `EVP_PKEY_CTX_new_from_name` already covers (`#Y52`) — and so
+needs no cross-statement trace to classify correctly, for either classical or PQC names. Zero
+existing coverage confirmed (`grep -in 'EVP_SIGNATURE_fetch' cpp.toml` → no matches). One new
+`C_CALLEE_APIS` dispatch entry, one new `populate_args` match arm (`scanner.rs`, arg 1 as `alg`, same
+position/shape as `EVP_PKEY_CTX_new_from_name`'s arg 1), one new extract query (`CPP-068`), and 19
+new classify arms (`CRYPTO-973`–`991`): RSA → `rsa-unattributed`, ECDSA → `ecdsa-unattributed`,
+ED25519 → `ed25519`, ED448 → `ed448`, ML-DSA-44/65/87, and the twelve SLH-DSA parameter sets — all
+against algorithm-table rows the pack already had, all literal names confirmed against
+`providers/implementations/include/prov/names.h`'s `PROV_NAMES_*` macros in the vendored clone before
+writing a rule.
+
+**Corpus effect: 1 finding added, 0 removed, 0 reclassified — 1 TP, 0 FP, hand-verified by opening
+the cited line.** `openssl/openssl`'s `ssl/ssl_ciph.c:343`,
+`sig = EVP_SIGNATURE_fetch(ctx->libctx, "ECDSA", ctx->propq)` inside `ssl_ctx_init` — a genuine fetch
+of a live ECDSA signature-provider implementation, used to populate `ctx->disabled_auth_mask` (a
+capability probe: OpenSSL only enables ECDSA-authenticated TLS cipher suites if the fetch succeeds).
+Scored TP on the same basis `#Y56` already established for liboqs's `OQS_KEM_new`/`OQS_SIG_new`
+sites — fetching/allocating a live provider handle for a named algorithm is itself the operation this
+tool inventories, independent of whether the caller goes on to sign anything with it. No other
+corpus site calls `EVP_SIGNATURE_fetch` with any of the other 18 covered names — coverage without
+further corpus demand, the same shape several prior cycles in this class documented.
+
+**Precision 97.12% (`bin/precision.py work/y70_pre.json work/y70_post.json --added-tp 1 --added-fp 0
+--write-readme`), unchanged in the published figure — the added row happens to round to the same
+two decimal places.** Fresh (97.116%), carried-constants (97.159%) and pooled (97.165%) estimators
+agree within 0.049pp, inside tolerance. Populations re-derived fresh at A=956/B=1014 against a
+1970-finding corpus (pre: 1969). `--write-readme` applied the only real change: corpus total 1969 →
+1970 in the headline sentence (figure, CI, audited-count and date were already exact). `b_tp`
+corrected 354 → 355 in `state/estimator.json`, mirroring `#Y54`/`#Y56`/`#Y57`/`#Y59`/`#Y62(a)`'s
+bookkeeping precedent — not a `change_estimator`/`reanchor_precision` C1 action;
+`state/precision.json`'s published anchor moves only via the gate reading this cycle's own
+`PRECISION:` line.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (140
+tests in `scan_test.rs`, one new: `scans_c_openssl_signature_fetch`). Both trust-invariant tests
+(`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`) untouched and pass.
+
+**Not re-taken, said out loud:** the `--policy nsa-cnsa2` divergence and Go line-exact recall — the
+one added finding is a C/C++ site asserting `ecdsa-unattributed`, not Go, so neither number could
+plausibly have moved. `OPEN-ASK #ESTIMATOR1` and `OPEN-ASK #CORPUSDRIFT` remain open, neither this
+cycle's to resolve. **Not done, said out loud:** the actual `EVP_PKEY_sign_message_init`/
+`verify_message_init` operation call sites remain uncovered — closing that gap correctly would need
+the same-function trace from the operation call back to its `EVP_SIGNATURE_fetch`/`EVP_SIGNATURE`
+construction that `#Y69`'s own closing note already deferred for `EVP_PKEY_sign`/`verify`, not a new
+scope this cycle had budget to build.
