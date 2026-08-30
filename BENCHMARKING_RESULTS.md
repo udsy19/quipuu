@@ -4630,3 +4630,54 @@ tests in `scan_test.rs`, one new). Both trust-invariant tests (`test_network_dis
 pointer is now exhausted across all three rule packs it named (C#, Go, Rust) — a future cycle should
 confirm no fourth pack (`java.toml`/`python.toml`/`javascript.toml`/`cpp.toml`) has an equivalent gap
 before assuming the pattern is fully closed.
+
+## `DECISION #ESTIMATOR2` applied — README and `state/estimator.json` reverted 97.71% → 97.11%
+
+Not a new measurement — syncing the tree to an adjudication that had already landed
+(`state/decisions.jsonl`, `#ESTIMATOR2`, `action: reanchor_precision`, `value: 97.11`,
+`at: 2026-08-30T14:06:49Z`) but had not yet been applied to the repo; a prior cycle attempted the
+sync bundled with an unrelated detection change that could not itself pass `gate_precision` (below),
+and the whole cycle was reverted, leaving `main`'s README stale against the already-moved anchor and
+`gate_published_figure` red for every subsequent change. The decision reverses `#Y64`'s fold of a
+100%-census audit of its own new rule's targets (139 findings, 0 FP) into the anchor's per-stratum
+sample, plus `#Y65`'s further 12, on the grounds that auditing every target a brand-new rule produces
+and folding the result into the very sample it is measured against inflates the reported rate
+regardless of real-world precision — `gate_precision` only blocks a drop past -0.5pp and let both
+rises (+0.54pp, then +0.06pp) through unexamined. Full rationale in `state/decisions.jsonl`; the
+decision was made independently of this cycle and is not re-argued here (rule 7) — this entry only
+records applying it.
+
+**Fixed:** `state/estimator.json`'s `a_tp` 335→262 and `b_tp` 420→354 (both `a_fp`/`b_fp` unchanged
+at 9), matching `#Y63`'s last gate-passed 97.11% anchor exactly (`BENCHMARKING_RESULTS.md:4490`).
+`README.md`'s headline and comparison-table cell corrected 97.71% → 97.11%, sample size 785 → 634,
+denominator 1687 → 1846 (this cycle's corpus-B total, `#CORPUSDRIFT`-affected as usual). `#Y64`'s
+and `#Y65`'s own entries above are left as an accurate record of what those cycles measured and
+shipped — real, hand-verified detection gains — the correction is to the anchor-sample question,
+not to those findings' TP/FP status.
+
+**Confirmed via `bin/precision.py`:** with the reverted `estimator.json`, a fresh corpus-B dump
+(1846 findings) disagrees between its fresh-population and carried-constant estimators by 0.053pp —
+just over the tool's 0.05pp tolerance, triggering `ESTIMATOR DISAGREEMENT` and refusing to emit a
+`PRECISION:` line. This is `OPEN-ASK #ESTIMATOR1`'s pre-existing fresh/carried drift crossing the
+tool's tolerance for the first time on record; evidence appended to that ask rather than filing a
+new one. No `PRECISION:` line is emitted for this entry — the README correction above applies an
+already-decided value (`DECISION #ESTIMATOR2`'s own `value: 97.11`), not a fresh derivation, and
+this cycle is not authorised to pick an estimator to resolve the disagreement (`policy.toml`
+`change_estimator`, C1).
+
+**Held back, not shipped this cycle: BouncyCastle `DilithiumSigner`/`SPHINCSPlusSigner` coverage
+(`#Y66`).** A prior cycle wrote this detection change (`java.toml` classify arms `CRYPTO-958`/
+`CRYPTO-959`, `scanner.rs`'s `JAVA_CTOR_APIS`, two new `BcLightweight.java` fixture call sites) and
+confirmed it is real, correct coverage — 0 corpus-B effect either way (`bin/precision.py
+work/y66_pre.json work/y66_post.json`: 1846 → 1846, row-identical; no corpus-B project instantiates
+either class) — but `gate_precision` requires a `PRECISION:` line whenever a diff touches a
+`DETECTION_PATHS` file, and the `ESTIMATOR DISAGREEMENT` above blocks emitting one regardless of
+which binary produced the dump: re-running `bin/precision.py` against the reverted estimator
+reproduces the identical 0.053pp disagreement on the *pre-change* binary alone, so the block is not
+an effect of `#Y66`'s change and re-attempting the identical diff this cycle would fail the gate
+identically. Re-landing it is blocked on `OPEN-ASK #ESTIMATOR1`, not on the rule itself; the fixture
+and rule diff are reproducible from the parked cycle's own commit for whoever picks this up once
+that ask is answered.
+
+**Held:** no detection rule or scanner code touched by this entry. `cargo build --release
+--workspace` / `cargo test --release --workspace` both clean, unaffected.
