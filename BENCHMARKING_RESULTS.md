@@ -5057,3 +5057,67 @@ cycle's to resolve. **Not done, said out loud:** the actual `EVP_PKEY_sign_messa
 the same-function trace from the operation call back to its `EVP_SIGNATURE_fetch`/`EVP_SIGNATURE`
 construction that `#Y69`'s own closing note already deferred for `EVP_PKEY_sign`/`verify`, not a new
 scope this cycle had budget to build.
+
+## `#Y74(b)`: liboqs-python's `oqs.KeyEncapsulation`/`oqs.Signature` gain coverage — 2026-08-30
+
+**Id collision, flagged rather than silently reused:** `Backlog.md` filed two unrelated items as
+`#Y74` — this one (liboqs's official Python binding) and an already-shipped one (`f757e89`,
+`EVP_EncryptInit_ex` AES-CBC, `BENCHMARKING_RESULTS.md` above). Disambiguated here as `#Y74(b)`
+rather than reusing the id silently; `Backlog.md` should re-key one of the two on its next pass.
+
+**What shipped.** `python.toml` had zero coverage for `oqs.KeyEncapsulation(alg)`/`oqs.Signature(alg)`
+— liboqs's own official Python binding, which constructs via the identical `OQS_KEM_new`/
+`OQS_SIG_new` C entry points `cpp.toml` already classifies (`#Y56`). Both of the library's own
+published examples (`examples/kem.py:22`, `examples/sig.py:24`) pass a local variable
+(`kemalg`/`sigalg`) rather than a literal, confirmed by reading the vendored
+`crypto-adjacent/liboqs-python` clone directly — a literal-only rule would have missed the library's
+own documented usage. `scanner.rs` gained two `PYTHON_CALLEE_APIS` entries and one `populate_args`
+match arm (arg 0: `alg` when a string literal, `alg_symbol` when a bare identifier — the same
+literal/symbol split `CRYPTO-104`/`CRYPTO-173` already established for RSA key sizes). `python.toml`
+gained two extract blocks and eight classify arms (`CRYPTO-992`–`1001`): three ML-KEM parameter sets,
+three ML-DSA parameter sets, and a `kem-unattributed`/`sig-unattributed` fallback pair per class for
+both the algorithm zoo (HQC, BIKE, Classic McEliece, SPHINCS+, ...) and the unresolvable-variable
+case — the same six-plus-two shape `#Y56` shipped for `cpp.toml`. One new fixture
+(`tests/fixtures/python/liboqs_python.py`, 10 call sites) and one new test
+(`scans_python_liboqs_python_kem_sig`) cover all eight rule/algorithm_id pairs, literal and variable
+forms alike.
+
+**Corpus effect: 0 findings, either side — verified as a real zero, not a scan-scope artifact.**
+`crypto-adjacent/liboqs-python`'s own dump entry produces 0 findings on both binaries; the rule
+itself was confirmed live against the same clone, not just against the fixture — scanning
+`examples/kem.py`/`examples/sig.py` directly with the post-change binary fires `CRYPTO-996`/
+`CRYPTO-1001` exactly as expected (4 and 2 sites respectively, both variable-argument forms). Zero
+in the corpus dump is explained by `benchmarks/corpus-b-realworld/ecosystems/crypto-adjacent/
+liboqs-python.toml`'s `scan_hints.scan_paths = ["oqs/"]`, which excludes `examples/` entirely — the
+same "real call site outside `scan_hints.scan_paths`" shape `#Y29`/`#Y44` already documented for
+other liboqs-family findings. Inside the scanned `oqs/` package itself, `KeyEncapsulation`/
+`Signature` are only ever *defined*, not constructed (`oqs/serialize.py:113` constructs the
+explicitly-out-of-scope `StatefulSignature` instead) — so 0 is the correct count for what this
+corpus actually scans, not a missed detection. Real-world Python codebases reaching for ML-KEM/
+ML-DSA in mid-2026 also favor `pyca/cryptography`'s native classes (`#Y47`) over a ctypes wrapper —
+coverage without corpus demand, the same shape `#Y43`/`#Y51`/`#Y55`/`#Y58`/`#Y63` already documented.
+
+**Precision 97.15% (`bin/precision.py work/y74d_pre.json work/y74d_post.json`), against a published
+97.12% — the gap is pre-existing `OPEN-ASK #CORPUSDRIFT`, not this change's effect, proven
+structurally rather than asserted: the two dumps are row-identical (1811 findings both sides, 0
+added, 0 removed) despite the corpus-clones population differing from the 1970-finding corpus the
+97.12% figure was measured against.** Corpus B tuple: `--source --deps --include-safe`, profile
+`nist-default`, pre-change binary built from commit `b0c3d08` (`#Y70`'s own merge commit) in a
+throwaway worktree, post-change binary from this cycle's tree (`4a0b02b`). Fresh-derived populations
+A=797/B=1014 against the 1811-finding corpus; fresh (97.154%), carried-constants (97.159%) and pooled
+Wilson (97.165%) estimators agree within 0.011pp, well inside tolerance. `--write-readme` applied:
+figure 97.12% → 97.15%, CI low 95.8% → 95.9%, corpus total 1970 → 1811 (audited-row count and date
+unchanged — the drift moves the denominator, not the sample).
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (141
+tests in `scan_test.rs`, one new). Both trust-invariant tests (`test_network_disabled_error`,
+`test_run_acvp_kats_rejects_code_execution`) untouched and pass.
+
+**Not re-taken, said out loud:** the `--policy nsa-cnsa2` divergence and Go/cross-language recall —
+zero findings moved, so neither could plausibly change. `OPEN-ASK #ESTIMATOR1` and `OPEN-ASK
+#CORPUSDRIFT` remain open, neither this cycle's to resolve — this entry is fresh, first-hand evidence
+that `#CORPUSDRIFT`'s magnitude (159 findings, 1970 → 1811) is on the larger end of what recent
+cycles have reported. **Not done, said out loud:** liboqs-python's `StatefulSignature`/
+`OQS_SIG_STFL_new` (LMS/XMSS) wrapper is out of scope, per the same standing firmware-signing
+population rejection `cpp.toml`'s own header already states for the C entry point it wraps.
