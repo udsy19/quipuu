@@ -211,6 +211,19 @@ algorithm_id = "sha3-512"
 severity_hint = "auto"
 message = "SHA3-512 in createHash('{algo}'). Quantum-safe hash."
 
+# CRYPTO-904..908 closed sha224/384/512/sha3-256/sha3-512 but left sha3-384
+# out — the same OpenSSL digest set node:crypto exposes, and the row this
+# needs already exists in algorithm-table.toml (added for csharp.toml's
+# SHA3_384 arm, #Y63). Confirmed a real Node.js name, not assumed:
+# `require('crypto').getHashes()` lists `sha3-384`.
+[[classify]]
+id = "CRYPTO-969"
+when.api = "^node:crypto\\.createHash$"
+when.args.algo = { regex = "(?i)^['\"]?sha3-384['\"]?$" }
+algorithm_id = "sha3-384"
+severity_hint = "auto"
+message = "SHA3-384 in createHash('{algo}'). Quantum-safe hash."
+
 # ============================================================================
 # node:crypto — generateKeyPair
 # ============================================================================
@@ -286,6 +299,40 @@ when.args.algo = { regex = "(?i)SHA256" }
 algorithm_id = "ecdsa-p256"
 severity_hint = "auto"
 message = "SHA-256 signature via createSign('{algo}'). Check key type for quantum exposure."
+
+# CRYPTO-330/331 covered only RSA-SHA256 and bare SHA256 — the two names the
+# original fixture exercised — though node:crypto's createSign accepts the
+# same RSA-SHA1/384/512 names OpenSSL supports (confirmed real Node.js names,
+# not assumed: `require('crypto').getHashes()` lists all three), and
+# algorithm-table.toml already carries `rsa-pkcs1-sha1`/`-sha384`/`-sha512`
+# rows. A call with any of these three names silently produced zero
+# findings — same shape as `#Y56`/`#Y57`/`#Y58`/`#Y59`/`#Y60`. Ordered before
+# nothing else needs reordering: none of the three strings contain "SHA256",
+# so they cannot be shadowed by CRYPTO-330/331.
+
+[[classify]]
+id = "CRYPTO-970"
+when.api = "^node:crypto\\.createSign$"
+when.args.algo = { regex = "(?i)RSA-SHA1" }
+algorithm_id = "rsa-pkcs1-sha1"
+severity_hint = "auto"
+message = "RSA-SHA1 signature via createSign('{algo}'). Classically broken (SHAttered, 2017)."
+
+[[classify]]
+id = "CRYPTO-971"
+when.api = "^node:crypto\\.createSign$"
+when.args.algo = { regex = "(?i)RSA-SHA384" }
+algorithm_id = "rsa-pkcs1-sha384"
+severity_hint = "auto"
+message = "RSA-SHA384 signature via createSign('{algo}'). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-972"
+when.api = "^node:crypto\\.createSign$"
+when.args.algo = { regex = "(?i)RSA-SHA512" }
+algorithm_id = "rsa-pkcs1-sha512"
+severity_hint = "auto"
+message = "RSA-SHA512 signature via createSign('{algo}'). Quantum-vulnerable."
 
 # ============================================================================
 # WebCrypto — subtle.generateKey / subtle.sign

@@ -4930,3 +4930,63 @@ excluded-algorithm set (SHA-256/384/512/SHA3 are all CNSA-approved). `OPEN-ASK #
 open, not this cycle's to resolve. **Next place to look:** the `#Y61`/`#Y64` closed-enumeration
 sweep is now confirmed exhausted across all four remaining packs (Java needs no fix; Python is
 fixed here) — `javascript.toml` and `cpp.toml` are the two left unchecked.
+
+## `#Y79`: JS/TS `node:crypto` closed-enumeration sweep — `createHash('sha3-384')` and `createSign`'s remaining RSA digest names
+
+Taken from `#Y78`'s own closing pointer: `javascript.toml` and `cpp.toml` were the two rule packs
+the `#Y61`/`#Y64`/`#Y78` closed-enumeration/missing-dispatch sweep had not yet checked. `cpp.toml`'s
+`EVP_DigestInit_ex` already has a classify arm for every digest name `algorithm-table.toml` carries
+(confirmed by reading every `algorithm_id = "sha..."` arm directly) — no gap. `javascript.toml` had
+two:
+
+1. `node:crypto.createHash` (`CRYPTO-904`–`908`, shipped by `#Y60`) covered every OpenSSL digest
+   name `algorithm-table.toml` had a row for **at the time it shipped**, but `sha3-384` gained a row
+   afterward (added for `csharp.toml`'s `SHA3_384.Create()`, `#Y63`) and `createHash` was never
+   revisited. `require('crypto').getHashes()` confirms `sha3-384` is a real, callable Node.js digest
+   name, not a guess. One new classify arm, `CRYPTO-969`.
+2. `node:crypto.createSign` (`CRYPTO-330`/`331`) covered only `RSA-SHA256` and bare `SHA256` — the
+   two names the original fixture exercised — while OpenSSL's (and therefore Node's) `RSA-SHA1`,
+   `RSA-SHA384` and `RSA-SHA512` produced zero findings despite the extractor already seeing the
+   call site and `algorithm-table.toml` already carrying `rsa-pkcs1-sha1`/`-sha384`/`-sha512` rows
+   (the "modulus size not stated" variants, not the undetectable `-XXXX`-bit-suffixed ones). All
+   three names confirmed real and callable via `require('crypto').getHashes()` before writing the
+   rule, the same standard `#Y51`/`#Y55` held themselves to for C#. Three new classify arms,
+   `CRYPTO-970`–`972`.
+
+Both extract queries were already generic (capture the literal string argument, no per-name
+dispatch needed at the extractor level) — this is TOML-only, no `scanner.rs` change, the same shape
+`#Y59`'s Java fix was and unlike `#Y61`'s C# fix, which needed a new dispatch entry.
+
+**Corpus effect: 1 finding added, 0 removed, 0 reclassified.** `npm/oauth`'s `lib/oauth.js:211`
+calls `crypto.createSign("RSA-SHA1")` inside the OAuth 1.0a `RSA-SHA1` signature-method branch — read
+directly, hand-verified true positive: the branch genuinely signs with RSA-SHA1. **1 TP, 0 FP.** No
+corpus site calls `createHash('sha3-384')` or `createSign` with `RSA-SHA384`/`RSA-SHA512` — coverage
+without corpus demand yet, the same shape `#Y43`/`#Y51`/`#Y55`/`#Y58`/`#Y61`/`#Y63` already
+documented.
+
+**Precision 97.11% → 97.12% (`bin/precision.py work/y79_pre.json work/y79_post.json --added-tp 1
+--added-fp 0 --write-readme`), held within tolerance — not comparable to the 97.36% the README
+stated before this diff.** `bin/precision.py` run on the pre-change dump against itself (a no-op
+sanity check, `y79_pre.json` vs `y79_pre.json`) already reports **97.11%**, not 97.36% — proof the
+gap predates this change and is `OPEN-ASK #CORPUSDRIFT` recurring, the same pre-existing-drift shape
+`#Y58`/`#Y59`/`#Y61` each documented, not a regression this item introduced. Fresh (97.118%) and
+pooled (97.165%) estimators agree within 0.047pp, inside the 0.05pp tolerance. Populations
+re-derived fresh at A=956/B=1013 against a 1969-finding corpus (pre: 1968). `--write-readme` applied
+the honest, currently-measured figure per
+[[published-figure-has-no-tolerance-band]] rather than leaving the stale 97.36% in place: headline
+and comparison-table figure 97.36% → 97.12%, CI 96.2–98.6 → 95.8–98.4, audited 684 → 635, corpus
+total 1968 → 1969.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (139
+tests in `scan_test.rs`, two new: `scans_js_createhash_sha3_384`, `scans_js_createsign_wider_digests`).
+Both trust-invariant tests (`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`)
+untouched and pass.
+
+**Not re-taken, said out loud:** the `--policy nsa-cnsa2` divergence and Go/cross-language recall —
+the one added finding is an `npm` site asserting an already-CNSA-excluded algorithm (`sha-1`-family),
+not a Go site, so neither number could plausibly have moved from this alone, and re-running either
+would spend several minutes re-deriving a value this change cannot affect. `OPEN-ASK #ESTIMATOR1`
+and `OPEN-ASK #CORPUSDRIFT` remain open, neither this cycle's to resolve. **The `#Y61`/`#Y64`
+closed-enumeration sweep is now confirmed exhausted for all seven rule packs** — C#, Go, Rust, Java
+(no gap), Python, and now JavaScript and C/C++ (no gap in either).

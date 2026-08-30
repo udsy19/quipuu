@@ -49,6 +49,11 @@ function hashWiderDigests() {
     const h5 = crypto.createHash("sha3-512");
 }
 
+// JST-010 / CRYPTO-969 — the last remaining OpenSSL digest name, sha3-384
+function hashSha3_384() {
+    const h = crypto.createHash("sha3-384");
+}
+
 // JST-020 / CRYPTO-320 — RSA generateKeyPair
 function keyPairRsa() {
     crypto.generateKeyPair("rsa", { modulusLength: 2048 }, (err, pub, priv) => {});
@@ -67,6 +72,13 @@ function keyPairEd25519() {
 // JST-030 / CRYPTO-330 — RSA-SHA256 createSign
 function signRsa() {
     const sign = crypto.createSign("RSA-SHA256");
+}
+
+// JST-030 / CRYPTO-970..972 — the remaining OpenSSL RSA signature digest names
+function signRsaWiderDigests() {
+    const s1 = crypto.createSign("RSA-SHA1");
+    const s2 = crypto.createSign("RSA-SHA384");
+    const s3 = crypto.createSign("RSA-SHA512");
 }
 
 // JST-040 / CRYPTO-340 — WebCrypto subtle.generateKey
