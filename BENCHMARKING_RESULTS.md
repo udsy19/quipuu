@@ -4105,3 +4105,54 @@ are untouched and pass. The two rule-integrity gates
 not re-measured — the finding set changed by exactly 1 row in one language pack, neither number
 could plausibly have moved. `OPEN-ASK #ESTIMATOR1` remains unanswered and is not this cycle's to
 answer.
+
+## `#Y60`: node:crypto `createHash` gains the remaining OpenSSL digest names
+
+Found by generalizing `#Y56`/`#Y57`/`#Y58`/`#Y59`'s own pattern across another rule pack, per
+`#Y59`'s own closing pointer ("keep applying the same generalization... across the remaining
+rule packs (go.toml, javascript.toml, rust.toml, csharp.toml) not yet swept this way"). Swept
+`rsa.*generate`/`RSA.Create`/hash-selection call sites across go.toml, rust.toml and csharp.toml
+first — all three already carry the equivalent catch-all or full enum (Go/Rust's RSA keygen has
+an `rsa-unattributed` arm, C#'s `RSA.Create()` is unattributed by construction). javascript.toml's
+`createHash` was the one call site in the remaining four rule packs still shaped like the gap
+`#Y59` closed for Java.
+
+`javascript.toml`'s `node:crypto.createHash` (`JST-010`) had exactly three classify arms —
+`CRYPTO-310`/`311`/`312` for MD5, SHA-1 and SHA-256, the three names the original fixture
+exercised — with no arms for the other five digest names createHash resolves through OpenSSL,
+even though `algorithm-table.toml` already carries rows for all five (`sha-224`, `sha-384`,
+`sha-512`, `sha3-256`, `sha3-512` — the identical set `#Y59` closed for Java). Verified directly
+before touching anything: `crypto.createHash("sha384")`, `("sha512")` and `("sha3-256")` each
+scored 0 findings on the release binary while `("md5")` scored 1. The extractor
+(`JST-010`'s query) already captures the algorithm string at every call site regardless of which
+name is passed — this is a missing-enum-arms gap, not a missing extractor capability, so no
+`scanner.rs` change was needed. Five new classify arms (`CRYPTO-904`..`908`), each mirroring
+`CRYPTO-312`'s existing shape exactly (case-insensitive, optional quotes). Five new cases added
+to the existing `crypto.js` fixture and one new test, `scans_js_createhash_wider_digests`.
+
+**Corpus effect: 0 findings added, 0 removed — a row-identical 1533-finding dump, both
+binaries.** `bin/precision.py work/y60_pre.json work/y60_post.json` (pre-change binary built
+from `000efb0` in a throwaway worktree, post-change binary this cycle's tree `da59c9d`, both
+dumps taken back-to-back against the same corpus-clones checkout): 1533 → 1533, no delta. No
+project in corpus B calls `createHash` with any of the five newly-covered names — the same
+"coverage without corpus demand" shape as `#Y43`/`#Y55`/`#Y58`.
+
+**Precision 97.15% (`bin/precision.py`, `--added-tp 0 --added-fp 0`), unchanged from the
+published anchor.** All three estimators agree closely (stratified-fresh 97.146%,
+stratified-carried 97.143%, pooled Wilson 97.147%, spread 0.004pp). Since nothing in the finding
+set moved, there is nothing to fold into `state/estimator.json` and no README change to make —
+the published figure already reads 97.15%.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing
+(127 tests in `scan_test.rs`, one new: `scans_js_createhash_wider_digests`). The two
+trust-invariant tests (`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`)
+are untouched and pass.
+
+**Not re-taken, said out loud:** the `--policy nsa-cnsa2` divergence and Go line-exact recall are
+not re-measured — the finding set did not move at all, so neither number could plausibly have
+changed. `OPEN-ASK #ESTIMATOR1` remains unanswered and is not this cycle's to answer. No new
+rung-2 coverage item was filed this cycle to replace `#Y60` in rank — the next place to look is
+the same closed-enumeration-without-fallback pattern in whatever remains of go.toml/rust.toml/
+csharp.toml beyond the RSA-keygen and hash-selection sweep this cycle already did, or a rule
+pack not yet swept this way at all.
