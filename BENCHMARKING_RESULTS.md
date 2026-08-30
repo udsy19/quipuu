@@ -4046,3 +4046,62 @@ not this cycle's to make.
 new fixture test, `phase8_pycryptodome_variable_rsa_bits_produces_finding`). The two
 trust-invariant tests (`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`)
 are untouched and pass.
+
+## `#Y59`: Java `MessageDigest.getInstance` gains the remaining JCA standard digest names
+
+Found by generalizing `#Y56`/`#Y57`/`#Y58`'s own pattern across another rule pack, per `#Y58`'s
+own closing pointer ("keep applying the same generalization... across the remaining language rule
+packs"). Checked for a parked branch to inspect first: none existed this cycle.
+
+`java.toml`'s `java.security.MessageDigest.getInstance` (`JAV-020`) had exactly three classify
+arms — `CRYPTO-220`/`221`/`222` for MD5, SHA-1 and SHA-256, the three names the original fixture
+exercised — with no arms for the other JCA standard digest names, even though
+`algorithm-table.toml` already carries rows for all five of them (`sha-224`, `sha-384`, `sha-512`,
+`sha3-256`, `sha3-512`, used by the equivalent Go and Rust hash rules). A call naming any of the
+five produced zero findings despite `populate_java_args` already capturing the algorithm string
+for every `MessageDigest.getInstance` call site — this is a missing-enum-arms gap, not a missing
+extractor capability, so no `scanner.rs` change was needed. Five new classify arms
+(`CRYPTO-899`..`903`), each mirroring `CRYPTO-222`'s existing shape exactly. Five new cases added
+to the existing `Main.java` fixture and one new test,
+`scans_java_messagedigest_wider_digests`.
+
+**Corpus effect: 1 finding added, 0 removed.** `bin/precision.py work/y59_pre.json
+work/y59_post.json` (pre-change binary built from `f69340e` in a throwaway worktree, post-change
+binary this cycle's tree, both dumps taken back-to-back against the same corpus-clones state):
+1532 → 1533 findings, exactly one delta. Read and hand-verified true positive at the cited line:
+`maven:org.bouncycastle:bcprov-jdk18on`'s composite ML-KEM engine
+(`prov/src/main/java/org/bouncycastle/jcajce/provider/asymmetric/compositekem/CompositeMLKEMEngine.java:166`)
+calls `MessageDigest.getInstance("SHA3-256")` to hash the combined ML-KEM/traditional shared
+secret per the composite-KEM combiner (`CompositeIndex.getKEMLabel`) — a real, reachable
+cryptographic operation the scanner previously could not see at all.
+
+**Precision 97.15% (`bin/precision.py ... --added-tp 1 --added-fp 0`), a 0.05pp rise from the
+97.10% anchor.** All three estimators agree closely (stratified-fresh 97.146%, stratified-carried
+97.143%, pooled Wilson 97.147%, spread 0.004pp — well inside the 0.05pp agreement tolerance). Delta
+lands in stratum B: sample 350/9 → 351/9 (`state/estimator.json`'s `b_tp` corrected 350 → 351,
+mirroring `#Y54`'s/`#Y56`'s/`#Y57`'s bookkeeping precedent — not a `change_estimator`/
+`reanchor_precision` C1 action). README's headline, comparison table and interval/denominator
+paragraphs updated to the new figure, sample size and population in the same diff, per rule 4.
+
+**Surfaced, not caused, by this item: `OPEN-ASK #CORPUSDRIFT` moved again.** The stratum-A
+population fell 801 → 661 between this measurement and `#Y58`'s (stratum B held steady, 871 → 872).
+Both this cycle's pre- and post-change dumps were taken today against the same corpus-clones
+checkout and agree on the split (661/872), and `corpus_integrity.py` reports 150/150 projects
+populated and matching the committed baseline (1 pre-existing `unscannable`, unchanged) — so the
+drift is environmental (the corpus-clones working trees, not the manifest pins) and pre-dates this
+change, the same shape `#Y39`/`#Y43`/`#Y52` already documented for this open ask. Not this cycle's
+to resolve (rule 7); recorded so the next cycle's population numbers are not mistaken for a
+regression.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing
+(126 tests in `scan_test.rs`, one new: `scans_java_messagedigest_wider_digests`). The two
+trust-invariant tests (`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`)
+are untouched and pass. The two rule-integrity gates
+(`classify_rules_never_publish_a_parameter_their_when_clause_contradicts`,
+`every_classify_rule_targets_an_api_the_extractor_can_emit`) pass on the new arms.
+
+**Not re-taken, said out loud:** the `--policy nsa-cnsa2` divergence and Go line-exact recall are
+not re-measured — the finding set changed by exactly 1 row in one language pack, neither number
+could plausibly have moved. `OPEN-ASK #ESTIMATOR1` remains unanswered and is not this cycle's to
+answer.
