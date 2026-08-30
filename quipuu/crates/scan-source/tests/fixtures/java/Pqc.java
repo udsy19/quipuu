@@ -62,4 +62,24 @@ public class Pqc {
     public static void hqcCipher() throws Exception {
         Cipher c = Cipher.getInstance("HQC-256");
     }
+
+    // JAV-001 / CRYPTO-1014 — BIKE128 cipher (BouncyCastle)
+    public static void bikeCipher() throws Exception {
+        Cipher c = Cipher.getInstance("BIKE128");
+    }
+
+    // JAV-010 / CRYPTO-1018 — BIKE family-generic name, no parameter set stated
+    public static void bikeKeypairUnattributed() throws Exception {
+        KeyPairGenerator g = KeyPairGenerator.getInstance("BIKE", "BCPQC");
+    }
+
+    // JAV-010 / CRYPTO-1019 — Classic McEliece keypair generation, family sentinel
+    public static void cmceKeypair() throws Exception {
+        KeyPairGenerator g = KeyPairGenerator.getInstance("mceliece6960119", "BCPQC");
+    }
+
+    // JAV-040 / CRYPTO-1020 — Classic McEliece encapsulation object, family sentinel
+    public static void cmceKem() throws Exception {
+        KEM kem = KEM.getInstance("CMCE");
+    }
 }

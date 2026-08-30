@@ -174,6 +174,42 @@ algorithm_id = "hqc-unattributed"
 severity_hint = "auto"
 message = "Cipher.getInstance('{spec}') — NIST-selected backup KEM (HQC), FIPS standard pending, but the parameter set is not stated at this call site (BC's family-generic 'HQC' name)."
 
+# --- PQC candidate: BIKE, BouncyCastle's own PKE/Cipher JCA registration ----
+# org.bouncycastle.pqc.jcajce.provider.BIKE's Mappings.configure() registers
+# BIKE under Cipher.getInstance only (no KEM.getInstance registration exists
+# for BIKE, unlike HQC/CMCE) — same qualified-plus-generic name shape.
+[[classify]]
+id = "CRYPTO-1014"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)^\"?BIKE128\"?$" }
+algorithm_id = "bike-128"
+severity_hint = "auto"
+message = "Cipher.getInstance('{spec}') — NIST 4th-round PQC KEM candidate (BIKE, not selected as the standardized backup). Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1015"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)^\"?BIKE192\"?$" }
+algorithm_id = "bike-192"
+severity_hint = "auto"
+message = "Cipher.getInstance('{spec}') — NIST 4th-round PQC KEM candidate (BIKE, not selected as the standardized backup). Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1016"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)^\"?BIKE256\"?$" }
+algorithm_id = "bike-256"
+severity_hint = "auto"
+message = "Cipher.getInstance('{spec}') — NIST 4th-round PQC KEM candidate (BIKE, not selected as the standardized backup). Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1017"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)^\"?BIKE\"?$" }
+algorithm_id = "bike-unattributed"
+severity_hint = "auto"
+message = "Cipher.getInstance('{spec}') — NIST 4th-round PQC KEM candidate (BIKE, not selected as the standardized backup), but the parameter set is not stated at this call site (BC's family-generic 'BIKE' name)."
+
 # ============================================================================
 # java.security.KeyPairGenerator.getInstance
 # ============================================================================
@@ -432,6 +468,28 @@ algorithm_id = "hqc-unattributed"
 severity_hint = "auto"
 message = "KeyPairGenerator.getInstance('{algo}') — NIST-selected backup KEM (HQC), FIPS standard pending, but the parameter set is not stated at this call site (BC's family-generic 'HQC' name; chosen separately via HQCParameterSpec at a later .initialize() call)."
 
+# --- PQC candidate: BIKE, generic-only — BC registers no per-size --------
+# KeyPairGenerator name for BIKE (unlike Cipher above), only "BIKE" itself.
+[[classify]]
+id = "CRYPTO-1018"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?BIKE\"?$" }
+algorithm_id = "bike-unattributed"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — NIST 4th-round PQC KEM candidate (BIKE, not selected as the standardized backup); BC exposes no per-size KeyPairGenerator name, so the parameter set is chosen separately at a later Cipher.getInstance('BIKE128'/'192'/'256') call this table does not trace across statements."
+
+# --- PQC candidate: Classic McEliece, one family-level sentinel for both --
+# the generic "CMCE" string and all 32+ qualified "mceliece<params>" names
+# (Backlog cycle 62) — see algorithm-table.toml's classic-mceliece-unattributed
+# row for why this does not enumerate every parameter set.
+[[classify]]
+id = "CRYPTO-1019"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?(CMCE|MCELIECE[0-9A-Z]*)\"?$" }
+algorithm_id = "classic-mceliece-unattributed"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — NIST 4th-round PQC KEM candidate (Classic McEliece, not selected as the standardized backup). Migrated key-establishment call site; specific parameter set not tracked."
+
 # `KeyPairGenerator.getInstance(keyType)` with `keyType` a variable (netty's
 # `pkitesting/Algorithms.java` is the corpus's own example) matches none of
 # CRYPTO-210..223 above — none of their regexes match the variable's
@@ -527,6 +585,17 @@ when.args.algo = { regex = "(?i)^\"?HQC\"?$" }
 algorithm_id = "hqc-unattributed"
 severity_hint = "auto"
 message = "KEM.getInstance('{algo}') — NIST-selected backup KEM (HQC), FIPS standard pending, but the parameter set is not stated at this call site (BC's family-generic 'HQC' name)."
+
+# --- PQC candidate: Classic McEliece, KEM.getInstance (JDK 21+ only — BC ---
+# gates this registration on SpiUtil.hasKEM()). Same family-level sentinel
+# as the KeyPairGenerator arm above; BIKE has no KEM.getInstance registration.
+[[classify]]
+id = "CRYPTO-1020"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?(CMCE|MCELIECE[0-9A-Z]*)\"?$" }
+algorithm_id = "classic-mceliece-unattributed"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — NIST 4th-round PQC KEM candidate (Classic McEliece, not selected as the standardized backup). Migrated key-establishment call site; specific parameter set not tracked."
 
 # `KEM.getInstance(algorithmName)` with a variable argument matches none of
 # CRYPTO-227..229 above and vanished from the report entirely. Unlike

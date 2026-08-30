@@ -1081,6 +1081,69 @@ primitive = "kem"
 quantum_status = "PqcDraft"
 notes = "BouncyCastle's JCA provider accepts the family-generic 'HQC' string; the parameter set (HQC-128/192/256) is chosen separately, e.g. via HQCParameterSpec at a later .initialize() call this table's classify rules do not trace across statements. The call site is unambiguously HQC; only the parameter set is unattributed."
 
+# BIKE — an unselected NIST 4th-round KEM candidate (HQC was picked as the
+# backup KEM instead, 2025-03-11). BouncyCastle's own JCA provider
+# (org.bouncycastle.pqc.jcajce.provider.BIKE, shipped inside bcprov-jdk18on)
+# registers the qualified "BIKE128"/"BIKE192"/"BIKE256" strings under
+# Cipher.getInstance and the family-generic "BIKE" string under both
+# Cipher.getInstance and KeyPairGenerator.getInstance — real production
+# classpath surface, not a research fixture, hence dedicated rows rather than
+# folding into kem-unattributed above. Security categories mirror the
+# suffix numbering the same way HQC-128/192/256 do.
+[[algorithm]]
+id = "bike-128"
+display_name = "BIKE-128"
+family = "PQC-candidate"
+primitive = "kem"
+nist_quantum_security_level = 1
+quantum_status = "PqcDraft"
+notes = "NIST 4th-round KEM candidate, not selected as the standardized backup (HQC was chosen instead, 2025-03-11) — no FIPS number or OID exists. Category 1, equivalent to AES-128 security category."
+
+[[algorithm]]
+id = "bike-192"
+display_name = "BIKE-192"
+family = "PQC-candidate"
+primitive = "kem"
+nist_quantum_security_level = 3
+quantum_status = "PqcDraft"
+notes = "NIST 4th-round KEM candidate, not selected as the standardized backup (HQC was chosen instead, 2025-03-11) — no FIPS number or OID exists. Category 3, equivalent to AES-192 security category."
+
+[[algorithm]]
+id = "bike-256"
+display_name = "BIKE-256"
+family = "PQC-candidate"
+primitive = "kem"
+nist_quantum_security_level = 5
+quantum_status = "PqcDraft"
+notes = "NIST 4th-round KEM candidate, not selected as the standardized backup (HQC was chosen instead, 2025-03-11) — no FIPS number or OID exists. Category 5, equivalent to AES-256 security category."
+
+[[algorithm]]
+id = "bike-unattributed"
+display_name = "BIKE (parameter set not stated at this call site)"
+family = "PQC-candidate"
+primitive = "kem"
+quantum_status = "PqcDraft"
+notes = "BouncyCastle's JCA provider accepts the family-generic 'BIKE' string at both Cipher.getInstance and KeyPairGenerator.getInstance; the parameter set (BIKE128/192/256) is only ever chosen at Cipher.getInstance and this table's classify rules do not trace across statements to attribute it back to a KeyPairGenerator call. The call site is unambiguously BIKE; only the parameter set is unattributed."
+
+# Classic McEliece — an unselected NIST 4th-round KEM candidate (HQC was
+# picked as the backup KEM instead, 2025-03-11). BouncyCastle's own JCA
+# provider (org.bouncycastle.jcajce.provider.asymmetric.CMCE, shipped inside
+# bcprov-jdk18on) registers 16 base parameter sets x 2 ("plain" and an
+# "f"/"pc"/"pcf" fast-decoding suffix family), each under KeyPairGenerator,
+# Cipher and (JDK 21+) KEM.getInstance, plus the family-generic "CMCE" string
+# — 32+ distinct literal names. Given near-zero measured corpus prevalence
+# (Backlog cycle 62), this ships one family-level sentinel matching any of
+# them rather than 32 per-parameter rows; per-parameter rows are the same
+# "resolve by hand once a family matters enough for its own row" deferral
+# kem-unattributed above already states, narrowed to this one family.
+[[algorithm]]
+id = "classic-mceliece-unattributed"
+display_name = "Classic McEliece (parameter set not stated at this call site)"
+family = "PQC-candidate"
+primitive = "kem"
+quantum_status = "PqcDraft"
+notes = "BouncyCastle's JCA provider accepts both the family-generic 'CMCE' string and 32+ qualified 'mceliece<params>[f|pc|pcf]' strings across KeyPairGenerator/Cipher/KEM.getInstance; this table has no per-parameter row for any of them yet (unselected NIST 4th-round candidate, no FIPS number or OID). The call site is unambiguously Classic McEliece; the specific parameter set is unattributed."
+
 [[algorithm]]
 id = "sig-unattributed"
 display_name = "Post-quantum signature (algorithm family not in the quipuu table)"

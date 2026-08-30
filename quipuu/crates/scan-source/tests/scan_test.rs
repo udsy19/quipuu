@@ -449,6 +449,10 @@ fn scans_java_pqc_keypairgenerator_and_signature_and_kem() {
         ("CRYPTO-1009", "hqc-unattributed"), // KeyPairGenerator.getInstance("HQC", "BCPQC")
         ("CRYPTO-1011", "hqc-192"),          // KEM.getInstance("HQC-192")
         ("CRYPTO-1004", "hqc-256"),          // Cipher.getInstance("HQC-256")
+        ("CRYPTO-1014", "bike-128"),         // Cipher.getInstance("BIKE128")
+        ("CRYPTO-1018", "bike-unattributed"), // KeyPairGenerator.getInstance("BIKE", "BCPQC")
+        ("CRYPTO-1019", "classic-mceliece-unattributed"), // KeyPairGenerator.getInstance("mceliece6960119", "BCPQC")
+        ("CRYPTO-1020", "classic-mceliece-unattributed"), // KEM.getInstance("CMCE")
     ];
     for (rule_id, algorithm_id) in want {
         assert!(
