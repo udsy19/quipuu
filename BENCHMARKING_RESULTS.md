@@ -5185,3 +5185,62 @@ than this item's scope, matching how `#Y80`'s own filing scoped its "first concr
 other fourth-round PQC-candidate providers (BIKE, Classic McEliece) are untouched — the filing
 checked only HQC's own shape. `OPEN-ASK #ESTIMATOR1`/`#ESTIMATOROFRECORD` and `OPEN-ASK
 #CORPUSDRIFT` remain open, neither this cycle's to resolve.
+
+## `#Y81`: BouncyCastle BIKE/Classic McEliece JCA coverage (2026-08-30)
+
+Tuple, per `#S12`: **corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change binary built from commit `43c7b54` in a throwaway worktree ·
+post-change binary from this cycle's tree · dumps `work/y81_pre.json` ↔ `work/y81_post.json`, both
+1811 findings, taken back-to-back against the same corpus-clones state to rule out
+`OPEN-ASK #CORPUSDRIFT` rather than reuse a same-day dump from a prior cycle.**
+
+**What shipped:** `#Y80`'s own closing note named the gap directly — BC's other fourth-round
+PQC-candidate providers (BIKE, Classic McEliece) were untouched. `org.bouncycastle.pqc.jcajce.
+provider.BIKE` registers the qualified `"BIKE128"/"BIKE192"/"BIKE256"` strings under
+`Cipher.getInstance` and the family-generic `"BIKE"` string under both `Cipher.getInstance` and
+`KeyPairGenerator.getInstance` (no `KEM.getInstance` registration exists for BIKE, unlike HQC/CMCE).
+`org.bouncycastle.jcajce.provider.asymmetric.CMCE` registers 16 base parameter sets × 2 name
+variants across `KeyPairGenerator`, `Cipher` and (JDK 21+) `KEM.getInstance`, plus the
+family-generic `"CMCE"` string — 32+ distinct literal names. Given near-zero measured corpus
+prevalence, Classic McEliece ships one family-level sentinel (`classic-mceliece-unattributed`)
+matching any of them rather than 32 per-parameter rows, the same "resolve by hand once a family
+matters enough for its own row" deferral `#Y80`'s own `hqc-unattributed`/`kem-unattributed` rows
+already use. Seven new classify arms (`CRYPTO-1014`–`1020`) and four new `algorithm-table.toml`
+rows (`bike-128`/`192`/`256`/`-unattributed`, `classic-mceliece-unattributed`), `family =
+"PQC-candidate"` (neither has a FIPS number or OID — both are unselected 4th-round candidates,
+HQC was picked as the backup KEM 2025-03-11), matching the existing `kem-unattributed`/
+`sig-unattributed` family string `cbom/src/emit.rs`'s `canonicalize_family` already omits from
+CycloneDX 1.7's `algorithmFamiliesEnum` — no emitter change needed. Coverage verified against a
+planted fixture (`tests/fixtures/java/Pqc.java`, `cargo test
+scans_java_pqc_keypairgenerator_and_signature_and_kem`), now asserting 15 rule/algorithm-id pairs
+(up from 11).
+
+**Corpus effect: 0 findings, either side.** The dump diff between `y81_pre.json` and
+`y81_post.json` shows 0 added, 0 removed, dumps row-identical — expected, since BIKE and Classic
+McEliece are both unselected 4th-round candidates with materially lower real-world adoption than
+HQC (the standardized backup), and the corpus's one BouncyCastle project
+(`bcprov-jdk18on`/`bcpkix-jdk18on`) does not call either provider anywhere in its own source,
+including its vendored test suite. Not measured elsewhere in the corpus either, so this is a
+genuine zero, not a `scan_hints`-excluded site the way `#Y80`'s HQC finding was.
+
+**Precision 97.15% (`bin/precision.py work/y81_pre.json work/y81_post.json --write-readme`), held —
+0 findings added, 0 removed, dumps row-identical.** This pair was taken back-to-back today rather
+than reusing `#Y80`'s `y80_post.json` (which the README already flags as 1970 findings, not
+today's 1811) specifically to avoid re-measuring across the drift `#Y74(b)`/`#Y80` both hit.
+`--write-readme` applied the honestly-measured figure: 97.12% → 97.15%, CI low 95.8% → 95.9%,
+corpus total 1970 → 1811 (audited-row count and date unchanged — the drift moves the denominator,
+not the sample, same as every prior cycle that has hit this).
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --workspace` all passing (141 tests in
+`scan_test.rs`, one extended: `scans_java_pqc_keypairgenerator_and_signature_and_kem` now asserts
+15 rule/algorithm-id pairs, up from 11). Both trust-invariant tests
+(`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`) untouched and pass.
+
+**Not done, said out loud:** the two-hop trace resolving BIKE's family-generic
+`KeyPairGenerator.getInstance("BIKE", ...)` back to its actual size via a later
+`Cipher.getInstance("BIKE128")` call is not built, same standing gap `#Y80` already named for HQC
+— no cross-statement trace exists anywhere in `java.toml`/`scanner.rs` today. Classic McEliece's
+32+ parameter sets are not individually attributed, per this entry's own stated policy.
+`OPEN-ASK #ESTIMATOR1`/`#ESTIMATOROFRECORD` and `OPEN-ASK #CORPUSDRIFT` remain open, neither this
+cycle's to resolve.
