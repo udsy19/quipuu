@@ -3822,3 +3822,44 @@ fn scans_python_pqc_native_mlkem_mldsa() {
             .collect::<Vec<_>>()
     );
 }
+
+/// Backlog `#Y74`: liboqs's own official Python binding (`liboqs-python`)
+/// had zero `python.toml` coverage — `oqs.KeyEncapsulation(alg)` /
+/// `oqs.Signature(alg)` construct via the identical `OQS_KEM_new`/
+/// `OQS_SIG_new` C entry points `cpp.toml` already classifies. Both official
+/// examples (examples/kem.py, examples/sig.py) pass a local variable rather
+/// than a literal, so both the literal and the variable-symbol fallback must
+/// fire.
+#[test]
+fn scans_python_liboqs_python_kem_sig() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("python/liboqs_python.py"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-992", "ml-kem-512"),
+        ("CRYPTO-993", "ml-kem-768"),
+        ("CRYPTO-994", "ml-kem-1024"),
+        ("CRYPTO-995", "kem-unattributed"), // literal HQC-128
+        ("CRYPTO-996", "kem-unattributed"), // variable kemalg
+        ("CRYPTO-997", "ml-dsa-44"),
+        ("CRYPTO-998", "ml-dsa-65"),
+        ("CRYPTO-999", "ml-dsa-87"),
+        ("CRYPTO-1000", "sig-unattributed"), // literal SPHINCS+
+        ("CRYPTO-1001", "sig-unattributed"), // variable sigalg
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in liboqs-python fixture; findings: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+}

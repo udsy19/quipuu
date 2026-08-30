@@ -570,3 +570,129 @@ when.api = "^cryptography\\.hazmat\\.mldsa\\.ml_dsa_87$"
 algorithm_id = "ml-dsa-87"
 severity_hint = "auto"
 message = "pyca ML-DSA-87 — FIPS 204, quantum-resistant. Migrated signature call site."
+
+# ============================================================================
+# liboqs's official Python binding (`liboqs-python`, PyPI, PQCA-maintained) —
+# oqs.KeyEncapsulation(alg) / oqs.Signature(alg) construct via the identical
+# OQS_KEM_new / OQS_SIG_new C entry points cpp.toml already classifies. Both
+# of the library's own published examples (examples/kem.py, examples/sig.py)
+# pass a local variable rather than a literal, so each API needs both a
+# literal-string arm set and a variable-symbol fallback (#Y74).
+# ============================================================================
+
+[[extract]]
+id = "PY-090"
+language = "python"
+query = """
+(call
+  function: (attribute
+    object: (identifier) @oqs_mod (#eq? @oqs_mod "oqs")
+    attribute: (identifier) @fn (#eq? @fn "KeyEncapsulation"))
+  arguments: (argument_list (_) @alg))
+"""
+captures = { oqs_mod = "ident", fn = "ident", alg = "literal_string" }
+api = "oqs.KeyEncapsulation"
+description = "liboqs-python KEM construction — oqs.KeyEncapsulation(alg_name)."
+
+[[classify]]
+id = "CRYPTO-992"
+when.api = "^oqs\\.KeyEncapsulation$"
+when.args.alg = { regex = "^ML-KEM-512$" }
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "liboqs-python KeyEncapsulation({alg}) — ML-KEM-512, FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-993"
+when.api = "^oqs\\.KeyEncapsulation$"
+when.args.alg = { regex = "^ML-KEM-768$" }
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "liboqs-python KeyEncapsulation({alg}) — ML-KEM-768, FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-994"
+when.api = "^oqs\\.KeyEncapsulation$"
+when.args.alg = { regex = "^ML-KEM-1024$" }
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "liboqs-python KeyEncapsulation({alg}) — ML-KEM-1024, FIPS 203, quantum-resistant."
+
+# Fallback for every other liboqs KEM name (HQC, BIKE, Classic McEliece,
+# FrodoKEM, ...) and for a runtime variable whose value cannot be read
+# statically — both official examples (kem.py) pass `kemalg` this way.
+# Ordered last so the ML-KEM arms above match first. Same shape #Y56 already
+# shipped for cpp.toml's OQS_KEM_new.
+[[classify]]
+id = "CRYPTO-995"
+when.api = "^oqs\\.KeyEncapsulation$"
+when.args.alg = { regex = "." }
+algorithm_id = "kem-unattributed"
+severity_hint = "auto"
+message = "liboqs-python KeyEncapsulation({alg}) — post-quantum KEM, family not in the quipuu algorithm table. Recorded as an unattributed call site — classify it by hand."
+
+[[classify]]
+id = "CRYPTO-996"
+when.api = "^oqs\\.KeyEncapsulation$"
+when.args.alg_symbol = { regex = ".+" }
+algorithm_id = "kem-unattributed"
+severity_hint = "auto"
+message = "liboqs-python KeyEncapsulation algorithm is runtime-variable ({alg_symbol}); cannot statically verify the parameter set. Post-quantum KEM regardless."
+
+[[extract]]
+id = "PY-091"
+language = "python"
+query = """
+(call
+  function: (attribute
+    object: (identifier) @oqs_mod (#eq? @oqs_mod "oqs")
+    attribute: (identifier) @fn (#eq? @fn "Signature"))
+  arguments: (argument_list (_) @alg))
+"""
+captures = { oqs_mod = "ident", fn = "ident", alg = "literal_string" }
+api = "oqs.Signature"
+description = "liboqs-python signature construction — oqs.Signature(alg_name)."
+
+[[classify]]
+id = "CRYPTO-997"
+when.api = "^oqs\\.Signature$"
+when.args.alg = { regex = "^ML-DSA-44$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "liboqs-python Signature({alg}) — ML-DSA-44, FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-998"
+when.api = "^oqs\\.Signature$"
+when.args.alg = { regex = "^ML-DSA-65$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "liboqs-python Signature({alg}) — ML-DSA-65, FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-999"
+when.api = "^oqs\\.Signature$"
+when.args.alg = { regex = "^ML-DSA-87$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "liboqs-python Signature({alg}) — ML-DSA-87, FIPS 204, quantum-resistant."
+
+# Fallback for every other liboqs SIG name (SLH-DSA, MAYO, CROSS, UOV, ...)
+# and for a runtime variable — both official examples (sig.py) pass `sigalg`
+# this way. Ordered last so the ML-DSA arms above match first. Same shape
+# #Y56 already shipped for cpp.toml's OQS_SIG_new.
+[[classify]]
+id = "CRYPTO-1000"
+when.api = "^oqs\\.Signature$"
+when.args.alg = { regex = "." }
+algorithm_id = "sig-unattributed"
+severity_hint = "auto"
+message = "liboqs-python Signature({alg}) — post-quantum signature, family not in the quipuu algorithm table. Recorded as an unattributed call site — classify it by hand."
+
+[[classify]]
+id = "CRYPTO-1001"
+when.api = "^oqs\\.Signature$"
+when.args.alg_symbol = { regex = ".+" }
+algorithm_id = "sig-unattributed"
+severity_hint = "auto"
+message = "liboqs-python Signature algorithm is runtime-variable ({alg_symbol}); cannot statically verify the parameter set. Post-quantum signature regardless."

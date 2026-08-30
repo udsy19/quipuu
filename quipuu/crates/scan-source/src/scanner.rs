@@ -1623,6 +1623,11 @@ const PYTHON_CALLEE_APIS: &[(&str, &str)] = &[
     ("RSA.generate", "Crypto.PublicKey.RSA.generate"),
     ("DES.new", "Crypto.Cipher.DES.new"),
     ("DES3.new", "Crypto.Cipher.DES3.new"),
+    // liboqs's official Python binding (`liboqs-python`, PyPI) — both classes
+    // construct via the identical OQS_KEM_new/OQS_SIG_new C entry points
+    // cpp.toml already classifies (#Y74).
+    ("oqs.KeyEncapsulation", "oqs.KeyEncapsulation"),
+    ("oqs.Signature", "oqs.Signature"),
     // pyca's first-party FIPS 203/204 classes (`cryptography.hazmat.primitives.
     // asymmetric.mlkem`/`.mldsa`). The parameter set is baked into the class
     // name itself, so — same shape as ed25519/x25519 above — no arg capture
@@ -2849,6 +2854,28 @@ fn populate_args(
                 out.insert("curve_name".into(), ArgValue::Str(curve));
             } else if let Some(curve) = python_first_arg_identifier(args_node, source) {
                 out.insert("curve_symbol".into(), ArgValue::Str(curve));
+            }
+        }
+        (Language::Python, "oqs.KeyEncapsulation" | "oqs.Signature") => {
+            // oqs.KeyEncapsulation("ML-KEM-768") / oqs.Signature("ML-DSA-65") —
+            // both liboqs-python's own official examples (examples/kem.py,
+            // examples/sig.py) pass a local variable (`kemalg`/`sigalg`)
+            // rather than the literal, so a literal-only capture would
+            // silently produce zero findings on the library's documented
+            // usage. Same shape as RSA.generate's bits/bits_symbol split.
+            if let Some(arg) = nth_real_arg(args_node, 0) {
+                match arg.kind() {
+                    "string" => {
+                        let alg = node_text(arg, source)
+                            .trim_matches(|c| c == '"' || c == '\'')
+                            .to_string();
+                        out.insert("alg".into(), ArgValue::Str(alg));
+                    }
+                    "identifier" => {
+                        out.insert("alg_symbol".into(), ArgValue::Str(node_text(arg, source)));
+                    }
+                    _ => {}
+                }
             }
         }
         (Language::C | Language::Cpp, "openssl.RSA_generate_key_ex") => {
