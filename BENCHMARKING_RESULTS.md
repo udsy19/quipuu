@@ -4299,3 +4299,56 @@ which this cycle did not do. `OPEN-ASK #ESTIMATOR1` and `OPEN-ASK #CORPUSDRIFT` 
 are not this cycle's to answer or resolve. The `--policy nsa-cnsa2` divergence and Go line-exact
 recall are not re-measured — the finding set changed by exactly 3 rows in one language pack, neither
 number could plausibly have moved.
+
+## `#Y62(b)`: OpenSSL `SSL_CONF_cmd(ctx, "Groups"/"Curves", <literal>)` reuses the group-preference-list rule — 2026-08-30
+
+Taken from `#Y62`'s own ranking, the next part below (a): the config-dispatch form of the same TLS
+group-preference setting, filed lower-priority because "most real call sites pass a config-file-
+sourced variable, not a literal, and correctly degrade to unattributed; the literal-argument
+minority is free once (a)'s classify block exists."
+
+**What shipped.** `match_c_ssl_groups_list` (`scanner.rs`) now also matches `SSL_CONF_cmd(cctx,
+cmd, value)` when `cmd` is a string literal case-insensitively equal to `"Groups"` or its pre-3.0
+alias `"Curves"` (`SSL_CONF_cmd(3)`: command names in the file-syntax form are case-insensitive)
+and `value` is a string literal — reusing the exact same colon/tuple-splitting and the existing
+`openssl.SSL_CTX_set1_groups_list` api, so no new `CRYPTO` id or `algorithm-table.toml` row was
+needed, exactly as filed. A different command name, or a non-literal value, produce no match — the
+literal-argument minority the filing named, nothing more.
+
+**Corpus effect: 0 findings, either side — a row-identical 1536-finding dump**
+(`work/y62b_pre.json` ↔ `work/y62b_post.json`, pre-change binary built from `be6f2e0` — the
+`#Y62(a)` write-up commit — in a throwaway worktree, post-change binary this cycle's tree, both
+dumps taken back-to-back against the same `corpus-clones` checkout). Checked why rather than
+assumed: `grep -rn "SSL_CONF_cmd" corpus-clones` finds 72 call sites, all in `wolfSSL`'s own test
+suite (`tests/api.c`) exercising its OpenSSL-compatibility layer. Every one either passes a runtime
+`curve` variable as the value (the real-usage shape Pass 2-C of the filing predicted) or a literal
+naming an unrecognised curve (`"foobar"`, `"invalidcurve"`) inside an `ExpectIntEQ(...,
+WOLFSSL_FAILURE)`/`ExpectIntNE(...)` negative test — ids this rule pack has no classify arm for, so
+neither shape can produce a finding. wolfSSL's tests also use the command-line-syntax spelling
+`"-curves"` (dash-prefixed) alongside the file-syntax `"Curves"` this item covers; `"-curves"`
+correctly does not match here, since it is a different, unfiled command spelling, not a case
+variant of `"Curves"` — named as a related, unclaimed gap rather than silently expanded into.
+
+**Precision 97.16% (`bin/precision.py`, `--added-tp 0 --added-fp 0`), unchanged — a falsification,
+not a re-derivation.** The tool reproduces the anchored 97.16% and reports the two dumps
+row-identical, so no TP/FP ratio could have moved; `--write-readme` confirms "README already states
+this claim — nothing to write," since the published figure was already 97.16% from `#Y62(a)` and
+this item adds no delta. No `state/estimator.json` correction needed, unlike every prior sibling in
+this series — there is no TP to fold in.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (129
+tests in `scan_test.rs`, existing group-list test extended with 4 new fixture cases rather than a
+new test, since it already asserts the exact finding count the classify block produces). The two
+trust-invariant tests (`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`)
+are untouched and pass.
+
+**Not done, said out loud:** parts (c)–(d) of `#Y62` (rustls's `CryptoProvider.kx_groups` vec
+literal — still needs the prevalence grep the filing itself required before shipping — and
+BouncyCastle's raw `org.bouncycastle.tls.NamedGroup`) remain open, unranked below this item. The
+`"-curves"`/`"-groups"` command-line-syntax spelling of this same OpenSSL command is a real, small,
+separate gap this item does not close — named above rather than guessed at, since neither this
+cycle's research nor the original filing verified `"-groups"`'s exact spelling against the manpage.
+`OPEN-ASK #ESTIMATOR1` and `OPEN-ASK #CORPUSDRIFT` both remain open and are not this cycle's to
+answer or resolve. The `--policy nsa-cnsa2` divergence and Go line-exact recall are not re-measured
+— the finding set did not move at all, so neither number could plausibly have changed.
