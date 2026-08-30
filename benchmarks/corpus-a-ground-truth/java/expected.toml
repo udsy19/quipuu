@@ -1,0 +1,77 @@
+# Ground truth for Probe.java, generated from its `EXPECT <family>` comments.
+# Each [[site]] is one planted, idiomatic call site; `family` is the
+# coarse algorithm family recall_check.py checks the scanner's finding
+# against (see FAMILY_ALIASES in recall_check.py for the exact mapping).
+
+[[site]]
+line = 8
+family = "rsa"
+
+[[site]]
+line = 9
+family = "ecdsa"
+
+[[site]]
+line = 10
+family = "ecdh"
+
+[[site]]
+line = 11
+family = "dsa"
+
+[[site]]
+line = 12
+family = "md5"
+
+[[site]]
+line = 13
+family = "sha1"
+
+[[site]]
+line = 14
+family = "sha256"
+
+[[site]]
+line = 15
+family = "sha384"
+
+[[site]]
+line = 16
+family = "hmac"
+
+[[site]]
+line = 17
+family = "pbkdf2"
+
+[[site]]
+line = 18
+family = "bcrypt"
+
+[[site]]
+line = 19
+family = "aesgcm"
+
+[[site]]
+line = 20
+family = "3des"
+
+[[site]]
+line = 21
+family = "rc4"
+
+[[site]]
+line = 22
+family = "chacha20"
+
+[[site]]
+line = 23
+family = "mlkem"
+
+[[site]]
+line = 24
+family = "mldsa"
+
+[[site]]
+line = 25
+family = "slhdsa"
+

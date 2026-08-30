@@ -1,0 +1,77 @@
+# Ground truth for main.go, generated from its `EXPECT <family>` comments.
+# Each [[site]] is one planted, idiomatic call site; `family` is the
+# coarse algorithm family recall_check.py checks the scanner's finding
+# against (see FAMILY_ALIASES in recall_check.py for the exact mapping).
+
+[[site]]
+line = 27
+family = "rsa"
+
+[[site]]
+line = 28
+family = "ecdsa"
+
+[[site]]
+line = 29
+family = "ecdh"
+
+[[site]]
+line = 30
+family = "dsa"
+
+[[site]]
+line = 31
+family = "md5"
+
+[[site]]
+line = 32
+family = "sha1"
+
+[[site]]
+line = 33
+family = "sha256"
+
+[[site]]
+line = 34
+family = "sha384"
+
+[[site]]
+line = 35
+family = "hmac"
+
+[[site]]
+line = 36
+family = "pbkdf2"
+
+[[site]]
+line = 37
+family = "scrypt"
+
+[[site]]
+line = 38
+family = "bcrypt"
+
+[[site]]
+line = 39
+family = "argon2"
+
+[[site]]
+line = 40
+family = "aes128"
+
+[[site]]
+line = 41
+family = "aesgcm"
+
+[[site]]
+line = 42
+family = "3des"
+
+[[site]]
+line = 43
+family = "rc4"
+
+[[site]]
+line = 44
+family = "chacha20"
+

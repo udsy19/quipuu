@@ -60,6 +60,13 @@ A benchmark is only as good as its corpus. Three corpora, each with a different 
 
 **Location:** `benchmarks/corpus-a-ground-truth/` (public). Every fixture comes with a paired `expected.toml` listing the labeled findings. The corpus is itself a published artifact — competitors can run their tools against it and report numbers.
 
+**Current status, 2026-08-30, stated plainly against the target below:** the directory exists
+with one planted file per language (7 files, 117 call sites, no adversarial or negative
+subdirectories yet) and a working `recall_check.py` — **41.9% family-level recall (49/117)**,
+detail and methodology in `benchmarks/corpus-a-ground-truth/README.md`. This is a first slice
+of the composition target, not the finished ~200-file corpus; the adversarial/negative
+subdirectories and the per-language site counts below remain to be built.
+
 **Composition target:**
 - Go: 25 files (~150 sites)
 - Python: 25 files (~150 sites)  

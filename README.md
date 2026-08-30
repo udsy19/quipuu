@@ -257,7 +257,7 @@ The release before it removed the second shape, an `alg=none` finding on a const
 
 ### Recall, published beside precision
 
-**Go-only line-exact recall: 100.0%** — 401 of 401 in-scope `crypto/*` standard-library call sites, measured 2026-08-29 on the 1244-finding dump (`dsa1_post.json`) that produced a since-superseded 94.7% precision figure, after a fix to the ground-truth builder itself (below). It has not been re-measured against the 613-row audit the precision figure above is now sampled from. **This is a Go number and is not a recall figure for a seven-language tool**; no equivalent ground truth exists yet for the other six packs.
+**Go-only line-exact recall: 100.0%** — 401 of 401 in-scope `crypto/*` standard-library call sites, measured 2026-08-29 on the 1244-finding dump (`dsa1_post.json`) that produced a since-superseded 94.7% precision figure, after a fix to the ground-truth builder itself (below). It has not been re-measured against the 613-row audit the precision figure above is now sampled from. **This is a Go number derived from 25 real-world projects**; the cross-language number below is a smaller, planted probe, not the same kind of measurement.
 
 Ground truth is built independently of our own rule files, by scanning the 25 Go corpus projects for 33 quantum-relevant stdlib APIs and requiring the matching `crypto/*` import, so it cannot inherit our blind spots. Reproduce with `python3 recall_check.py --clones DIR --dump results/all_findings.json`, which scores against a `dump_findings.py` artifact so recall is measured on exactly the finding set the precision audit samples.
 
@@ -275,6 +275,18 @@ Every API in the ground truth, constructor and operation alike, is now at 100% i
 **A related measure: does a missing operation site cost a whole algorithm family in the CBOM?** Re-run on the `dsa`-inclusive dump, `work/synth_family_gap.py`'s method (family evidenced by a stdlib operation call site, absent from our findings) drops from **12 to 11** family-losses across the 25 `go-modules` projects — real but small, because the one `dsa` loss the rule closes (`x-crypto`) is in-scope while the remaining loss (`vault/helper/pkcs7/sign.go:220`, also `dsa.Sign`) sits outside `vault`'s `scan_hints.scan_paths` subtree, the same whole-tree-vs-in-scope gap the paragraph above names, not a detection defect. Not reproducible from this repo alone — the script reads a corpus-local dump path — but the method is `recall_check.py`'s own ground-truth construction applied to CBOM family coverage instead of line-exact sites.
 
 The benchmark corpus and reproduce scripts live in `benchmarks/corpus-b-realworld/`. Run `./clone_all.sh`, then `python3 scan_corpus.py --include-safe` for the speed and finding counts, `python3 dump_findings.py` for the per-finding dump the precision audit samples, and `python3 recall_check.py` for the recall figures; all three take `--clones` if the corpus lives outside the repo. Verify the numbers yourself.
+
+**Cross-language recall: 41.9% (49/117), measured 2026-08-30.** `benchmarks/corpus-a-ground-truth/`
+is 117 hand-planted call sites, one idiomatic invocation per line, spanning all seven supported
+languages and ~17 algorithm families — a probe we designed independently of `data/rules/`, not
+derived from real-world projects the way corpus B and the Go recall figure above are. Scored at
+family level (a `rsa-2048` finding and an `rsa-unattributed` finding both count as a hit for
+`family = "rsa"`) with `python3 recall_check.py`. Read the number with its own README before
+quoting it: 23 of the 117 sites (`hmac`/`scrypt`/`bcrypt`/`argon2`) can never score a hit because
+`algorithm-table.toml` carries no MAC or password-KDF family yet, and the `cpp` file's 0% includes
+several call shapes no real C code would actually write. Not a CI gate — narrowing an over-broad
+rule to kill a false positive can cost a true positive at the same site, so recall is measured and
+published, never enforced as a floor.
 
 ---
 
