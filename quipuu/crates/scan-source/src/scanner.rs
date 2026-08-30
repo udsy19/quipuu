@@ -2396,6 +2396,12 @@ const C_CALLEE_APIS: &[(&str, &str)] = &[
         "openssl.EVP_PKEY_CTX_new_from_name",
     ),
     ("EVP_PKEY_Q_keygen", "openssl.EVP_PKEY_Q_keygen"),
+    // Generic KEM *operation* API (as opposed to keygen above) — neither
+    // function takes an algorithm argument, so no populate_args arm is
+    // needed; the classify layer degrades both unconditionally to
+    // kem-unattributed. Backlog #Y69 (KEM half).
+    ("EVP_PKEY_encapsulate", "openssl.EVP_PKEY_encapsulate"),
+    ("EVP_PKEY_decapsulate", "openssl.EVP_PKEY_decapsulate"),
 ];
 
 fn match_c_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {

@@ -1105,3 +1105,58 @@ when.args.alg = { regex = "(?i)^SLH-DSA-SHAKE-256f$" }
 algorithm_id = "slh-dsa-shake-256f"
 severity_hint = "auto"
 message = "OpenSSL generic keygen(\"{alg}\") — SLH-DSA-SHAKE-256f, FIPS 205, quantum-resistant."
+
+# ============================================================================
+# OpenSSL 3.5+ — EVP_PKEY_encapsulate / EVP_PKEY_decapsulate, the generic KEM
+# *operation* API (as opposed to keygen, which CPP-064/065 above already
+# cover). Neither function takes an algorithm argument — it is fixed on the
+# EVP_PKEY_CTX built earlier via EVP_PKEY_CTX_new_from_pkey/new_from_name,
+# which this pack does not currently trace across statements. Rather than
+# emit nothing (the status quo — 0 findings on OpenSSL's own production
+# `crypto/cms/cms_kemri.c` RFC 9629 KEMRecipientInfo implementation and its
+# `apps/pkeyutl.c` CLI, five real call sites measured directly), degrade to
+# the same kem-unattributed sentinel #Y56 already shipped for liboqs's
+# generic API: the call site is unambiguously a KEM operation — OpenSSL has
+# no classical use of this specific entry point, unlike EVP_PKEY_sign/verify
+# which also cover ordinary RSA/ECDSA and are deliberately not added here —
+# only the parameter set is unattributed. Backlog #Y69 (KEM half only; the
+# sign/verify half needs the same-function trace to avoid mislabeling an
+# already-migrated classical-vs-PQC choice, and is left for a follow-up that
+# builds it).
+# ============================================================================
+
+[[extract]]
+id = "CPP-066"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "EVP_PKEY_encapsulate"))
+"""
+captures = { fn = "ident" }
+api = "openssl.EVP_PKEY_encapsulate"
+description = "OpenSSL EVP_PKEY_encapsulate(ctx, wrappedkey, wrappedkeylen, genkey, genkeylen) — generic KEM encapsulation. Algorithm is set on the EVP_PKEY_CTX at construction, not visible at this call."
+
+[[extract]]
+id = "CPP-067"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "EVP_PKEY_decapsulate"))
+"""
+captures = { fn = "ident" }
+api = "openssl.EVP_PKEY_decapsulate"
+description = "OpenSSL EVP_PKEY_decapsulate(ctx, unwrapped, unwrappedlen, wrappedkey, wrappedkeylen) — generic KEM decapsulation. Algorithm is set on the EVP_PKEY_CTX at construction, not visible at this call."
+
+[[classify]]
+id = "CRYPTO-960"
+when.api = "^openssl\\.EVP_PKEY_encapsulate$"
+algorithm_id = "kem-unattributed"
+severity_hint = "auto"
+message = "OpenSSL EVP_PKEY_encapsulate() — KEM encapsulation, parameter set fixed on the EVP_PKEY_CTX built earlier and not visible at this call. Recorded as an unattributed call site — classify it by hand."
+
+[[classify]]
+id = "CRYPTO-961"
+when.api = "^openssl\\.EVP_PKEY_decapsulate$"
+algorithm_id = "kem-unattributed"
+severity_hint = "auto"
+message = "OpenSSL EVP_PKEY_decapsulate() — KEM decapsulation, parameter set fixed on the EVP_PKEY_CTX built earlier and not visible at this call. Recorded as an unattributed call site — classify it by hand."

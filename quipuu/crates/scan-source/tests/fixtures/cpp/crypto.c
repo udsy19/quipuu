@@ -229,3 +229,17 @@ void openssl_generic_keygen_classical(OSSL_LIB_CTX *libctx) {
 void openssl_generic_keygen_ml_kem(OSSL_LIB_CTX *libctx) {
     EVP_PKEY *kem_key = EVP_PKEY_Q_keygen(libctx, NULL, "ML-KEM-1024");
 }
+
+/* CPP-066 / CPP-067, CRYPTO-960 / CRYPTO-961 — OpenSSL 3.5+ generic KEM
+   operation API (EVP_PKEY_encapsulate/decapsulate). Neither call carries an
+   algorithm argument of its own — it lives on the EVP_PKEY_CTX built earlier
+   — so both must degrade to kem-unattributed rather than produce nothing.
+   Backlog #Y69 (KEM half). Mirrors the shape of cms_kemri.c's real
+   RFC 9629 KEMRecipientInfo call sites. */
+void openssl_kem_operation(EVP_PKEY_CTX *ctx, unsigned char *wrapped,
+                            size_t *wrapped_len, unsigned char *genkey,
+                            size_t *genkey_len, unsigned char *unwrapped,
+                            size_t *unwrapped_len) {
+    EVP_PKEY_encapsulate(ctx, wrapped, wrapped_len, genkey, genkey_len);
+    EVP_PKEY_decapsulate(ctx, unwrapped, unwrapped_len, wrapped, wrapped_len);
+}

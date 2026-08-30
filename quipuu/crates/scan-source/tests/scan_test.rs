@@ -3627,6 +3627,40 @@ fn scans_c_openssl_generic_keygen() {
     }
 }
 
+/// Backlog `#Y69` (KEM half): OpenSSL 3.5+'s generic KEM *operation* API
+/// (`EVP_PKEY_encapsulate`/`EVP_PKEY_decapsulate`, as opposed to keygen,
+/// which `scans_c_openssl_generic_keygen` already covers) had zero coverage.
+/// Neither call carries an algorithm argument — it lives on the
+/// `EVP_PKEY_CTX` built earlier, which this pack does not trace across
+/// statements — so both must degrade to `kem-unattributed` rather than
+/// produce nothing, the same convention `#Y56` shipped for liboqs's generic
+/// KEM API.
+#[test]
+fn scans_c_openssl_kem_operation_api() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-960", "kem-unattributed"), // EVP_PKEY_encapsulate(ctx, ...)
+        ("CRYPTO-961", "kem-unattributed"), // EVP_PKEY_decapsulate(ctx, ...)
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in cpp/crypto.c; got: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+}
+
 /// Backlog `#Y47`: pyca/cryptography's own first-party ML-KEM/ML-DSA classes
 /// had no classify arm at all — `python.toml` recognized every classical
 /// primitive in the library but not the two it migrated to FIPS 203/204.
