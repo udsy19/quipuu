@@ -79,6 +79,18 @@ fn scans_go_fixture() {
             .any(|f| f.rule_id == "CRYPTO-051" && f.algorithm_id == "sha-1")
     );
 
+    // sha256.New() → CRYPTO-948, sha512.New() → CRYPTO-952.
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-948" && f.algorithm_id == "sha-256")
+    );
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-952" && f.algorithm_id == "sha-512")
+    );
+
     // crypto/tls.Config.CurvePreferences — GO-032.
     // The fixture lists tls.X25519, tls.CurveP256, tls.CurveP384.
     assert!(
@@ -2541,12 +2553,13 @@ fn phase9_go_main_fixture_unchanged() {
     //     CRYPTO-032 (tls.X25519), CRYPTO-033 (tls.CurveP256),
     //     CRYPTO-034 (tls.CurveP384), CRYPTO-036 (ecdh.X25519),
     //     CRYPTO-037 (ecdh.P256)
+    //   - 2 added with sha256.New()/sha512.New() detection
     let b = load_builtins().expect("builtins");
     let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
     let main_findings = scanner
         .scan_path(&fixtures_root().join("go/main.go"))
         .expect("scan succeeds");
-    assert_eq!(main_findings.len(), 12, "go/main.go count must not change");
+    assert_eq!(main_findings.len(), 14, "go/main.go count must not change");
 
     let switch_findings = scanner
         .scan_path(&fixtures_root().join("go/jwt_switch.go"))
@@ -3258,28 +3271,35 @@ fn go_operation_sites_are_all_detected() {
     };
 
     // ecdsa.Sign / SignASN1 / VerifyASN1 — curve unknown at the call site.
-    expect(18, "CRYPTO-015", "ecdsa-unattributed");
-    expect(19, "CRYPTO-015", "ecdsa-unattributed");
     expect(20, "CRYPTO-015", "ecdsa-unattributed");
+    expect(21, "CRYPTO-015", "ecdsa-unattributed");
+    expect(22, "CRYPTO-015", "ecdsa-unattributed");
 
     // rsa.SignPKCS1v15 / VerifyPKCS1v15 — key size unknown at the call site.
-    expect(24, "CRYPTO-006", "rsa-unattributed");
-    expect(25, "CRYPTO-006", "rsa-unattributed");
+    expect(26, "CRYPTO-006", "rsa-unattributed");
+    expect(27, "CRYPTO-006", "rsa-unattributed");
 
     // ed25519.Sign / Verify — no parameter set to lose.
-    expect(29, "CRYPTO-021", "ed25519");
-    expect(30, "CRYPTO-021", "ed25519");
+    expect(31, "CRYPTO-021", "ed25519");
+    expect(32, "CRYPTO-021", "ed25519");
 
     // md5.Sum / sha1.Sum — the one-shot form, distinct from md5.New/sha1.New.
-    expect(34, "CRYPTO-052", "md5");
-    expect(35, "CRYPTO-053", "sha-1");
+    expect(36, "CRYPTO-052", "md5");
+    expect(37, "CRYPTO-053", "sha-1");
+
+    // sha256.Sum256/Sum224 and sha512.Sum512/Sum384 — the one-shot forms,
+    // distinct from sha256.New/sha512.New in main.go.
+    expect(38, "CRYPTO-949", "sha-256");
+    expect(39, "CRYPTO-951", "sha-224");
+    expect(40, "CRYPTO-953", "sha-512");
+    expect(41, "CRYPTO-955", "sha-384");
 
     // dsa.GenerateKey / Sign / Verify — no parameter is ever stated at any of
     // these call sites (the prime/subprime size lives in a separate
     // dsa.GenerateParameters call this pack does not track).
-    expect(39, "CRYPTO-016", "dsa-unattributed");
-    expect(40, "CRYPTO-017", "dsa-unattributed");
-    expect(41, "CRYPTO-017", "dsa-unattributed");
+    expect(45, "CRYPTO-016", "dsa-unattributed");
+    expect(46, "CRYPTO-017", "dsa-unattributed");
+    expect(47, "CRYPTO-017", "dsa-unattributed");
 }
 
 // Backlog #Y20: `circl`'s eddilithium{2,3} hybrid schemes AND-combine an

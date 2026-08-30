@@ -11,6 +11,8 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
 	"math/big"
 )
 
@@ -33,6 +35,10 @@ func ed25519Ops(priv ed25519.PrivateKey, pub ed25519.PublicKey, message, sig []b
 func hashSums(data []byte) {
 	_ = md5.Sum(data)
 	_ = sha1.Sum(data)
+	_ = sha256.Sum256(data)
+	_ = sha256.Sum224(data)
+	_ = sha512.Sum512(data)
+	_ = sha512.Sum384(data)
 }
 
 func dsaOps(priv *dsa.PrivateKey, pub *dsa.PublicKey, hash []byte, r, s *big.Int) {

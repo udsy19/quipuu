@@ -1330,6 +1330,19 @@ const GO_CALLEE_APIS: &[(&str, &str)] = &[
     ("sha1.New", "crypto/md5_sha1.New"),
     ("md5.Sum", "crypto/md5_sha1.Sum"),
     ("sha1.Sum", "crypto/md5_sha1.Sum"),
+    // crypto/sha256 and crypto/sha512 had no coverage at all — every md5/sha1
+    // call site was detected but the far more common sha256.New()/Sum256()
+    // was invisible. Each function name already states its own digest size,
+    // so (unlike md5/sha1 sharing "New"/"Sum" above) no args.pkg capture is
+    // needed to disambiguate.
+    ("sha256.New", "crypto/sha256.New"),
+    ("sha256.Sum256", "crypto/sha256.Sum256"),
+    ("sha256.New224", "crypto/sha256.New224"),
+    ("sha256.Sum224", "crypto/sha256.Sum224"),
+    ("sha512.New", "crypto/sha512.New"),
+    ("sha512.Sum512", "crypto/sha512.Sum512"),
+    ("sha512.New384", "crypto/sha512.New384"),
+    ("sha512.Sum384", "crypto/sha512.Sum384"),
     ("aes.NewCipher", "crypto/aes.NewCipher"),
     ("des.NewCipher", "crypto/des.NewCipher"),
     ("des.NewTripleDESCipher", "crypto/des.NewTripleDESCipher"),

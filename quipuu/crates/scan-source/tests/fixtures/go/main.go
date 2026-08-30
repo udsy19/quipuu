@@ -9,6 +9,8 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/tls"
 )
 
@@ -37,6 +39,8 @@ func keys() {
 func hashes() {
 	_ = md5.New()
 	_ = sha1.New()
+	_ = sha256.New()
+	_ = sha512.New()
 }
 
 // TLS key-exchange — exercises GO-032 / CRYPTO-032..035.

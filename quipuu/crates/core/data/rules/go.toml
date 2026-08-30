@@ -683,6 +683,103 @@ message = "SHA-1 is classically broken (SHAttered, 2017). Use SHA-256 or stronge
 cwe = "CWE-327"
 
 # ============================================================================
+# crypto/sha256 / crypto/sha512 — had zero coverage; every md5.New()/sha1.New()
+# was detected but sha256.New()/Sum256() — the far more common call in real
+# Go code — was not. Each function name states its own digest size, so unlike
+# md5/sha1 above these need no args.pkg disambiguation.
+# ============================================================================
+
+[[extract]]
+id = "GO-052"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "sha256")
+    field: (field_identifier) @fn (#match? @fn "^(New|New224|Sum256|Sum224)$")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "crypto/sha256.*"
+description = "SHA-256/SHA-224 hash construction via crypto/sha256."
+
+[[classify]]
+id = "CRYPTO-948"
+when.api = "^crypto/sha256\\.New$"
+algorithm_id = "sha-256"
+severity_hint = "auto"
+message = "sha256.New() — SHA-256 hash construction. Quantum-safe."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-949"
+when.api = "^crypto/sha256\\.Sum256$"
+algorithm_id = "sha-256"
+severity_hint = "auto"
+message = "sha256.Sum256() — SHA-256 one-shot hash. Quantum-safe."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-950"
+when.api = "^crypto/sha256\\.New224$"
+algorithm_id = "sha-224"
+severity_hint = "auto"
+message = "sha256.New224() — SHA-224 hash construction. Quantum-safe."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-951"
+when.api = "^crypto/sha256\\.Sum224$"
+algorithm_id = "sha-224"
+severity_hint = "auto"
+message = "sha256.Sum224() — SHA-224 one-shot hash. Quantum-safe."
+cwe = "CWE-327"
+
+[[extract]]
+id = "GO-053"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "sha512")
+    field: (field_identifier) @fn (#match? @fn "^(New|New384|Sum512|Sum384)$")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "crypto/sha512.*"
+description = "SHA-512/SHA-384 hash construction via crypto/sha512."
+
+[[classify]]
+id = "CRYPTO-952"
+when.api = "^crypto/sha512\\.New$"
+algorithm_id = "sha-512"
+severity_hint = "auto"
+message = "sha512.New() — SHA-512 hash construction. Quantum-safe."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-953"
+when.api = "^crypto/sha512\\.Sum512$"
+algorithm_id = "sha-512"
+severity_hint = "auto"
+message = "sha512.Sum512() — SHA-512 one-shot hash. Quantum-safe."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-954"
+when.api = "^crypto/sha512\\.New384$"
+algorithm_id = "sha-384"
+severity_hint = "auto"
+message = "sha512.New384() — SHA-384 hash construction. Quantum-safe."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-955"
+when.api = "^crypto/sha512\\.Sum384$"
+algorithm_id = "sha-384"
+severity_hint = "auto"
+message = "sha512.Sum384() — SHA-384 one-shot hash. Quantum-safe."
+cwe = "CWE-327"
+
+# ============================================================================
 # golang-jwt / jwt-go — JWT signing
 # ============================================================================
 
