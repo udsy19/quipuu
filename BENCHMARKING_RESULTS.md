@@ -4827,3 +4827,49 @@ are not re-measured — six added stratum-B findings could not plausibly move ei
 still has no AES-CTR/CFB/OFB coverage (no `algorithm-table.toml` rows exist for those modes
 either), and the closed-enumeration sweep named at `#Y73` still has `java.toml`, `python.toml` and
 `javascript.toml` unswept for the equivalent missing-dispatch pattern.
+
+## `#Y69` (KEM half): OpenSSL `EVP_PKEY_encapsulate`/`EVP_PKEY_decapsulate` gain coverage, gate re-run — 2026-08-30
+
+The prior attempt at this change (`aeded9d`) shipped the rule but could not merge: `bin/precision.py`
+on that cycle's dumps hit `OPEN-ASK #ESTIMATOR1`'s fresh-vs-carried-vs-pooled three-way spread
+(0.051pp, just past the tool's tolerance) even on a pre-vs-pre no-op, so no `PRECISION:` line was
+emitted and `gate_precision` correctly blocked the merge (`detection changed but no measurement
+reported`). That commit was parked (`parked/20260830T183216-gate-red`) rather than lost.
+
+**What this cycle did.** Cherry-picked `aeded9d`'s rule/scanner/fixture/test diff onto `main`
+unchanged (4 files, 109 insertions — no code changes here, the rule itself was already correct and
+audited) and re-measured from scratch rather than reusing the parked cycle's stale dumps: built a
+genuinely clean pre-change binary in a separate worktree at `f757e89` (verified 0 occurrences of
+`EVP_PKEY_encapsulate` in `strings` output, byte-different from the post binary — the first attempt
+at a "pre" binary in this session was accidentally a stale leftover build from the parked cycle that
+already contained the rule, caught by an `md5sum` diff against the post binary coming back identical
+before any dump was trusted), then ran a fresh 150-project corpus dump with each. `bin/precision.py`
+itself has since been updated (visible in its own source comments, cycle 151) to compare only the
+two candidate-for-publication estimators — stratified-on-fresh-populations and pooled Wilson — not
+the carried-constant variant, which `state/estimator.json` already documents as "never used in a
+figure." That is what actually unblocked this: fresh (97.381%) vs pooled (97.425%) agree to within
+0.044pp, inside the 0.05pp tolerance, where the three-way comparison the parked cycle saw would not
+have.
+
+**Corpus effect: 65 findings added (36 `CRYPTO-960`, 29 `CRYPTO-961`), 0 removed** — identical site
+set to the parked cycle's own audit (openssl/openssl 16, aws-lc 43, boringssl 6). Spot-checked
+`hpke.c:516` (real `EVP_PKEY_encapsulate` call inside HPKE's KEM step) and
+`evp_extra_test.cc:2545` (real call in a KAT-style parameterized test) directly against the corpus
+clone; both genuine, matching the parked cycle's own line-by-line reading. **65 TP, 0 FP**, all
+stratum B. `bin/precision.py work/y69fix_pre.json work/y69fix_post.json --sample
+work/c11_stratumB.json --added-tp 65 --added-fp 0 --write-readme`: fresh-derived populations
+A=746/B=1013 against a 1759-finding corpus (pre-dump 1694, rebuilt clean as described above).
+`--write-readme` applied: figure 97.17% → 97.38%, CI 95.9–98.5% → 96.2–98.6%, audited 640 → 699,
+corpus total 1694 → 1759.
+
+**Precision 97.17% → 97.38%.**
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing
+(includes the parked cycle's new `scans_c_openssl_kem_operation_api`). Both trust-invariant tests
+(`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`) untouched and pass.
+
+**Not done, said out loud:** the parked branch `parked/20260830T183216-gate-red` still exists and can
+be deleted once this commit is confirmed merged — left in place here since deleting branches is
+outside this change's scope. `EVP_PKEY_sign`/`verify` (the same-function-trace-gated remainder
+`aeded9d`'s own message named) is still not built.
