@@ -146,6 +146,42 @@ severity_hint = "auto"
 message = "RustCrypto Sha512 — SHA-512 hash. Quantum-safe."
 
 # ============================================================================
+# RustCrypto — Md5 / Sha1 (md5 / sha1 crates) — classically broken. Same
+# closed-enumeration gap as crypto/md5+crypto/sha1 in go.toml before #Y64:
+# the sha2 family (Sha256/384/512) above had coverage, but the digest-trait
+# shape is identical for the md5 and sha1 crates and had none.
+# ============================================================================
+
+[[extract]]
+id = "RST-021"
+language = "rust"
+query = """
+(call_expression
+  function: (scoped_identifier
+    path: (identifier) @cls (#match? @cls "^(Md5|Sha1)$")
+    name: (identifier) @fn (#match? @fn "^(new|digest)$")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "rustcrypto.{cls}.digest"
+description = "md5 crate Md5 / sha1 crate Sha1 hash."
+
+[[classify]]
+id = "CRYPTO-956"
+when.api = "^rustcrypto\\.Md5\\.digest$"
+algorithm_id = "md5"
+severity_hint = "critical"
+message = "RustCrypto Md5 — MD5 is classically broken (collision attacks since 2004). Use SHA-256 or stronger."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-957"
+when.api = "^rustcrypto\\.Sha1\\.digest$"
+algorithm_id = "sha-1"
+severity_hint = "critical"
+message = "RustCrypto Sha1 — SHA-1 is classically broken (SHAttered, 2017). Use SHA-256 or stronger."
+cwe = "CWE-327"
+
+# ============================================================================
 # RustCrypto — ChaCha20Poly1305::new
 # ============================================================================
 

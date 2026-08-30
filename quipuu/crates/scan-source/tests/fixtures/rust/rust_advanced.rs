@@ -5,7 +5,9 @@
 // V5 corpus run (RUST_COVERAGE_GAPS.md) cited specific file:line
 // citations for each — every example here mirrors a real one.
 
+use md5::Md5;
 use rsa::{RsaPrivateKey, pkcs1v15::SigningKey};
+use sha1::Sha1;
 use sha2::{Sha256, Sha384, Sha512};
 
 fn shapes(mut rng: impl rand::CryptoRng + rand::RngCore) {
@@ -36,4 +38,11 @@ fn shapes(mut rng: impl rand::CryptoRng + rand::RngCore) {
     // BUG-B, one crate over (competitors cycle 12).
     let _ = openssl::rsa::Rsa::generate(2048).unwrap(); // CRYPTO-591
     let _ = openssl::rsa::Rsa::generate(bits as u32).unwrap(); // CRYPTO-593 catch-all
+
+    // md5/sha1 crates — same digest-trait shape as sha2's Sha256/384/512
+    // above (BUG-A-adjacent gap: coverage existed for the sha2 family only).
+    let _ = Md5::new();      // CRYPTO-956
+    let _ = Md5::digest(b"hello");  // CRYPTO-956
+    let _ = Sha1::new();     // CRYPTO-957
+    let _ = Sha1::digest(b"hello"); // CRYPTO-957
 }

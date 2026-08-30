@@ -2294,6 +2294,30 @@ fn phase10_rust_qualified_sha_digest_normalizes() {
 }
 
 #[test]
+fn rust_md5_sha1_crates_are_covered() {
+    // #Y65: the sha2 family (Sha256/384/512) had coverage but the md5 and
+    // sha1 crates — same digest-trait shape, `New`/`Digest` — had none.
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/rust_advanced.rs"))
+        .expect("scan succeeds");
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-956" && f.algorithm_id == "md5"),
+        "expected CRYPTO-956/md5 for Md5::new/Md5::digest, got: {:?}",
+        findings.iter().map(|f| &f.rule_id).collect::<Vec<_>>()
+    );
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-957" && f.algorithm_id == "sha-1"),
+        "expected CRYPTO-957/sha-1 for Sha1::new/Sha1::digest"
+    );
+}
+
+#[test]
 fn phase10_rust_qualified_clientconfig_normalizes() {
     // BUG-A: rustls::ClientConfig::builder must match the bare rule.
     let b = load_builtins().expect("builtins");
