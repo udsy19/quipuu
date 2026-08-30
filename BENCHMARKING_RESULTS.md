@@ -4729,3 +4729,53 @@ Both trust-invariant tests (`test_network_disabled_error`,
 are not re-measured — the finding set did not move at all. `OPEN-ASK #ESTIMATOR1` remains open and
 unresolved by this cycle (rule 7) — it happened not to bind this time, which is a fact about this
 cycle's corpus-drift state, not a resolution of the ask.
+
+## `#Y73`: OpenSSL `EVP_DigestInit_ex` gains the remaining SHA-2/SHA-3 digest names — 2026-08-30
+
+Found by taking `#Y65`'s own closing pointer: the closed-enumeration/missing-dispatch sweep
+already run for C#, Go and Rust had not yet checked the remaining packs (`java.toml`,
+`python.toml`, `javascript.toml`, `cpp.toml`). `cpp.toml`'s `EVP_DigestInit_ex` classify block
+had exactly three arms — `EVP_md5`, `EVP_sha1`, `EVP_sha256` — with none for `EVP_sha224`,
+`EVP_sha384`, `EVP_sha512`, `EVP_sha3_256`, `EVP_sha3_384` or `EVP_sha3_512`, even though
+`algorithm-table.toml` already carries rows for `sha-224`, `sha-384`, `sha-512`, `sha3-256`,
+`sha3-384` and `sha3-512`. `scanner.rs`'s `digest_fn` capture for `EVP_DigestInit_ex` already
+extracts any callee identifier generically (not a closed enum, unlike the C#/Go dispatch-table
+gaps `#Y61`/`#Y64` fixed) — the gap is TOML-only, the same defect class as Java's
+`MessageDigest.getInstance` fix (`#Y59`).
+
+**What shipped.** Six new `cpp.toml` classify arms (`CRYPTO-423`–`CRYPTO-428`), one per digest
+name, mirroring `CRYPTO-420`–`CRYPTO-422`'s existing shape exactly. Six new call sites in
+`tests/fixtures/cpp/crypto.c`, one new test (`scans_c_evp_digest_wider_digests`) asserting all
+six rule/algorithm_id pairs.
+
+**Precision 97.15% → 97.15%, held (`bin/precision.py work/y73_pre.json work/y73_post.json
+--added-tp 1 --added-fp 0 --write-readme`).** Corpus B tuple: `--source --deps --include-safe`,
+profile `nist-default`, pre-change binary built from commit `f115661` in a throwaway worktree,
+post-change binary from this cycle's tree; dumps `work/y73_pre.json` (1687) → `work/y73_post.json`
+(1688). **1 finding added, 0 removed** — BoringSSL's own test suite,
+`crypto/evp/evp_extra_test.cc:1912`, `EVP_DigestInit_ex(ctx, EVP_sha384(), nullptr)`, hand-verified
+a genuine call (not a comment or string) by reading the cited line directly. The delta lands in
+stratum B. Fresh-derived populations A=746/B=942 against a 1688-finding corpus. `--write-readme`
+applied: figure unchanged at 97.15% (one TP out of 1688 does not move the rounded rate), CI low
+95.8% → 95.9%, audited 634 → 635, corpus total 1687 → 1688.
+
+**Also fixed in the same diff, per rule 4:** the README's "What that interval is" / "What the
+denominator excludes" paragraphs (lines 262/264) still quoted `661`/`875`-finding stratum
+populations and a `271`/`363`-row sample — stale since `#Y62(d)`, several cycles before the
+populations were re-derived fresh on every run (currently `746`/`942`). Those paragraphs are now
+updated to the numbers this run actually produced (271/746 in A, 364/942 in B, 617 TP/18 FP/635
+audited), rather than leaving a description of the interval that no longer matches the interval
+the headline reports.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (135
+tests in `scan_test.rs`, one new: `scans_c_evp_digest_wider_digests`). Both trust-invariant tests
+(`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`) untouched and pass.
+
+**Not re-taken, said out loud:** the `--policy nsa-cnsa2` divergence and Go/cross-language recall
+are not re-measured — a single added stratum-B finding could not plausibly move either. `OPEN-ASK
+#ESTIMATOR1` remains open, not this cycle's to resolve (it did not bind this run — fresh vs.
+carried estimators agreed well inside tolerance). **Next place to look:** the closed-enumeration
+sweep named at `#Y65` has now checked `cpp.toml`'s `EVP_DigestInit_ex`; `java.toml`,
+`python.toml` and `javascript.toml` are still unswept for the same pattern, as are `cpp.toml`'s
+other closed-enumeration call sites (`EVP_EncryptInit_ex`'s `cipher_fn` dispatch, for one).
