@@ -18,6 +18,14 @@ void openssl_rsa_2048(void) {
     RSA_generate_key_ex(rsa, 2048, NULL, NULL);
 }
 
+/* CPP-001 / CRYPTO-407 — RSA_generate_key_ex, bits in (2048, 4096), e.g.
+ * 3072. Backlog #Y57: no named band above matches this; without the
+ * catch-all it silently disappears despite the extractor seeing it. */
+void openssl_rsa_3072(void) {
+    RSA *rsa = RSA_new();
+    RSA_generate_key_ex(rsa, 3072, NULL, NULL);
+}
+
 /* CPP-002 / CRYPTO-403 — legacy RSA_generate_key, bits in position 1 */
 void openssl_rsa_legacy_weak(void) {
     RSA *rsa = RSA_generate_key(1024, 3, NULL, NULL);

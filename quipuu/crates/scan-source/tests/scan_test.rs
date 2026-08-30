@@ -756,6 +756,31 @@ fn scans_c_rsa_generate_key_ex_weak() {
     );
 }
 
+/// Backlog `#Y57`: `RSA_generate_key_ex` had classify arms for `bits < 2048`,
+/// `== 2048`, and `>= 4096` but nothing for the open band between — a real
+/// literal like 3072 silently produced zero findings despite the extractor
+/// seeing the call, the same gap `RSA_generate_key` (CRYPTO-406) and the
+/// Rust `openssl` crate (CRYPTO-593) already closed.
+#[test]
+fn scans_c_rsa_generate_key_ex_midrange() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-407" && f.algorithm_id == "rsa-unattributed"),
+        "expected CRYPTO-407 (RSA_generate_key_ex, bits=3072, catch-all) in C fixture; got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
 /// Legacy `RSA_generate_key(bits, e, cb, cb_arg)` puts bits in argument
 /// position 1 (`_ex` puts it in position 2) and must still be caught.
 #[test]

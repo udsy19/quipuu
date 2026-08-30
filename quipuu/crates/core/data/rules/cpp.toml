@@ -51,6 +51,17 @@ algorithm_id = "rsa-4096"
 severity_hint = "auto"
 message = "RSA_generate_key_ex(bits={bits}). Larger key does NOT protect against Shor's algorithm."
 
+# Catch-all: bits in (2048, 4096), e.g. 3072 — a real literal outside the
+# three named bands above. Same convention as CRYPTO-406 (RSA_generate_key,
+# same file) and CRYPTO-593 (openssl crate, Rust): without it the finding
+# silently disappears.
+[[classify]]
+id = "CRYPTO-407"
+when.api = "^openssl\\.RSA_generate_key_ex$"
+algorithm_id = "rsa-unattributed"
+severity_hint = "auto"
+message = "RSA_generate_key_ex(bits={bits}). Quantum-vulnerable to Shor regardless of key size."
+
 # ============================================================================
 # OpenSSL — RSA_generate_key (legacy, pre-3.0, no `_ex`)
 #
