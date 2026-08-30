@@ -1224,7 +1224,8 @@ fn scans_rust_kx_groups_list() {
             .filter(|f| f.algorithm_id == algorithm_id)
             .count();
         assert_eq!(
-            n, expected,
+            n,
+            expected,
             "expected {expected} finding(s) for {algorithm_id}, got {n}: {:#?}",
             group_findings
                 .iter()
