@@ -75,6 +75,17 @@ void openssl_digest_sha256(void) {
     EVP_DigestInit_ex(ctx, EVP_sha256(), NULL);
 }
 
+/* CPP-020 / CRYPTO-423..428 — the wider SHA-2/SHA-3 digest_fn names */
+void openssl_digest_wider(void) {
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    EVP_DigestInit_ex(ctx, EVP_sha224(), NULL);
+    EVP_DigestInit_ex(ctx, EVP_sha384(), NULL);
+    EVP_DigestInit_ex(ctx, EVP_sha512(), NULL);
+    EVP_DigestInit_ex(ctx, EVP_sha3_256(), NULL);
+    EVP_DigestInit_ex(ctx, EVP_sha3_384(), NULL);
+    EVP_DigestInit_ex(ctx, EVP_sha3_512(), NULL);
+}
+
 /* CPP-030 / CRYPTO-430 — weak cipher string */
 void openssl_cipher_list_weak(void) {
     SSL_CTX *ctx = SSL_CTX_new(TLS_method());

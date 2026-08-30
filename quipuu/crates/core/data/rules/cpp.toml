@@ -263,6 +263,58 @@ algorithm_id = "sha-256"
 severity_hint = "auto"
 message = "SHA-256 digest in EVP_DigestInit_ex. Quantum-safe hash."
 
+# The rest of OpenSSL's SHA-2/SHA-3 digest_fn names — md5/sha1/sha256 were
+# covered above, the wider SHA-2/SHA-3 family was not, same
+# closed-enumeration gap the Java MessageDigest pack (CRYPTO-899..903) and
+# node:crypto createHash pack already closed for their own APIs.
+[[classify]]
+id = "CRYPTO-423"
+when.api = "^openssl\\.EVP_DigestInit_ex$"
+when.args.digest_fn = { regex = "^EVP_sha224$" }
+algorithm_id = "sha-224"
+severity_hint = "auto"
+message = "SHA-224 digest in EVP_DigestInit_ex. Grover-weakened, not broken."
+
+[[classify]]
+id = "CRYPTO-424"
+when.api = "^openssl\\.EVP_DigestInit_ex$"
+when.args.digest_fn = { regex = "^EVP_sha384$" }
+algorithm_id = "sha-384"
+severity_hint = "auto"
+message = "SHA-384 digest in EVP_DigestInit_ex. Quantum-safe hash."
+
+[[classify]]
+id = "CRYPTO-425"
+when.api = "^openssl\\.EVP_DigestInit_ex$"
+when.args.digest_fn = { regex = "^EVP_sha512$" }
+algorithm_id = "sha-512"
+severity_hint = "auto"
+message = "SHA-512 digest in EVP_DigestInit_ex. Quantum-safe hash."
+
+[[classify]]
+id = "CRYPTO-426"
+when.api = "^openssl\\.EVP_DigestInit_ex$"
+when.args.digest_fn = { regex = "^EVP_sha3_256$" }
+algorithm_id = "sha3-256"
+severity_hint = "auto"
+message = "SHA3-256 digest in EVP_DigestInit_ex. Quantum-safe hash."
+
+[[classify]]
+id = "CRYPTO-427"
+when.api = "^openssl\\.EVP_DigestInit_ex$"
+when.args.digest_fn = { regex = "^EVP_sha3_384$" }
+algorithm_id = "sha3-384"
+severity_hint = "auto"
+message = "SHA3-384 digest in EVP_DigestInit_ex. Quantum-safe hash."
+
+[[classify]]
+id = "CRYPTO-428"
+when.api = "^openssl\\.EVP_DigestInit_ex$"
+when.args.digest_fn = { regex = "^EVP_sha3_512$" }
+algorithm_id = "sha3-512"
+severity_hint = "auto"
+message = "SHA3-512 digest in EVP_DigestInit_ex. Quantum-safe hash."
+
 # ============================================================================
 # OpenSSL SSL — SSL_CTX_set_cipher_list
 # ============================================================================
