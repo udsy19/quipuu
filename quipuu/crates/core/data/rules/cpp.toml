@@ -218,6 +218,32 @@ severity_hint = "high"
 message = "AES-256-ECB in EVP_EncryptInit_ex. Deterministic mode — leaks plaintext patterns."
 cwe = "CWE-327"
 
+# AES-CBC — same per-key-size split. Unauthenticated but not deterministic
+# like ECB; same severity tier as AES-GCM.
+[[classify]]
+id = "CRYPTO-920"
+when.api = "^openssl\\.EVP_EncryptInit_ex$"
+when.args.cipher_fn = { regex = "EVP_aes_128_cbc" }
+algorithm_id = "aes-128-cbc"
+severity_hint = "auto"
+message = "AES-128-CBC in EVP_EncryptInit_ex. Unauthenticated mode; 128-bit key may be Grover-weakened."
+
+[[classify]]
+id = "CRYPTO-921"
+when.api = "^openssl\\.EVP_EncryptInit_ex$"
+when.args.cipher_fn = { regex = "EVP_aes_192_cbc" }
+algorithm_id = "aes-192-cbc"
+severity_hint = "auto"
+message = "AES-192-CBC in EVP_EncryptInit_ex. Unauthenticated mode, adequate against Grover."
+
+[[classify]]
+id = "CRYPTO-922"
+when.api = "^openssl\\.EVP_EncryptInit_ex$"
+when.args.cipher_fn = { regex = "EVP_aes_256_cbc" }
+algorithm_id = "aes-256-cbc"
+severity_hint = "auto"
+message = "AES-256-CBC in EVP_EncryptInit_ex. Unauthenticated mode, quantum-safe."
+
 # ============================================================================
 # OpenSSL EVP — EVP_DigestInit_ex
 # ============================================================================

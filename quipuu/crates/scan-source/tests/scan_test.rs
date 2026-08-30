@@ -1107,6 +1107,28 @@ fn scans_c_evp_digest_wider_digests() {
 }
 
 #[test]
+fn scans_c_evp_aes_cbc() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    for (rule_id, algorithm_id) in [
+        ("CRYPTO-920", "aes-128-cbc"),
+        ("CRYPTO-921", "aes-192-cbc"),
+        ("CRYPTO-922", "aes-256-cbc"),
+    ] {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in C fixture"
+        );
+    }
+}
+
+#[test]
 fn scans_c_libsodium_box_keypair() {
     let b = load_builtins().unwrap();
     let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");

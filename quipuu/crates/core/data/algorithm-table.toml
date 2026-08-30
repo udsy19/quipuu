@@ -582,6 +582,17 @@ quantum_status = "QuantumSafe"
 oid = "2.16.840.1.101.3.4.1.46"
 
 [[algorithm]]
+id = "aes-192-cbc"
+display_name = "AES-192-CBC"
+family = "AES"
+primitive = "block-cipher"
+classical_security_bits = 192
+nist_quantum_security_level = 3
+quantum_status = "QuantumSafe"
+oid = "2.16.840.1.101.3.4.1.22"
+notes = "CBC mode: prefer GCM or ChaCha20-Poly1305 for new use."
+
+[[algorithm]]
 id = "aes-256-cbc"
 display_name = "AES-256-CBC"
 family = "AES"

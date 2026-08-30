@@ -57,6 +57,14 @@ void openssl_evp_aes_gcm(void) {
     EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, key, iv);
 }
 
+/* CPP-010 / CRYPTO-920..922 — AES-CBC cipher, all three key sizes */
+void openssl_evp_aes_cbc(void) {
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv);
+    EVP_EncryptInit_ex(ctx, EVP_aes_192_cbc(), NULL, key, iv);
+    EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv);
+}
+
 /* CPP-020 / CRYPTO-420 — MD5 digest */
 void openssl_digest_md5(void) {
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();

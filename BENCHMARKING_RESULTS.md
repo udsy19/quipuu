@@ -4779,3 +4779,51 @@ carried estimators agreed well inside tolerance). **Next place to look:** the cl
 sweep named at `#Y65` has now checked `cpp.toml`'s `EVP_DigestInit_ex`; `java.toml`,
 `python.toml` and `javascript.toml` are still unswept for the same pattern, as are `cpp.toml`'s
 other closed-enumeration call sites (`EVP_EncryptInit_ex`'s `cipher_fn` dispatch, for one).
+
+## `#Y74`: OpenSSL `EVP_EncryptInit_ex` gains AES-CBC (128/192/256) — 2026-08-30
+
+Taken directly from `#Y73`'s own closing pointer: `EVP_EncryptInit_ex`'s `cipher_fn` dispatch had
+classify arms for 3DES, DES, AES-GCM (128/192/256) and AES-ECB (128/192/256), but none for
+AES-CBC — despite CBC being, if anything, the more common legacy OpenSSL cipher mode in real
+code (the pre-AEAD default before GCM). `algorithm-table.toml` already carried `aes-128-cbc` and
+`aes-256-cbc` rows (used by `javascript.toml`'s WebCrypto arms); `aes-192-cbc` had no row at all
+and was added following the `aes-192-gcm`/`aes-192-ecb` precedent exactly (`classical_security_bits
+= 192`, `nist_quantum_security_level = 3`, `quantum_status = "QuantumSafe"`, OID
+`2.16.840.1.101.3.4.1.22` per the NIST AES OID arc).
+
+**What shipped.** Three new `cpp.toml` classify arms (`CRYPTO-920`–`CRYPTO-922`), mirroring the
+existing AES-ECB three-arm block's shape (`CRYPTO-412`/`416`/`417`) exactly, same `severity_hint`
+tier as the AES-GCM arms (`auto`, not `high` — CBC is unauthenticated but not deterministic like
+ECB). One new `aes-192-cbc` row in `algorithm-table.toml`. Three new call sites in
+`tests/fixtures/cpp/crypto.c`, one new test (`scans_c_evp_aes_cbc`) asserting all three
+rule/algorithm_id pairs. Also discovered while scoping this: `EVP_EncryptInit_ex`'s dispatch had
+never been exercised by any test at all before this change — `CRYPTO-410`/`411`/`413`–`417` (DES,
+3DES, GCM, ECB) had classify arms but zero fixture call sites or assertions in `scan_test.rs`.
+Left as found; not this cycle's gap to close, noted for a future sweep.
+
+**Precision 97.15% → 97.17% (`bin/precision.py work/y74_pre.json work/y74_post.json --added-tp 6
+--added-fp 0 --write-readme`).** Corpus B tuple: `--source --deps --include-safe`, profile
+`nist-default`, pre-change binary built from commit `1c47948` in a throwaway worktree,
+post-change binary from this cycle's tree; dumps `work/y74_pre.json` (1688) →
+`work/y74_post.json` (1694). **6 findings added, 0 removed**, all `CRYPTO-920` (AES-128-CBC),
+hand-verified genuine `EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), ...)` calls (not comments or
+strings) by reading every cited line directly: one in `aws-lc/ssl/ssl_session.cc:357`, one in
+`boringssl/ssl/ssl_session.cc:352`, four in `boringssl/crypto/cipher/cipher_test.cc` (lines 1436,
+1452, 1476, 1504). Unlike most recent cycles in this chain, this rule has real corpus demand —
+not a "coverage without corpus demand" shape. Fresh-derived populations A=746/B=948 against a
+1694-finding corpus; fresh (97.173%) and carried (97.178%) estimators agree to within 0.005pp,
+well inside the 0.05pp tolerance — `OPEN-ASK #ESTIMATOR1` did not bind this run. `--write-readme`
+applied: figure 97.15% → 97.17%, CI high 98.4% → 98.5%, audited 635 → 640, corpus total
+1688 → 1694.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing, one
+new (`scans_c_evp_aes_cbc`). Both trust-invariant tests (`test_network_disabled_error`,
+`test_run_acvp_kats_rejects_code_execution`) untouched and pass.
+
+**Not re-taken, said out loud:** the `--policy nsa-cnsa2` divergence and Go/cross-language recall
+are not re-measured — six added stratum-B findings could not plausibly move either. `OPEN-ASK
+#ESTIMATOR1` remains open, not this cycle's to resolve. **Next place to look:** `EVP_EncryptInit_ex`
+still has no AES-CTR/CFB/OFB coverage (no `algorithm-table.toml` rows exist for those modes
+either), and the closed-enumeration sweep named at `#Y73` still has `java.toml`, `python.toml` and
+`javascript.toml` unswept for the equivalent missing-dispatch pattern.
