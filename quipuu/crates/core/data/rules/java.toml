@@ -1356,3 +1356,118 @@ when.args.group = "ffdhe4096"
 algorithm_id = "dh-4096"
 severity_hint = "auto"
 message = "TLS group ffdhe4096 in setNamedGroups — finite-field DH (RFC 7919), quantum-vulnerable. Migrate to an ML-KEM hybrid group."
+
+# BouncyCastle's raw (non-JSSE) TLS stack — `TlsUtils.addIfSupported(supportedGroups,
+# crypto, new int[]{ NamedGroup.X25519MLKEM768, NamedGroup.x25519, … })`, the array-literal
+# argument an `AbstractTlsClient`/`AbstractTlsServer` subclass passes when overriding
+# `getSupportedGroups` to set its own TLS key-exchange group preference list. Same
+# downgrade signal `setNamedGroups` above already covers for the JSSE wrapper; this is
+# BC's independent stack, reached through `TlsUtils`'s static three-argument overload. No
+# query engine — the match is `match_bc_named_groups` in scanner.rs, not an `[[extract]]`
+# block here, same as rustls's `kx_groups` (`#Y62(c)`). Reuses the existing group ids;
+# field names verified against `bcgit/bc-java`'s own `NamedGroup.java` (fetched
+# 2026-08-30). Backlog `#Y62(d)`.
+
+[[classify]]
+id = "CRYPTO-932"
+when.api = "^org\\.bouncycastle\\.tls\\.NamedGroup$"
+when.args.group = "X25519MLKEM768"
+algorithm_id = "x25519-mlkem768"
+severity_hint = "auto"
+message = "BouncyCastle TlsUtils.addIfSupported group list: X25519MLKEM768 — hybrid X25519 + ML-KEM-768 (FIPS 203). Migrated key-establishment config."
+
+[[classify]]
+id = "CRYPTO-933"
+when.api = "^org\\.bouncycastle\\.tls\\.NamedGroup$"
+when.args.group = "SecP256r1MLKEM768"
+algorithm_id = "secp256r1-mlkem768"
+severity_hint = "auto"
+message = "BouncyCastle TlsUtils.addIfSupported group list: SecP256r1MLKEM768 — hybrid secp256r1 + ML-KEM-768 (FIPS 203). Migrated key-establishment config."
+
+[[classify]]
+id = "CRYPTO-934"
+when.api = "^org\\.bouncycastle\\.tls\\.NamedGroup$"
+when.args.group = "SecP384r1MLKEM1024"
+algorithm_id = "secp384r1-mlkem1024"
+severity_hint = "auto"
+message = "BouncyCastle TlsUtils.addIfSupported group list: SecP384r1MLKEM1024 — hybrid secp384r1 + ML-KEM-1024 (FIPS 203). Meets the CNSA 2.0 ML-KEM parameter set."
+
+[[classify]]
+id = "CRYPTO-935"
+when.api = "^org\\.bouncycastle\\.tls\\.NamedGroup$"
+when.args.group = "MLKEM768"
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "BouncyCastle TlsUtils.addIfSupported group list: MLKEM768 — non-hybrid ML-KEM-768 (FIPS 203) key exchange."
+
+[[classify]]
+id = "CRYPTO-936"
+when.api = "^org\\.bouncycastle\\.tls\\.NamedGroup$"
+when.args.group = "MLKEM1024"
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "BouncyCastle TlsUtils.addIfSupported group list: MLKEM1024 — non-hybrid ML-KEM-1024 (FIPS 203) key exchange."
+
+[[classify]]
+id = "CRYPTO-937"
+when.api = "^org\\.bouncycastle\\.tls\\.NamedGroup$"
+when.args.group = "x25519"
+algorithm_id = "x25519"
+severity_hint = "auto"
+message = "BouncyCastle TlsUtils.addIfSupported group list: x25519 — classical ECDH, vulnerable to Shor. Add X25519MLKEM768 first in the list."
+
+[[classify]]
+id = "CRYPTO-938"
+when.api = "^org\\.bouncycastle\\.tls\\.NamedGroup$"
+when.args.group = "x448"
+algorithm_id = "x448"
+severity_hint = "auto"
+message = "BouncyCastle TlsUtils.addIfSupported group list: x448 — classical ECDH, vulnerable to Shor. Add X25519MLKEM768 first in the list."
+
+[[classify]]
+id = "CRYPTO-939"
+when.api = "^org\\.bouncycastle\\.tls\\.NamedGroup$"
+when.args.group = "secp256r1"
+algorithm_id = "ecdh-p256"
+severity_hint = "auto"
+message = "BouncyCastle TlsUtils.addIfSupported group list: secp256r1 — classical ECDH, quantum-vulnerable. Add X25519MLKEM768 / SecP256r1MLKEM768 first."
+
+[[classify]]
+id = "CRYPTO-940"
+when.api = "^org\\.bouncycastle\\.tls\\.NamedGroup$"
+when.args.group = "secp384r1"
+algorithm_id = "ecdh-p384"
+severity_hint = "auto"
+message = "BouncyCastle TlsUtils.addIfSupported group list: secp384r1 — classical ECDH, quantum-vulnerable. Add SecP384r1MLKEM1024 first."
+
+[[classify]]
+id = "CRYPTO-941"
+when.api = "^org\\.bouncycastle\\.tls\\.NamedGroup$"
+when.args.group = "secp521r1"
+algorithm_id = "ecdh-p521"
+severity_hint = "auto"
+message = "BouncyCastle TlsUtils.addIfSupported group list: secp521r1 — classical ECDH, quantum-vulnerable. Migrate to an ML-KEM hybrid group."
+
+[[classify]]
+id = "CRYPTO-942"
+when.api = "^org\\.bouncycastle\\.tls\\.NamedGroup$"
+when.args.group = "ffdhe2048"
+algorithm_id = "dh-2048"
+severity_hint = "auto"
+message = "BouncyCastle TlsUtils.addIfSupported group list: ffdhe2048 — finite-field DH (RFC 7919), quantum-vulnerable. Migrate to an ML-KEM hybrid group."
+
+[[classify]]
+id = "CRYPTO-943"
+when.api = "^org\\.bouncycastle\\.tls\\.NamedGroup$"
+when.args.group = "ffdhe3072"
+algorithm_id = "dh-3072"
+severity_hint = "auto"
+message = "BouncyCastle TlsUtils.addIfSupported group list: ffdhe3072 — finite-field DH (RFC 7919), quantum-vulnerable. Migrate to an ML-KEM hybrid group."
+
+[[classify]]
+id = "CRYPTO-944"
+when.api = "^org\\.bouncycastle\\.tls\\.NamedGroup$"
+when.args.group = "ffdhe4096"
+algorithm_id = "dh-4096"
+severity_hint = "auto"
+message = "BouncyCastle TlsUtils.addIfSupported group list: ffdhe4096 — finite-field DH (RFC 7919), quantum-vulnerable. Migrate to an ML-KEM hybrid group."

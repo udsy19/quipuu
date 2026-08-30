@@ -712,6 +712,15 @@ fn walk(
     {
         out.extend(ms);
     }
+    // BouncyCastle raw (non-JSSE) TLS `TlsUtils.addIfSupported(supportedGroups, crypto,
+    // new int[]{ NamedGroup.X25519MLKEM768, … })` — BC's independent stack's counterpart
+    // to `match_java_set_named_groups` above. Backlog `#Y62(d)`.
+    if language == Language::Java
+        && kind == "method_invocation"
+        && let Some(ms) = match_bc_named_groups(node, source)
+    {
+        out.extend(ms);
+    }
     // OpenSSL `SSL_CTX_set1_groups_list(ctx, "P-521:X25519MLKEM768")` /
     // `SSL_set1_groups_list(ssl, "...")` / `SSL_CONF_cmd(ctx, "Groups",
     // "...")` — the colon-separated TLS key-exchange group preference
@@ -1059,6 +1068,69 @@ fn match_java_set_property_named_groups(call: Node<'_>, source: &[u8]) -> Option
     }
 }
 
+/// Match BouncyCastle's raw (non-JSSE) TLS stack: `TlsUtils.addIfSupported(supportedGroups,
+/// crypto, new int[]{ NamedGroup.X25519MLKEM768, NamedGroup.x25519, … })` — the array-literal
+/// argument an `AbstractTlsClient`/`AbstractTlsServer` subclass passes when overriding
+/// `getSupportedGroups` to set its own TLS key-exchange group preference list.
+/// `match_java_set_named_groups` above covers the JSSE-wrapper form
+/// (`SSLParameters.setNamedGroups`); this is BC's own stack, reached through `TlsUtils`'s static
+/// three-argument overload (`Vector`, `TlsCrypto`, `int[]`) — not the single-group overload, which
+/// carries no list to compare against. In corpus B the only call sites matching this shape are
+/// inside `bc-java`'s own `AbstractTlsClient.getSupportedGroups` default implementation, not
+/// application code overriding it — a real, if narrow, corpus-B hit. Field names verified against
+/// `bcgit/bc-java`'s own `NamedGroup.java` (fetched 2026-08-30). Backlog `#Y62(d)`.
+fn match_bc_named_groups(call: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch>> {
+    let object = call.child_by_field_name("object")?;
+    if node_text(object, source) != "TlsUtils" {
+        return None;
+    }
+    let name = call.child_by_field_name("name")?;
+    if node_text(name, source) != "addIfSupported" {
+        return None;
+    }
+    let args = call.child_by_field_name("arguments")?;
+    let mut args_cursor = args.walk();
+    let named: Vec<Node> = args.named_children(&mut args_cursor).collect();
+    let [_, _, array_arg] = named.as_slice() else {
+        return None;
+    };
+    if array_arg.kind() != "array_creation_expression" {
+        return None;
+    }
+    let initializer = array_arg.child_by_field_name("value")?;
+    if initializer.kind() != "array_initializer" {
+        return None;
+    }
+
+    let mut results = Vec::new();
+    let mut cursor = initializer.walk();
+    for element in initializer.named_children(&mut cursor) {
+        let group = match element.kind() {
+            "field_access" => node_text(element.child_by_field_name("field")?, source),
+            "identifier" => node_text(element, source),
+            _ => continue,
+        };
+        let mut group_args = HashMap::new();
+        group_args.insert("group".into(), ArgValue::Str(group.clone()));
+        let start = element.start_position();
+        results.push(RawMatch {
+            api: "org.bouncycastle.tls.NamedGroup".into(),
+            args: group_args,
+            line: (start.row + 1) as u32,
+            offset: element.start_byte() as u32,
+            symbol: format!("NamedGroup.{group}"),
+            snippet: node_text(element, source),
+            site_context: quipuu_core::SiteContext::Call,
+        });
+    }
+
+    if results.is_empty() {
+        None
+    } else {
+        Some(results)
+    }
+}
+
 /// Match OpenSSL `SSL_CTX_set1_groups_list(ctx, "P-521:X25519MLKEM768")` /
 /// `SSL_set1_groups_list(ssl, "...")` / `SSL_CONF_cmd(ctx, "Groups", "...")`
 /// — C's counterpart to `match_java_set_property_named_groups` above, both
@@ -1370,6 +1442,8 @@ const STRUCTURAL_APIS: &[&str] = &[
     "crypto/tls.Config.MinVersion",
     // match_java_set_named_groups
     "javax.net.ssl.SSLParameters.setNamedGroups",
+    // match_bc_named_groups
+    "org.bouncycastle.tls.NamedGroup",
     // match_c_ssl_groups_list
     "openssl.SSL_CTX_set1_groups_list",
     // match_rust_kx_groups

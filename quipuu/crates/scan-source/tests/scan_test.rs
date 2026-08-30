@@ -546,6 +546,60 @@ fn scans_java_ssl_parameters_set_named_groups() {
     );
 }
 
+#[test]
+fn scans_bc_named_groups_list() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/BcNamedGroups.java"))
+        .expect("scan succeeds");
+
+    let group_findings: Vec<_> = findings
+        .iter()
+        .filter(|f| f.rule_id.starts_with("CRYPTO-9") && (932..=944).contains(&rule_num(f)))
+        .collect();
+
+    for (algorithm_id, expected) in [
+        ("x25519-mlkem768", 1),
+        ("secp256r1-mlkem768", 1),
+        ("x25519", 1),
+        ("ecdh-p256", 1),
+        ("ecdh-p384", 1),
+        ("ecdh-p521", 1),
+        ("x448", 1),
+        ("dh-2048", 1),
+        ("dh-3072", 1),
+        ("dh-4096", 1),
+    ] {
+        let n = group_findings
+            .iter()
+            .filter(|f| f.algorithm_id == algorithm_id)
+            .count();
+        assert_eq!(
+            n,
+            expected,
+            "expected {expected} finding(s) for {algorithm_id}, got {n}: {:#?}",
+            group_findings
+                .iter()
+                .map(|f| &f.algorithm_id)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    // pqcOptIn (3 groups) + classicalOnlyDowngrade (7 groups) = 10. The
+    // netty-style unrelated `addIfSupported` helper (no `TlsUtils.` receiver)
+    // and the single-group overload must not add findings.
+    assert_eq!(
+        group_findings.len(),
+        10,
+        "unrelated addIfSupported / single-group overload sites must not fire: {:#?}",
+        group_findings
+            .iter()
+            .map(|f| &f.algorithm_id)
+            .collect::<Vec<_>>()
+    );
+}
+
 // ============================================================================
 // JavaScript fixtures
 // ============================================================================
