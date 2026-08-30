@@ -5121,3 +5121,67 @@ that `#CORPUSDRIFT`'s magnitude (159 findings, 1970 → 1811) is on the larger e
 cycles have reported. **Not done, said out loud:** liboqs-python's `StatefulSignature`/
 `OQS_SIG_STFL_new` (LMS/XMSS) wrapper is out of scope, per the same standing firmware-signing
 population rejection `cpp.toml`'s own header already states for the C entry point it wraps.
+
+## `#Y80`: BouncyCastle HQC KeyEncapsulation/Signature JCA coverage (2026-08-30)
+
+Tuple, per `#S12`: **corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change binary built from commit `996d128` in a throwaway worktree ·
+post-change binary from this cycle's tree · dumps `work/y80_pre.json` ↔ `work/y80_post.json`, both
+1970 findings.**
+
+**Taken from Track B synthesis cycle 27's own filing** (`Backlog.md`, "`#Y80` — BouncyCastle's own
+HQC key-encapsulation provider... has zero `java.toml` coverage, and the project's own vendored BC
+test suite already calls it in exactly the shape most likely to appear in real code"), next in rank
+per cycle 60's closing note.
+
+**What shipped:** `org.bouncycastle.pqc.jcajce.provider.HQC`'s `Mappings.configure()` (read in
+full) registers both the family-generic `"HQC"` string and the qualified `"HQC-128"/"HQC-192"/
+"HQC-256"` spellings across `KeyPairGenerator`, `KEM`, and `Cipher` — the same breadth ML-KEM
+already gets in `java.toml`. Twelve new classify arms (`CRYPTO-1002`–`1013`, four per API × three
+APIs) close it: the three qualified names map directly to new `hqc-128`/`hqc-192`/`hqc-256`
+algorithm-table rows, and the generic `"HQC"` name degrades to a new `hqc-unattributed` sentinel
+(mirroring `CRYPTO-782`'s SLH-DSA family-generic treatment) rather than falling through to the
+pre-existing `jca-unattributed`/`ml-kem-unattributed` catch-alls, which would have named the wrong
+family. All three extract queries already existed and already captured the literal generically —
+TOML-only change, no `scanner.rs` change. `algorithm-table.toml` gained `hqc-128`/`192`/`256`/
+`-unattributed` rows, `family = "PQC-candidate"` (no FIPS number exists for HQC yet, selected
+2025-03-11), which `cbom/src/emit.rs`'s existing `canonicalize_family` already omits from CycloneDX
+1.7's `algorithmFamiliesEnum` — no emitter change needed, confirmed by the existing `kem-unattributed`/
+`sig-unattributed` rows sharing the same family string.
+
+**Corpus effect: 0 findings, either side — verified as a real zero against a real, non-fixture
+call site, not an untested assumption.** `bcpkix-jdk18on`'s own vendored test suite,
+`pkix/src/test/java/org/bouncycastle/cert/cmp/test/PQCTest.java:776`, calls exactly
+`KeyPairGenerator.getInstance("HQC", "BCPQC")` followed by `kybKpGen.initialize(HQCParameterSpec.
+hqc128)` one line later — read directly from the vendored clone, not assumed from the filing's
+citation. Scanning that file directly with the post-change binary fires `CRYPTO-1009`
+(`hqc-unattributed`) at line 776 exactly as expected. The corpus dump shows 0 because
+`benchmarks/corpus-b-realworld/ecosystems/maven/bcpkix-jdk18on.toml`'s `scan_hints.exclude_paths =
+["pkix/src/test/"]` excludes the file entirely — the same "real site outside `scan_hints`" shape
+`#Y29`/`#Y44`/`#Y74(b)` already documented. Coverage also verified against a planted fixture
+(`tests/fixtures/java/Pqc.java`, `cargo test scans_java_pqc_keypairgenerator_and_signature_and_kem`),
+which now asserts all four new HQC arms alongside the existing ML-KEM/ML-DSA/SLH-DSA cases.
+
+**Precision 97.12% (`bin/precision.py work/y80_pre.json work/y80_post.json --write-readme`), held —
+0 findings added, 0 removed, dumps row-identical.** The published anchor was 97.15%; the 0.03pp gap
+is the same pre-existing `OPEN-ASK #CORPUSDRIFT` `#Y74(b)` already measured on this exact pair of
+dumps (corpus total 1811 → 1970 between that cycle's post-dump and this cycle's pre-dump, both
+built from the same commit range) — not this change's effect, since the finding-set identity check
+means nothing in the diff could have moved it. `--write-readme` applied the honestly-measured
+figure: 97.15% → 97.12%, CI low 95.9% → 95.8%, corpus total 1811 → 1970.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (141
+tests in `scan_test.rs`, one extended: `scans_java_pqc_keypairgenerator_and_signature_and_kem` now
+asserts 11 rule/algorithm-id pairs, up from 7). Both trust-invariant tests
+(`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`) untouched and pass.
+
+**Not done, said out loud:** the two-hop trace from `KeyPairGenerator.getInstance("HQC", ...)`
+through a later `.initialize(HQCParameterSpec.hqc128)` call — which would resolve the generic
+`"HQC"` site to its actual parameter set rather than `hqc-unattributed` — is not built here; no
+such cross-statement trace exists anywhere in `java.toml`/`scanner.rs` today (EC's own curve is
+left similarly unattributed for the identical reason), and building one is a larger scanner change
+than this item's scope, matching how `#Y80`'s own filing scoped its "first concrete change." BC's
+other fourth-round PQC-candidate providers (BIKE, Classic McEliece) are untouched — the filing
+checked only HQC's own shape. `OPEN-ASK #ESTIMATOR1`/`#ESTIMATOROFRECORD` and `OPEN-ASK
+#CORPUSDRIFT` remain open, neither this cycle's to resolve.
