@@ -1221,6 +1221,39 @@ fn scans_csharp_native_mlkem_mldsa_slhdsa() {
 }
 
 #[test]
+fn scans_csharp_mlkem_import_paths() {
+    // #Y51 — GenerateKey isn't the only way a key enters an MLKem: a
+    // provisioned key loaded from a vault or a wire payload goes through
+    // MLKem.Import*, which had zero coverage before this test.
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("csharp/PqcNative.cs"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-839", "ml-kem-768"), // ImportEncapsulationKey(MLKemAlgorithm.MLKem768, …)
+        ("CRYPTO-844", "ml-kem-1024"), // ImportDecapsulationKey(MLKemAlgorithm.MLKem1024, …)
+        ("CRYPTO-846", "ml-kem-512"), // ImportPrivateSeed(MLKemAlgorithm.MLKem512, …)
+        ("CRYPTO-850", "ml-kem-unattributed"), // ImportPkcs8PrivateKey(…) — no algorithm arg
+        ("CRYPTO-851", "ml-kem-unattributed"), // ImportSubjectPublicKeyInfo(…)
+        ("CRYPTO-852", "ml-kem-unattributed"), // ImportFromPem(…)
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in C# MLKem.Import* fixture; findings: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+}
+
+#[test]
 fn end_to_end_rsa_keygen_scores_high() {
     // Walking-skeleton end-to-end demo: real file in, Finding out, score out.
     let b = load_builtins().unwrap();

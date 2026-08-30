@@ -2327,6 +2327,30 @@ const CSHARP_CALLEE_APIS: &[(&str, &str)] = &[
         "SlhDsa.GenerateKey",
         "System.Security.Cryptography.SlhDsa.GenerateKey",
     ),
+    (
+        "MLKem.ImportEncapsulationKey",
+        "System.Security.Cryptography.MLKem.ImportEncapsulationKey",
+    ),
+    (
+        "MLKem.ImportDecapsulationKey",
+        "System.Security.Cryptography.MLKem.ImportDecapsulationKey",
+    ),
+    (
+        "MLKem.ImportPrivateSeed",
+        "System.Security.Cryptography.MLKem.ImportPrivateSeed",
+    ),
+    (
+        "MLKem.ImportPkcs8PrivateKey",
+        "System.Security.Cryptography.MLKem.ImportPkcs8PrivateKey",
+    ),
+    (
+        "MLKem.ImportSubjectPublicKeyInfo",
+        "System.Security.Cryptography.MLKem.ImportSubjectPublicKeyInfo",
+    ),
+    (
+        "MLKem.ImportFromPem",
+        "System.Security.Cryptography.MLKem.ImportFromPem",
+    ),
 ];
 
 /// C# `new Foo()` constructors.
@@ -2542,12 +2566,20 @@ fn populate_args(
             Language::CSharp,
             "System.Security.Cryptography.MLKem.GenerateKey"
             | "System.Security.Cryptography.MLDsa.GenerateKey"
-            | "System.Security.Cryptography.SlhDsa.GenerateKey",
+            | "System.Security.Cryptography.SlhDsa.GenerateKey"
+            | "System.Security.Cryptography.MLKem.ImportEncapsulationKey"
+            | "System.Security.Cryptography.MLKem.ImportDecapsulationKey"
+            | "System.Security.Cryptography.MLKem.ImportPrivateSeed",
         ) => {
             // MLKem.GenerateKey(MLKemAlgorithm.MLKem768) — the sole argument is
             // a member access naming the static algorithm-set field. A variable
             // there captures nothing and the classify layer degrades to the
             // family sentinel, same shape as the BouncyCastle arm above.
+            // MLKem.Import{Encapsulation,Decapsulation}Key/ImportPrivateSeed
+            // take the same MLKemAlgorithm field as their first argument
+            // (learn.microsoft.com, net-10.0), so the same capture applies —
+            // arg 0 is the algorithm, arg 1 the key material, for all six APIs
+            // this arm now covers.
             if let Some(paramset) = nth_csharp_arg_member_access_name(args_node, 0, source) {
                 out.insert("paramset".into(), ArgValue::Str(paramset));
             }

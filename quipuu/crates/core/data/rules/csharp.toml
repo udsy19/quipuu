@@ -747,3 +747,217 @@ when.api = "^System\\.Security\\.Cryptography\\.SlhDsa\\.GenerateKey$"
 algorithm_id = "slh-dsa-unattributed"
 severity_hint = "auto"
 message = "SlhDsa.GenerateKey(…) with a non-literal parameter set — FIPS 205, quantum-resistant, but the parameter set is not statically knowable at this call site."
+
+# MLKem.Import* — a codebase loading a provisioned FIPS 203 key (from a vault,
+# a cert store, or a wire payload) rather than generating one at runtime never
+# calls GenerateKey, so the block above produces zero findings for it. Method
+# names and signatures per backlog #Y51, independently corroborated against
+# CBOMkit's DotNetMLKem.java (PR #520): ImportEncapsulationKey/
+# ImportDecapsulationKey/ImportPrivateSeed take MLKemAlgorithm as their first
+# argument, same paramset-capture shape as GenerateKey; ImportPkcs8PrivateKey/
+# ImportSubjectPublicKeyInfo/ImportFromPem carry no algorithm argument at all
+# — the parameter set lives inside the encoded key material, not the call
+# site, so these three can only ever produce "ml-kem-unattributed".
+[[extract]]
+id = "CSH-058"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "MLKem")
+    name: (identifier) @fn (#eq? @fn "ImportEncapsulationKey"))
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "MLKemAlgorithm")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", fn = "ident", paramcls = "ident", paramset = "ident" }
+api = "System.Security.Cryptography.MLKem.ImportEncapsulationKey"
+description = "MLKem.ImportEncapsulationKey(MLKemAlgorithm.MLKem768, source) — .NET 10+ first-party FIPS 203 ML-KEM public-key import."
+
+[[classify]]
+id = "CRYPTO-838"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.ImportEncapsulationKey$"
+when.args.paramset = "MLKem512"
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "MLKem.ImportEncapsulationKey(MLKemAlgorithm.MLKem512, …) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-839"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.ImportEncapsulationKey$"
+when.args.paramset = "MLKem768"
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "MLKem.ImportEncapsulationKey(MLKemAlgorithm.MLKem768, …) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-840"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.ImportEncapsulationKey$"
+when.args.paramset = "MLKem1024"
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "MLKem.ImportEncapsulationKey(MLKemAlgorithm.MLKem1024, …) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-841"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.ImportEncapsulationKey$"
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "MLKem.ImportEncapsulationKey(…) with a non-literal parameter set — FIPS 203, quantum-resistant, but the parameter set is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-059"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "MLKem")
+    name: (identifier) @fn (#eq? @fn "ImportDecapsulationKey"))
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "MLKemAlgorithm")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", fn = "ident", paramcls = "ident", paramset = "ident" }
+api = "System.Security.Cryptography.MLKem.ImportDecapsulationKey"
+description = "MLKem.ImportDecapsulationKey(MLKemAlgorithm.MLKem768, source) — .NET 10+ first-party FIPS 203 ML-KEM private-key import."
+
+[[classify]]
+id = "CRYPTO-842"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.ImportDecapsulationKey$"
+when.args.paramset = "MLKem512"
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "MLKem.ImportDecapsulationKey(MLKemAlgorithm.MLKem512, …) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-843"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.ImportDecapsulationKey$"
+when.args.paramset = "MLKem768"
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "MLKem.ImportDecapsulationKey(MLKemAlgorithm.MLKem768, …) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-844"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.ImportDecapsulationKey$"
+when.args.paramset = "MLKem1024"
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "MLKem.ImportDecapsulationKey(MLKemAlgorithm.MLKem1024, …) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-845"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.ImportDecapsulationKey$"
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "MLKem.ImportDecapsulationKey(…) with a non-literal parameter set — FIPS 203, quantum-resistant, but the parameter set is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-060"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "MLKem")
+    name: (identifier) @fn (#eq? @fn "ImportPrivateSeed"))
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "MLKemAlgorithm")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", fn = "ident", paramcls = "ident", paramset = "ident" }
+api = "System.Security.Cryptography.MLKem.ImportPrivateSeed"
+description = "MLKem.ImportPrivateSeed(MLKemAlgorithm.MLKem768, source) — .NET 10+ first-party FIPS 203 ML-KEM seed-form private-key import."
+
+[[classify]]
+id = "CRYPTO-846"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.ImportPrivateSeed$"
+when.args.paramset = "MLKem512"
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "MLKem.ImportPrivateSeed(MLKemAlgorithm.MLKem512, …) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-847"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.ImportPrivateSeed$"
+when.args.paramset = "MLKem768"
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "MLKem.ImportPrivateSeed(MLKemAlgorithm.MLKem768, …) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-848"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.ImportPrivateSeed$"
+when.args.paramset = "MLKem1024"
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "MLKem.ImportPrivateSeed(MLKemAlgorithm.MLKem1024, …) — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-849"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.ImportPrivateSeed$"
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "MLKem.ImportPrivateSeed(…) with a non-literal parameter set — FIPS 203, quantum-resistant, but the parameter set is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-061"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "MLKem")
+    name: (identifier) @fn (#eq? @fn "ImportPkcs8PrivateKey")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.MLKem.ImportPkcs8PrivateKey"
+description = "MLKem.ImportPkcs8PrivateKey(source) — .NET 10+ first-party FIPS 203 ML-KEM PKCS#8 private-key import; the parameter set is encoded in the key material, not the call site."
+
+[[classify]]
+id = "CRYPTO-850"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.ImportPkcs8PrivateKey$"
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "MLKem.ImportPkcs8PrivateKey(…) — FIPS 203, quantum-resistant, but the parameter set is carried inside the PKCS#8 encoding and is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-062"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "MLKem")
+    name: (identifier) @fn (#eq? @fn "ImportSubjectPublicKeyInfo")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.MLKem.ImportSubjectPublicKeyInfo"
+description = "MLKem.ImportSubjectPublicKeyInfo(source) — .NET 10+ first-party FIPS 203 ML-KEM SubjectPublicKeyInfo import; the parameter set is encoded in the key material, not the call site."
+
+[[classify]]
+id = "CRYPTO-851"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.ImportSubjectPublicKeyInfo$"
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "MLKem.ImportSubjectPublicKeyInfo(…) — FIPS 203, quantum-resistant, but the parameter set is carried inside the SubjectPublicKeyInfo encoding and is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-063"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "MLKem")
+    name: (identifier) @fn (#eq? @fn "ImportFromPem")))
+"""
+captures = { cls = "ident", fn = "ident" }
+api = "System.Security.Cryptography.MLKem.ImportFromPem"
+description = "MLKem.ImportFromPem(source) — .NET 10+ first-party FIPS 203 ML-KEM PEM import; the parameter set is encoded in the key material, not the call site."
+
+[[classify]]
+id = "CRYPTO-852"
+when.api = "^System\\.Security\\.Cryptography\\.MLKem\\.ImportFromPem$"
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "MLKem.ImportFromPem(…) — FIPS 203, quantum-resistant, but the parameter set is carried inside the PEM-encoded key material and is not statically knowable at this call site."

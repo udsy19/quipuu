@@ -33,4 +33,35 @@ public class PqcNativeFixture
     {
         using var kem = MLKem.GenerateKey(chosen);
     }
+
+    // #Y51 — MLKem.Import* key-loading paths, not just GenerateKey
+    public static void MlKemImportEncapsulationKey(byte[] source)
+    {
+        using var kem = MLKem.ImportEncapsulationKey(MLKemAlgorithm.MLKem768, source);
+    }
+
+    public static void MlKemImportDecapsulationKey(byte[] source)
+    {
+        using var kem = MLKem.ImportDecapsulationKey(MLKemAlgorithm.MLKem1024, source);
+    }
+
+    public static void MlKemImportPrivateSeed(byte[] source)
+    {
+        using var kem = MLKem.ImportPrivateSeed(MLKemAlgorithm.MLKem512, source);
+    }
+
+    public static void MlKemImportPkcs8PrivateKey(byte[] source)
+    {
+        using var kem = MLKem.ImportPkcs8PrivateKey(source);
+    }
+
+    public static void MlKemImportSubjectPublicKeyInfo(byte[] source)
+    {
+        using var kem = MLKem.ImportSubjectPublicKeyInfo(source);
+    }
+
+    public static void MlKemImportFromPem(string source)
+    {
+        using var kem = MLKem.ImportFromPem(source);
+    }
 }

@@ -3792,3 +3792,52 @@ this), not a gap discovered and skipped.
 **Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
 --all-targets -- -D warnings` clean; `cargo test --workspace` all passing (one new fixture test,
 `scans_c_openssl_generic_keygen`).
+
+## `#Y51`: C# `MLKem.Import*` key-loading paths gain coverage — 2026-08-30
+
+**Closed a coverage gap the `.NET 10+` PQC block had since it shipped (`#Y43`).** `csharp.toml`'s
+`MLKem`/`MLDsa`/`SlhDsa` rules only recognized `GenerateKey` — a codebase that *loads* a
+provisioned FIPS 203 key (from a vault, a certificate store, or a wire payload) rather than
+generating one at runtime produced zero findings, regardless of how the key was used afterward.
+Method names sourced from backlog `#Y51`'s own filing, itself derived from CBOMkit's
+`DotNetMLKem.java` (PR #520, merged 2026-08-26) and cross-checked against `learn.microsoft.com`'s
+`MLKem` class page: `ImportEncapsulationKey`, `ImportDecapsulationKey`, and `ImportPrivateSeed`
+take the same `MLKemAlgorithm` first argument `GenerateKey` does; `ImportPkcs8PrivateKey`,
+`ImportSubjectPublicKeyInfo`, and `ImportFromPem` carry no algorithm argument at all — the
+parameter set is encoded inside the key material, not the call site. Scope is `MLKem` only, not
+`MLDsa`/`SlhDsa` — those classes' own import-method names were not independently verified this
+cycle, and guessing at API surface this repo cannot check (`P2` forbids fetching
+`learn.microsoft.com` at scan time, and `P1` forbids inferring it) would risk shipping a rule for a
+method that does not exist. Filed as follow-up, not silently dropped.
+
+**First change:** six new rows in `scanner.rs`'s `CSHARP_CALLEE_APIS` table (there is no query
+engine — the `[[extract]]` TOML blocks are documentation, per `rules.rs`'s
+`every_classify_rule_targets_an_api_the_extractor_can_emit` gate — the callee table is what
+`api_surface()` actually reflects) and one `populate_args` match arm extended to also cover
+`ImportEncapsulationKey`/`ImportDecapsulationKey`/`ImportPrivateSeed`, reusing `GenerateKey`'s
+existing arg-0 paramset capture unchanged. 15 new classify arms (`CRYPTO-838`..`852`) in
+`csharp.toml`: three parameter sets × three algorithm-parameterized methods, each with an
+`ml-kem-unattributed` fallback for a non-literal parameter set (four arms), plus one
+`ml-kem-unattributed` arm each for the three no-algorithm-argument import methods.
+
+**Corpus effect: 0 findings added, 0 removed, 0 reclassified.** Full 150-project pre/post dump
+(`work/y51_pre.json` ↔ `work/y51_post.json`, both 1660 findings, row-identical; script
+`work/y51_precision.py`; pre-change binary built from commit `a761fda` in a throwaway worktree).
+Expected, not a surprise: `MLKem.Import*` is brand-new `.NET 10` preview surface with (per the
+backlog filing's own honest framing) no known corpus-B consumer yet — same shape `#Y43`/`#Y44`
+already documented for other zero-corpus-demand coverage additions in this series. Verified
+instead against a planted fixture covering all six methods and all three parameter positions
+(`tests/fixtures/csharp/PqcNative.cs`, `cargo test scans_csharp_mlkem_import_paths`, 0/6 → 6/6
+detected).
+
+**Precision: 97.09% held, exactly — a falsification, not a re-derivation.** `work/y51_precision.py`
+reproduces the anchored 97.09% (600 TP / 18 FP pooled) on the pre dump before printing anything
+else, then asserts the two dumps are row-identical. They are.
+
+**Not done, said out loud:** the `MLKemCng`/`MLKemOpenSsl` platform-derived subclasses backlog
+`#Y51` also named, and `MLDsa`/`SlhDsa`'s own import-method equivalents, are real gaps this change
+does not close — out of this item's verified scope, not discovered and skipped.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (one new fixture test,
+`scans_csharp_mlkem_import_paths`).
