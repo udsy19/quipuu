@@ -102,6 +102,32 @@ void openssl_groups_list_hybrid(SSL *ssl) {
     SSL_set1_groups_list(ssl, "X25519MLKEM768:?curveSM2:DEFAULT");
 }
 
+/* #Y62(b) / CRYPTO-912, CRYPTO-914 — SSL_CONF_cmd's "Groups" config-string
+   form, literal value: reuses (a)'s classify block through the
+   command-dispatch API rather than the direct setter. */
+void openssl_conf_cmd_groups_literal(SSL_CONF_CTX *cctx) {
+    SSL_CONF_cmd(cctx, "Groups", "X25519:P-256");
+}
+
+/* #Y62(b) / CRYPTO-915 — the pre-3.0 "Curves" alias for the same command,
+   command-name matching is case-insensitive per SSL_CONF_cmd(3). */
+void openssl_conf_cmd_curves_alias(SSL_CONF_CTX *cctx) {
+    SSL_CONF_cmd(cctx, "CURVES", "P-384");
+}
+
+/* #Y62(b) — the overwhelming-majority real shape: the value is sourced from
+   a config file/CLI argument, not a literal. Must not fire — P4 forbids
+   resolving what a runtime config value would be. */
+void openssl_conf_cmd_groups_variable(SSL_CONF_CTX *cctx, const char *value) {
+    SSL_CONF_cmd(cctx, "Groups", value);
+}
+
+/* #Y62(b) — a different SSL_CONF_cmd command name; must not fire even though
+   the value looks like a group list. */
+void openssl_conf_cmd_other_command(SSL_CONF_CTX *cctx) {
+    SSL_CONF_cmd(cctx, "Options", "X25519");
+}
+
 /* CPP-040 / CRYPTO-440 — libsodium box keypair */
 void sodium_box_kp(void) {
     unsigned char pk[crypto_box_PUBLICKEYBYTES];

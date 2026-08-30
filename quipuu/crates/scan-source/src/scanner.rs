@@ -713,9 +713,10 @@ fn walk(
         out.extend(ms);
     }
     // OpenSSL `SSL_CTX_set1_groups_list(ctx, "P-521:X25519MLKEM768")` /
-    // `SSL_set1_groups_list(ssl, "...")` — the colon-separated TLS
-    // key-exchange group preference list, C's counterpart to Java's
-    // `setNamedGroups`/`jdk.tls.namedGroups` above. Backlog `#Y62(a)`.
+    // `SSL_set1_groups_list(ssl, "...")` / `SSL_CONF_cmd(ctx, "Groups",
+    // "...")` — the colon-separated TLS key-exchange group preference
+    // list, C's counterpart to Java's `setNamedGroups`/`jdk.tls.namedGroups`
+    // above. Backlog `#Y62(a)`/`#Y62(b)`.
     if matches!(language, Language::C | Language::Cpp)
         && kind == "call_expression"
         && let Some(ms) = match_c_ssl_groups_list(node, source)
@@ -1049,13 +1050,20 @@ fn match_java_set_property_named_groups(call: Node<'_>, source: &[u8]) -> Option
 }
 
 /// Match OpenSSL `SSL_CTX_set1_groups_list(ctx, "P-521:X25519MLKEM768")` /
-/// `SSL_set1_groups_list(ssl, "...")` — C's counterpart to
-/// `match_java_set_property_named_groups` above, both structurally (a
-/// delimited string, not an array) and semantically (TLS group-preference
-/// hardening config, not PQC adoption). Reuses the same `algorithm-table.toml`
-/// group ids java.toml's `setNamedGroups` classify arms already cover, under
-/// a new api so the classify rules stay pack-local (`cpp.toml`, backlog
-/// `#Y62(a)`).
+/// `SSL_set1_groups_list(ssl, "...")` / `SSL_CONF_cmd(ctx, "Groups", "...")`
+/// — C's counterpart to `match_java_set_property_named_groups` above, both
+/// structurally (a delimited string, not an array) and semantically (TLS
+/// group-preference hardening config, not PQC adoption). Reuses the same
+/// `algorithm-table.toml` group ids java.toml's `setNamedGroups` classify
+/// arms already cover, under a new api so the classify rules stay
+/// pack-local (`cpp.toml`, backlog `#Y62(a)`/`#Y62(b)`).
+///
+/// `SSL_CONF_cmd`'s first argument is a case-insensitive command name
+/// (`SSL_CONF_cmd(3)`): "Groups" and its pre-3.0 alias "Curves" both select
+/// this list, and only fire when *both* the command name and the value are
+/// string literals — the overwhelming majority of real `SSL_CONF_cmd` sites
+/// pass a config-file-sourced variable as the value, per `#Y62(b)`'s own
+/// filing, and those correctly produce no match here rather than a guess.
 ///
 /// OpenSSL's list grammar (`SSL_CTX_set1_groups_list(3)`) allows a `*`
 /// predicted-keyshare prefix, a `?` ignore-if-unknown prefix, a `-` remove
@@ -1067,11 +1075,22 @@ fn match_java_set_property_named_groups(call: Node<'_>, source: &[u8]) -> Option
 fn match_c_ssl_groups_list(call: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch>> {
     let function = call.child_by_field_name("function")?;
     let fn_name = node_text(function, source);
-    if fn_name != "SSL_CTX_set1_groups_list" && fn_name != "SSL_set1_groups_list" {
-        return None;
-    }
     let args = call.child_by_field_name("arguments")?;
-    let list_node = nth_real_arg(args, 1)?;
+    let list_node = if fn_name == "SSL_CTX_set1_groups_list" || fn_name == "SSL_set1_groups_list" {
+        nth_real_arg(args, 1)?
+    } else if fn_name == "SSL_CONF_cmd" {
+        let cmd_node = nth_real_arg(args, 1)?;
+        if cmd_node.kind() != "string_literal" {
+            return None;
+        }
+        let cmd_text = string_literal_value(cmd_node, source);
+        if !cmd_text.eq_ignore_ascii_case("Groups") && !cmd_text.eq_ignore_ascii_case("Curves") {
+            return None;
+        }
+        nth_real_arg(args, 2)?
+    } else {
+        return None;
+    };
     if list_node.kind() != "string_literal" {
         return None;
     }

@@ -938,9 +938,9 @@ fn scans_c_ssl_groups_list_splits_the_colon_and_tuple_separated_names() {
 
     for (algorithm_id, expected) in [
         ("ecdh-p521", 1),       // P-521
-        ("ecdh-p256", 1),       // *P-256 — the keyshare-prediction prefix must be stripped
-        ("ecdh-p384", 1),       // P-384
-        ("x25519", 1),          // X25519
+        ("ecdh-p256", 2),       // *P-256 (must strip keyshare prefix) + SSL_CONF_cmd's P-256
+        ("ecdh-p384", 2),       // P-384 + SSL_CONF_cmd "CURVES" alias's P-384
+        ("x25519", 2),          // X25519 + SSL_CONF_cmd's X25519
         ("x25519-mlkem768", 1), // X25519MLKEM768
     ] {
         let n = group_findings
@@ -959,13 +959,14 @@ fn scans_c_ssl_groups_list_splits_the_colon_and_tuple_separated_names() {
     }
 
     // `?curveSM2` (unknown name, ignorable prefix) and `DEFAULT` (the
-    // built-in-list pseudo-group) name no algorithm and must not fire — so
-    // the fixture's two calls produce exactly the 5 group findings above,
-    // nothing more.
+    // built-in-list pseudo-group) name no algorithm and must not fire; the
+    // SSL_CONF_cmd variable-value and non-Groups-command fixture calls must
+    // not fire either — so the fixture produces exactly the 8 group
+    // findings above, nothing more.
     assert_eq!(
         group_findings.len(),
-        5,
-        "curveSM2 and DEFAULT must not add findings: {:#?}",
+        8,
+        "curveSM2, DEFAULT, the SSL_CONF_cmd variable value, and the non-Groups command must not add findings: {:#?}",
         group_findings
             .iter()
             .map(|f| &f.algorithm_id)
