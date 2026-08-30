@@ -2112,6 +2112,16 @@ const C_CALLEE_APIS: &[(&str, &str)] = &[
     // as `alg`.
     ("OQS_KEM_new", "liboqs.OQS_KEM_new"),
     ("OQS_SIG_new", "liboqs.OQS_SIG_new"),
+    // OpenSSL 3.0+'s own generic keygen entry points — the documented
+    // replacement for the deprecated typed functions above (RSA_generate_key,
+    // EC_KEY_generate_key, ...). The algorithm is a runtime string argument
+    // rather than baked into the function name, same shape as the liboqs
+    // heap-form pair immediately above. Backlog #Y52.
+    (
+        "EVP_PKEY_CTX_new_from_name",
+        "openssl.EVP_PKEY_CTX_new_from_name",
+    ),
+    ("EVP_PKEY_Q_keygen", "openssl.EVP_PKEY_Q_keygen"),
 ];
 
 fn match_c_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
@@ -2479,6 +2489,20 @@ fn populate_args(
             // `nth_arg_call_ident` already falls back to a plain identifier
             // when the argument isn't a call, which is exactly this shape.
             if let Some(alg) = nth_arg_call_ident(args_node, 0, source) {
+                out.insert("alg".into(), ArgValue::Str(alg));
+            }
+        }
+        (Language::C | Language::Cpp, "openssl.EVP_PKEY_CTX_new_from_name") => {
+            // EVP_PKEY_CTX_new_from_name(libctx, name, propq) — arg 1 is the
+            // algorithm name string.
+            if let Some(alg) = nth_arg_string(args_node, 1, source) {
+                out.insert("alg".into(), ArgValue::Str(alg));
+            }
+        }
+        (Language::C | Language::Cpp, "openssl.EVP_PKEY_Q_keygen") => {
+            // EVP_PKEY_Q_keygen(libctx, propq, type, ...) — arg 2 is the
+            // algorithm name string.
+            if let Some(alg) = nth_arg_string(args_node, 2, source) {
                 out.insert("alg".into(), ArgValue::Str(alg));
             }
         }

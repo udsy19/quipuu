@@ -3091,6 +3091,39 @@ fn scans_c_liboqs_heap_form_sig_slh_dsa() {
     );
 }
 
+/// Backlog `#Y52`: OpenSSL 3.0+'s own generic keygen API
+/// (`EVP_PKEY_CTX_new_from_name` / `EVP_PKEY_Q_keygen`) had zero coverage —
+/// the documented replacement for the deprecated typed functions
+/// (`RSA_generate_key_ex`, ...) already covered above. Both classical and PQC
+/// algorithm names must resolve, across both call shapes.
+#[test]
+fn scans_c_openssl_generic_keygen() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-484", "rsa-unattributed"), // EVP_PKEY_CTX_new_from_name(libctx, "RSA", NULL)
+        ("CRYPTO-485", "ecdsa-unattributed"), // EVP_PKEY_CTX_new_from_name(libctx, "EC", NULL)
+        ("CRYPTO-486", "dh-unattributed"),  // EVP_PKEY_Q_keygen(libctx, NULL, "DH")
+        ("CRYPTO-489", "ml-kem-1024"),      // EVP_PKEY_Q_keygen(libctx, NULL, "ML-KEM-1024")
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in cpp/crypto.c; got: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+}
+
 /// Backlog `#Y47`: pyca/cryptography's own first-party ML-KEM/ML-DSA classes
 /// had no classify arm at all — `python.toml` recognized every classical
 /// primitive in the library but not the two it migrated to FIPS 203/204.

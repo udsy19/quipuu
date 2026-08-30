@@ -135,3 +135,17 @@ void liboqs_sig_heap_slh_dsa(void) {
 void liboqs_stfl_out_of_scope(void) {
     OQS_SIG_STFL *sig = OQS_SIG_STFL_new("LMS_SHA256_H10_W8");
 }
+
+/* CPP-064 / CRYPTO-484..486 — OpenSSL 3.0+ generic keygen, classical algorithms */
+void openssl_generic_keygen_classical(OSSL_LIB_CTX *libctx) {
+    EVP_PKEY_CTX *rsa_ctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA", NULL);
+    EVP_PKEY_CTX *ec_ctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", NULL);
+    EVP_PKEY *dh_key = EVP_PKEY_Q_keygen(libctx, NULL, "DH");
+}
+
+/* CPP-065 / CRYPTO-489 — OpenSSL 3.0+ generic keygen, ML-KEM-1024 via the
+   one-shot EVP_PKEY_Q_keygen form (mirrors #Y52's cited
+   ml_kem_evp_extra_test.c call shape). */
+void openssl_generic_keygen_ml_kem(OSSL_LIB_CTX *libctx) {
+    EVP_PKEY *kem_key = EVP_PKEY_Q_keygen(libctx, NULL, "ML-KEM-1024");
+}

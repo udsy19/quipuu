@@ -3736,3 +3736,59 @@ the corpus rather than derived from it.
 
 **Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
 --all-targets -- -D warnings` clean; `cargo test --workspace` all passing, unchanged counts.
+
+## `#Y52`: OpenSSL 3.0+'s generic keygen API (`EVP_PKEY_CTX_new_from_name` / `EVP_PKEY_Q_keygen`) — 2026-08-30
+
+**Closed a zero-coverage gap in `cpp.toml`'s own stated scope.** The file's header comment has
+claimed `EVP_PKEY_keygen` coverage since it was written; no rule for it, or for either of OpenSSL
+3.0's documented generic-keygen entry points, ever existed (`grep -n
+"EVP_PKEY_CTX_new_from_name\|EVP_PKEY_Q_keygen" crates/core/data/rules/cpp.toml` — zero hits before
+this change). These two functions are OpenSSL's own replacement for the deprecated typed keygen
+functions `cpp.toml` already covers (`RSA_generate_key_ex`, `RSA_generate_key`); the algorithm is a
+runtime string-literal argument rather than baked into the function name, the same shape as
+liboqs's heap-form `OQS_KEM_new`/`OQS_SIG_new` pair already in the file.
+
+**First change:** two rows in `scanner.rs`'s `C_CALLEE_APIS` table (there is no query engine — the
+`[[extract]]` TOML blocks are documentation, per the file's own comment and `rules.rs`'s
+`every_classify_rule_targets_an_api_the_extractor_can_emit` gate — the callee table is what
+`api_surface()` actually reflects), a match arm each capturing the algorithm-name string at its
+respective argument position (`EVP_PKEY_CTX_new_from_name(libctx, name, propq)`: arg 1;
+`EVP_PKEY_Q_keygen(libctx, propq, type, ...)`: arg 2, via the existing `nth_arg_string` helper), and
+21 classify arms (`CRYPTO-484`..`504`) sharing one `when.api` regex over both functions: RSA, EC
+(→ `ecdsa-unattributed`, same reasoning as `CRYPTO-211` in `java.toml` for
+`KeyPairGenerator.getInstance("EC")` — the curve is set separately and Shor breaks every curve, so
+the migration verdict is exact even though the classical strength is not), DH, the three ML-KEM and
+three ML-DSA parameter sets, and the twelve "pure" SLH-DSA parameter sets liboqs's own heap-form
+rules already cover. `cpp.toml`'s header comment is corrected in the same diff to name the two real
+functions instead of the never-covered one.
+
+**Corpus effect: 5 findings added, 0 removed, 0 reclassified.** Full 150-project pre/post dump
+(`work/y52_pre.json` ↔ `work/y52_post.json`, 1655 → 1660 findings; script `work/y52_precision.py`;
+pre-change binary built from commit `0427cf1` in a throwaway worktree). All 5 additions are on
+`openssl/openssl` itself and were hand-labelled by opening the cited line: three
+`EVP_PKEY_CTX_new_from_name(libctx, "EC", propq)` sites (`crypto/hpke/hpke.c:110` and `:1333`,
+feeding `EVP_PKEY_paramgen`/`EVP_PKEY_keygen_init` in HPKE's NIST-curve KEM path;
+`crypto/cms/cms_ec.c:49`, decoding a CMS recipient's EC domain parameters) and two
+`EVP_PKEY_CTX_new_from_name(..., "DH", ...)` sites (`ssl/t1_lib.c:4506` and
+`ssl/statem/statem_clnt.c:2820`, building the server's and client's classic-DHE key object for a
+TLS `ServerKeyExchange`) — **5 TP, 0 FP, 0 DEPENDS**, none inside a test, a disabled branch, or a
+comment. Verified additionally against a planted fixture covering both call shapes and both
+classical and PQC names (`tests/fixtures/cpp/crypto.c`, `cargo test
+scans_c_openssl_generic_keygen`, 0/4 → 4/4 detected).
+
+**Precision: 97.06% → 97.09% (95% CI 95.4–98.1), `work/y52_precision.py`.** The script reproduces
+the anchored 97.06% on the pre dump before printing anything else, then appends the 5 hand-labelled
+TPs to the same 613-row audited pool the anchor rests on: 600/618 = 97.09%. Read as precision held
+with coverage added, not as an improvement — the movement is the arithmetic effect of appending 5
+fully-audited findings to a sample the rest of which is not re-drawn, the 5 are sampled at 100%
+against roughly 20% elsewhere (biasing the number upward, same caveat every prior coverage-add cycle
+in this series has carried), and the new figure sits well inside the prior interval.
+
+**Not done, said out loud:** ED25519/ED448/X25519/X448 and DSA are real OpenSSL 3.0+ generic-keygen
+algorithm names this change does not add a classify arm for — out of this item's stated scope
+(RSA/EC/DH plus the ML-KEM/ML-DSA/SLH-DSA families already named by the backlog entry that filed
+this), not a gap discovered and skipped.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (one new fixture test,
+`scans_c_openssl_generic_keygen`).
