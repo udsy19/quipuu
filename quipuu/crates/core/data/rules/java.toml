@@ -476,6 +476,54 @@ algorithm_id = "sha-256"
 severity_hint = "auto"
 message = "SHA-256 hash in MessageDigest.getInstance('{algo}'). Quantum-safe for hashing."
 
+# CRYPTO-220..222 covered MD5/SHA-1/SHA-256, the three names in the original
+# fixture, but MessageDigest.getInstance also accepts every other JCA
+# standard digest name, all with rows already in algorithm-table.toml
+# (sha-224, sha-384, sha-512, sha3-256, sha3-512 — used by the equivalent Go
+# and Rust hash rules). A call with any of those five names silently
+# produced zero findings; same shape as `#Y56`/`#Y57`/`#Y58`, but here the
+# gap is missing enum arms rather than a missing catch-all.
+
+[[classify]]
+id = "CRYPTO-899"
+when.api = "^java\\.security\\.MessageDigest\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SHA-?224\"?$" }
+algorithm_id = "sha-224"
+severity_hint = "auto"
+message = "SHA-224 hash in MessageDigest.getInstance('{algo}'). Quantum-safe for hashing."
+
+[[classify]]
+id = "CRYPTO-900"
+when.api = "^java\\.security\\.MessageDigest\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SHA-?384\"?$" }
+algorithm_id = "sha-384"
+severity_hint = "auto"
+message = "SHA-384 hash in MessageDigest.getInstance('{algo}'). Quantum-safe for hashing."
+
+[[classify]]
+id = "CRYPTO-901"
+when.api = "^java\\.security\\.MessageDigest\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SHA-?512\"?$" }
+algorithm_id = "sha-512"
+severity_hint = "auto"
+message = "SHA-512 hash in MessageDigest.getInstance('{algo}'). Quantum-safe for hashing."
+
+[[classify]]
+id = "CRYPTO-902"
+when.api = "^java\\.security\\.MessageDigest\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SHA3-256\"?$" }
+algorithm_id = "sha3-256"
+severity_hint = "auto"
+message = "SHA3-256 hash in MessageDigest.getInstance('{algo}'). Quantum-safe for hashing."
+
+[[classify]]
+id = "CRYPTO-903"
+when.api = "^java\\.security\\.MessageDigest\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SHA3-512\"?$" }
+algorithm_id = "sha3-512"
+severity_hint = "auto"
+message = "SHA3-512 hash in MessageDigest.getInstance('{algo}'). Quantum-safe for hashing."
+
 # ============================================================================
 # org.bouncycastle — BC provider detection
 # ============================================================================

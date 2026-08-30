@@ -71,6 +71,31 @@ public class Main {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
     }
 
+    // JAV-020 / CRYPTO-899 — SHA-224
+    public static void hashSha224() throws Exception {
+        MessageDigest md = MessageDigest.getInstance("SHA-224");
+    }
+
+    // JAV-020 / CRYPTO-900 — SHA-384
+    public static void hashSha384() throws Exception {
+        MessageDigest md = MessageDigest.getInstance("SHA-384");
+    }
+
+    // JAV-020 / CRYPTO-901 — SHA-512
+    public static void hashSha512() throws Exception {
+        MessageDigest md = MessageDigest.getInstance("SHA-512");
+    }
+
+    // JAV-020 / CRYPTO-902 — SHA3-256
+    public static void hashSha3_256() throws Exception {
+        MessageDigest md = MessageDigest.getInstance("SHA3-256");
+    }
+
+    // JAV-020 / CRYPTO-903 — SHA3-512
+    public static void hashSha3_512() throws Exception {
+        MessageDigest md = MessageDigest.getInstance("SHA3-512");
+    }
+
     // JAV-030 / CRYPTO-233 — BouncyCastle provider
     public static void bcProvider() {
         BouncyCastleProvider prov = new BouncyCastleProvider();

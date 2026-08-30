@@ -378,6 +378,30 @@ fn scans_java_messagedigest_sha1() {
 }
 
 #[test]
+fn scans_java_messagedigest_wider_digests() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Main.java"))
+        .expect("scan succeeds");
+
+    for (rule_id, algorithm_id) in [
+        ("CRYPTO-899", "sha-224"),
+        ("CRYPTO-900", "sha-384"),
+        ("CRYPTO-901", "sha-512"),
+        ("CRYPTO-902", "sha3-256"),
+        ("CRYPTO-903", "sha3-512"),
+    ] {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in Java fixture"
+        );
+    }
+}
+
+#[test]
 fn scans_java_keypairgenerator_rsa() {
     let b = load_builtins().unwrap();
     let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
