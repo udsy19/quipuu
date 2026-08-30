@@ -1,3 +1,4 @@
+import javax.crypto.Cipher;
 import javax.crypto.KEM;
 import java.security.KeyPairGenerator;
 import java.security.Signature;
@@ -40,5 +41,25 @@ public class Pqc {
     // JAV-090 / CRYPTO-790 — SLH-DSA-SHAKE-128S signature
     public static void slhDsaSignature() throws Exception {
         Signature s = Signature.getInstance("SLH-DSA-SHAKE-128S", "BC");
+    }
+
+    // JAV-010 / CRYPTO-1006 — HQC-128 keypair generation (BouncyCastle)
+    public static void hqcKeypair() throws Exception {
+        KeyPairGenerator g = KeyPairGenerator.getInstance("HQC-128", "BCPQC");
+    }
+
+    // JAV-010 / CRYPTO-1009 — HQC family-generic name, no parameter set stated
+    public static void hqcKeypairUnattributed() throws Exception {
+        KeyPairGenerator g = KeyPairGenerator.getInstance("HQC", "BCPQC");
+    }
+
+    // JAV-040 / CRYPTO-1011 — HQC-192 encapsulation object
+    public static void hqcKem() throws Exception {
+        KEM kem = KEM.getInstance("HQC-192");
+    }
+
+    // JAV-001 / CRYPTO-1004 — HQC-256 cipher
+    public static void hqcCipher() throws Exception {
+        Cipher c = Cipher.getInstance("HQC-256");
     }
 }

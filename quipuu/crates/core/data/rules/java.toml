@@ -138,6 +138,42 @@ algorithm_id = "aes-unattributed-gcm"
 severity_hint = "auto"
 message = "AES-GCM in Cipher.getInstance('{spec}'). Good AEAD mode. The key size is not in this string — it comes from the SecretKey, so this finding asserts the mode only. Confirm 256-bit key."
 
+# --- PQC candidate: HQC, BouncyCastle's own PKE/Cipher JCA registration -----
+# org.bouncycastle.pqc.jcajce.provider.HQC's Mappings.configure() registers
+# HQC under Cipher.getInstance as well as KeyPairGenerator/KEM (Backlog
+# #Y80) — same generic-plus-qualified name shapes as those two below.
+[[classify]]
+id = "CRYPTO-1002"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)^\"?HQC-128\"?$" }
+algorithm_id = "hqc-128"
+severity_hint = "auto"
+message = "Cipher.getInstance('{spec}') — NIST-selected backup KEM (HQC), FIPS standard pending. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1003"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)^\"?HQC-192\"?$" }
+algorithm_id = "hqc-192"
+severity_hint = "auto"
+message = "Cipher.getInstance('{spec}') — NIST-selected backup KEM (HQC), FIPS standard pending. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1004"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)^\"?HQC-256\"?$" }
+algorithm_id = "hqc-256"
+severity_hint = "auto"
+message = "Cipher.getInstance('{spec}') — NIST-selected backup KEM (HQC), FIPS standard pending. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1005"
+when.api = "^javax\\.crypto\\.Cipher\\.getInstance$"
+when.args.spec = { regex = "(?i)^\"?HQC\"?$" }
+algorithm_id = "hqc-unattributed"
+severity_hint = "auto"
+message = "Cipher.getInstance('{spec}') — NIST-selected backup KEM (HQC), FIPS standard pending, but the parameter set is not stated at this call site (BC's family-generic 'HQC' name)."
+
 # ============================================================================
 # java.security.KeyPairGenerator.getInstance
 # ============================================================================
@@ -360,6 +396,42 @@ algorithm_id = "slh-dsa-unattributed"
 severity_hint = "auto"
 message = "KeyPairGenerator.getInstance('{algo}') — FIPS 205 pre-hash variant, quantum-resistant, but the parameter set is not stated at this call site (BC's family-generic 'HASH-SLH-DSA' name)."
 
+# --- PQC candidate: HQC, BouncyCastle's own KeyPairGenerator registration ---
+# org.bouncycastle.pqc.jcajce.provider.HQC's Mappings.configure() registers
+# both the qualified "HQC-128/192/256" strings and the family-generic "HQC"
+# string (Backlog #Y80) — same generic-vs-qualified split as SLH-DSA above.
+[[classify]]
+id = "CRYPTO-1006"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?HQC-128\"?$" }
+algorithm_id = "hqc-128"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — NIST-selected backup KEM (HQC), FIPS standard pending. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1007"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?HQC-192\"?$" }
+algorithm_id = "hqc-192"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — NIST-selected backup KEM (HQC), FIPS standard pending. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1008"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?HQC-256\"?$" }
+algorithm_id = "hqc-256"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — NIST-selected backup KEM (HQC), FIPS standard pending. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1009"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?HQC\"?$" }
+algorithm_id = "hqc-unattributed"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — NIST-selected backup KEM (HQC), FIPS standard pending, but the parameter set is not stated at this call site (BC's family-generic 'HQC' name; chosen separately via HQCParameterSpec at a later .initialize() call)."
+
 # `KeyPairGenerator.getInstance(keyType)` with `keyType` a variable (netty's
 # `pkitesting/Algorithms.java` is the corpus's own example) matches none of
 # CRYPTO-210..223 above — none of their regexes match the variable's
@@ -420,6 +492,41 @@ when.args.algo = { regex = "(?i)^\"?ML-KEM-1024\"?$" }
 algorithm_id = "ml-kem-1024"
 severity_hint = "auto"
 message = "KEM.getInstance('{algo}') — FIPS 203, quantum-resistant. Migrated key-establishment call site."
+
+# --- PQC candidate: HQC, BouncyCastle's own KEM.getInstance registration ---
+# org.bouncycastle.pqc.jcajce.provider.HQC's Mappings.configure() registers
+# HQC under KEM.getInstance too (Backlog #Y80), qualified and generic alike.
+[[classify]]
+id = "CRYPTO-1010"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?HQC-128\"?$" }
+algorithm_id = "hqc-128"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — NIST-selected backup KEM (HQC), FIPS standard pending. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1011"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?HQC-192\"?$" }
+algorithm_id = "hqc-192"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — NIST-selected backup KEM (HQC), FIPS standard pending. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1012"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?HQC-256\"?$" }
+algorithm_id = "hqc-256"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — NIST-selected backup KEM (HQC), FIPS standard pending. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1013"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?HQC\"?$" }
+algorithm_id = "hqc-unattributed"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — NIST-selected backup KEM (HQC), FIPS standard pending, but the parameter set is not stated at this call site (BC's family-generic 'HQC' name)."
 
 # `KEM.getInstance(algorithmName)` with a variable argument matches none of
 # CRYPTO-227..229 above and vanished from the report entirely. Unlike

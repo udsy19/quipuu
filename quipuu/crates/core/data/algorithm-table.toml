@@ -1036,7 +1036,50 @@ display_name = "Post-quantum KEM (algorithm family not in the quipuu table)"
 family = "PQC-candidate"
 primitive = "kem"
 quantum_status = "PqcDraft"
-notes = "liboqs's OQS_KEM_new(OQS_KEM_alg_<macro>) accepts any KEM the library ships, including candidates this table has no row for yet (HQC — NIST's selected backup KEM, default-on in liboqs since 0.16.0/2026-07-09 — plus BIKE, Classic McEliece, FrodoKEM, NTRUPrime). The call site is unambiguously post-quantum; only the specific family is unattributed. Resolve by hand, or add a dedicated row and classify arm once a family here ships in a production consumer."
+notes = "liboqs's OQS_KEM_new(OQS_KEM_alg_<macro>) accepts any KEM the library ships, including candidates this table has no row for yet (BIKE, Classic McEliece, FrodoKEM, NTRUPrime). HQC — NIST's selected backup KEM, default-on in liboqs since 0.16.0/2026-07-09 — got its own hqc-128/192/256 rows below (Backlog #Y80) once BouncyCastle's own JCA provider gave it a production consumer; this sentinel now covers only the families that still have none. The call site is unambiguously post-quantum; only the specific family is unattributed. Resolve by hand, or add a dedicated row and classify arm once a family here ships in a production consumer."
+
+# HQC — NIST's selected backup KEM (selected 2025-03-11), no FIPS number yet.
+# BouncyCastle's own JCA provider (org.bouncycastle.pqc.jcajce.provider.HQC,
+# shipped inside bcprov-jdk18on) registers both the family-generic "HQC"
+# string and the parameter-qualified "HQC-128"/"HQC-192"/"HQC-256" spellings
+# (Backlog #Y80) — real production classpath surface, not a research fixture,
+# hence dedicated rows rather than folding into kem-unattributed above.
+# Security categories (1/3/5) match the NIST PQC submission's own parameter
+# naming, the same category-per-name convention ML-KEM-512/768/1024 use.
+[[algorithm]]
+id = "hqc-128"
+display_name = "HQC-128"
+family = "PQC-candidate"
+primitive = "kem"
+nist_quantum_security_level = 1
+quantum_status = "PqcDraft"
+notes = "NIST-selected backup KEM (selected 2025-03-11), FIPS standard pending — no FIPS number or OID exists yet. Category 1, equivalent to AES-128 security category."
+
+[[algorithm]]
+id = "hqc-192"
+display_name = "HQC-192"
+family = "PQC-candidate"
+primitive = "kem"
+nist_quantum_security_level = 3
+quantum_status = "PqcDraft"
+notes = "NIST-selected backup KEM (selected 2025-03-11), FIPS standard pending — no FIPS number or OID exists yet. Category 3, equivalent to AES-192 security category."
+
+[[algorithm]]
+id = "hqc-256"
+display_name = "HQC-256"
+family = "PQC-candidate"
+primitive = "kem"
+nist_quantum_security_level = 5
+quantum_status = "PqcDraft"
+notes = "NIST-selected backup KEM (selected 2025-03-11), FIPS standard pending — no FIPS number or OID exists yet. Category 5, equivalent to AES-256 security category."
+
+[[algorithm]]
+id = "hqc-unattributed"
+display_name = "HQC (parameter set not stated at this call site)"
+family = "PQC-candidate"
+primitive = "kem"
+quantum_status = "PqcDraft"
+notes = "BouncyCastle's JCA provider accepts the family-generic 'HQC' string; the parameter set (HQC-128/192/256) is chosen separately, e.g. via HQCParameterSpec at a later .initialize() call this table's classify rules do not trace across statements. The call site is unambiguously HQC; only the parameter set is unattributed."
 
 [[algorithm]]
 id = "sig-unattributed"
