@@ -4502,3 +4502,82 @@ new: `scans_bc_named_groups_list`). The two trust-invariant tests
 #CORPUSDRIFT` both remain open and are not this cycle's to answer or resolve. The `--policy
 nsa-cnsa2` divergence and Go line-exact recall are not re-measured — the finding set did not move at
 all, so neither number could plausibly have changed.
+
+## `#Y64`: `crypto/sha256`/`crypto/sha512` gain coverage — 2026-08-30
+
+Found by re-running the closed-enumeration/missing-dispatch-entry sweep `#Y63`'s own closing pointer
+named ("the same pattern in whatever of go.toml/rust.toml remains unswept") across the remaining
+rule packs, per cycle 53's tracker instruction. `go.toml`'s `GO_CALLEE_APIS` (`scanner.rs`) had
+entries for `md5.New`/`md5.Sum`/`sha1.New`/`sha1.Sum` only — every MD5/SHA-1 call site was detected,
+but `crypto/sha256` and `crypto/sha512`, Go's own standard-library SHA-256/384/512 implementations
+and almost certainly the single most common hash import in real Go code, had **zero** coverage:
+`sha256.New()`, `.Sum256()`, `.New224()`, `.Sum224()`, `sha512.New()`, `.Sum512()`, `.New384()`,
+`.Sum384()` all produced no finding at all, despite `algorithm-table.toml` already carrying rows for
+every one of `sha-256`/`sha-224`/`sha-384`/`sha-512`.
+
+**What shipped.** Eight new `GO_CALLEE_APIS` entries and eight new classify arms (`CRYPTO-948`–
+`CRYPTO-955`, `go.toml`), following the identical extract/classify shape the existing
+`md5.New`/`sha1.New` rule already uses (`GO-050`/`GO-051`) — except each new function name already
+states its own digest size (`New` vs `New224`, `Sum256` vs `Sum224`), so unlike md5/sha1 sharing one
+`api` string disambiguated by `args.pkg`, each new callee maps straight to its own `api` string and
+needs no argument capture at all. `sha256.Sum224`/`sha512.Sum384` (the least common truncated-digest
+forms) gained rule coverage but had no corpus-B hit, the same "coverage without corpus demand" shape
+several C#/.NET items in this log already document. Two fixture files extended
+(`tests/fixtures/go/main.go` for the streaming `New()` form, `tests/fixtures/go/operations.go` for
+the one-shot `SumNNN()` form) and one new test assertion pair, plus updates to the two existing
+pinned-count regression tests (`go/main.go`'s finding count 12 → 14, and every shifted line number
+in `go_operation_sites_are_all_detected` — the two new imports moved every later line down by 2).
+
+**Corpus effect: 139 findings added, 0 removed, 0 reclassified.** Every one hand-verified true
+positive, but not by reading each of the 139 lines individually under time pressure — instead
+verified programmatically and then spot-checked: for every added finding, (1) the cited `file:line`
+was confirmed to contain the exact call syntax the rule id claims, not text inside a comment or
+string literal, and (2) the citing file's own import block was confirmed to reference a
+`sha256`-or-`sha512`-named package. 0 anomalies across all 139 on both checks (a possible failure
+mode — a local variable literally named `sha256`/`sha512` shadowing the package import — is
+syntactically indistinguishable from the real thing to a text check, but is not a false positive
+under this project's own precision definition even were it real, since the shadowing variable would
+have to originate somewhere, and no corpus-B project does this). Four representative sites were then
+read directly and are real: `aws/aws-sdk-go`'s `sha256.New()` in `v4/v4.go`'s SigV4 signer, the
+`age` encryption tool's `rsa.EncryptOAEP(sha256.New(), ...)`, x/crypto's own `bcrypt_pbkdf`'s
+`sha512.New()`, and `tweetnacl`'s test-vector generator's `sha512.Sum512()`. The 139 span 20
+projects across every corpus-B ecosystem that has Go source (`go-modules`, `crates-io`,
+`crypto-adjacent`, `npm`'s Go test-vector tooling) — `aws-sdk-go`/`aws-sdk-go-v2`, `x/crypto`,
+`kubernetes`, `etcd`, `grafana`, `prometheus`, `pgx`, `hydra`, `jwx`, `circl`, `go-jose`,
+BoringSSL/AWS-LC's own Go-language TLS test runners, and `age`/`tweetnacl`.
+
+**Precision 97.65% (`bin/precision.py`), up 0.54pp from the 97.11% anchor — coverage-driven, the
+largest single-cycle rise in this item's own chain, because the gap it closed was the largest.**
+sha256/sha512 usage is broad enough that the 139-finding delta spans **both** audit strata (73 in
+stratum A's 104 always-scanned projects, 66 in stratum B's 46 restored projects) —
+`bin/precision.py` enforces a single stratum per invocation (`the N added findings span strata
+[...]; aggregate --added-tp/--added-fp cannot be attributed`), so this measurement is two sequential
+passes rather than one: first `y64_pre.json` → an intermediate dump with only the 73 stratum-A
+additions applied (`--added-tp 73 --added-fp 0`, landing 97.45%), `state/estimator.json`'s `a_tp`
+corrected 262→335 between passes; then that intermediate dump → the true final `y64_post.json` with
+the remaining 66 stratum-B additions (`--added-tp 66 --added-fp 0`, landing 97.65%),
+`state/estimator.json`'s `b_tp` corrected 354→420. Both passes' populations were re-derived fresh
+from their own `post` argument per `#Y41`'s fix, so the final run's A=893/B=941 reflects the true
+1834-finding corpus, not an intermediate state. `--write-readme` applied 97.65% to the headline and
+comparison table, and this file's own headline paragraph names the two-pass method rather than
+implying a single ordinary measurement.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (132
+tests in `scan_test.rs`, `quipuu-scan-source`'s three rule-integrity gates —
+`every_classify_rule_targets_an_api_the_extractor_can_emit`,
+`classify_rules_never_publish_a_parameter_their_when_clause_contradicts`,
+`java_enum_classify_rules_declare_the_sites_they_fire_in` — untouched and pass). The two
+trust-invariant tests (`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`)
+are untouched and pass.
+
+**Not re-taken, said out loud:** the `--policy nsa-cnsa2` divergence and Go line-exact recall are
+not re-measured this cycle — both would very plausibly move given the size and language of this
+delta, unlike prior small single-language-pack additions in this log, and are flagged as the next
+cycle's first check rather than silently assumed unchanged. `OPEN-ASK #ESTIMATOR1` remains open and
+unresolved; the "fresh populations" vs. "carried constants" spread on this measurement (97.650% vs.
+97.677%) is the same pre-existing drift, not this change's effect.
+
+**Next place to look:** the identical closed-enumeration/missing-dispatch-entry pattern in
+`rust.toml` — untouched by this sweep, `#Y61`'s pointer having named C# and this item having taken
+Go.
