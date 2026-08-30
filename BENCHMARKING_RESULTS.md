@@ -4352,3 +4352,64 @@ cycle's research nor the original filing verified `"-groups"`'s exact spelling a
 `OPEN-ASK #ESTIMATOR1` and `OPEN-ASK #CORPUSDRIFT` both remain open and are not this cycle's to
 answer or resolve. The `--policy nsa-cnsa2` divergence and Go line-exact recall are not re-measured
 — the finding set did not move at all, so neither number could plausibly have changed.
+
+## `#Y62(c)`: rustls `CryptoProvider.kx_groups` gains the same TLS group-preference-list rule — 2026-08-30
+
+Taken from `#Y62`'s own ranking, part (c) — Rust's counterpart to the Go `CurvePreferences` / Java
+`setNamedGroups` / OpenSSL `SSL_CTX_set1_groups_list` rule family (`#Y62a`, `#Y62b`). Filed with an
+explicit precondition: "still needs a prevalence grep against a real corpus before shipping" — this
+item does that grep as part of its own corpus measurement below, not as a separate step.
+
+**What shipped.** New `match_rust_kx_groups` (`scanner.rs`) matches two real shapes, both an array
+of `provider::kx_group::<NAME>` (or bare `<NAME>`) path elements: a `CryptoProvider { kx_groups:
+Cow::Borrowed(&[...]), .. }` field initializer, and a provider crate's own `pub static
+DEFAULT_KX_GROUPS`/`ALL_KX_GROUPS` list definition — the shape that actually holds a literal list in
+rustls-ring/rustls-aws-lc-rs, since a `CryptoProvider` literal usually just names one of those two
+constants rather than repeating the list. `find_array_literal` follows `Cow::Borrowed(&[...])` /
+`Cow::Owned(&[...])` / a bare `&[...]` down to the innermost array; an identifier passthrough (no
+literal at the site) and `vec![...]` macro bodies (a token tree tree-sitter does not structure into
+elements) are both named, unclaimed gaps rather than silently matched. 12 new classify arms
+(`CRYPTO-920`–`CRYPTO-931`) reuse the exact algorithm ids `#Y62(a)`'s OpenSSL arms already publish —
+no new `algorithm-table.toml` rows. Group names verified against rustls-ring's and
+rustls-aws-lc-rs's own `pub mod kx_group` re-exports (`docs.rs/rustls`, fetched 2026-08-30), not
+guessed from the Go/Java/OpenSSL spellings. Fixture covers both shapes plus the identifier-passthrough
+and `vec![...]` non-matches: `cargo test scans_rust_kx_groups_list`, 6/6 expected findings, 0 from
+the two named gaps.
+
+**Corpus effect: 0 findings, either side — a row-identical 1536-finding dump**
+(`work/y62c_pre.json` ↔ `work/y62c_post.json`, pre-change binary built from `a9d6150` — the
+`#Y62(b)` write-up commit — in a throwaway worktree, post-change binary this cycle's tree, both
+dumps taken back-to-back against the same `corpus-clones` checkout). This is the prevalence grep the
+filing required, done for real rather than assumed: corpus B's `crates-io:rustls` project scans only
+`rustls/src/` (`exclude_paths = ["rustls/tests/"]`), and within that subtree the only field
+initializer with a real array literal is `crypto/test_provider.rs:33`'s
+`kx_groups: Cow::Borrowed(&[KEY_EXCHANGE_GROUP])` — a single identifier that names no recognised
+group, so it produces no classify match, correctly. `client/test.rs` and `server/test.rs` each have
+one `Cow::Borrowed(&[FAKE_HYBRID, FAKE_KX_GROUP])`-shaped literal (also unrecognised names, correctly
+unmatched) and several `vec![...]` bodies (the named gap, correctly unmatched). The provider crates'
+own `DEFAULT_KX_GROUPS`/`ALL_KX_GROUPS` definitions — the shape this rule actually targets, e.g.
+`rustls-ring/src/lib.rs:264`'s `pub static ALL_KX_GROUPS: &[&dyn SupportedKxGroup] =
+&[kx_group::X25519, kx_group::SECP256R1, kx_group::SECP384R1];` — sit in a sibling crate directory
+inside the same monorepo clone that `crates-io:rustls`'s `scan_paths` does not reach; `crates-io`
+has no separate `rustls-ring`/`rustls-aws-lc-rs` project entry. The zero is a corpus scan-boundary
+result, not a rule defect — checked by hand-reading every `kx_groups`/`KX_GROUPS` hit in the clone,
+not assumed from the finding count matching.
+
+**Precision 97.16% (`work/y62c_precision.py`, reconstructs the recorded 97.16% baseline from
+`state/estimator.json`'s pooled 616 TP / 18 FP), unchanged — a falsification, not a re-derivation.**
+The two dumps are row-identical, so no TP/FP ratio could have moved. No `state/estimator.json`
+correction needed, same as `#Y62(b)` — there is no TP to fold in.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (130
+tests in `scan_test.rs`, one new: `scans_rust_kx_groups_list`). The two trust-invariant tests
+(`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`) are untouched and pass.
+
+**Not done, said out loud:** part (d) of `#Y62` (BouncyCastle's raw `org.bouncycastle.tls.NamedGroup`)
+remains open. This item's own zero corpus hit means the rule is unverified against any real positive
+in *this* corpus — the fixture is the only evidence the matcher fires correctly at all; a corpus with
+a `rustls-ring`/`rustls-aws-lc-rs` project entry (or any downstream crate whose own source, not
+rustls's, calls `CryptoProvider { kx_groups: ... }` with a literal) would be needed to observe a real
+positive. `OPEN-ASK #ESTIMATOR1` and `OPEN-ASK #CORPUSDRIFT` both remain open and are not this
+cycle's to answer or resolve. The `--policy nsa-cnsa2` divergence and Go line-exact recall are not
+re-measured — the finding set did not move at all, so neither number could plausibly have changed.
