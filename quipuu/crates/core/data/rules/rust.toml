@@ -462,3 +462,110 @@ when.api = "^openssl\\.Rsa\\.generate$"
 algorithm_id = "rsa-unattributed"
 severity_hint = "auto"
 message = "openssl::rsa::Rsa::generate(bit_size) — bit size is a runtime variable; cannot statically verify it meets the 2048-bit floor. Quantum-vulnerable to Shor in any case."
+
+# rustls TLS key-exchange group preference list — `CryptoProvider {
+# kx_groups: Cow::Borrowed(&[provider::kx_group::X25519, …]), .. }` and the
+# provider crates' own `DEFAULT_KX_GROUPS`/`ALL_KX_GROUPS` static list
+# definitions. Rust's counterpart to Go's CurvePreferences (CRYPTO-032..035)
+# and Java's setNamedGroups (CRYPTO-798..810); same group ids, no new
+# algorithm-table.toml rows. There is no query engine — the match is
+# `match_rust_kx_groups` in scanner.rs, not this file's absent [[extract]]
+# block. Names verified against rustls-ring's and rustls-aws-lc-rs's own
+# `pub mod kx_group` re-exports (`docs.rs/rustls`, fetched 2026-08-30).
+# Backlog #Y62(c).
+
+[[classify]]
+id = "CRYPTO-920"
+when.api = "^rustls\\.CryptoProvider\\.kx_groups$"
+when.args.group = "X25519MLKEM768"
+algorithm_id = "x25519-mlkem768"
+severity_hint = "auto"
+message = "rustls kx_groups: X25519MLKEM768 — hybrid X25519 + ML-KEM-768 (FIPS 203). Migrated key-establishment config."
+
+[[classify]]
+id = "CRYPTO-921"
+when.api = "^rustls\\.CryptoProvider\\.kx_groups$"
+when.args.group = "SECP256R1MLKEM768"
+algorithm_id = "secp256r1-mlkem768"
+severity_hint = "auto"
+message = "rustls kx_groups: SECP256R1MLKEM768 — hybrid secp256r1 + ML-KEM-768 (FIPS 203). Migrated key-establishment config."
+
+[[classify]]
+id = "CRYPTO-922"
+when.api = "^rustls\\.CryptoProvider\\.kx_groups$"
+when.args.group = "SECP384R1MLKEM1024"
+algorithm_id = "secp384r1-mlkem1024"
+severity_hint = "auto"
+message = "rustls kx_groups: SECP384R1MLKEM1024 — hybrid secp384r1 + ML-KEM-1024 (FIPS 203). Meets the CNSA 2.0 ML-KEM parameter set."
+
+[[classify]]
+id = "CRYPTO-923"
+when.api = "^rustls\\.CryptoProvider\\.kx_groups$"
+when.args.group = "MLKEM768"
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "rustls kx_groups: MLKEM768 — non-hybrid ML-KEM-768 (FIPS 203) key exchange."
+
+[[classify]]
+id = "CRYPTO-924"
+when.api = "^rustls\\.CryptoProvider\\.kx_groups$"
+when.args.group = "MLKEM1024"
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "rustls kx_groups: MLKEM1024 — non-hybrid ML-KEM-1024 (FIPS 203) key exchange."
+
+[[classify]]
+id = "CRYPTO-925"
+when.api = "^rustls\\.CryptoProvider\\.kx_groups$"
+when.args.group = "X25519"
+algorithm_id = "x25519"
+severity_hint = "auto"
+message = "rustls kx_groups: X25519 — classical ECDH, vulnerable to Shor. Add X25519MLKEM768 first in the list."
+
+[[classify]]
+id = "CRYPTO-926"
+when.api = "^rustls\\.CryptoProvider\\.kx_groups$"
+when.args.group = "SECP256R1"
+algorithm_id = "ecdh-p256"
+severity_hint = "auto"
+message = "rustls kx_groups: SECP256R1 — classical ECDH, quantum-vulnerable. Add X25519MLKEM768 / SECP256R1MLKEM768 first."
+
+[[classify]]
+id = "CRYPTO-927"
+when.api = "^rustls\\.CryptoProvider\\.kx_groups$"
+when.args.group = "SECP384R1"
+algorithm_id = "ecdh-p384"
+severity_hint = "auto"
+message = "rustls kx_groups: SECP384R1 — classical ECDH, quantum-vulnerable. Add SECP384R1MLKEM1024 first."
+
+[[classify]]
+id = "CRYPTO-928"
+when.api = "^rustls\\.CryptoProvider\\.kx_groups$"
+when.args.group = "SECP521R1"
+algorithm_id = "ecdh-p521"
+severity_hint = "auto"
+message = "rustls kx_groups: SECP521R1 — classical ECDH, quantum-vulnerable. Migrate to an ML-KEM hybrid group."
+
+[[classify]]
+id = "CRYPTO-929"
+when.api = "^rustls\\.CryptoProvider\\.kx_groups$"
+when.args.group = "FFDHE2048"
+algorithm_id = "dh-2048"
+severity_hint = "auto"
+message = "rustls kx_groups: FFDHE2048 — finite-field DH (RFC 7919), quantum-vulnerable. Migrate to an ML-KEM hybrid group."
+
+[[classify]]
+id = "CRYPTO-930"
+when.api = "^rustls\\.CryptoProvider\\.kx_groups$"
+when.args.group = "FFDHE3072"
+algorithm_id = "dh-3072"
+severity_hint = "auto"
+message = "rustls kx_groups: FFDHE3072 — finite-field DH (RFC 7919), quantum-vulnerable. Migrate to an ML-KEM hybrid group."
+
+[[classify]]
+id = "CRYPTO-931"
+when.api = "^rustls\\.CryptoProvider\\.kx_groups$"
+when.args.group = "FFDHE4096"
+algorithm_id = "dh-4096"
+severity_hint = "auto"
+message = "rustls kx_groups: FFDHE4096 — finite-field DH (RFC 7919), quantum-vulnerable. Migrate to an ML-KEM hybrid group."

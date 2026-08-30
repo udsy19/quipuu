@@ -763,6 +763,16 @@ fn walk(
     {
         out.push(m);
     }
+    // rustls `kx_groups: Cow::Borrowed(&[provider::kx_group::X25519, …])` and
+    // `pub static DEFAULT_KX_GROUPS: &[&dyn SupportedKxGroup] = &[…]` —
+    // Rust's counterpart to Go's CurvePreferences / Java's setNamedGroups.
+    // Backlog `#Y62(c)`.
+    if language == Language::Rust
+        && matches!(kind, "field_initializer" | "const_item" | "static_item")
+        && let Some(ms) = match_rust_kx_groups(node, source)
+    {
+        out.extend(ms);
+    }
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
         walk(
@@ -1123,6 +1133,90 @@ fn match_c_ssl_groups_list(call: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch
     }
 }
 
+/// Match rustls's TLS key-exchange group preference list — Rust's
+/// counterpart to `match_go_curve_preferences` / `match_java_set_named_groups`
+/// / `match_c_ssl_groups_list` above. Two real shapes, both an array of
+/// `provider::kx_group::<NAME>` (or bare `<NAME>`) path elements:
+///
+/// * a `CryptoProvider { kx_groups: Cow::Borrowed(&[...]), .. }` field
+///   initializer (the shape `#Y62`'s filing named), and
+/// * a provider crate's own `pub static DEFAULT_KX_GROUPS: &[&dyn
+///   SupportedKxGroup] = &[...]` / `ALL_KX_GROUPS` definition — the one that
+///   actually holds a literal list in rustls-ring/rustls-aws-lc-rs; the
+///   `CryptoProvider` literal itself usually just names one of these two
+///   constants rather than repeating the list.
+///
+/// `vec![...]` macro bodies are a `macro_invocation` token tree tree-sitter
+/// does not structure into elements, so [`find_array_literal`] does not
+/// unwrap them — a real, narrow gap (mostly test-only construction in the
+/// corpus prevalence check for `#Y62(c)`), named rather than silently
+/// matched.
+fn match_rust_kx_groups(node: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch>> {
+    let value = match node.kind() {
+        "field_initializer" => {
+            let field = node.child_by_field_name("field")?;
+            if node_text(field, source) != "kx_groups" {
+                return None;
+            }
+            node.child_by_field_name("value")?
+        }
+        "const_item" | "static_item" => {
+            let name = node.child_by_field_name("name")?;
+            if !node_text(name, source).contains("KX_GROUPS") {
+                return None;
+            }
+            node.child_by_field_name("value")?
+        }
+        _ => return None,
+    };
+    let array = find_array_literal(value)?;
+
+    let mut results = Vec::new();
+    let mut cursor = array.walk();
+    for element in array.named_children(&mut cursor) {
+        let name_node = match element.kind() {
+            "scoped_identifier" => element.child_by_field_name("name")?,
+            "identifier" => element,
+            _ => continue,
+        };
+        let group = node_text(name_node, source);
+        let mut args = HashMap::new();
+        args.insert("group".into(), ArgValue::Str(group.clone()));
+        let start = element.start_position();
+        results.push(RawMatch {
+            api: "rustls.CryptoProvider.kx_groups".into(),
+            args,
+            line: (start.row + 1) as u32,
+            offset: element.start_byte() as u32,
+            symbol: group,
+            snippet: node_text(element, source),
+            site_context: quipuu_core::SiteContext::Call,
+        });
+    }
+
+    if results.is_empty() {
+        None
+    } else {
+        Some(results)
+    }
+}
+
+/// Follow `Cow::Borrowed(&[...])` / `Cow::Owned(&[...])` / a bare `&[...]`
+/// down to the innermost `array_expression`.
+fn find_array_literal(mut node: Node<'_>) -> Option<Node<'_>> {
+    loop {
+        match node.kind() {
+            "array_expression" => return Some(node),
+            "reference_expression" => node = node.child_by_field_name("value")?,
+            "call_expression" => {
+                let args = node.child_by_field_name("arguments")?;
+                node = args.named_child(0)?;
+            }
+            _ => return None,
+        }
+    }
+}
+
 /// Handle `new ClassName()` — Java and C#.
 fn match_object_creation(call: Node<'_>, source: &[u8], language: Language) -> Option<RawMatch> {
     // Java: object_creation_expression has a `type` field (type_identifier)
@@ -1278,6 +1372,8 @@ const STRUCTURAL_APIS: &[&str] = &[
     "javax.net.ssl.SSLParameters.setNamedGroups",
     // match_c_ssl_groups_list
     "openssl.SSL_CTX_set1_groups_list",
+    // match_rust_kx_groups
+    "rustls.CryptoProvider.kx_groups",
 ];
 
 /// The apis reached through `match_java_field_access` — a bare enum-constant

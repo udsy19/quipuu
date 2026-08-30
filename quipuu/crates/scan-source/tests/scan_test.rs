@@ -1199,6 +1199,54 @@ fn scans_rust_chacha20poly1305() {
     );
 }
 
+#[test]
+fn scans_rust_kx_groups_list() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/kx_groups.rs"))
+        .expect("scan succeeds");
+
+    let group_findings: Vec<_> = findings
+        .iter()
+        .filter(|f| f.rule_id.starts_with("CRYPTO-9") && (920..=931).contains(&rule_num(f)))
+        .collect();
+
+    for (algorithm_id, expected) in [
+        ("x25519-mlkem768", 2), // PROVIDER + DEFAULT_KX_GROUPS
+        ("x25519", 1),          // PROVIDER
+        ("secp256r1-mlkem768", 0),
+        ("ecdh-p256", 2), // DEFAULT_KX_GROUPS + the unrelated-struct field
+        ("ecdh-p384", 1), // DEFAULT_KX_GROUPS
+    ] {
+        let n = group_findings
+            .iter()
+            .filter(|f| f.algorithm_id == algorithm_id)
+            .count();
+        assert_eq!(
+            n, expected,
+            "expected {expected} finding(s) for {algorithm_id}, got {n}: {:#?}",
+            group_findings
+                .iter()
+                .map(|f| &f.algorithm_id)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    // The identifier-passthrough and vec![...] macro sites in `build`/
+    // `build_vec` must not fire — so the fixture produces exactly the 6
+    // group findings counted above, nothing more.
+    assert_eq!(
+        group_findings.len(),
+        6,
+        "the identifier-passthrough and vec! macro sites must not add findings: {:#?}",
+        group_findings
+            .iter()
+            .map(|f| &f.algorithm_id)
+            .collect::<Vec<_>>()
+    );
+}
+
 // ============================================================================
 // C# fixtures
 // ============================================================================
