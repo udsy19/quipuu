@@ -4681,3 +4681,51 @@ that ask is answered.
 
 **Held:** no detection rule or scanner code touched by this entry. `cargo build --release
 --workspace` / `cargo test --release --workspace` both clean, unaffected.
+
+## `#Y66`: BouncyCastle `DilithiumSigner`/`SPHINCSPlusSigner` gain coverage — 2026-08-30
+
+The blocker named above no longer applies. `OPEN-ASK #ESTIMATOR1` itself is unchanged and still
+open, but `#OPEN-ASK #CORPUSDRIFT`'s underlying corpus-B finding count landed on a different state
+this cycle (1687, not the 1846 that produced the 0.053pp `ESTIMATOR DISAGREEMENT`): fresh (97.148%)
+and carried (97.155%) estimators now agree to within 0.007pp, well inside the tool's 0.05pp
+tolerance, so `bin/precision.py` emits a `PRECISION:` line again. This entry independently
+re-implements the identical diff the held-back cycle above already designed and confirmed correct
+(same rule ids `CRYPTO-958`/`CRYPTO-959`, same `scanner.rs` table, same fixture) — not re-derived
+from scratch, since the earlier cycle's reasoning already held.
+
+**What shipped:** quipuu's `java.toml` had zero coverage for BouncyCastle's pre-FIPS-finalization
+PQC signer class names (`DilithiumSigner`, `SPHINCSPlusSigner`) — the FIPS 203/204/205-aligned
+class names (`MLDSASigner`, `SLHDSASigner`, …) were covered exhaustively, but a caller who has not
+migrated off BC's older class names produced zero findings. Two new `JAVA_CTOR_APIS` entries
+(`scanner.rs`) and two new `java.toml` classify arms (`CRYPTO-958` → `ml-dsa-unattributed`,
+`CRYPTO-959` → `slh-dsa-unattributed`), mirroring `CRYPTO-816`/`CRYPTO-817`'s existing
+`MLDSASigner`/`SLHDSASigner` treatment exactly — same standardized algorithms under an older name,
+not a new algorithm family. **Not** `FalconSigner` (FN-DSA is not yet FIPS-final, same bar `#Y43`
+set for `CompositeMLDsa`) and **not** the five non-selected/broken schemes (`PicnicSigner` et al. —
+new-algorithm-family scope creep, no `algorithm-table.toml` row to resolve to). Two new call sites
+in `tests/fixtures/java/BcLightweight.java`, `scans_java_bouncycastle_lightweight_pqc_classes`
+extended 10 → 12 expectations.
+
+**Precision 97.11% → 97.15% (`bin/precision.py work/y66_pre.json work/y66_post.json
+--write-readme`), held, not moved by this change.** `0 added, 0 removed` — a row-identical
+1687-finding set both sides; no corpus-B project instantiates either class (same
+"coverage-without-corpus-demand" shape as `#Y43`/`#Y51`/`#Y55`/`#Y58`/`#Y61`/`#Y63`). The 0.04pp
+movement is entirely `OPEN-ASK #CORPUSDRIFT`: re-running the tool on the *unmodified pre-change*
+dump against itself also reads 97.15%, not the published 97.11% anchor — proven by
+`work/y66_pre.json` vs itself before comparing against the post-change dump. Published per
+[[published-figure-has-no-tolerance-band]] precedent: the README must equal the emitted
+`PRECISION:` line exactly, with no exemption for "it's just corpus drift." README's headline and
+comparison-table cell updated 97.11% → 97.15%, denominator 1846 → 1687, sample size unchanged at
+634 (no new audit — the delta is 0 findings, nothing to sample).
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (133
+tests in `scan_test.rs`, `every_classify_rule_targets_an_api_the_extractor_can_emit` and
+`classify_rules_never_publish_a_parameter_their_when_clause_contradicts` both exercised and clean).
+Both trust-invariant tests (`test_network_disabled_error`,
+`test_run_acvp_kats_rejects_code_execution`) untouched and pass.
+
+**Not re-taken, said out loud:** the `--policy nsa-cnsa2` divergence and Go/cross-language recall
+are not re-measured — the finding set did not move at all. `OPEN-ASK #ESTIMATOR1` remains open and
+unresolved by this cycle (rule 7) — it happened not to bind this time, which is a fact about this
+cycle's corpus-drift state, not a resolution of the ask.
