@@ -3955,3 +3955,47 @@ new fixture test, `scans_c_liboqs_heap_form_unattributed_fallback`; the existing
 `liboqs_stfl_new_is_out_of_scope` count updated 7 → 11 liboqs findings to include the 4 new fixture
 sites). The two trust-invariant tests (`test_network_disabled_error`,
 `test_run_acvp_kats_rejects_code_execution`) are untouched and pass.
+
+## `#Y57`: `RSA_generate_key_ex` gains an `rsa-unattributed` catch-all for the open band
+
+`cpp.toml:29-52`'s three `[[classify]]` arms on OpenSSL's primary `RSA_generate_key_ex` cover
+`bits < 2048`, `bits == 2048`, and `bits >= 4096` — three named bands with a real gap between
+2048 and 4096. A literal like 3072, or a runtime `bits` variable the scanner cannot resolve
+statically, matched none of the three and silently produced zero findings, despite the extractor
+already seeing the call site. The sibling legacy API in the same file, `RSA_generate_key`
+(`CRYPTO-406`), and the Rust `openssl` crate (`CRYPTO-593`), had already closed exactly this gap;
+`RSA_generate_key_ex` — the modern, more commonly called API — had not. Verified directly before
+touching anything: `RSA_generate_key_ex(rsa, 3072, NULL, NULL)` scored 0 findings while an
+otherwise-identical 2048-bit call scored 1.
+
+**First change:** one new classify arm (`CRYPTO-407`), ordered last after the three named bands,
+with no `when.args.bits` constraint — mirroring `CRYPTO-406`'s existing shape exactly, including
+catching a runtime `bits` variable as `rsa-unattributed` (real call site, size not statically
+known, quantum-vulnerable to Shor regardless). One new fixture (`openssl_rsa_3072`,
+`RSA_generate_key_ex(rsa, 3072, ...)`) and one new test (`scans_c_rsa_generate_key_ex_midrange`).
+
+**Corpus effect: 7 findings added, 0 removed.** Full 150-project pre/post dump
+(`work/y57_pre.json` ↔ `work/y57_post.json`, 1525 → 1532 findings; pre-change binary is the
+content-identical `#Y56` build, confirmed byte-for-byte via `git diff` against the commit that
+produced it). All 7 land in `openssl/openssl`, `aws/aws-lc`, and `google/boringssl` — every one a
+real `RSA_generate_key_ex(rsa, bits, ...)` call with `bits` a runtime variable (a function
+parameter or struct field), not a literal. Hand-verified true positive at each cited line: every
+site really does generate a live RSA key of a size the scanner cannot pin down further, which is
+exactly what `rsa-unattributed` already means for the sibling API. No corpus project calls this
+API with a literal outside the three named bands.
+
+**Precision: 97.14% (`bin/precision.py work/y57_pre_flat.json work/y57_post_flat.json --added-tp 7
+--added-fp 0`), held within the gate's tolerance of the 97.08% anchor — coverage added, not a
+reanchor.** All three estimators agree closely (stratified-fresh 97.142%, stratified-carried
+97.139%, pooled Wilson 97.143%), so the tool emits a `PRECISION:` line rather than refusing. The
+delta lands entirely in stratum B: sample 343/9 → 350/9 (`b_tp` corrected in `state/estimator.json`,
+mirroring `#Y54`'s and `#Y56`'s bookkeeping precedent — not a `change_estimator`/
+`reanchor_precision` C1 action, since the published anchor in `state/precision.json` (97.08%) is
+left untouched). Whether to fold these 7 into the published anchor is the same open estimator
+question `OPEN-ASK #ESTIMATOR1` already covers, and is not this cycle's to answer.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (one
+new fixture test, `scans_c_rsa_generate_key_ex_midrange`). The two trust-invariant tests
+(`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`) are untouched and
+pass.
