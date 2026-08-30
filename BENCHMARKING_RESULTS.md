@@ -3893,3 +3893,65 @@ else, then asserts the two dumps are row-identical. They are.
 `scans_csharp_mldsa_slhdsa_import_paths`). The two trust-invariant tests
 (`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`) are untouched and
 pass.
+
+## `#Y56`: liboqs `OQS_KEM_new`/`OQS_SIG_new` gain a `kem-unattributed`/`sig-unattributed` fallback
+
+`cpp.toml:501-547`'s two `[[extract]]` rules capture *any* identifier argument to
+`OQS_KEM_new`/`OQS_SIG_new` — tree-sitter sees the `OQS_{KEM,SIG}_alg_*` macro name as a bare
+identifier, not the string it expands to. Every `[[classify]]` arm on those two APIs was a closed
+regex naming one of the fifteen ML-KEM/ML-DSA/SLH-DSA parameter sets, with no catch-all arm of the
+kind `csharp.toml` and `java.toml` already carry for this exact situation. So HQC — NIST's own
+selected backup KEM, default-on in production liboqs since 0.16.0 (2026-07-09) — and every other
+liboqs candidate family (MAYO, BIKE, Classic McEliece, FrodoKEM, NTRUPrime, ...) produced **zero**
+findings, not a degraded one, despite the extractor already seeing the call site. Measured directly
+before touching anything: 5 keygen calls (3 `OQS_KEM_alg_hqc_{128,192,256}`, 1
+`OQS_SIG_alg_mayo_1`, 1 `OQS_KEM_alg_ml_kem_768` control) scored 1 finding, the control.
+
+**First change:** two new `[[classify]]` arms (`CRYPTO-897` on `OQS_KEM_new`, `CRYPTO-898` on
+`OQS_SIG_new`), each ordered last after the enumerated arms with an unconstrained `when.args.alg`
+regex, degrading any unmatched macro *or variable* to a new `kem-unattributed`/`sig-unattributed`
+sentinel pair — the raw captured value named in the message so the finding stays actionable
+without a resolved FIPS number. Two new `algorithm-table.toml` rows carry `quantum_status =
+"PqcDraft"` (none of these candidate families has a NIST FIPS number the way ML-KEM/ML-DSA/SLH-DSA
+do) and `family = "PQC-candidate"`, which needed one addition to `cbom/src/emit.rs`'s
+`canonicalize_family`: the CycloneDX 1.7 `algorithmFamiliesEnum` has no member for "a real
+post-quantum call site whose specific family is unattributed", so it is omitted from the CBOM the
+same way `webcrypto-unattributed`/`jca-unattributed`/`signature-unattributed` already are — caught
+by `emit_test.rs`'s schema-validation suite before this reached corpus B.
+
+**Not reopening the liboqs algorithm zoo rejection:** no per-candidate rule for HQC/MAYO/BIKE/
+Classic McEliece/etc. — exactly the family-level fallback that rejection's own text already named
+("two family-level rules... never one arm per candidate") but had not actually built until now.
+
+**Corpus effect: 5 findings added, 0 removed, 0 reclassified — a real recall gain, not the expected
+zero.** Full 150-project pre/post dump (`work/y56_pre.json` ↔ `work/y56_post.json`, 1660 → 1665
+findings; pre-change binary built from commit `a819fef` in a throwaway worktree). All 5 land inside
+`open-quantum-safe/liboqs`'s own reference implementation (`src/sig/sig.c:3148`,
+`OQS_SIG_supports_ctx_str`) and its `oqs-provider` OpenSSL provider (`oqsprov/oqsprov_keys.c:1089,
+1111, 1129, 1162`) — every one of the five calls `OQS_KEM_new`/`OQS_SIG_new` with a runtime
+algorithm-name variable (`alg_name`, `oqs_name`) rather than a literal macro, a shape the closed
+enum could never have matched regardless of which family the argument names. Read at each cited
+line and hand-verified true positive: every site really does allocate a live liboqs KEM/SIG context
+by a caller-supplied algorithm name. No other corpus project reaches either API with a non-literal
+argument. Verified additionally against a planted fixture (`tests/fixtures/cpp/crypto.c`, `cargo
+test scans_c_liboqs_heap_form_unattributed_fallback`, 1/5 → 5/5 detected, matching the pre-change
+probe above with one extra site).
+
+**Precision: 97.08% (`bin/precision.py work/y56_pre.json work/y56_post.json --added-tp 5
+--added-fp 0`), held within the gate's tolerance of the 97.09% anchor — coverage added, not a
+reanchor.** All three estimators agree closely (stratified-fresh 97.076%, stratified-carried
+97.111%, pooled Wilson 97.111%), so the tool emits a `PRECISION:` line rather than refusing. The
+delta lands entirely in stratum A: population 796 → 801, sample 266/9 → 271/9 (`a_tp` corrected
+257 → 262 in `state/estimator.json`, mirroring `#Y54`'s bookkeeping precedent — not a
+`change_estimator`/`reanchor_precision` C1 action, since the published anchor in
+`state/precision.json` (97.09%) is left untouched). Per this item's own filing, reported here on
+the new `kem-unattributed`/`sig-unattributed` stratum specifically, not silently folded into a
+restated headline: whether to fold these 5 into the published anchor is the same open estimator
+question `OPEN-ASK #ESTIMATOR1` already covers, and is not this cycle's to answer.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (one
+new fixture test, `scans_c_liboqs_heap_form_unattributed_fallback`; the existing
+`liboqs_stfl_new_is_out_of_scope` count updated 7 → 11 liboqs findings to include the 4 new fixture
+sites). The two trust-invariant tests (`test_network_disabled_error`,
+`test_run_acvp_kats_rejects_code_execution`) are untouched and pass.
