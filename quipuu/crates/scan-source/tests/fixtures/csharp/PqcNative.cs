@@ -121,4 +121,24 @@ public class PqcNativeFixture
     {
         using var slh = SlhDsa.ImportFromPem(source);
     }
+
+    // #Y87 — MLKemCng/MLDsaCng, the Windows-CNG-backed wrapper classes.
+    // The parameter set lives on the CngKey argument, not this call, so
+    // both can only ever produce their *-unattributed algorithm id.
+    public static void MlKemCng(CngKey key)
+    {
+        using var kem = new MLKemCng(key);
+    }
+
+    public static void MlDsaCng(CngKey key)
+    {
+        using var dsa = new MLDsaCng(key);
+    }
+
+    // Classical CNG control — RSACng is explicitly out of scope for #Y87
+    // and intentionally produces no finding.
+    public static void RsaCngControl(CngKey key)
+    {
+        using var rsa = new RSACng(key);
+    }
 }

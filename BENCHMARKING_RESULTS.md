@@ -5489,3 +5489,59 @@ passing (142 `scan_test.rs` cases, unchanged). Both trust-invariant tests untouc
 benchmark table's own numbers today (grepped for one; none exists), which is exactly the process
 gap `#Y84` diagnosed — left as a follow-up rather than built here, to keep this change the same
 size as the one it fixes.
+
+## `#Y87`: .NET `MLKemCng`/`MLDsaCng` (Windows-CNG-backed PQC wrappers) gain coverage — 2026-08-31
+
+Tuple: **corpus B (150 projects) · scanner set `--source --deps --include-safe` · profile
+`nist-default` · pre-change dump `work/y85_post.json` (1853, `2ba189c`, unchanged by this diff) ·
+post-change binary from this cycle's tree · dump `work/y87_post.json` (1853).**
+
+**What shipped.** `#Y51` named `MLKemCng`/`MLKemOpenSsl` as a known-open remainder but never
+verified their constructor shape. Independently confirmed this cycle: `MLKemCng` is a
+`sealed class MLKemCng : MLKem` with exactly one constructor, `MLKemCng(CngKey)` — the
+algorithm/parameter set lives on the `CngKey` argument, not the constructor call, the same
+receiver-carries-the-identity shape `#Y86`'s `MLDSAMuHasher` and Java's `Signature`/
+`KeyPairGenerator` operation classes already degrade gracefully for. `MLDsaCng(CngKey)` has the
+identical shape. `csharp.toml` had zero coverage for either — in fact zero coverage for any `*Cng`
+class of any kind, classical or PQC, confirmed by grep before writing a rule. Two new
+`[[extract]]`/`[[classify]]` pairs (`CSH-075`/`CRYPTO-1046`, `CSH-076`/`CRYPTO-1047`) match bare
+`new MLKemCng(...)`/`new MLDsaCng(...)` construction with no argument inspection, emitting
+`ml-kem-unattributed`/`ml-dsa-unattributed` with message text naming the CNG interop path
+explicitly. `RSACng`/`DSACng`/`ECDsaCng` (classical CNG) are explicitly out of scope, kept as a
+fixture control that must *not* fire. Because the extract layer's queries are not executed
+(matching is a hand-written walker per `scanner.rs`), `CSHARP_CTOR_APIS` also gained the two new
+`(class_name, api)` entries — the same two-sided change every prior `CSH-0xx`/`CRYPTO-10xx` ctor
+rule in this file required, caught immediately by the new fixture returning nothing on first run.
+
+**Corpus effect: 0 findings added, 0 removed, dumps byte-identical (1853 both sides) — a real
+zero, not a `scan_hints`-excluded site.** Independently verified against a fixture instead
+(`tests/fixtures/csharp/PqcNative.cs`, extended with `MlKemCng`/`MlDsaCng`/`RsaCngControl`
+methods; `scans_csharp_native_mlkem_mldsa_slhdsa` extended to assert `CRYPTO-1046`/`CRYPTO-1047`
+fire and that no finding's message contains `"RSACng"`). This project's `crypto-adjacent/`
+corpus is Maven/npm/pip-weighted and contains no Windows-targeting C# project, so a zero corpus
+delta was the stated expectation going in, not a surprise found after the fact.
+
+**Precision 97.22% → 97.16% (`bin/precision.py work/y85_post.json work/y87_post.json
+--write-readme`), and this diff caused none of it — a falsification, not a re-derivation.** 0
+findings added, 0 removed, so no TP/FP ratio could have moved. The fall is `state/estimator.json`
+never having persisted `#Y85`'s own `--added-tp 16` fold (`b_tp` still reads 355, not 371) —
+exactly the gap `OPEN-ASK #ESTIMATORPERSIST` already names and the same shape `#Y86`'s cycle hit
+one cycle before this one. `--write-readme` applied the honest figure: 97.22% → 97.16%, CI
+96.0–98.5% → 95.9–98.5%, audited 651 → 635 (271 stratum A, 364 stratum B). The two prose sentences
+describing sample composition (README.md, "What that interval is" / "What the denominator
+excludes") were hand-corrected in the same diff per rule 4 — `--write-readme` only rewrites the
+mechanical headline/CI/audited-count fields, not narrative prose quoting the prior cycle's
+composition.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets --workspace -- -D warnings` clean; `cargo test --release --workspace` all
+passing (142 `scan_test.rs` cases, one extended). Both trust-invariant tests untouched and pass.
+`readme_rule_pack_counts` required updating 117→119 extract / 700→702 classify (total) and C#'s
+115→117 (per-language); confirmed failing before the README fix, passing after, per "a gate that
+cannot fail is not a gate."
+
+**Not done, said out loud:** the Win32 CNG native layer (`BCryptGenerateKeyPair` against
+`BCRYPT_MLKEM_ALG_HANDLE`) remains uncovered, per the second-pass synthesis's own finding that a
+broader corpus check (beyond the one vendored `symcrypt` clone) found no literal call site —
+blocked, not ready to build. `OPEN-ASK #ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT` remain open,
+neither this cycle's to resolve.

@@ -1616,11 +1616,13 @@ fn scans_csharp_native_mlkem_mldsa_slhdsa() {
         .expect("scan succeeds");
 
     let want = [
-        ("CRYPTO-600", "rsa-unattributed"),    // RSA.Create() control
-        ("CRYPTO-671", "ml-kem-768"),          // MLKem.GenerateKey(MLKemAlgorithm.MLKem768)
-        ("CRYPTO-674", "ml-dsa-65"),           // MLDsa.GenerateKey(MLDsaAlgorithm.MLDsa65)
+        ("CRYPTO-600", "rsa-unattributed"),     // RSA.Create() control
+        ("CRYPTO-671", "ml-kem-768"),           // MLKem.GenerateKey(MLKemAlgorithm.MLKem768)
+        ("CRYPTO-674", "ml-dsa-65"),            // MLDsa.GenerateKey(MLDsaAlgorithm.MLDsa65)
         ("CRYPTO-676", "slh-dsa-sha2-128s"), // SlhDsa.GenerateKey(SlhDsaAlgorithm.SlhDsaSha2_128s)
         ("CRYPTO-688", "ml-kem-unattributed"), // parameter set read from a variable
+        ("CRYPTO-1046", "ml-kem-unattributed"), // new MLKemCng(key) — #Y87
+        ("CRYPTO-1047", "ml-dsa-unattributed"), // new MLDsaCng(key) — #Y87
     ];
     for (rule_id, algorithm_id) in want {
         assert!(
@@ -1634,6 +1636,18 @@ fn scans_csharp_native_mlkem_mldsa_slhdsa() {
                 .collect::<Vec<_>>()
         );
     }
+
+    // #Y87 — RSACng (classical CNG) is explicitly out of scope: no classify
+    // rule anywhere in csharp.toml targets it, so `new RSACng(key)` in the
+    // fixture must not surface as any finding's message.
+    assert!(
+        !findings.iter().any(|f| f.message.contains("RSACng")),
+        "RSACng is out of scope for #Y87 and must not be detected; findings: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
 }
 
 #[test]
