@@ -92,7 +92,7 @@ jobs:
     steps:
       # ── 1. Checkout (full history so the tag ref is available) ────────────
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -225,7 +225,7 @@ jobs:
 
       # ── 8. Upload as a workflow artifact (used by the aggregator job) ─────
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-${{ matrix.target }}
           path: |
@@ -259,7 +259,7 @@ jobs:
 
     steps:
       - name: Download all release artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: release-*
           path: /tmp/all-artifacts
