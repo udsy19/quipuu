@@ -3801,12 +3801,14 @@ fn scans_python_pqc_native_mlkem_mldsa() {
         .expect("scan succeeds");
 
     let want = [
-        ("CRYPTO-821", "ml-kem-768"),  // MLKEM768PrivateKey.generate()
-        ("CRYPTO-822", "ml-kem-1024"), // MLKEM1024PrivateKey.from_seed_bytes(...)
-        ("CRYPTO-821", "ml-kem-768"),  // MLKEM768PublicKey.from_public_bytes(...)
-        ("CRYPTO-824", "ml-dsa-65"),   // MLDSA65PrivateKey.generate()
-        ("CRYPTO-823", "ml-dsa-44"),   // MLDSA44PrivateKey.generate()
-        ("CRYPTO-824", "ml-dsa-65"),   // MLDSA65PublicKey.from_public_bytes(...)
+        ("CRYPTO-821", "ml-kem-768"),           // MLKEM768PrivateKey.generate()
+        ("CRYPTO-822", "ml-kem-1024"),          // MLKEM1024PrivateKey.from_seed_bytes(...)
+        ("CRYPTO-821", "ml-kem-768"),           // MLKEM768PublicKey.from_public_bytes(...)
+        ("CRYPTO-824", "ml-dsa-65"),            // MLDSA65PrivateKey.generate()
+        ("CRYPTO-823", "ml-dsa-44"),            // MLDSA44PrivateKey.generate()
+        ("CRYPTO-824", "ml-dsa-65"),            // MLDSA65PublicKey.from_public_bytes(...)
+        ("CRYPTO-1035", "ml-dsa-unattributed"), // MLDSAMuHasher(public_key)
+        ("CRYPTO-1035", "ml-dsa-unattributed"), // mldsa.MLDSAMuHasher(public_key, ...)
     ];
     for (rule_id, algorithm_id) in want {
         assert!(
@@ -3827,7 +3829,7 @@ fn scans_python_pqc_native_mlkem_mldsa() {
         .count();
     assert_eq!(
         pqc_count,
-        6,
+        8,
         "instance-method calls through a variable (key.encapsulate(), sig_key.sign()) must not \
          be classified as ml-kem/ml-dsa — got: {:#?}",
         findings

@@ -8,7 +8,9 @@ from cryptography.hazmat.primitives.asymmetric.mldsa import (
     MLDSA44PrivateKey,
     MLDSA65PrivateKey,
     MLDSA65PublicKey,
+    MLDSAMuHasher,
 )
+from cryptography.hazmat.primitives.asymmetric import mldsa
 
 
 def mlkem_sites():
@@ -29,3 +31,12 @@ def mldsa_sites():
 
     # Same unresolvable-receiver shape as above.
     sig_key.sign(b"test data")
+
+
+def mldsa_external_mu_sites():
+    # #Y86: MLDSAMuHasher — bare-imported and module-qualified spellings.
+    # Direct construction call; the parameter set lives in `public_key`'s
+    # runtime type, which is not statically knowable here.
+    public_key = load_signer_public_key()
+    MLDSAMuHasher(public_key)
+    mldsa.MLDSAMuHasher(public_key, b"context")

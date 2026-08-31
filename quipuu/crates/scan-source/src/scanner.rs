@@ -1779,6 +1779,15 @@ const PYTHON_CALLEE_APIS: &[(&str, &str)] = &[
         "MLDSA87PublicKey.from_public_bytes",
         "cryptography.hazmat.mldsa.ml_dsa_87",
     ),
+    // `MLDSAMuHasher(public_key, context=None)` — FIPS 204 external-mu
+    // incremental hashing (#Y86). Unlike the key classes above, this is a
+    // direct constructor call rather than a class-name-qualified static
+    // method, but `callee_text` is still just the source text of the call's
+    // `function` node, so the same two-spellings lookup applies. The
+    // parameter set lives in the `public_key` argument's runtime type, which
+    // this table cannot trace, so it degrades to `ml-dsa-unattributed`.
+    ("mldsa.MLDSAMuHasher", "cryptography.hazmat.mldsa.mu_hasher"),
+    ("MLDSAMuHasher", "cryptography.hazmat.mldsa.mu_hasher"),
 ];
 
 fn match_python_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {

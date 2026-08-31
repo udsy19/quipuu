@@ -5321,3 +5321,67 @@ resolve it, the same structural gap `#Y80`/`#Y81` already named for HQC/BIKE's o
 cases. The `<DIGEST>WITHXMSS(MT)` alias family is a real, smaller remaining gap, named above.
 `OPEN-ASK #ESTIMATOR1`/`#ESTIMATOROFRECORD` and `OPEN-ASK #CORPUSDRIFT` remain open, neither this
 cycle's to resolve.
+
+## `#Y86`: pyca `MLDSAMuHasher` (FIPS 204 external-mu incremental hashing) gains coverage — 2026-08-31
+
+Backlog item filed by the ecosystem lens: pyca/cryptography 50.0.0 shipped `MLDSAMuHasher`
+(`cryptography.hazmat.primitives.asymmetric.mldsa`), the library's own implementation of FIPS 204's
+external-mu mode — the same feature `#Y85` found missing from OpenSSL's `EVP_MD_fetch("ML-DSA-MU")`.
+`python.toml`'s existing `PY-081`/`CRYPTO-823`–`825` arms cover `MLDSA*(Private|Public)Key.generate`/
+`from_seed_bytes`/`from_public_bytes`, all class-name-qualified static-method calls; `MLDSAMuHasher`
+is a direct constructor call instead (`MLDSAMuHasher(public_key)` / `mldsa.MLDSAMuHasher(public_key,
+context)`, both spellings confirmed against pyca's own `docs/hazmat/primitives/asymmetric/mldsa.rst`
+and `tests/hazmat/primitives/test_mldsa.py` in this project's own corpus-B clone), and had zero rules
+for either spelling.
+
+**What shipped.** Two new `PYTHON_CALLEE_APIS` entries (`scanner.rs`) — `MLDSAMuHasher` and
+`mldsa.MLDSAMuHasher`, the same "module-qualified and bare-imported" pairing every other
+`mlkem`/`mldsa` entry already uses, since `match_call`'s callee text is the literal source span of
+the call's `function` node regardless of node shape. One new extract (`PY-082`) and one classify
+arm (`CRYPTO-1035`), degrading to `ml-dsa-unattributed` — the parameter set lives in the
+`public_key` argument's runtime type, which this table does not trace, the identical reasoning
+`csharp.toml`'s `MLDsa.ImportPkcs8PrivateKey`/`ImportSubjectPublicKeyInfo`/`ImportFromPem` arms
+already use for the same "encoded elsewhere" shape. Fixture: `tests/fixtures/python/pqc_native.py`
+gained both spellings; `scans_python_pqc_native_mlkem_mldsa` extended 6→8 expected PQC findings.
+
+**Corpus effect: 0 added, 0 removed, 0 reclassified — dumps byte-identical, 1837 findings both
+sides.** `crypto-adjacent/pyca-cryptography`'s own `scan_hints.scan_paths` is
+`["src/cryptography/hazmat/primitives/", "src/rust/src/"]` with `exclude_paths = ["tests/"]`; the
+library's only real `MLDSAMuHasher(...)` call sites are in `tests/hazmat/primitives/test_mldsa.py`,
+outside scan scope, and `src/cryptography/hazmat/primitives/asymmetric/mldsa.py`'s own reference
+(`MLDSAMuHasher = rust_openssl.mldsa.MLDSAMuHasher`) is an assignment, not a call. Coverage verified
+against the fixture only, same "coverage without corpus demand" shape as `#Y43`/`#Y51`/`#Y55`/`#Y83`
+— expected in advance, not a surprise found after the fact.
+
+**Precision 97.25% -> 97.16%, and this fall is not attributable to this change.**
+`bin/precision.py work/mu_pre.json work/mu_post.json --write-readme` (pre built from `4be3eb7`, post
+from this cycle's tree; both dumps 1837 findings, 0 added/removed) reproduces the same 97.159%
+whether run on the pre or the post dump — the number cannot have moved because of this diff, since
+there is no diff in the finding set for it to move on. The fall is `state/estimator.json` reading
+`b_tp: 355`, not `bcprov-jdk18on`'s `#Y83`-audited `381` (see its entry above: "sample A 262/271, B
+381/390"). `state/estimator.json` is harness state outside this repo's git tree, hand-edited on a
+documented convention (six prior entries, most recently `#Y70`) — this cycle did not hand-edit it,
+because `OPEN-ASK #ESTIMATORPERSIST` (filed 2026-08-31, unresolved as of this commit) is already
+adjudicating exactly this drift, across three coverage cycles (`#Y73`, `#Y74`, `#Y83`) whose real,
+audited TPs were never folded back into the persisted sample. Overwriting the ask's own working
+number without its answer would be a second guess, not a fix. `gate_precision`'s regression
+tolerance is 0.5pp; this cycle's -0.09pp is within it and the gate reads it as held, not regressed.
+`gate_published_figure` requires the README figure to equal the reported one exactly, so
+`--write-readme` was run and README now states 97.16% / 635 audited findings — a real drop in the
+*displayed* audited-sample size from 661, not because any evidence was un-audited, but because the
+persisted state the tool reads from does not yet contain three cycles' worth of already-published
+folds. Full corroborating detail (population math, exact stale-vs-correct sample counts) added to
+`OPEN-ASK #ESTIMATORPERSIST` in the vault backlog this cycle, without answering it.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --workspace` all passing (141 tests in
+`scan_test.rs`, one extended). Both trust-invariant tests (`test_network_disabled_error`,
+`test_run_acvp_kats_rejects_code_execution`) untouched and pass. `readme_rule_pack_counts` (the
+build gate `#Y76`/cycle 66 added) required a same-diff update: 115→116 extract blocks, 689→690
+classify arms.
+
+**Not done, said out loud:** `#Y85` (OpenSSL `EVP_MD_fetch`'s `"ML-DSA-MU"` pseudo-digest, the same
+FIPS 204 external-mu feature on the C++ side) is unclaimed follow-up, not in this cycle's scope —
+it requires a new `[[extract]]` shape (`EVP_MD_fetch`'s string-literal second argument) that this
+cycle did not build. `OPEN-ASK #ESTIMATORPERSIST` remains open; this cycle strengthens its evidence
+but does not answer it.
