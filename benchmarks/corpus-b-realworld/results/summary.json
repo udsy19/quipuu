@@ -10,67 +10,67 @@
       "status": "unscannable"
     }
   ],
-  "total_elapsed_seconds": 230.0,
+  "total_elapsed_seconds": 277.32,
   "by_ecosystem": {
     "pypi": {
       "projects_scanned": 25,
       "projects_not_scanned": 0,
-      "projects_with_findings": 15,
+      "projects_with_findings": 17,
       "projects_with_errors": 0,
-      "total_findings": 77,
-      "audible_findings": 77,
+      "total_findings": 176,
+      "audible_findings": 176,
       "suppressed_findings": 0,
-      "total_duration_seconds": 8.9
+      "total_duration_seconds": 10.42
     },
     "npm": {
       "projects_scanned": 25,
       "projects_not_scanned": 0,
-      "projects_with_findings": 6,
+      "projects_with_findings": 9,
       "projects_with_errors": 0,
-      "total_findings": 127,
-      "audible_findings": 127,
+      "total_findings": 143,
+      "audible_findings": 143,
       "suppressed_findings": 0,
-      "total_duration_seconds": 6.59
+      "total_duration_seconds": 7.169999999999999
     },
     "maven": {
       "projects_scanned": 25,
       "projects_not_scanned": 0,
-      "projects_with_findings": 18,
+      "projects_with_findings": 19,
       "projects_with_errors": 0,
-      "total_findings": 81,
-      "audible_findings": 81,
+      "total_findings": 263,
+      "audible_findings": 263,
       "suppressed_findings": 0,
-      "total_duration_seconds": 21.349999999999998
+      "total_duration_seconds": 20.28
     },
     "crates-io": {
       "projects_scanned": 25,
       "projects_not_scanned": 1,
-      "projects_with_findings": 13,
+      "projects_with_findings": 14,
       "projects_with_errors": 1,
-      "total_findings": 86,
-      "audible_findings": 86,
+      "total_findings": 128,
+      "audible_findings": 128,
       "suppressed_findings": 0,
-      "total_duration_seconds": 1.6000000000000005
+      "total_duration_seconds": 2.1000000000000005
     },
     "go-modules": {
       "projects_scanned": 25,
       "projects_not_scanned": 0,
-      "projects_with_findings": 20,
+      "projects_with_findings": 21,
       "projects_with_errors": 0,
-      "total_findings": 485,
-      "audible_findings": 485,
+      "total_findings": 733,
+      "audible_findings": 733,
       "suppressed_findings": 0,
-      "total_duration_seconds": 143.16
+      "total_duration_seconds": 192.97000000000006
     },
     "crypto-adjacent": {
       "projects_scanned": 25,
       "projects_not_scanned": 0,
-      "projects_with_findings": 12,
+      "projects_with_findings": 16,
       "projects_with_errors": 0,
-      "total_findings": 200,
-      "audible_findings": 200,
+      "total_findings": 410,
+      "audible_findings": 410,
       "suppressed_findings": 0,
-      "total_duration_seconds": 48.179999999999986
+      "total_duration_seconds": 44.07999999999998
     }
   },
   "top_10_by_findings": [
@@ -85,10 +85,10 @@
         "jws",
         "jwt"
       ],
-      "total_findings": 195,
-      "audible_findings": 195,
+      "total_findings": 216,
+      "audible_findings": 216,
       "suppressed_findings": 0,
-      "duration_seconds": 0.51,
+      "duration_seconds": 0.75,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -170,12 +170,137 @@
           "count": 5
         },
         {
-          "algorithm_id": "x25519",
+          "algorithm_id": "sha-256",
+          "count": 5
+        },
+        {
+          "algorithm_id": "sha-256",
           "count": 2
+        },
+        {
+          "algorithm_id": "ecdsa-unattributed",
+          "count": 1
         },
         {
           "algorithm_id": "rsa-2048",
           "count": 1
+        }
+      ]
+    },
+    {
+      "canonical_id": "maven:org.bouncycastle:bcprov-jdk18on",
+      "ecosystem": "maven",
+      "integrity": "ok",
+      "scan_paths": [
+        "core/src/main/java",
+        "prov/src/main/java"
+      ],
+      "total_findings": 140,
+      "audible_findings": 140,
+      "suppressed_findings": 0,
+      "duration_seconds": 5.07,
+      "exit_code": 0,
+      "status": "ok",
+      "errors": [],
+      "sample_findings": [
+        {
+          "algorithm_id": "ml-kem-unattributed",
+          "count": 9
+        },
+        {
+          "algorithm_id": "aes-unattributed",
+          "count": 5
+        },
+        {
+          "algorithm_id": "aes-unattributed-gcm",
+          "count": 2
+        },
+        {
+          "algorithm_id": "xmss",
+          "count": 2
+        },
+        {
+          "algorithm_id": "xmss-mt",
+          "count": 2
+        },
+        {
+          "algorithm_id": "jca-unattributed",
+          "count": 48
+        },
+        {
+          "algorithm_id": "slh-dsa-unattributed",
+          "count": 27
+        },
+        {
+          "algorithm_id": "ml-dsa-unattributed",
+          "count": 13
+        },
+        {
+          "algorithm_id": "xmss",
+          "count": 11
+        },
+        {
+          "algorithm_id": "xmss-mt",
+          "count": 11
+        }
+      ]
+    },
+    {
+      "canonical_id": "crypto-adjacent:github.com/aws/aws-lc",
+      "ecosystem": "crypto-adjacent",
+      "integrity": "ok",
+      "scan_paths": [
+        "crypto",
+        "ssl",
+        "include/openssl"
+      ],
+      "total_findings": 129,
+      "audible_findings": 129,
+      "suppressed_findings": 0,
+      "duration_seconds": 4.81,
+      "exit_code": 0,
+      "status": "ok",
+      "errors": [],
+      "sample_findings": [
+        {
+          "algorithm_id": "kem-unattributed",
+          "count": 39
+        },
+        {
+          "algorithm_id": "rsa-2048",
+          "count": 16
+        },
+        {
+          "algorithm_id": "rsa-undersized",
+          "count": 7
+        },
+        {
+          "algorithm_id": "aes-unattributed",
+          "count": 4
+        },
+        {
+          "algorithm_id": "rsa-unattributed",
+          "count": 3
+        },
+        {
+          "algorithm_id": "tls-cipher-suite-config",
+          "count": 17
+        },
+        {
+          "algorithm_id": "aes-unattributed",
+          "count": 7
+        },
+        {
+          "algorithm_id": "ecdsa-unattributed",
+          "count": 5
+        },
+        {
+          "algorithm_id": "kem-unattributed",
+          "count": 4
+        },
+        {
+          "algorithm_id": "rsa-unattributed",
+          "count": 4
         }
       ]
     },
@@ -186,10 +311,10 @@
       "scan_paths": [
         "."
       ],
-      "total_findings": 77,
-      "audible_findings": 77,
+      "total_findings": 105,
+      "audible_findings": 105,
       "suppressed_findings": 0,
-      "duration_seconds": 0.16,
+      "duration_seconds": 0.22,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -203,16 +328,16 @@
           "count": 13
         },
         {
+          "algorithm_id": "rsa-unattributed",
+          "count": 11
+        },
+        {
           "algorithm_id": "ed25519",
-          "count": 9
+          "count": 10
         },
         {
           "algorithm_id": "rsa-2048",
           "count": 9
-        },
-        {
-          "algorithm_id": "ecdsa-p384",
-          "count": 6
         }
       ]
     },
@@ -225,10 +350,10 @@
         "ssl",
         "pki"
       ],
-      "total_findings": 65,
-      "audible_findings": 65,
+      "total_findings": 101,
+      "audible_findings": 101,
       "suppressed_findings": 0,
-      "duration_seconds": 2.95,
+      "duration_seconds": 3.24,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -238,20 +363,20 @@
           "count": 14
         },
         {
+          "algorithm_id": "kem-unattributed",
+          "count": 6
+        },
+        {
           "algorithm_id": "rsa-undersized",
           "count": 5
         },
         {
+          "algorithm_id": "aes-128-cbc",
+          "count": 4
+        },
+        {
           "algorithm_id": "aes-unattributed",
           "count": 3
-        },
-        {
-          "algorithm_id": "aes-128-gcm",
-          "count": 2
-        },
-        {
-          "algorithm_id": "3des",
-          "count": 1
         },
         {
           "algorithm_id": "aes-unattributed",
@@ -263,15 +388,15 @@
         },
         {
           "algorithm_id": "x25519",
-          "count": 6
+          "count": 7
         },
         {
-          "algorithm_id": "ecdh-p256",
-          "count": 2
+          "algorithm_id": "ecdsa-unattributed",
+          "count": 5
         },
         {
-          "algorithm_id": "ecdh-p384",
-          "count": 2
+          "algorithm_id": "rsa-unattributed",
+          "count": 4
         },
         {
           "algorithm_id": "sha-1",
@@ -284,14 +409,135 @@
       ]
     },
     {
+      "canonical_id": "crypto-adjacent:github.com/tink-crypto/tink-go",
+      "ecosystem": "crypto-adjacent",
+      "integrity": "ok",
+      "scan_paths": [
+        "aead",
+        "hybrid",
+        "signature",
+        "jwt"
+      ],
+      "total_findings": 78,
+      "audible_findings": 78,
+      "suppressed_findings": 0,
+      "duration_seconds": 1.04,
+      "exit_code": 0,
+      "status": "ok",
+      "errors": [],
+      "sample_findings": [
+        {
+          "algorithm_id": "aes-unattributed",
+          "count": 2
+        },
+        {
+          "algorithm_id": "ml-kem-768",
+          "count": 8
+        },
+        {
+          "algorithm_id": "ecdh-p384",
+          "count": 6
+        },
+        {
+          "algorithm_id": "ecdh-p256",
+          "count": 5
+        },
+        {
+          "algorithm_id": "ecdh-p521",
+          "count": 5
+        },
+        {
+          "algorithm_id": "ml-kem-1024",
+          "count": 5
+        },
+        {
+          "algorithm_id": "ecdsa-unattributed",
+          "count": 9
+        },
+        {
+          "algorithm_id": "ed25519",
+          "count": 9
+        },
+        {
+          "algorithm_id": "rsa-3072",
+          "count": 2
+        },
+        {
+          "algorithm_id": "rsa-unattributed",
+          "count": 2
+        },
+        {
+          "algorithm_id": "ecdh-p256",
+          "count": 1
+        },
+        {
+          "algorithm_id": "sha-256",
+          "count": 6
+        },
+        {
+          "algorithm_id": "ecdsa-p256",
+          "count": 5
+        },
+        {
+          "algorithm_id": "ecdh-p256",
+          "count": 2
+        },
+        {
+          "algorithm_id": "rsa-pkcs1-sha256",
+          "count": 2
+        },
+        {
+          "algorithm_id": "rsa-unattributed",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "canonical_id": "go-modules:github.com/aws/aws-sdk-go-v2",
+      "ecosystem": "go-modules",
+      "integrity": "ok",
+      "scan_paths": [
+        "."
+      ],
+      "total_findings": 72,
+      "audible_findings": 72,
+      "suppressed_findings": 0,
+      "duration_seconds": 149.64,
+      "exit_code": 0,
+      "status": "ok",
+      "errors": [],
+      "sample_findings": [
+        {
+          "algorithm_id": "sha-256",
+          "count": 32
+        },
+        {
+          "algorithm_id": "rsa-undersized",
+          "count": 11
+        },
+        {
+          "algorithm_id": "md5",
+          "count": 7
+        },
+        {
+          "algorithm_id": "sha-1",
+          "count": 7
+        },
+        {
+          "algorithm_id": "ecdsa-unattributed",
+          "count": 6
+        }
+      ]
+    },
+    {
       "canonical_id": "npm:jsonwebtoken",
       "ecosystem": "npm",
       "integrity": "ok",
       "scan_paths": [
         "."
       ],
-      "total_findings": 64,
-      "audible_findings": 64,
+      "total_findings": 69,
+      "audible_findings": 69,
       "suppressed_findings": 0,
       "duration_seconds": 0.09,
       "exit_code": 0,
@@ -307,75 +553,53 @@
           "count": 26
         },
         {
+          "algorithm_id": "rsa-unattributed",
+          "count": 6
+        },
+        {
           "algorithm_id": "jwt-alg-none",
           "count": 2
         },
         {
           "algorithm_id": "rsa-pss-sha256",
           "count": 2
-        },
-        {
-          "algorithm_id": "rsa-unattributed",
-          "count": 1
         }
       ]
     },
     {
-      "canonical_id": "crypto-adjacent:github.com/aws/aws-lc",
-      "ecosystem": "crypto-adjacent",
+      "canonical_id": "pypi:pycryptodome",
+      "ecosystem": "pypi",
       "integrity": "ok",
       "scan_paths": [
-        "crypto",
-        "ssl",
-        "include/openssl"
+        "."
       ],
-      "total_findings": 60,
-      "audible_findings": 60,
+      "total_findings": 67,
+      "audible_findings": 67,
       "suppressed_findings": 0,
-      "duration_seconds": 3.89,
+      "duration_seconds": 1.28,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
       "sample_findings": [
         {
-          "algorithm_id": "rsa-2048",
-          "count": 16
+          "algorithm_id": "3des",
+          "count": 36
+        },
+        {
+          "algorithm_id": "sha-256",
+          "count": 11
         },
         {
           "algorithm_id": "rsa-undersized",
-          "count": 7
+          "count": 9
         },
         {
-          "algorithm_id": "aes-unattributed",
-          "count": 4
-        },
-        {
-          "algorithm_id": "3des",
-          "count": 1
-        },
-        {
-          "algorithm_id": "rc4",
-          "count": 1
-        },
-        {
-          "algorithm_id": "tls-cipher-suite-config",
-          "count": 17
-        },
-        {
-          "algorithm_id": "aes-unattributed",
-          "count": 7
-        },
-        {
-          "algorithm_id": "md5",
-          "count": 2
+          "algorithm_id": "des",
+          "count": 5
         },
         {
           "algorithm_id": "sha-1",
-          "count": 2
-        },
-        {
-          "algorithm_id": "3des",
-          "count": 1
+          "count": 4
         }
       ]
     },
@@ -388,10 +612,10 @@
         "vault/seal",
         "sdk/helper/certutil"
       ],
-      "total_findings": 50,
-      "audible_findings": 50,
+      "total_findings": 63,
+      "audible_findings": 63,
       "suppressed_findings": 0,
-      "duration_seconds": 0.46,
+      "duration_seconds": 0.66,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -399,227 +623,41 @@
         {
           "algorithm_id": "ecdsa-p256",
           "count": 25
-        },
-        {
-          "algorithm_id": "ed25519",
-          "count": 5
-        },
-        {
-          "algorithm_id": "ecdsa-p384",
-          "count": 2
-        },
-        {
-          "algorithm_id": "ecdsa-p521",
-          "count": 2
-        },
-        {
-          "algorithm_id": "rsa-2048",
-          "count": 2
-        },
-        {
-          "algorithm_id": "ecdsa-p256",
-          "count": 5
-        },
-        {
-          "algorithm_id": "ed25519",
-          "count": 5
-        },
-        {
-          "algorithm_id": "ecdsa-p384",
-          "count": 2
-        },
-        {
-          "algorithm_id": "ecdsa-p521",
-          "count": 1
-        }
-      ]
-    },
-    {
-      "canonical_id": "crypto-adjacent:github.com/tink-crypto/tink-go",
-      "ecosystem": "crypto-adjacent",
-      "integrity": "ok",
-      "scan_paths": [
-        "aead",
-        "hybrid",
-        "signature",
-        "jwt"
-      ],
-      "total_findings": 48,
-      "audible_findings": 48,
-      "suppressed_findings": 0,
-      "duration_seconds": 0.91,
-      "exit_code": 0,
-      "status": "ok",
-      "errors": [],
-      "sample_findings": [
-        {
-          "algorithm_id": "aes-unattributed",
-          "count": 2
-        },
-        {
-          "algorithm_id": "ecdh-p384",
-          "count": 6
-        },
-        {
-          "algorithm_id": "ecdh-p256",
-          "count": 5
-        },
-        {
-          "algorithm_id": "ecdh-p521",
-          "count": 5
-        },
-        {
-          "algorithm_id": "x25519",
-          "count": 2
-        },
-        {
-          "algorithm_id": "aes-unattributed",
-          "count": 1
-        },
-        {
-          "algorithm_id": "ed25519",
-          "count": 5
-        },
-        {
-          "algorithm_id": "rsa-3072",
-          "count": 2
-        },
-        {
-          "algorithm_id": "ecdh-p256",
-          "count": 1
-        },
-        {
-          "algorithm_id": "ecdh-p384",
-          "count": 1
-        },
-        {
-          "algorithm_id": "ecdh-p521",
-          "count": 1
         },
         {
           "algorithm_id": "sha-256",
-          "count": 6
-        },
-        {
-          "algorithm_id": "ecdsa-p256",
-          "count": 5
-        },
-        {
-          "algorithm_id": "ecdh-p256",
-          "count": 2
-        },
-        {
-          "algorithm_id": "rsa-pkcs1-sha256",
-          "count": 2
-        },
-        {
-          "algorithm_id": "ecdh-p384",
-          "count": 1
-        }
-      ]
-    },
-    {
-      "canonical_id": "npm:jsrsasign",
-      "ecosystem": "npm",
-      "integrity": "ok",
-      "scan_paths": [
-        "."
-      ],
-      "total_findings": 43,
-      "audible_findings": 43,
-      "suppressed_findings": 0,
-      "duration_seconds": 1.43,
-      "exit_code": 0,
-      "status": "ok",
-      "errors": [],
-      "sample_findings": [
-        {
-          "algorithm_id": "3des",
-          "count": 25
-        },
-        {
-          "algorithm_id": "aes-unattributed",
-          "count": 18
-        }
-      ]
-    },
-    {
-      "canonical_id": "go-modules:github.com/aws/aws-sdk-go-v2",
-      "ecosystem": "go-modules",
-      "integrity": "ok",
-      "scan_paths": [
-        "."
-      ],
-      "total_findings": 28,
-      "audible_findings": 28,
-      "suppressed_findings": 0,
-      "duration_seconds": 110.99,
-      "exit_code": 0,
-      "status": "ok",
-      "errors": [],
-      "sample_findings": [
-        {
-          "algorithm_id": "rsa-undersized",
-          "count": 11
-        },
-        {
-          "algorithm_id": "sha-1",
-          "count": 7
-        },
-        {
-          "algorithm_id": "md5",
-          "count": 4
-        },
-        {
-          "algorithm_id": "ecdsa-p256",
-          "count": 2
-        },
-        {
-          "algorithm_id": "rsa-4096",
-          "count": 2
-        }
-      ]
-    },
-    {
-      "canonical_id": "go-modules:golang.org/x/crypto",
-      "ecosystem": "go-modules",
-      "integrity": "ok",
-      "scan_paths": [
-        "ssh",
-        "argon2",
-        "bcrypt",
-        "pbkdf2"
-      ],
-      "total_findings": 25,
-      "audible_findings": 25,
-      "suppressed_findings": 0,
-      "duration_seconds": 0.29,
-      "exit_code": 0,
-      "status": "ok",
-      "errors": [],
-      "sample_findings": [
-        {
-          "algorithm_id": "ecdsa-p256",
-          "count": 7
+          "count": 10
         },
         {
           "algorithm_id": "ed25519",
-          "count": 6
-        },
-        {
-          "algorithm_id": "aes-unattributed",
           "count": 5
         },
         {
-          "algorithm_id": "rsa-3072",
+          "algorithm_id": "ecdsa-p384",
           "count": 2
         },
         {
-          "algorithm_id": "3des",
+          "algorithm_id": "ecdsa-p521",
+          "count": 2
+        },
+        {
+          "algorithm_id": "ecdsa-p256",
+          "count": 5
+        },
+        {
+          "algorithm_id": "ed25519",
+          "count": 5
+        },
+        {
+          "algorithm_id": "ecdsa-p384",
+          "count": 2
+        },
+        {
+          "algorithm_id": "ecdsa-p521",
           "count": 1
         },
         {
-          "algorithm_id": "unknown",
+          "algorithm_id": "ecdsa-unattributed",
           "count": 1
         }
       ]
@@ -629,9 +667,7 @@
     "pypi:charset-normalizer",
     "pypi:certifi",
     "pypi:idna",
-    "pypi:setuptools",
     "pypi:six",
-    "pypi:python-dateutil",
     "pypi:pyasn1",
     "pypi:rsa",
     "pypi:bcrypt",
@@ -648,10 +684,7 @@
     "npm:glob",
     "npm:crypto-js",
     "npm:bcryptjs",
-    "npm:node-rsa",
-    "npm:ssh2",
     "npm:openpgp",
-    "npm:oauth",
     "npm:passport",
     "npm:helmet",
     "npm:cookie",
@@ -660,9 +693,7 @@
     "maven:commons-codec:commons-codec",
     "maven:com.amazonaws:aws-java-sdk-kms",
     "maven:org.apache.shiro:shiro-crypto-core",
-    "maven:com.unboundid:unboundid-ldapsdk",
     "maven:org.eclipse.parsson:parsson",
-    "crates-io:ring",
     "crates-io:rustls-pki-types",
     "crates-io:rustls-native-certs",
     "crates-io:tokio-rustls",
@@ -674,21 +705,16 @@
     "crates-io:hmac",
     "crates-io:argon2",
     "go-modules:github.com/coredns/coredns",
-    "go-modules:github.com/minio/minio",
     "go-modules:github.com/moby/moby",
     "go-modules:github.com/containerd/containerd",
     "go-modules:github.com/labstack/echo",
-    "crypto-adjacent:github.com/open-quantum-safe/liboqs",
     "crypto-adjacent:github.com/wolfSSL/wolfssl",
     "crypto-adjacent:github.com/Mbed-TLS/mbedtls",
-    "crypto-adjacent:github.com/nabla-c0d3/sslyze",
-    "crypto-adjacent:github.com/open-quantum-safe/oqs-provider",
     "crypto-adjacent:github.com/open-quantum-safe/liboqs-rust",
     "crypto-adjacent:github.com/open-quantum-safe/liboqs-python",
     "crypto-adjacent:github.com/microsoft/SymCrypt",
     "crypto-adjacent:github.com/microsoft/SymCrypt-OpenSSL",
     "crypto-adjacent:github.com/apple/swift-crypto",
-    "crypto-adjacent:github.com/facebookresearch/CrypTen",
     "crypto-adjacent:github.com/aws/aws-encryption-sdk-c",
     "crypto-adjacent:github.com/rustpq/pqcrypto"
   ],

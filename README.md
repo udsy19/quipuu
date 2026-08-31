@@ -10,7 +10,7 @@ open reports/quipuu.html
 
 <!-- TODO: add screenshot or asciinema recording -->
 
-Seven languages. Four output formats. No account. No cloud. No LLM. Median project scans in 170ms; the mean is 1532ms — see the benchmark table, both are real.
+Seven languages. Four output formats. No account. No cloud. No LLM. Median project scans in 205ms; the mean is 1847ms — see the benchmark table, both are real.
 
 > **Formerly `cryptoscope`, briefly `seawall`.** Renamed to `quipuu` in August 2026, before any
 > release. A quipu is the Incan knotted-cord record system — an entire civilisation's inventory
@@ -176,34 +176,38 @@ with nothing to find, which `corpus-integrity.toml` records as `files_scanned = 
 
 | Metric | Value |
 |---|---|
-| Total findings | 1056 |
+| Total findings | 1853 |
 | Projects scanned | 149 of 150, 1 `unscannable`, **0 errored** |
-| Wall-clock time | 230.0s (3m 50s) for all 150 |
-| Per project | median 170ms · mean 1532ms · p90 1.35s · max 111.0s |
+| Wall-clock time | 277.3s (4m 37s) for all 150 |
+| Per project | median 205ms · mean 1847ms · p90 1.23s · max 149.6s |
 | Languages covered | 7 (Go, Python, Java, JavaScript/TypeScript, C/C++, Rust, C#) |
 
 Every row above comes from **one run**: `python3 scan_corpus.py --include-safe`, flags
 `--source --deps --include-safe`, profile `nist-default`, release build, single-threaded,
-on **2 cores of an AMD EPYC 9354P with 7 GB RAM**, 2026-08-29. It wrote
+on **2 cores of an AMD EPYC 9354P with 7 GB RAM**, 2026-08-31. It wrote
 `results/summary.json`. `results/all_findings.json` is the per-finding dump from
-`dump_findings.py` under the same binary, flags and corpus; the two agree at **1056** by
+`dump_findings.py` under the same binary, flags and corpus; the two agree at **1853** by
 independent count, ecosystem by ecosystem, and that population is what the precision figure
 below is sampled from.
 
 **Read the mean and the median as different facts.** The 9.0× gap between them is three
-repositories: `aws-sdk-go-v2` alone takes 111.0s, and with `aws-sdk-go` (24.0s) and `wolfssl`
-(17.4s) the top three are 66.7% of the total wall-clock. **132 of 150 projects finish in under
+repositories: `aws-sdk-go-v2` alone takes 149.6s, and with `aws-sdk-go` (31.1s) and `wolfssl`
+(15.4s) the top three are 70.8% of the total wall-clock. **129 of 150 projects finish in under
 a second.** The mean describes a corpus deliberately stocked with vendored AWS SDKs; the
 median describes a project. Neither is the number to quote alone.
 
 **Wall-clock on this box moves between runs.** Earlier passes over the same corpus with the
-same flags gave 281.1s, 282.0s, 294.9s, 329.0s and 367.4s against the 230.0s above — the last
-of those over a wider corpus scope than this one. Read the whole-corpus figure as "between four
-and six minutes on two shared cores", not as three significant figures. The finding counts do
-not move for timing reasons: this run's **1056** is reproduced exactly by an independent
-`dump_findings.py` pass on the same binary. The steps down from 1570 — 91 findings, then 80 —
-are the two false-positive suppressions recorded in `BENCHMARKING_RESULTS.md`, and the step
-from 1399 to 1056 is the 2026-08-29 corpus scope repair described there and below.
+same flags gave 230.0s, 281.1s, 282.0s, 294.9s, 329.0s and 367.4s against the 277.3s above —
+the 367.4s pass was over a wider corpus scope than this one. Read the whole-corpus figure as
+"between four and six minutes on two shared cores", not as three significant figures. The
+finding counts do not move for timing reasons: this run's **1853** is reproduced exactly by an
+independent `dump_findings.py` pass on the same binary. The steps down from 1570 — 91 findings,
+then 80 — are the two false-positive suppressions recorded in `BENCHMARKING_RESULTS.md`, and the
+step from 1399 to 1056 is the 2026-08-29 corpus scope repair described there and below. Every
+commit since then through `2ba189c` added rule-pack coverage rather than removed findings,
+taking the total from 1056 to **1853** — this table had gone stale against that climb for two
+days and two coverage cycles before this run, which is why it now cites the same run
+(`2026-08-31`) as the precision paragraph below instead of a run 38 lines and two days apart.
 
 **These figures replace a published `~22s / ~150ms`, which was wrong.** That pair came from
 `results/summary.json` at `include_safe:false`, in a run where **9 of 150 clones were
@@ -359,7 +363,7 @@ quipuu scan .
 | Languages (crypto-specific) | 7 | 7+ | 7+ | Java, Python, Go, C# (comprehensive rules merged 2026-08-26) | Any |
 | Published precision (crypto findings) | 97.22% (651 audited rows, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
 | Published recall | 100.0% (Go stdlib, 401/401 in-scope sites); 41.9% cross-language (49/117 planted sites, 7 languages) | Not published | Not published | Not published | Not published |
-| Scan speed | 170ms median project; 230s for the 150-project corpus (2 cores) | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
+| Scan speed | 205ms median project; 277s for the 150-project corpus (2 cores) | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
 
 **Where CodeQL wins:** CodeQL has full inter-procedural data-flow. It can trace a key from generation through storage to use and flag misuse that a pattern-based scanner cannot see. If you need that depth and can absorb the scan time, CodeQL delivers it. quipuu does not attempt to replicate data-flow analysis — it trades that capability for speed, locality, and PQC specificity.
 

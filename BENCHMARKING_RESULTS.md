@@ -5448,3 +5448,44 @@ worsens nor resolves the ask. The `SHAKE128`/`SHAKE256` `EVP_MD_fetch` names see
 `ml_kem.c` alongside the two SHA3 calls that did fire are not covered — no existing algorithm-table
 id for bare SHAKE as a digest — left as a smaller possible follow-up, not filed as its own item
 absent a second corpus site.
+
+## `#Y84`, README benchmark table re-run — docs/artifact-only, no `PRECISION:` line
+
+No source, rule, or gate touched. `README.md:179`'s "Benchmark numbers" table still read **1056**
+total findings and a 2026-08-29 wall-clock, while the precision paragraph 38 lines below (kept
+current by `bin/precision.py --write-readme` on every coverage cycle) had climbed to **1853** —
+`#Y84`, filed 2026-08-31 and re-evidenced the same day after two more coverage cycles (`#Y85`,
+`#Y86`) landed on top of it un-refreshed, widening the gap 74% → 75.5%. Root cause, per the
+filing: ten commits since the 08-29 table run each correctly advanced the precision paragraph,
+none re-ran the table, and nothing greps the two against each other.
+
+**What ran, in the foreground, per `#Y84`'s own "first change" spec:** `scan_corpus.py --clones
+/opt/cryptoscope/work/corpus-clones --include-safe` (277.3s, 149/150 projects, one `unscannable`),
+then `dump_findings.py --clones /opt/cryptoscope/work/corpus-clones` to regenerate the committed
+`results/all_findings.json` independently — both against the release binary built from this
+cycle's tree (`2ba189c`, unchanged by this diff). **Both agree at 1853**, matching the precision
+paragraph's already-published denominator exactly; this diff does not change what quipuu detects,
+only what the table reports about the same corpus the paragraph already describes.
+
+**Table replaced wholesale, not patched:** total findings 1056→1853, wall-clock 230.0s→277.3s,
+median 170ms→205ms, mean 1532ms→1847ms, p90 1.35s→1.23s, max 111.0s→149.6s (still `aws-sdk-go-v2`,
+still the same three-repository shape behind the mean/median gap — `aws-sdk-go-v2` 149.6s,
+`aws-sdk-go` 31.1s, `wolfssl` 15.4s, 70.8% of total wall-clock; 129/150 projects finish under a
+second, was 132/150). **Every other copy of the same two numbers grepped and fixed in the same
+diff, per rule 4** — the README's own lede (`Median project scans in 170ms; the mean is 1532ms`)
+and the comparison table's `Scan speed` row both quoted the same stale pair and are now 205ms/
+277s. `llms.txt`/`llms-full.txt` carry no copy of either figure — checked, not assumed.
+
+**Precision: no claim, no `PRECISION:` line.** Nothing in `crates/` or `crates/core/data/rules/`
+changed; the 97.22% headline and its 651-of-1853 audited sample are untouched by this diff and
+were already current before it ran — `#Y84`'s gap was between two numbers *in the same document*,
+not between the published figure and reality. Re-running `bin/precision.py` over two identical
+dumps would measure nothing this diff did not already prove: the finding population is 1853 either
+side, because no side is different.
+
+**Held:** `cargo build --release --workspace` clean; `cargo test --release --workspace` all
+passing (142 `scan_test.rs` cases, unchanged). Both trust-invariant tests untouched and pass.
+`readme_rule_pack_counts` unaffected — extract/classify counts unchanged. No gate reads the
+benchmark table's own numbers today (grepped for one; none exists), which is exactly the process
+gap `#Y84` diagnosed — left as a follow-up rather than built here, to keep this change the same
+size as the one it fixes.
