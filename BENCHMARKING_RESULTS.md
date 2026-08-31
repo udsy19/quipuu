@@ -5244,3 +5244,80 @@ not the sample, same as every prior cycle that has hit this).
 32+ parameter sets are not individually attributed, per this entry's own stated policy.
 `OPEN-ASK #ESTIMATOR1`/`#ESTIMATOROFRECORD` and `OPEN-ASK #CORPUSDRIFT` remain open, neither this
 cycle's to resolve.
+
+## `#Y83`: BouncyCastle XMSS/XMSS^MT (NIST SP 800-208 stateful hash-based signatures) gain coverage — 2026-08-31
+
+Self-filed and shipped in the same cycle, from the closed-enumeration sweep's own methodology
+(`#Y58`–`#Y64`, `#Y78`/`#Y79`) applied to a family the sweep never reached: `algorithm-table.toml`
+has carried `lms`/`hss`/`xmss`/`xmss-mt` rows since the CNSA 2.0 policy work, each with an
+`undetectable` reason naming a missing X.509 OID — but `grep -c` against every `data/rules/*.toml`
+showed **zero** classify rules anywhere naming any of the four ids. Unlike BIKE/CMCE/HQC (unselected
+or newly-selected 4th-round PQC candidates), XMSS and single-tree LMS are **already NIST-approved**
+(RFC 8391/RFC 8554, NIST SP 800-208) and CNSA 2.0-approved for firmware/software signing — a
+standardized algorithm family with no detection path at all, ranked above another PQC-candidate
+filler for that reason.
+
+**What shipped, and what did not.** BouncyCastle's vendored `LMS.java`/`XMSS.java` (read directly
+from the corpus's own `maven/bcprov-jdk18on` clone) show the JCA `KeyPairGenerator`/`Signature`
+service name **"LMS" is registered once for both single-tree LMS and multi-tree HSS keys** — HSS is
+selected later via a `LMSHSSKeyGenParameterSpec` passed to `.initialize()`, a call this table cannot
+trace across statements — so shipping either `lms` or `hss` for a bare `getInstance("LMS")` call
+would risk exactly the misattribution class `#S2`'s
+`classify_rules_never_publish_a_parameter_their_when_clause_contradicts` gate exists to catch (even
+though that specific gate does not check this pair). LMS/HSS is therefore left unclassified, named
+here rather than silently skipped. XMSS has no such ambiguity: **"XMSS" and "XMSSMT" are two
+distinct, unambiguous JCA service names**, and BC's low-level API (`org.bouncycastle.pqc.crypto.xmss`)
+has two distinct classes, `XMSSSigner`/`XMSSMTSigner`, mirroring `#Y66`'s `DilithiumSigner`/
+`SPHINCSPlusSigner` shape exactly. Two new `JAVA_CTOR_APIS` entries (`scanner.rs`) plus 14 new
+`java.toml` classify arms: 2 low-level ctor arms (`CRYPTO-1033`/`1034`), 2 `KeyPairGenerator`
+arms (`CRYPTO-1021`/`1022`), and 10 `Signature.getInstance` arms (`CRYPTO-1023`–`1032`, the bare
+names plus the four digest-qualified names — `XMSS-SHA256`/`SHAKE128`/`SHA512`/`SHAKE256` and their
+`XMSSMT-` siblings — BC registers directly). **Not done, named rather than silently skipped:** BC
+also registers a `<DIGEST>WITHXMSS(MT)` alias family and the fully-qualified
+`<DIGEST>WITHXMSS(MT)-<DIGEST>` names those resolve to; enumerating that alias set correctly is a
+`#Y61`-sized job of its own, not a quick addition to this one. Two new fixture call sites each in
+`tests/fixtures/java/BcLightweight.java` (ctor forms) and `tests/fixtures/java/Pqc.java` (JCA
+forms), extending `scans_java_bouncycastle_lightweight_pqc_classes` 12→14 expectations and
+`scans_java_pqc_keypairgenerator_and_signature_and_kem` 15→19.
+
+**The reachability gate caught a real staleness this cycle introduced, not a pre-existing one.**
+`algorithm_reachability.rs`'s `every_algorithm_id_is_emitted_or_says_why_not` failed on the first
+build: making `xmss`/`xmss-mt` reachable left their `undetectable = "As lms — no vendored OID."`
+rows stale (direction 2 — "no row carries an `undetectable` reason once something emits it"). Fixed
+in the same commit by removing the field from both rows and recording how each is now reached;
+`lms`/`hss`'s own `undetectable` reasons are untouched and still accurate.
+
+**Corpus effect: 26 findings added, 0 removed, 0 reclassified — all `CRYPTO-1033`/`1034`, all in
+`maven/bcprov-jdk18on`'s own vendored source, all hand-verified true positive by opening the cited
+line.** Every one is a real `new XMSSSigner()`/`new XMSSMTSigner()` inside BC's own XMSS/XMSSMT
+signing implementation (`core/.../xmss/XMSS.java:179,217`, `XMSSMT.java:116,154`) and its 12
+prehash/no-prehash `SignatureSpi` nested-class constructors (`XMSSSignatureSpi.java`,
+`XMSSMTSignatureSpi.java`) — genuinely instantiates a live signer object in every case, no test
+mock or assertion-required-to-fail shape among them. **26 TP, 0 FP.** None of the 10
+`Signature.getInstance`/`KeyPairGenerator.getInstance` JCA arms fired — no corpus project calls
+either service by name — the same "coverage without corpus demand" shape as `#Y43`/`#Y51`/`#Y55`/
+`#Y58`/`#Y61`/`#Y63`/`#Y66`.
+
+**Precision 97.15% → 97.25% (`bin/precision.py work/xmss_pre.json work/xmss_post.json --added-tp 26
+--added-fp 0 --write-readme`).** Fresh (97.253%) and carried (97.252%) stratified estimators agree
+to within 0.001pp; pooled Wilson reads 97.277%. `bin/precision.py` reports the delta landing
+entirely in stratum B — `bcprov-jdk18on` is one of the 46 restored projects (same stratum `#Y59`'s
+`CompositeMLKEMEngine.java` finding landed in); the 26 are appended directly to the existing audited pool
+rather than re-stratified — sample A 262/271, B 381/390, fresh populations A=797/B=1040 — the same
+upward-bias caveat every coverage-add cycle in this log carries. `--write-readme` applied: figure
+97.15%→97.25%, CI 95.9–98.4%→96.0–98.5%, audited 635→661, corpus total 1811→1837, measured date
+2026-08-30→2026-08-31.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --release --workspace` all passing (141
+tests in `scan_test.rs`, two extended; the reachability gate — `every_algorithm_id_is_emitted_or_says_why_not`,
+`every_emitted_id_resolves_to_a_table_row`, `no_emitter_exists_outside_the_enumerated_set` — all
+exercised and clean after the `algorithm-table.toml` fix above). Both trust-invariant tests
+(`test_network_disabled_error`, `test_run_acvp_kats_rejects_code_execution`) untouched and pass.
+
+**Not done, said out loud:** LMS/HSS remain unclassified for the call-site ambiguity reason given
+above — the two-hop trace from `getInstance("LMS")` to a later `LMSHSSKeyGenParameterSpec` would
+resolve it, the same structural gap `#Y80`/`#Y81` already named for HQC/BIKE's own generic-name
+cases. The `<DIGEST>WITHXMSS(MT)` alias family is a real, smaller remaining gap, named above.
+`OPEN-ASK #ESTIMATOR1`/`#ESTIMATOROFRECORD` and `OPEN-ASK #CORPUSDRIFT` remain open, neither this
+cycle's to resolve.
