@@ -3784,6 +3784,39 @@ fn scans_c_openssl_signature_fetch() {
     }
 }
 
+/// Backlog `#Y85`: OpenSSL 4.0+'s fetch-by-name digest API (`EVP_MD_fetch`)
+/// had zero coverage, classical or PQC — including the new FIPS 204
+/// external-mu pseudo-digest (`EVP_MD_fetch(libctx, "ML-DSA-MU", propq)`)
+/// used for HSM-split ML-DSA signing.
+#[test]
+fn scans_c_openssl_md_fetch() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-1036", "md5"),                 // EVP_MD_fetch(libctx, "MD5", NULL)
+        ("CRYPTO-1037", "sha-1"),               // EVP_MD_fetch(libctx, "SHA1", NULL)
+        ("CRYPTO-1039", "sha-256"),             // EVP_MD_fetch(libctx, "SHA256", NULL)
+        ("CRYPTO-1044", "sha3-512"),            // EVP_MD_fetch(libctx, "SHA3-512", NULL)
+        ("CRYPTO-1045", "ml-dsa-unattributed"), // EVP_MD_fetch(libctx, "ML-DSA-MU", NULL)
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in cpp/crypto.c; got: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+}
+
 /// Backlog `#Y47`: pyca/cryptography's own first-party ML-KEM/ML-DSA classes
 /// had no classify arm at all — `python.toml` recognized every classical
 /// primitive in the library but not the two it migrated to FIPS 203/204.

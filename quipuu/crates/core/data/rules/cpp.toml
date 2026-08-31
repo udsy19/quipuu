@@ -1345,3 +1345,112 @@ when.args.alg = { regex = "(?i)^SLH-DSA-SHAKE-256f$" }
 algorithm_id = "slh-dsa-shake-256f"
 severity_hint = "auto"
 message = "OpenSSL EVP_SIGNATURE_fetch(\"{alg}\") — SLH-DSA-SHAKE-256f, FIPS 205, quantum-resistant."
+
+# ============================================================================
+# OpenSSL 4.0+ — fetch-by-name digest API (EVP_MD_fetch), the documented
+# replacement for the typed EVP_DigestInit_ex(ctx, EVP_sha256(), ...) form
+# above. Same runtime-string-argument shape as EVP_PKEY_CTX_new_from_name /
+# EVP_SIGNATURE_fetch. OpenSSL 4.0.0 (2026-04-14) also overloads this same
+# entry point for a pseudo-digest: EVP_MD_fetch(libctx, "ML-DSA-MU", propq)
+# computes FIPS 204's external-mu message representative for HSM-split
+# ML-DSA signing — a real call shape (130 files in openssl/openssl's own
+# crypto/ml_dsa and crypto/slh_dsa use EVP_MD_fetch with a literal name),
+# previously invisible because no rule matched EVP_MD_fetch at all, classical
+# or PQC. Backlog #Y85.
+# ============================================================================
+
+[[extract]]
+id = "CPP-069"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "EVP_MD_fetch")
+  arguments: (argument_list
+    (_)
+    (string_literal) @alg))
+"""
+captures = { fn = "ident", alg = "literal_string" }
+api = "openssl.EVP_MD_fetch"
+description = "OpenSSL EVP_MD_fetch(libctx, name, propq) — fetch-by-name digest lookup, including FIPS 204's external-mu pseudo-digest (\"ML-DSA-MU\")."
+
+[[classify]]
+id = "CRYPTO-1036"
+when.api = "^openssl\\.EVP_MD_fetch$"
+when.args.alg = { regex = "(?i)^MD5$" }
+algorithm_id = "md5"
+severity_hint = "critical"
+message = "OpenSSL EVP_MD_fetch(\"{alg}\") — MD5 digest. Classically broken."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-1037"
+when.api = "^openssl\\.EVP_MD_fetch$"
+when.args.alg = { regex = "(?i)^SHA1$" }
+algorithm_id = "sha-1"
+severity_hint = "critical"
+message = "OpenSSL EVP_MD_fetch(\"{alg}\") — SHA-1 digest. Classically broken (SHAttered, 2017)."
+cwe = "CWE-327"
+
+[[classify]]
+id = "CRYPTO-1038"
+when.api = "^openssl\\.EVP_MD_fetch$"
+when.args.alg = { regex = "(?i)^SHA224$" }
+algorithm_id = "sha-224"
+severity_hint = "auto"
+message = "OpenSSL EVP_MD_fetch(\"{alg}\") — SHA-224 digest. Grover-weakened, not broken."
+
+[[classify]]
+id = "CRYPTO-1039"
+when.api = "^openssl\\.EVP_MD_fetch$"
+when.args.alg = { regex = "(?i)^SHA256$" }
+algorithm_id = "sha-256"
+severity_hint = "auto"
+message = "OpenSSL EVP_MD_fetch(\"{alg}\") — SHA-256 digest. Quantum-safe hash."
+
+[[classify]]
+id = "CRYPTO-1040"
+when.api = "^openssl\\.EVP_MD_fetch$"
+when.args.alg = { regex = "(?i)^SHA384$" }
+algorithm_id = "sha-384"
+severity_hint = "auto"
+message = "OpenSSL EVP_MD_fetch(\"{alg}\") — SHA-384 digest. Quantum-safe hash."
+
+[[classify]]
+id = "CRYPTO-1041"
+when.api = "^openssl\\.EVP_MD_fetch$"
+when.args.alg = { regex = "(?i)^SHA512$" }
+algorithm_id = "sha-512"
+severity_hint = "auto"
+message = "OpenSSL EVP_MD_fetch(\"{alg}\") — SHA-512 digest. Quantum-safe hash."
+
+[[classify]]
+id = "CRYPTO-1042"
+when.api = "^openssl\\.EVP_MD_fetch$"
+when.args.alg = { regex = "(?i)^SHA3-256$" }
+algorithm_id = "sha3-256"
+severity_hint = "auto"
+message = "OpenSSL EVP_MD_fetch(\"{alg}\") — SHA3-256 digest. Quantum-safe hash."
+
+[[classify]]
+id = "CRYPTO-1043"
+when.api = "^openssl\\.EVP_MD_fetch$"
+when.args.alg = { regex = "(?i)^SHA3-384$" }
+algorithm_id = "sha3-384"
+severity_hint = "auto"
+message = "OpenSSL EVP_MD_fetch(\"{alg}\") — SHA3-384 digest. Quantum-safe hash."
+
+[[classify]]
+id = "CRYPTO-1044"
+when.api = "^openssl\\.EVP_MD_fetch$"
+when.args.alg = { regex = "(?i)^SHA3-512$" }
+algorithm_id = "sha3-512"
+severity_hint = "auto"
+message = "OpenSSL EVP_MD_fetch(\"{alg}\") — SHA3-512 digest. Quantum-safe hash."
+
+[[classify]]
+id = "CRYPTO-1045"
+when.api = "^openssl\\.EVP_MD_fetch$"
+when.args.alg = { regex = "(?i)^ML-DSA-MU$" }
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "OpenSSL EVP_MD_fetch(\"{alg}\") — FIPS 204 ML-DSA external-mu message representative, quantum-resistant, but the parameter set is carried by the signing/verification context this call site does not expose."

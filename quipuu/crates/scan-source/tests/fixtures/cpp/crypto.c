@@ -263,3 +263,16 @@ void openssl_signature_fetch(OSSL_LIB_CTX *libctx) {
     EVP_SIGNATURE *mldsa87_sig = EVP_SIGNATURE_fetch(libctx, "ML-DSA-87", NULL);
     EVP_SIGNATURE *slhdsa_sig = EVP_SIGNATURE_fetch(libctx, "SLH-DSA-SHAKE-256f", NULL);
 }
+
+/* CPP-069, CRYPTO-1036..1045 — OpenSSL 4.0+'s fetch-by-name digest API
+   (EVP_MD_fetch(libctx, name, propq)), the documented replacement for the
+   typed EVP_DigestInit_ex(ctx, EVP_sha256(), ...) form above, plus the same
+   entry point's FIPS 204 external-mu pseudo-digest ("ML-DSA-MU"), added in
+   OpenSSL 4.0.0 for HSM-split ML-DSA signing. Backlog #Y85. */
+void openssl_md_fetch(OSSL_LIB_CTX *libctx) {
+    EVP_MD *md5_md = EVP_MD_fetch(libctx, "MD5", NULL);
+    EVP_MD *sha1_md = EVP_MD_fetch(libctx, "SHA1", NULL);
+    EVP_MD *sha256_md = EVP_MD_fetch(libctx, "SHA256", NULL);
+    EVP_MD *sha3_512_md = EVP_MD_fetch(libctx, "SHA3-512", NULL);
+    EVP_MD *mldsamu_md = EVP_MD_fetch(libctx, "ML-DSA-MU", NULL);
+}

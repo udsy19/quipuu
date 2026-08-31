@@ -5385,3 +5385,66 @@ FIPS 204 external-mu feature on the C++ side) is unclaimed follow-up, not in thi
 it requires a new `[[extract]]` shape (`EVP_MD_fetch`'s string-literal second argument) that this
 cycle did not build. `OPEN-ASK #ESTIMATORPERSIST` remains open; this cycle strengthens its evidence
 but does not answer it.
+
+## `#Y85`: OpenSSL `EVP_MD_fetch` (fetch-by-name digest API, plus FIPS 204's `"ML-DSA-MU"` pseudo-digest) gains coverage — 2026-08-31
+
+Picked up as `#Y86`'s own named follow-up: OpenSSL 4.0.0 (2026-04-14) added `EVP_MD_fetch(libctx,
+name, propq)`, the documented fetch-by-name replacement for the typed
+`EVP_DigestInit_ex(ctx, EVP_sha256(), ...)` form `cpp.toml` already covers (`CRYPTO-420`–`428`), and
+overloads the same entry point for a pseudo-digest: `EVP_MD_fetch(libctx, "ML-DSA-MU", propq)`
+computes FIPS 204's external-mu message representative for HSM-split ML-DSA signing. Confirmed
+before touching anything: `grep -n "EVP_MD_fetch" crates/core/data/rules/cpp.toml` returned no
+output — zero coverage, classical or PQC, for a call shape 130 files in this project's own vendored
+`crypto-adjacent/openssl` clone use with a literal string name, including
+`crypto/ml_dsa/ml_dsa_key.c` and `crypto/slh_dsa/slh_dsa_key.c`.
+
+**What shipped.** One new `[[extract]]` (`CPP-069`), matching `EVP_MD_fetch`'s second argument as a
+string literal — the identical shape `CPP-064`'s `EVP_PKEY_CTX_new_from_name` already uses, arg
+position 1 (0-indexed) of the same 3-argument `(libctx, name, propq)` OpenSSL 3.0+ fetch-API
+signature. Ten new classify arms (`CRYPTO-1036`–`1045`): nine reuse the algorithm ids
+`EVP_DigestInit_ex`'s existing digest coverage already established (md5, sha-1, sha-224, sha-256,
+sha-384, sha-512, sha3-256, sha3-384, sha3-512), reworded to name the actual call site
+(`EVP_MD_fetch("{alg}")`) rather than copying `EVP_DigestInit_ex`'s message text onto a different
+API verbatim — a wrong-attribution defect P0's "no wrong finding on a real file:line" bar exists to
+catch, not a corner worth cutting for a shorter diff. The tenth (`CRYPTO-1045`) degrades
+`"ML-DSA-MU"` to `ml-dsa-unattributed`, the same graceful-degradation convention `#Y86`'s
+`MLDSAMuHasher` arm and `csharp.toml`'s `MLDsa.Import*` arms already use: the parameter set is
+carried by the signing/verification context this call site does not expose. `scanner.rs` gained the
+matching `C_CALLEE_APIS` entry and a `populate_args` arm (arg 1, same as `EVP_PKEY_CTX_new_from_name`
+and `EVP_SIGNATURE_fetch`). Fixture: `tests/fixtures/cpp/crypto.c` gained an `openssl_md_fetch`
+function (MD5, SHA1, SHA256, SHA3-512, ML-DSA-MU); new test `scans_c_openssl_md_fetch` in
+`scan_test.rs` (141→142).
+
+**Corpus effect: 16 added, 0 removed, 0 reclassified** (`work/y85_pre.json` 1837 →
+`work/y85_post.json` 1853; pre-change binary built from `6af6b0c`, post-change binary from this
+cycle's tree). All 16 land in `crypto-adjacent:github.com/openssl/openssl` (24 → 40 findings),
+every one hand-verified against the corpus clone: 6 `CRYPTO-1037` (sha-1) in `ocsp_srv.c`,
+`x509_cmp.c`, `srp_lib.c` (×2), `rsa_enc.c`; 6 `CRYPTO-1039` (sha-256) in `rsa_pk1.c`, `rsa_ossl.c`,
+`ts_rsp_sign.c`, `quic_record_util.c`, `self_test_kats.c`, `scrypt.c`; 2 `CRYPTO-1041` (sha-512) in
+`bn_rand.c`, `ecx_kmgmt.c`; 1 `CRYPTO-1042` (sha3-256) and 1 `CRYPTO-1044` (sha3-512), both in
+`ml_kem.c`. Every cited line is a genuine `EVP_MD_fetch(ctx, "<NAME>", ...)` call with a literal
+digest name — real coverage, not a rule tautologically matching its own fixture. No `"ML-DSA-MU"`
+finding: this corpus's pinned OpenSSL checkout does not yet call `EVP_MD_fetch` with that name
+anywhere in-tree, a genuine zero (checked, not assumed) reported per rule 5, not implied as
+recall. `SN_md5`/`OSSL_DIGEST_NAME_MD5` macro-argument forms (also present in `x509_cmp.c`) do not
+fire — out of scope, same literal-string-argument limitation `EVP_PKEY_CTX_new_from_name` already
+has.
+
+**Precision 97.16% -> 97.22%** (`bin/precision.py work/y85_pre.json work/y85_post.json --added-tp 16
+--added-fp 0 --write-readme`). `--write-readme` applied: headline 97.16%→97.22%, CI 95.9–98.5%→
+96.0–98.5%, audited findings 635→651 of 1837→1853, comparison table row and the classify-arm-count
+sentences (117 extract / 700 classify total; C/C++ 114→124) all updated in the same diff.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets -- -D warnings` clean; `cargo test --workspace` all passing (142 tests in
+`scan_test.rs`, one new). Both trust-invariant tests (`test_network_disabled_error`,
+`test_run_acvp_kats_rejects_code_execution`) untouched and pass. `readme_rule_pack_counts` (the
+build gate `#Y76`/cycle 66 added) required the same-diff update it exists to force.
+
+**Not done, said out loud:** `OPEN-ASK #ESTIMATORPERSIST` is unresolved and not this cycle's to
+touch (`bin/precision.py` is outside this track's write authority) — this cycle's `--added-tp 16`
+run folds cleanly on top of whatever base `state/estimator.json` currently holds, so it neither
+worsens nor resolves the ask. The `SHAKE128`/`SHAKE256` `EVP_MD_fetch` names seen live in
+`ml_kem.c` alongside the two SHA3 calls that did fire are not covered — no existing algorithm-table
+id for bare SHAKE as a digest — left as a smaller possible follow-up, not filed as its own item
+absent a second corpus site.

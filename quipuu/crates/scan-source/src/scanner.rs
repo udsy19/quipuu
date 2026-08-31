@@ -2445,6 +2445,11 @@ const C_CALLEE_APIS: &[(&str, &str)] = &[
     // call site as PQC. Attributing at EVP_SIGNATURE_fetch instead sidesteps
     // the defect and correctly classifies both classical and PQC fetches.
     ("EVP_SIGNATURE_fetch", "openssl.EVP_SIGNATURE_fetch"),
+    // OpenSSL 4.0+'s fetch-by-name digest API, same runtime-string-argument
+    // shape as EVP_PKEY_CTX_new_from_name / EVP_SIGNATURE_fetch above. Also
+    // covers FIPS 204's external-mu pseudo-digest (EVP_MD_fetch(libctx,
+    // "ML-DSA-MU", propq)), added in OpenSSL 4.0.0. Backlog #Y85.
+    ("EVP_MD_fetch", "openssl.EVP_MD_fetch"),
 ];
 
 fn match_c_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
@@ -2948,6 +2953,13 @@ fn populate_args(
         (Language::C | Language::Cpp, "openssl.EVP_SIGNATURE_fetch") => {
             // EVP_SIGNATURE_fetch(libctx, algorithm, propq) — arg 1 is the
             // algorithm name string.
+            if let Some(alg) = nth_arg_string(args_node, 1, source) {
+                out.insert("alg".into(), ArgValue::Str(alg));
+            }
+        }
+        (Language::C | Language::Cpp, "openssl.EVP_MD_fetch") => {
+            // EVP_MD_fetch(libctx, name, propq) — arg 1 is the digest name
+            // string, including FIPS 204's external-mu pseudo-digest name.
             if let Some(alg) = nth_arg_string(args_node, 1, source) {
                 out.insert("alg".into(), ArgValue::Str(alg));
             }
