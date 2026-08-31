@@ -772,6 +772,14 @@ fn walk(
     {
         out.push(m);
     }
+    // Go `oqs.KeyEncapsulation{}` / `oqs.Signature{}` — liboqs-go's
+    // zero-value-then-`.Init(name, ...)` construction, backlog `#Y77`.
+    if language == Language::Go
+        && kind == "composite_literal"
+        && let Some(m) = match_go_oqs_construction(node, source)
+    {
+        out.push(m);
+    }
     // rustls `kx_groups: Cow::Borrowed(&[provider::kx_group::X25519, …])` and
     // `pub static DEFAULT_KX_GROUPS: &[&dyn SupportedKxGroup] = &[…]` —
     // Rust's counterpart to Go's CurvePreferences / Java's setNamedGroups.
@@ -1461,6 +1469,9 @@ const STRUCTURAL_APIS: &[&str] = &[
     "openssl.SSL_CTX_set1_groups_list",
     // match_rust_kx_groups
     "rustls.CryptoProvider.kx_groups",
+    // match_go_oqs_construction
+    "liboqs-go/oqs.KeyEncapsulation",
+    "liboqs-go/oqs.Signature",
 ];
 
 /// The apis reached through `match_java_field_access` — a bare enum-constant
@@ -2056,6 +2067,55 @@ fn match_go_curve_preferences(keyed: Node<'_>, source: &[u8]) -> Option<Vec<RawM
     } else {
         Some(results)
     }
+}
+
+/// Match Go `oqs.KeyEncapsulation{}` / `oqs.Signature{}` — liboqs-go's own
+/// binding to the C `liboqs` library (backlog `#Y77`).
+///
+/// Unlike every row in [`GO_CALLEE_APIS`], the algorithm name never appears
+/// as an argument to this expression. liboqs-go's own examples construct a
+/// zero-value struct and pass the name to a separate `.Init(name, nil)` call
+/// one statement later — `client := oqs.KeyEncapsulation{}` then
+/// `client.Init(kemName, nil)`, where `kemName` is itself a variable in both
+/// `examples/kem/kem.go` and `examples/sig/sig.go`, not a literal at the call
+/// site. Resolving that would mean tracing `client`'s declared type into a
+/// later statement to know that a subsequent `.Init(...)` call belongs to
+/// this construction — the same declared-receiver-type tracking `OPEN-ASK
+/// #SIGNVERIFY` deferred as unbuilt capability — so this only flags the
+/// construction itself and degrades to the generic `kem-unattributed` /
+/// `sig-unattributed` sentinel, the same shape `python.toml`'s liboqs-python
+/// binding already uses for the identical family-not-yet-in-algorithm-table
+/// case (backlog `#Y74(b)`).
+///
+/// AST: `composite_literal type: (qualified_type package: (package_identifier)
+/// name: (type_identifier)) body: (literal_value)` — confirmed against
+/// `tree-sitter-go` directly, not assumed from another language's grammar.
+fn match_go_oqs_construction(literal: Node<'_>, source: &[u8]) -> Option<RawMatch> {
+    let ty = literal.child_by_field_name("type")?;
+    if ty.kind() != "qualified_type" {
+        return None;
+    }
+    let pkg = ty.child_by_field_name("package")?;
+    if node_text(pkg, source) != "oqs" {
+        return None;
+    }
+    let name = ty.child_by_field_name("name")?;
+    let type_name = node_text(name, source);
+    let api = match type_name.as_str() {
+        "KeyEncapsulation" => "liboqs-go/oqs.KeyEncapsulation",
+        "Signature" => "liboqs-go/oqs.Signature",
+        _ => return None,
+    };
+    let start = literal.start_position();
+    Some(RawMatch {
+        api: api.into(),
+        args: HashMap::new(),
+        line: (start.row + 1) as u32,
+        offset: literal.start_byte() as u32,
+        symbol: format!("oqs.{type_name}{{}}"),
+        snippet: node_text(literal, source),
+        site_context: quipuu_core::SiteContext::Call,
+    })
 }
 
 /// Detect a Go JOSE algorithm string literal in an algorithm-registration

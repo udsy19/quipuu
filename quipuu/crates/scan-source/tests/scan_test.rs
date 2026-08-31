@@ -196,6 +196,31 @@ fn go_stdlib_mlkem_is_classified() {
     }
 }
 
+/// liboqs-go's `oqs.KeyEncapsulation{}` / `oqs.Signature{}` construction —
+/// backlog `#Y77`. The algorithm name arrives on a later `.Init(name, nil)`
+/// call this extractor does not trace, so both sites degrade to the generic
+/// unattributed sentinel rather than a specific parameter set.
+#[test]
+fn go_liboqs_go_construction_is_classified() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let path = fixtures_root().join("go/liboqs_go.go");
+    let findings = scanner.scan_path(&path).expect("scan succeeds");
+
+    for (rule, algorithm_id, line) in [
+        ("CRYPTO-1048", "kem-unattributed", 15),
+        ("CRYPTO-1049", "sig-unattributed", 25),
+    ] {
+        assert!(
+            findings.iter().any(|f| f.rule_id == rule
+                && f.algorithm_id == algorithm_id
+                && f.location.line == Some(line)),
+            "expected {rule}/{algorithm_id} at line {line} in liboqs_go.go, got {:#?}",
+            findings,
+        );
+    }
+}
+
 #[test]
 fn scans_python_fixture() {
     let b = load_builtins().unwrap();

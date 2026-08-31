@@ -1296,3 +1296,58 @@ when.site_context = ["Call", "StructLiteral", "StringConstant"]
 algorithm_id = "aes-128-gcm"
 severity_hint = "low"
 message = "JWE enc=A128GCM — AES-128-GCM content encryption. Weakened by Grover; prefer AES-256."
+
+# ============================================================================
+# liboqs's official Go binding (`liboqs-go`, tagged v0.16.0, version-matched to
+# the C library) — `oqs.KeyEncapsulation{}` / `oqs.Signature{}` construct a
+# zero-value struct; the algorithm name arrives one statement later via a
+# separate `.Init(name, nil)` call, unlike `python.toml`'s `oqs.KeyEncapsulation
+# (alg)` constructor-argument shape for the same upstream C library (#Y74(b)).
+# Both official examples (examples/kem/kem.go, examples/sig/sig.go, read
+# directly from the vendored clone) pass the name as a variable even at the
+# `.Init` call site, so this only flags the construction and degrades to the
+# same generic `kem-unattributed` / `sig-unattributed` sentinel the Python
+# binding's own fallback rows already use (#Y77).
+# ============================================================================
+
+[[extract]]
+id = "GO-075"
+language = "go"
+query = """
+(composite_literal
+  type: (qualified_type
+    package: (package_identifier) @oqs_pkg (#eq? @oqs_pkg "oqs")
+    name: (type_identifier) @oqs_type (#eq? @oqs_type "KeyEncapsulation"))
+  body: (literal_value))
+"""
+captures = { oqs_pkg = "ident", oqs_type = "ident" }
+api = "liboqs-go/oqs.KeyEncapsulation"
+description = "liboqs-go KEM construction — oqs.KeyEncapsulation{} then .Init(name, ...)."
+
+[[classify]]
+id = "CRYPTO-1048"
+when.api = "^liboqs-go/oqs\\.KeyEncapsulation$"
+algorithm_id = "kem-unattributed"
+severity_hint = "auto"
+message = "liboqs-go KeyEncapsulation{} — post-quantum KEM construction; the algorithm name is set on a later .Init(name, ...) call this extractor does not trace. Recorded as an unattributed call site — classify it by hand."
+
+[[extract]]
+id = "GO-076"
+language = "go"
+query = """
+(composite_literal
+  type: (qualified_type
+    package: (package_identifier) @oqs_pkg (#eq? @oqs_pkg "oqs")
+    name: (type_identifier) @oqs_type (#eq? @oqs_type "Signature"))
+  body: (literal_value))
+"""
+captures = { oqs_pkg = "ident", oqs_type = "ident" }
+api = "liboqs-go/oqs.Signature"
+description = "liboqs-go signature construction — oqs.Signature{} then .Init(name, ...)."
+
+[[classify]]
+id = "CRYPTO-1049"
+when.api = "^liboqs-go/oqs\\.Signature$"
+algorithm_id = "sig-unattributed"
+severity_hint = "auto"
+message = "liboqs-go Signature{} — post-quantum signature construction; the algorithm name is set on a later .Init(name, ...) call this extractor does not trace. Recorded as an unattributed call site — classify it by hand."

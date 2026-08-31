@@ -5545,3 +5545,100 @@ cannot fail is not a gate."
 broader corpus check (beyond the one vendored `symcrypt` clone) found no literal call site —
 blocked, not ready to build. `OPEN-ASK #ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT` remain open,
 neither this cycle's to resolve.
+
+## `#Y77`: liboqs-go's `oqs.KeyEncapsulation{}`/`oqs.Signature{}` gain coverage — 2026-08-31
+
+Picked as the highest-value unclaimed item: every other Track A candidate in the backlog was either
+`needs-human-approval` (doc/policy items) or explicitly blocked pending a broader corpus (the Win32
+CNG native layer, filed alongside `#Y87`). `#Y77` was the one remaining fully-specified, buildable
+coverage item, filed by the ecosystem lens as "weakest-evidenced, lowest-ranked" specifically
+because it had not yet been vendored and read directly — the filing's own first concrete change was
+"vendor `liboqs-go` into `corpus-clones/crypto-adjacent/` ... before finalizing the capture query."
+Done this cycle: `git clone --depth 1 --branch v0.16.0 https://github.com/open-quantum-safe/liboqs-go`
+into `work/corpus-clones/crypto-adjacent/liboqs-go`, then `examples/kem/kem.go` and
+`examples/sig/sig.go` read directly rather than trusted from the `pkg.go.dev` fetch the filing
+quoted.
+
+**What the vendored source actually shows, and why the filing's premise was half right.** liboqs-go
+constructs a zero-value struct and initialises it on a separate statement:
+`client := oqs.KeyEncapsulation{}` then `client.Init(kemName, nil)`, and both examples pass the
+algorithm name as a variable (`kemName`/`sigName`), never a literal, at the `.Init` call site
+itself. The filing characterised this as needing new "declared-receiver-type tracking" — the same
+capability `OPEN-ASK #SIGNVERIFY` deferred as unbuilt. That capability is genuinely absent and
+still is. But it is only needed to resolve the *algorithm name*, which lives on `.Init`, not on the
+construction. The construction itself — `oqs.KeyEncapsulation{}` / `oqs.Signature{}`, a
+`composite_literal` with a `qualified_type` whose package is `oqs` — is a strong, self-contained
+signal with no other information needed, the same "flag the constructor, not the eventual algorithm"
+degradation `#Y87`'s `MLKemCng`/`MLDsaCng` and `python.toml`'s own liboqs-python fallback rows
+already use. So this ships the safe subset without building the deferred capability: `scanner.rs`
+gained one new structural matcher (`match_go_oqs_construction`, hooked on Go's `composite_literal`
+node kind) and two `STRUCTURAL_APIS` entries; `go.toml` gained two extract blocks (`GO-075`/`GO-076`)
+and two classify arms (`CRYPTO-1048`/`CRYPTO-1049`), each unconditional (no `when.args` predicate —
+there is no argument to read) emitting the generic `kem-unattributed`/`sig-unattributed` sentinel,
+not `ml-kem-unattributed`/`ml-dsa-unattributed` — liboqs supports HQC, BIKE, Classic McEliece,
+SPHINCS+, and more beyond ML-KEM/ML-DSA, and the construction site names none of them, so claiming
+the narrower family would be exactly the "id asserts a parameter the call site never states" defect
+`classify_rules_never_publish_a_parameter_their_when_clause_contradicts` exists to catch.
+
+**Coverage verified against the vendored clone directly, not only a fixture — confirmed a real
+detection, not a scan-scope artifact.** Scanning `work/corpus-clones/crypto-adjacent/liboqs-go`
+directly with the post-change binary: **9 findings**, all real — both official examples
+(`examples/kem/kem.go:18`, `examples/sig/sig.go:17`), the client/server KEM example
+(`examples/client_server_kem/{client,server}_kem.go`, 3 sites), and liboqs-go's own test suite
+(`oqstests/kem_test.go:147`, `oqstests/sig_test.go:345`) — every one a genuine `KeyEncapsulation{}`/
+`Signature{}` construction, none inside a branch a test requires to fail. A new fixture
+(`tests/fixtures/go/liboqs_go.go`, transcribed from the two official examples) and one new test
+(`go_liboqs_go_construction_is_classified`) pin both rule/algorithm_id pairs.
+
+**Corpus B effect: 0 findings, either side — the expected zero, not a surprise.** `liboqs-go` has no
+entry in `benchmarks/corpus-b-realworld/manifest.toml` (unlike `liboqs`/`liboqs-python`, which
+already do), so the 150-project corpus dump cannot see it regardless of this change; the filing's
+own `grep -rl` across `go-modules/`'s 20 vendored projects already established zero prevalence
+there too. Adding `liboqs-go` as a 151st corpus project is a separate, larger decision (a new
+manifest entry, a pinned commit, `scan_hints`) this item's own filing did not ask for — the vendored
+clone under `crypto-adjacent/` exists to verify the rule against real source, the same role
+`liboqs`/`liboqs-python`'s clones already serve, not to add corpus coverage.
+
+**Precision 97.16%, held exactly — a falsification, not a re-derivation, and a second, unrelated
+bug caught in the process.** First pass used `work/dump_findings_flags.py` (the same scratch script
+several recent cycles cite) and got **2012 findings both sides**, which looked like a 159-finding
+`OPEN-ASK #CORPUSDRIFT` jump against the published 1853 — until `benchmarks/corpus-b-realworld/
+scan_corpus.py` was run against the same binary and same `--clones` root and returned **1853**, not
+2012, on an unchanged corpus. Diffing the two tools' per-project counts isolated the entire 159-row
+gap to one project: `crates-io:rustls-pemfile`, a manifest entry `corpus-integrity.toml` and
+`scan_corpus.py` both correctly mark `unscannable` — its pinned commit has no directory of its own,
+its clone is the symlinked tree `crates-io:rustls` already scans (`README.md`'s own corpus-B note
+states this) — but `work/dump_findings_flags.py` has no integrity check at all, so it fell through
+to scanning *something* at that path and added 159 spurious rows no other tool would ever produce.
+This is not a re-measurement of `#CORPUSDRIFT`; it is a distinct scratch-script defect that happened
+to land in the same 159-row size class, caught here only because a second, independent tool was run
+over the same binary instead of trusting the first number. Re-dumped with the repo's own
+integrity-checked `dump_findings.py` instead (`work/y77_pre_clean.json` ↔ `work/y77_post_clean.json`,
+pre-change binary built from commit `8296cdf` — `#Y87`'s own commit — in a throwaway worktree,
+post-change binary from this cycle's tree): **1853 findings both sides, row-identical, 0 added, 0
+removed** — matching `scan_corpus.py` exactly and matching the published anchor's own denominator
+exactly, so `bin/precision.py work/y77_pre_clean.json work/y77_post_clean.json --write-readme`
+reproduces **97.16%** (95% CI 95.9–98.5%) with no change to the figure, the interval, or the
+corpus total. Fresh (97.163%), carried-constants (97.159%) and pooled Wilson (97.165%) estimators
+agree within 0.006pp.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets --workspace -- -D warnings` clean; `cargo test --release --workspace` all
+passing (143 `scan_test.rs` cases, one new). Both trust-invariant tests untouched and pass.
+`readme_rule_pack_counts` required updating 119→121 extract / 702→704 classify (total) and Go's
+93→95 (per-language) in the same diff — confirmed failing before the fix, passing after.
+
+**Not done, said out loud:** the declared-receiver-type trace from `oqs.KeyEncapsulation{}`/
+`oqs.Signature{}` to its later `.Init(name, ...)` call, which would resolve this past the generic
+sentinel to a specific parameter set, is not built — the same standing capability gap `OPEN-ASK
+#SIGNVERIFY` already named and deferred. `liboqs-go` is not added as a corpus B project, per the
+scope note above. `work/dump_findings_flags.py`'s `rustls-pemfile` defect is not fixed — it is a
+scratch script outside this repo, flagged here rather than silently worked around, and any cycle
+still using it for a whole-corpus total should cross-check against `scan_corpus.py`/`dump_findings.py`
+first. Checked rather than assumed whether this explains any prior `OPEN-ASK #CORPUSDRIFT` evidence:
+`work/y74d_pre.json`/`y74d_post.json` (the dumps `#Y74(b)`'s own 1970→1811 jump cites) carry the
+`{corpus, projects, findings}` shape only the canonical `dump_findings.py` produces, with
+`rustls-pemfile` correctly recorded `unscannable`/0 findings in both — so that jump is not this bug,
+and this cycle does not generalize its own finding beyond the one scratch-script run it caught it in.
+`OPEN-ASK #ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT` remain open, neither this cycle's to
+resolve.
