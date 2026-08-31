@@ -82,4 +82,24 @@ public class Pqc {
     public static void cmceKem() throws Exception {
         KEM kem = KEM.getInstance("CMCE");
     }
+
+    // JAV-010 / CRYPTO-1021 — XMSS (single-tree) keypair generation
+    public static void xmssKeypair() throws Exception {
+        KeyPairGenerator g = KeyPairGenerator.getInstance("XMSS", "BCPQC");
+    }
+
+    // JAV-010 / CRYPTO-1022 — XMSSMT (multi-tree) keypair generation
+    public static void xmssMtKeypair() throws Exception {
+        KeyPairGenerator g = KeyPairGenerator.getInstance("XMSSMT", "BCPQC");
+    }
+
+    // JAV-090 / CRYPTO-1025 — XMSS signature, digest-qualified name
+    public static void xmssSignature() throws Exception {
+        Signature s = Signature.getInstance("XMSS-SHA256", "BCPQC");
+    }
+
+    // JAV-090 / CRYPTO-1029 — XMSSMT signature, digest-qualified name
+    public static void xmssMtSignature() throws Exception {
+        Signature s = Signature.getInstance("XMSSMT-SHA256", "BCPQC");
+    }
 }

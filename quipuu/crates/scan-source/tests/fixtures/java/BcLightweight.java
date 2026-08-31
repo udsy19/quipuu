@@ -65,4 +65,14 @@ public class BcLightweight {
     public static void sphincsPlusSign() {
         Object g = new SPHINCSPlusSigner();
     }
+
+    // JAV-030 / CRYPTO-1033 — XMSS (single-tree) stateful hash-based signing
+    public static void xmssSign() {
+        Object g = new XMSSSigner();
+    }
+
+    // JAV-030 / CRYPTO-1034 — XMSSMT (multi-tree) stateful hash-based signing
+    public static void xmssMtSign() {
+        Object g = new XMSSMTSigner();
+    }
 }

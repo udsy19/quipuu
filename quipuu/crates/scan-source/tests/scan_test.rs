@@ -453,6 +453,10 @@ fn scans_java_pqc_keypairgenerator_and_signature_and_kem() {
         ("CRYPTO-1018", "bike-unattributed"), // KeyPairGenerator.getInstance("BIKE", "BCPQC")
         ("CRYPTO-1019", "classic-mceliece-unattributed"), // KeyPairGenerator.getInstance("mceliece6960119", "BCPQC")
         ("CRYPTO-1020", "classic-mceliece-unattributed"), // KEM.getInstance("CMCE")
+        ("CRYPTO-1021", "xmss"), // KeyPairGenerator.getInstance("XMSS", "BCPQC")
+        ("CRYPTO-1022", "xmss-mt"), // KeyPairGenerator.getInstance("XMSSMT", "BCPQC")
+        ("CRYPTO-1025", "xmss"), // Signature.getInstance("XMSS-SHA256", "BCPQC")
+        ("CRYPTO-1029", "xmss-mt"), // Signature.getInstance("XMSSMT-SHA256", "BCPQC")
     ];
     for (rule_id, algorithm_id) in want {
         assert!(
@@ -489,6 +493,8 @@ fn scans_java_bouncycastle_lightweight_pqc_classes() {
         ("CRYPTO-819", "slh-dsa-unattributed"), // new HashSLHDSASigner()
         ("CRYPTO-958", "ml-dsa-unattributed"), // new DilithiumSigner()
         ("CRYPTO-959", "slh-dsa-unattributed"), // new SPHINCSPlusSigner()
+        ("CRYPTO-1033", "xmss"),            // new XMSSSigner()
+        ("CRYPTO-1034", "xmss-mt"),         // new XMSSMTSigner()
     ];
     for (rule_id, algorithm_id) in want {
         assert!(

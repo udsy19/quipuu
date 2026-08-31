@@ -1195,8 +1195,7 @@ display_name = "XMSS (single-tree)"
 family = "XMSS"
 primitive = "signature"
 quantum_status = "QuantumSafe"
-undetectable = "As lms — no vendored OID."
-notes = "RFC 8391 / NIST SP 800-208. Stateful hash-based. CNSA 2.0 approves single-tree XMSS for software and firmware signing."
+notes = "RFC 8391 / NIST SP 800-208. Stateful hash-based. CNSA 2.0 approves single-tree XMSS for software and firmware signing. Reachable via java.toml's KeyPairGenerator/Signature.getInstance(\"XMSS\") and BC's low-level XMSSSigner constructor — no OID needed, unlike lms/hss above."
 
 [[algorithm]]
 id = "xmss-mt"
@@ -1204,8 +1203,7 @@ display_name = "XMSS^MT (multi-tree)"
 family = "XMSS"
 primitive = "signature"
 quantum_status = "QuantumSafe"
-undetectable = "As lms — no vendored OID."
-notes = "RFC 8391 / NIST SP 800-208. Quantum-safe, but explicitly PROHIBITED by CNSA 2.0, which takes single-tree XMSS only; listed in nsa-cnsa2 policy_disallowed."
+notes = "RFC 8391 / NIST SP 800-208. Quantum-safe, but explicitly PROHIBITED by CNSA 2.0, which takes single-tree XMSS only; listed in nsa-cnsa2 policy_disallowed. Reachable via java.toml's KeyPairGenerator/Signature.getInstance(\"XMSSMT\") and BC's low-level XMSSMTSigner constructor."
 
 # ============================================================================
 # TLS HYBRID GROUPS — combined classical + PQC key agreement

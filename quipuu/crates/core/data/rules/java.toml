@@ -490,6 +490,30 @@ algorithm_id = "classic-mceliece-unattributed"
 severity_hint = "auto"
 message = "KeyPairGenerator.getInstance('{algo}') — NIST 4th-round PQC KEM candidate (Classic McEliece, not selected as the standardized backup). Migrated key-establishment call site; specific parameter set not tracked."
 
+# --- Approved: XMSS/XMSSMT, NIST SP 800-208 stateful hash-based signatures --
+# BC's LMS/XMSS.java registers "XMSS" and "XMSSMT" as two distinct
+# KeyPairGenerator service names — unlike LMS, where the identical "LMS" name
+# covers both single- and multi-tree HSS keys (the multi-tree variant is
+# selected later via a LMSHSSKeyGenParameterSpec passed to .initialize(),
+# which this table cannot trace across statements), so LMS/HSS is not
+# classified here to avoid guessing which one a bare getInstance("LMS") call
+# will produce.
+[[classify]]
+id = "CRYPTO-1021"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?XMSS\"?$" }
+algorithm_id = "xmss"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — RFC 8391 / NIST SP 800-208 single-tree stateful hash-based signature, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1022"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?XMSSMT\"?$" }
+algorithm_id = "xmss-mt"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — RFC 8391 / NIST SP 800-208 multi-tree stateful hash-based signature, quantum-safe but explicitly prohibited by CNSA 2.0 (single-tree XMSS only)."
+
 # `KeyPairGenerator.getInstance(keyType)` with `keyType` a variable (netty's
 # `pkitesting/Algorithms.java` is the corpus's own example) matches none of
 # CRYPTO-210..223 above — none of their regexes match the variable's
@@ -709,7 +733,7 @@ id = "JAV-030"
 language = "java"
 query = """
 (object_creation_expression
-  type: (type_identifier) @cls (#match? @cls "^(RSAKeyPairGenerator|AESEngine|GCMBlockCipher|BouncyCastleProvider|MLKEMKeyPairGenerator|MLDSAKeyPairGenerator|SLHDSAKeyPairGenerator|MLKEMGenerator|MLKEMExtractor|MLDSASigner|SLHDSASigner|HashMLDSASigner|HashSLHDSASigner|DilithiumSigner|SPHINCSPlusSigner)$"))
+  type: (type_identifier) @cls (#match? @cls "^(RSAKeyPairGenerator|AESEngine|GCMBlockCipher|BouncyCastleProvider|MLKEMKeyPairGenerator|MLDSAKeyPairGenerator|SLHDSAKeyPairGenerator|MLKEMGenerator|MLKEMExtractor|MLDSASigner|SLHDSASigner|HashMLDSASigner|HashSLHDSASigner|DilithiumSigner|SPHINCSPlusSigner|XMSSSigner|XMSSMTSigner)$"))
 """
 captures = { cls = "ident" }
 api = "org.bouncycastle.{cls}"
@@ -832,6 +856,25 @@ when.api = "^org\\.bouncycastle\\.SPHINCSPlusSigner$"
 algorithm_id = "slh-dsa-unattributed"
 severity_hint = "auto"
 message = "BouncyCastle SPHINCSPlusSigner instantiated — FIPS 205 signature under BC's pre-finalization class name, quantum-resistant, but the parameter set comes from the key it is initialised with, not this call."
+
+# NIST SP 800-208 stateful hash-based signatures, BC's low-level API
+# (org.bouncycastle.pqc.crypto.xmss). Unlike Dilithium/SPHINCSPlus above, the
+# class name itself states single- vs multi-tree — XMSSSigner cannot produce
+# an XMSSMT signature and vice versa — so no "-unattributed" sentinel is
+# needed here.
+[[classify]]
+id = "CRYPTO-1033"
+when.api = "^org\\.bouncycastle\\.XMSSSigner$"
+algorithm_id = "xmss"
+severity_hint = "auto"
+message = "BouncyCastle XMSSSigner instantiated — RFC 8391 / NIST SP 800-208 single-tree stateful hash-based signature, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1034"
+when.api = "^org\\.bouncycastle\\.XMSSMTSigner$"
+algorithm_id = "xmss-mt"
+severity_hint = "auto"
+message = "BouncyCastle XMSSMTSigner instantiated — RFC 8391 / NIST SP 800-208 multi-tree stateful hash-based signature, quantum-safe but explicitly prohibited by CNSA 2.0 (single-tree XMSS only)."
 
 # ============================================================================
 # Java JWT-library enum constants (jjwt, java-jwt, nimbus-jose-jwt, jose4j)
@@ -1418,6 +1461,95 @@ when.args.algo = { regex = "(?i)^\"?HASH-?(WITH-?)?SLH-?DSA\"?$" }
 algorithm_id = "slh-dsa-unattributed"
 severity_hint = "auto"
 message = "Signature.getInstance('{algo}') — FIPS 205 pre-hash variant, quantum-resistant, but the parameter set is not stated at this call site (BC's family-generic 'HASH-SLH-DSA' name)."
+
+# --- Approved: XMSS/XMSSMT, NIST SP 800-208 stateful hash-based signatures --
+# Bare service names plus the four digest-qualified names BC registers
+# directly for each (LMS.java/XMSS.java, read from the vendored bcprov-jdk18on
+# clone). BC also registers a "<DIGEST>WITHXMSS(MT)" alias family and the
+# fully-qualified "<DIGEST>WITHXMSS(MT)-<DIGEST>" names these resolve to —
+# left uncovered here, named rather than silently missed: enumerating that
+# alias set correctly needs the same care #Y61 put into csharp.toml's SHA3
+# classes, not a quick addition. LMS/HSS is not classified for the same
+# call-site ambiguity reason given at the KeyPairGenerator arms above.
+[[classify]]
+id = "CRYPTO-1023"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?XMSS\"?$" }
+algorithm_id = "xmss"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — RFC 8391 / NIST SP 800-208 single-tree stateful hash-based signature, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1024"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?XMSSMT\"?$" }
+algorithm_id = "xmss-mt"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — RFC 8391 / NIST SP 800-208 multi-tree stateful hash-based signature, quantum-safe but explicitly prohibited by CNSA 2.0 (single-tree XMSS only)."
+
+[[classify]]
+id = "CRYPTO-1025"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?XMSS-SHA256\"?$" }
+algorithm_id = "xmss"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — RFC 8391 / NIST SP 800-208 single-tree stateful hash-based signature, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1026"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?XMSS-SHAKE128\"?$" }
+algorithm_id = "xmss"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — RFC 8391 / NIST SP 800-208 single-tree stateful hash-based signature, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1027"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?XMSS-SHA512\"?$" }
+algorithm_id = "xmss"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — RFC 8391 / NIST SP 800-208 single-tree stateful hash-based signature, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1028"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?XMSS-SHAKE256\"?$" }
+algorithm_id = "xmss"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — RFC 8391 / NIST SP 800-208 single-tree stateful hash-based signature, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1029"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?XMSSMT-SHA256\"?$" }
+algorithm_id = "xmss-mt"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — RFC 8391 / NIST SP 800-208 multi-tree stateful hash-based signature, quantum-safe but explicitly prohibited by CNSA 2.0 (single-tree XMSS only)."
+
+[[classify]]
+id = "CRYPTO-1030"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?XMSSMT-SHAKE128\"?$" }
+algorithm_id = "xmss-mt"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — RFC 8391 / NIST SP 800-208 multi-tree stateful hash-based signature, quantum-safe but explicitly prohibited by CNSA 2.0 (single-tree XMSS only)."
+
+[[classify]]
+id = "CRYPTO-1031"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?XMSSMT-SHA512\"?$" }
+algorithm_id = "xmss-mt"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — RFC 8391 / NIST SP 800-208 multi-tree stateful hash-based signature, quantum-safe but explicitly prohibited by CNSA 2.0 (single-tree XMSS only)."
+
+[[classify]]
+id = "CRYPTO-1032"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?XMSSMT-SHAKE256\"?$" }
+algorithm_id = "xmss-mt"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — RFC 8391 / NIST SP 800-208 multi-tree stateful hash-based signature, quantum-safe but explicitly prohibited by CNSA 2.0 (single-tree XMSS only)."
 
 # `Signature.getInstance(algorithmIdentifier)` with a variable argument (the
 # same netty `pkitesting/Algorithms.java` call site as CRYPTO-234's

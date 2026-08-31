@@ -2271,6 +2271,11 @@ const JAVA_CTOR_APIS: &[(&str, &str)] = &[
     // FIPS-aligned classes above (#Y66).
     ("DilithiumSigner", "org.bouncycastle.DilithiumSigner"),
     ("SPHINCSPlusSigner", "org.bouncycastle.SPHINCSPlusSigner"),
+    // NIST SP 800-208 stateful hash-based signatures, low-level API. The two
+    // class names are unambiguous on their own — unlike the JCA "LMS" service
+    // name, which BC registers once for both single- and multi-tree HSS keys.
+    ("XMSSSigner", "org.bouncycastle.XMSSSigner"),
+    ("XMSSMTSigner", "org.bouncycastle.XMSSMTSigner"),
 ];
 
 fn match_java_ctor(class_name: &str) -> Option<(String, HashMap<String, ArgValue>)> {
