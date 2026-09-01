@@ -5957,3 +5957,87 @@ completely unrelated change, which is evidence for whoever picks it up that it r
 rather than needing an unusual trigger.
 
 PRECISION: 97.17%
+
+## Measurement, 2026-09-01 (Track A cycle 79 — Java `KeyPairGenerator.getInstance("Ed25519"/"XDH")`, `#T8`'s two remaining classical drops)
+
+`#T8` (filed 2026-08-27) named "~14 TOML-only PQC classify arms" as ready-to-build once `#T3`
+unblocked `Severity::Safe`; re-reading it this cycle found every PQC arm it listed (Go
+`CurvePreferences` ML-KEM rows, Java `KeyPairGenerator`/`Signature.getInstance` ML-KEM/ML-DSA rows)
+already shipped across cycles 43–78. The two **classical** drops `#T8` named in the same breath —
+`KeyPairGenerator.getInstance("Ed25519")` and `("XDH")` — had not: `JAV-010`'s extractor already
+captures any string-literal argument to `KeyPairGenerator.getInstance`, so both call shapes were
+extracted and silently dropped with no classify arm to match them, the same "extracted but
+unclassified" defect `#T8` described for the PQC rows.
+
+**Also checked before building anything, per "measure, don't assert":** `#Y88`'s own filing named
+`sntrup761x25519-sha512` (RFC 9941) as a ready-to-rank-lower second row for the SSH `Config.
+KeyExchanges` rule. Fetched `pkg.go.dev/golang.org/x/crypto/ssh` and read the vendored corpus
+copy directly (`work/corpus-clones/go-modules/x-crypto/ssh/common.go:83-106`): `supportedKexAlgos`
+and `defaultKexAlgos` list eight KEX names, none of them Sntrup761 — `golang.org/x/crypto/ssh`
+does not implement this KEX at all, so a Go classify arm for it would fire on a string no real
+Go program using this library can negotiate. Not built; left named in the backlog for whichever
+non-Go SSH library (OpenSSH itself, paramiko, russh) actually implements it, which no lens has
+checked yet.
+
+**What shipped:** two new classify arms, `java.toml` `CRYPTO-1063` (`"Ed25519"` → the existing
+`ed25519` algorithm id, same as every other Ed25519 call site in the table) and `CRYPTO-1064`
+(`"XDH"` → a new `xdh-unattributed` sentinel, `algorithm-table.toml`, exact same shape as
+`ecdh-unattributed`: XDH is the JCA family name covering both X25519 and X448, and the curve is
+chosen at the following `.initialize(NamedParameterSpec(...))` call this matcher cannot see).
+`crates/cbom/src/emit.rs`'s `canonicalize_family` gained `"XDH" => "ECDH"` alongside its existing
+`"X25519" | "X448"` mapping — the CycloneDX 1.7 `algorithmFamiliesEnum` has no `XDH` member, so
+without this the CBOM emitter would have failed schema validation the first time a real `XDH`
+finding reached it (caught by `every_algorithm_emits_a_bom_valid_at_the_version_it_declares`,
+which failed before the fix and passes after). New fixture coverage: `tests/fixtures/java/Main.java`
+gained both call shapes; new test `scans_java_keypairgenerator_ed25519_and_xdh` pins both rule
+ids to both algorithm ids.
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change binary `a38bdc0` (cycle 78's own commit) · post-change binary
+from this cycle's tree · dumps `work/y88_post.json` ↔ `work/y89_post.json`, both 1911 findings,
+both produced by the repo's own `benchmarks/corpus-b-realworld/dump_findings.py` (integrity-checked,
+clone-relative paths) — not the absolute-path ad-hoc scratch script, which on a first pass produced
+a spurious ~2000-row diff purely from a path-format mismatch against the previous dump and was
+discarded before drawing any conclusion from it.**
+
+**1 finding added, 1 removed, 0 net change in count — a reclassification, not new coverage.**
+`crypto-adjacent:github.com/tink-crypto/tink-java`'s `X25519Conscrypt.java:91`
+(`KeyPairGenerator.getInstance("XDH", provider)`, followed by `.initialize(255)`) moved from the
+generic `CRYPTO-234`/`jca-unattributed` sentinel to the new `CRYPTO-1064`/`xdh-unattributed` arm.
+Opened the cited line directly: a real XDH keypair-generation call, hand-labelled TP under both the
+old and new classification — the reclassification is strictly more specific (names the primitive as
+XDH rather than "some JCA call"), not a new detection. No other corpus B project calls
+`KeyPairGenerator.getInstance` with `"Ed25519"` or `"XDH"` as a literal.
+
+**Precision 97.17% (persisted) → 97.18%, held within rounding.**
+`bin/precision.py work/y88_post.json work/y89_post.json --added-tp 1 --added-fp 0 --write-readme`
+reproduced the anchored 97.17%/635-row baseline before printing anything else, then folded the one
+hand-labelled TP into stratum A (`262/271` → `263/272`, matching the "delta lands in stratum A"
+output — the reclassified row is a new key precision.py cannot match against the old label, so it
+is treated as one new sampled row, not a like-for-like swap). Stratified-fresh (97.179%), pooled
+Wilson (97.170%) agree within 0.01pp.
+
+**README, corrected in full, not just the headline.** `--write-readme` updated the headline
+(97.17% → 97.18%, 635 → 636 audited) and comparison-table cells. Per rule 4: the "What the
+denominator excludes" paragraph's second copy of the composition (`635`/`617 TP`) was updated to
+`636`/`618 TP` in the same diff. Also fixed, found by the same grep sweep and reported separately
+since it predates this cycle: the Recall section's "618-row audit" cross-reference (`#Y89`, filed
+2026-09-01 synthesis cycle 31) was stale by 17 rows against the then-current 635 and is now
+rewritten to say "the audit the precision figure above is now sampled from" instead of a second
+hardcoded count, per `#Y89`'s own recommendation, so it cannot drift out of sync with the headline
+again. `readme_rule_pack_counts` required updating 728→730 classify (total) and Java's 181→183
+(per-language) — confirmed failing before the fix, passing after.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets --workspace -- -D warnings` clean; `cargo test --release --workspace` all
+passing (148 `scan_test.rs` cases, one new; 7 `emit_test.rs` cases including the CBOM schema-validity
+one this cycle's fix was required to keep green). Both trust-invariant tests untouched and pass.
+
+**Not done, said out loud:** `sntrup761x25519-sha512` is now known *not* buildable against
+`golang.org/x/crypto/ssh` specifically (see above) — a negative result recorded so the next cycle
+does not re-derive it, not a closure of the backlog item, which still names other languages'
+libraries as unverified. The Java two-hop generic-name traces (`#Y80`/`#Y81`/LMS/HSS) and the
+aws-lc-rs `kem`/`signature` module gap remain open, neither this cycle's to take. `OPEN-ASK
+#ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT` remain open, neither this cycle's to resolve.
+
+PRECISION: 97.18%

@@ -464,6 +464,16 @@ quantum_status = "BrokenByShor"
 replacement = "ml-kem-1024"
 oid = "1.3.101.111"
 
+[[algorithm]]
+id = "xdh-unattributed"
+display_name = "XDH (curve not stated at the call site)"
+family = "XDH"
+primitive = "key-agree"
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "x25519-mlkem768"
+notes = "`KeyPairGenerator.getInstance(\"XDH\")` names the JCA algorithm family that covers both X25519 and X448; the curve comes from the subsequent `.initialize(NamedParameterSpec(...))` call, which this matcher cannot see. Shor breaks both curves, so the migration verdict is exact and only the classical strength is unknown. Sentinel, in the same role as ecdh-unattributed."
+
 # DH / DSA -------------------------------------------------------------------
 
 [[algorithm]]

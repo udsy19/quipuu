@@ -309,6 +309,27 @@ algorithm_id = "ml-dsa-87"
 severity_hint = "auto"
 message = "KeyPairGenerator.getInstance('{algo}') — FIPS 204, quantum-resistant. Migrated signature call site."
 
+# --- Classical: the two JCA names KeyPairGenerator.getInstance drops today --
+
+[[classify]]
+id = "CRYPTO-1063"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?Ed25519\"?$" }
+algorithm_id = "ed25519"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — Ed25519, broken by Shor. Replace with ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-1064"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?XDH\"?$" }
+algorithm_id = "xdh-unattributed"
+severity_hint = "auto"
+# The curve (X25519 vs X448) is chosen at the subsequent
+# .initialize(NamedParameterSpec) call, which this matcher cannot see — same
+# shape as CRYPTO-211's "EC" arm above.
+message = "XDH keypair generator — the curve is chosen at .initialize(NamedParameterSpec(...)) and is not stated here. Quantum-vulnerable at every curve. Replace with X25519MLKEM768."
+
 # --- PQC: FIPS 205, BouncyCastle's own JCA names (BC has no JDK-native ------
 # SLH-DSA provider; names read from bcgit/bc-java
 # prov/.../jcajce/provider/asymmetric/SLHDSA.java's Mappings class, not

@@ -525,6 +525,27 @@ fn scans_java_keypairgenerator_rsa() {
 }
 
 #[test]
+fn scans_java_keypairgenerator_ed25519_and_xdh() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/Main.java"))
+        .expect("scan succeeds");
+
+    for (rule_id, algorithm_id) in [
+        ("CRYPTO-1063", "ed25519"),         // KeyPairGenerator.getInstance("Ed25519")
+        ("CRYPTO-1064", "xdh-unattributed"), // KeyPairGenerator.getInstance("XDH")
+    ] {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in Java fixture"
+        );
+    }
+}
+
+#[test]
 fn scans_java_pqc_keypairgenerator_and_signature_and_kem() {
     let b = load_builtins().unwrap();
     let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");

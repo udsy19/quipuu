@@ -207,8 +207,10 @@ fn canonicalize_family(family: &str) -> Option<String> {
         // bom-examples Protocol/bom.json).
         "RSA" => "RSASSA-PKCS1",
         // X25519 / X448 are EdDSA-family curves but the spec catalogues them
-        // under ECDH (key-agree). Map there.
-        "X25519" | "X448" => "ECDH",
+        // under ECDH (key-agree). Map there. "XDH" is the JCA name covering
+        // both curves generically (KeyPairGenerator.getInstance("XDH")) —
+        // same destination.
+        "X25519" | "X448" | "XDH" => "ECDH",
         // Finite-Field Diffie-Hellman — our short name vs spec's FFDH.
         "DH" => "FFDH",
         // Draft / hybrid families have no canonical entry yet.

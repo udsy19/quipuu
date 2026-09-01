@@ -56,6 +56,16 @@ public class Main {
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
     }
 
+    // JAV-010 / CRYPTO-1063 — Ed25519 KeyPairGenerator
+    public static void kpgEd25519() throws Exception {
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519");
+    }
+
+    // JAV-010 / CRYPTO-1064 — XDH KeyPairGenerator
+    public static void kpgXdh() throws Exception {
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("XDH");
+    }
+
     // JAV-020 / CRYPTO-220 — MD5
     public static void hashMd5() throws Exception {
         MessageDigest md = MessageDigest.getInstance("MD5");
