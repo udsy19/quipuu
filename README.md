@@ -10,7 +10,7 @@ open reports/quipuu.html
 
 <!-- TODO: add screenshot or asciinema recording -->
 
-Seven languages. Four output formats. No account. No cloud. No LLM. Median project scans in 205ms; the mean is 1847ms — see the benchmark table, both are real.
+Seven languages. Four output formats. No account. No cloud. No LLM. Median project scans in 175ms; the mean is 1575ms — see the benchmark table, both are real.
 
 > **Formerly `cryptoscope`, briefly `seawall`.** Renamed to `quipuu` in August 2026, before any
 > release. A quipu is the Incan knotted-cord record system — an entire civilisation's inventory
@@ -362,7 +362,7 @@ quipuu scan .
 | Languages (crypto-specific) | 7 | 7+ | 7+ | Java, Python, Go, C# (comprehensive rules merged 2026-08-26) | Any |
 | Published precision (crypto findings) | 97.18% (636 audited rows, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
 | Published recall | 100.0% (Go stdlib, 401/401 in-scope sites); 41.9% cross-language (49/117 planted sites, 7 languages) | Not published | Not published | Not published | Not published |
-| Scan speed | 205ms median project; 277s for the 150-project corpus (2 cores) | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
+| Scan speed | 175ms median project; 236.6s for the 150-project corpus (2 cores) | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
 
 **Where CodeQL wins:** CodeQL has full inter-procedural data-flow. It can trace a key from generation through storage to use and flag misuse that a pattern-based scanner cannot see. If you need that depth and can absorb the scan time, CodeQL delivers it. quipuu does not attempt to replicate data-flow analysis — it trades that capability for speed, locality, and PQC specificity.
 
