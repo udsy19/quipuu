@@ -6442,3 +6442,79 @@ coverage), the next-ranked item from the same synthesis cycle, was not started t
 remain outside `crates/`/`README.md`, this track's write authority.
 
 PRECISION: 97.17%
+
+## Measurement, 2026-09-01 (Track A cycle 203 — `#Y101`, BouncyCastle Java `CompositeKEMs` gains
+`javax.crypto.KeyGenerator.getInstance` coverage)
+
+Took `#Y101` as ranked first by cycle-36 synthesis: `java.toml` had zero coverage for
+`javax.crypto.KeyGenerator.getInstance` at all — not an attribution gap on an existing fallback, a
+true zero, confirmed by a live pre-change scan producing no finding whatsoever on a
+`KeyGenerator.getInstance("MLKEM768-X25519-SHA3-256", "BC")` line while its `KeyPairGenerator`
+sibling on the same fixture correctly fell through to `jca-unattributed`.
+
+**The filing's own "23 names" count did not survive a direct re-fetch and is corrected here, not
+built around.** BouncyCastle 1.85.2's `bcprov-jdk18on` (`repo1.maven.org/maven2` `maven-metadata.xml`,
+`<lastUpdated>20260807034313</lastUpdated>`) matches git tag `r1rv85v2`, fetched directly from
+`github.com/bcgit/bc-java` rather than trusted from the filing's citation. `compositekem/
+CompositeIndex.java`'s static initialiser registers exactly **12** `ASN1ObjectIdentifier` →
+algorithm-name pairings, not 23 — `MLKEM768-RSA{2048,3072,4096}-SHA3-256`, `MLKEM768-X25519-SHA3-256`,
+`MLKEM768-ECDH-{P256,P384,BP256}-SHA3-256`, `MLKEM1024-RSA3072-SHA3-256`, `MLKEM1024-ECDH-{P384,
+BP384,P521}-SHA3-256`, `MLKEM1024-X448-SHA3-256`. `CompositeKEMs.Mappings.configure` iterates
+`CompositeIndex.getSupportedIdentifiers()` and registers exactly one `KeyGenerator.<name>` per
+identifier — no second registration path exists that would add the other 11 the filing counted.
+Building 23 arms would have shipped 11 that can never fire against any string BC actually returns
+from `getSupportedIdentifiers()`, the same "classify rule targets an api the extractor can emit"
+failure mode the reachability gate exists to catch, just one level down (a real API matched by a
+fictional literal, not a fictional API).
+
+**Scoped narrowly, per the filing's own Pass 2 objection.** `javax.crypto.KeyGenerator` has no
+general extraction anywhere in this file — most of its calls are AES/ChaCha20/HMAC symmetric key
+generation, outside the PQC migration story. One new `[[extract]]` block (`JAV-110`) plus 12
+`[[classify]]` arms (`CRYPTO-1082`–`1093`) match only the 12 confirmed literal names, degrading to
+`ml-kem-unattributed` — the same "no composite-family row in algorithm-table.toml" reasoning
+`CompositeMLDsa` (`#Y95`, C#) already established, not a new precedent. A `KeyGenerator.getInstance`
+call naming anything else, including ordinary symmetric algorithms, is extracted and then matches no
+classify rule, which produces no finding at all — confirmed in the new fixture's own
+`keyGeneratorAesIsNotExtracted()` case.
+
+**Two Rust-side dispatch-table entries were required in addition to the TOML, not TOML alone** —
+`java.toml`'s `[[extract]]` blocks document intent; matching for Java is actually a hand-written
+walker (`scanner.rs`) keyed on `JAVA_CALLEE_APIS`. Confirmed the gap the hard way: the TOML-only diff
+built first compiled clean and passed every existing test, but the new fixture's `KeyGenerator` call
+sites produced zero findings until `JAVA_CALLEE_APIS` gained a `KeyGenerator.getInstance` row and
+`populate_java_args`'s api match arm gained the same string — the identical two-site pattern every
+other `*_CALLEE_APIS` addition in this file's history required.
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change dump `work/y102_default.json` (1916, commit `06ef2eb`) ·
+post-change binary from this cycle's tree · dump `work/y101_post.json` (1916), both produced by the
+repo's own `benchmarks/corpus-b-realworld/dump_findings.py`.**
+
+**0 findings added, 0 removed, 0 reclassified — the expected result, not a surprise.** The filing's
+own corpus check already found every composite-KEM/composite-signature string in corpus B's `maven`
+tree confined to `bcpkix-jdk18on` itself (BC's own PKIX module, self-tests and OID-mapping classes),
+never an independent downstream consumer; `crypto-adjacent/aws-lc`'s Go/C clone is unrelated. No
+project in the 150-project manifest calls `javax.crypto.KeyGenerator.getInstance` with any of the 12
+literal names.
+
+**Precision 97.17%, held exactly.** `bin/precision.py work/y102_default.json work/y101_post.json
+--write-readme` confirms row-identity on the two byte-identical 1916-finding dumps and reports the
+fresh stratified populations (`A=797, B=1119`, sample `A 262/271`, `B 355/364`) at 97.175%, rounding
+to the same published two-decimal figure; `--write-readme` found the headline and comparison-table
+figures already correct. The rule-pack-count sentences (`133 extract blocks and 747 classify arms`,
+Java's `183`) were updated by hand in the same diff — `134`/`759`/`195` — confirmed against a fresh
+`grep -c '^\[\[extract\]\]'`/`'^\[\[classify\]\]'` before committing.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --all` clean; `cargo clippy --release
+--all-targets --workspace -- -D warnings` clean; `cargo test --release --workspace` all passing (one
+new test function, `scans_java_bouncycastle_composite_kem_keygenerator`, 152 `scan_test.rs` cases,
+one new). Both trust-invariant tests untouched and pass. `readme_rule_pack_counts_match_the_rule_packs`
+confirmed failing before the README edit (133/747/183), passing after (134/759/195).
+
+**Not done, said out loud:** `OPEN-ASK #ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT` remain open,
+neither this cycle's to resolve — this cycle could not have caused either (byte-identical dumps).
+`#Y104` (BC Java `CompositeSignatures`, the same synthesis cycle's lower-ranked attribution item) and
+`#Y102`/`#Y103` (README recall-figure and footnote-count staleness, same synthesis cycle, both
+docs-only) were not started this cycle.
+
+PRECISION: 97.17%

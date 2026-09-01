@@ -616,6 +616,53 @@ fn scans_java_pqc_keypairgenerator_and_signature_and_kem() {
 }
 
 #[test]
+fn scans_java_bouncycastle_composite_kem_keygenerator() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/CompositeKem.java"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-234", "jca-unattributed"), // KeyPairGenerator.getInstance("MLKEM768-X25519-SHA3-256")
+        ("CRYPTO-1082", "ml-kem-unattributed"), // KeyGenerator.getInstance("MLKEM768-RSA2048-SHA3-256")
+        ("CRYPTO-1083", "ml-kem-unattributed"), // KeyGenerator.getInstance("MLKEM768-RSA3072-SHA3-256")
+        ("CRYPTO-1084", "ml-kem-unattributed"), // KeyGenerator.getInstance("MLKEM768-RSA4096-SHA3-256")
+        ("CRYPTO-1085", "ml-kem-unattributed"), // KeyGenerator.getInstance("MLKEM768-X25519-SHA3-256")
+        ("CRYPTO-1086", "ml-kem-unattributed"), // KeyGenerator.getInstance("MLKEM768-ECDH-P256-SHA3-256")
+        ("CRYPTO-1087", "ml-kem-unattributed"), // KeyGenerator.getInstance("MLKEM768-ECDH-P384-SHA3-256")
+        ("CRYPTO-1088", "ml-kem-unattributed"), // KeyGenerator.getInstance("MLKEM768-ECDH-BP256-SHA3-256")
+        ("CRYPTO-1089", "ml-kem-unattributed"), // KeyGenerator.getInstance("MLKEM1024-RSA3072-SHA3-256")
+        ("CRYPTO-1090", "ml-kem-unattributed"), // KeyGenerator.getInstance("MLKEM1024-ECDH-P384-SHA3-256")
+        ("CRYPTO-1091", "ml-kem-unattributed"), // KeyGenerator.getInstance("MLKEM1024-ECDH-BP384-SHA3-256")
+        ("CRYPTO-1092", "ml-kem-unattributed"), // KeyGenerator.getInstance("MLKEM1024-X448-SHA3-256")
+        ("CRYPTO-1093", "ml-kem-unattributed"), // KeyGenerator.getInstance("MLKEM1024-ECDH-P521-SHA3-256")
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in Java composite-KEM fixture; findings: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+    assert_eq!(
+        findings.len(),
+        13,
+        "the plain KeyGenerator.getInstance(\"AES\") call must not be extracted — this is not a \
+         general KeyGenerator policy; findings: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
 fn scans_java_bouncycastle_lightweight_pqc_classes() {
     let b = load_builtins().unwrap();
     let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");

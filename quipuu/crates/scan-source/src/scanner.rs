@@ -1870,6 +1870,10 @@ const JAVA_CALLEE_APIS: &[(&str, &str)] = &[
         "java.security.Signature.getInstance",
     ),
     ("KEM.getInstance", "javax.crypto.KEM.getInstance"),
+    (
+        "KeyGenerator.getInstance",
+        "javax.crypto.KeyGenerator.getInstance",
+    ),
 ];
 
 fn match_java_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
@@ -3526,7 +3530,8 @@ fn populate_java_args(
         | "java.security.KeyPairGenerator.getInstance"
         | "java.security.MessageDigest.getInstance"
         | "java.security.Signature.getInstance"
-        | "javax.crypto.KEM.getInstance" => {
+        | "javax.crypto.KEM.getInstance"
+        | "javax.crypto.KeyGenerator.getInstance" => {
             // First arg is a string literal like "AES/GCM/NoPadding"
             let key = match api {
                 "javax.crypto.Cipher.getInstance" => "spec",

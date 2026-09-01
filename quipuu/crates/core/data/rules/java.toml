@@ -1820,3 +1820,129 @@ when.args.group = "ffdhe4096"
 algorithm_id = "dh-4096"
 severity_hint = "auto"
 message = "BouncyCastle TlsUtils.addIfSupported group list: ffdhe4096 — finite-field DH (RFC 7919), quantum-vulnerable. Migrate to an ML-KEM hybrid group."
+
+# ============================================================================
+# javax.crypto.KeyGenerator.getInstance — BouncyCastle CompositeKEMs only
+# (#Y101). `javax.crypto.KeyGenerator` has no general extraction in this file
+# (most of its calls are AES/ChaCha20/HMAC symmetric key generation, out of
+# the PQC migration story) — this block is scoped narrowly to the literal
+# algorithm-name strings BC 1.85.2's own CompositeKEMs.Mappings registers
+# under `KeyGenerator.<name>`, not a general KeyGenerator policy. A call
+# whose literal does not match one of these arms is extracted and then
+# matches no classify rule, which produces no finding at all, exactly like
+# every other unmatched literal in this file.
+#
+# Verified directly against the release tag matching the published Maven
+# Central artifact (`bcprov-jdk18on` 1.85.2, `bc-java` tag `r1rv85v2`), not a
+# changelog or a prior cycle's count: `compositekem/CompositeIndex.java`'s
+# static initialiser registers exactly 12 composite ML-KEM pairings, not the
+# 23 the standing backlog item named — the discrepancy is recorded in
+# BENCHMARKING_RESULTS.md rather than silently built around.
+[[extract]]
+id = "JAV-110"
+language = "java"
+query = """
+(method_invocation
+  object: (identifier) @cls (#eq? @cls "KeyGenerator")
+  name: (identifier) @fn (#eq? @fn "getInstance")
+  arguments: (argument_list (string_literal) @algo))
+"""
+captures = { cls = "ident", fn = "ident", algo = "literal_string" }
+api = "javax.crypto.KeyGenerator.getInstance"
+description = "Java KeyGenerator.getInstance(algo) — scoped here to BouncyCastle's Composite ML-KEM algorithm-name registrations (draft-ietf-lamps-pq-composite-kem), not a general KeyGenerator extraction."
+
+[[classify]]
+id = "CRYPTO-1082"
+when.api = "^javax\\.crypto\\.KeyGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLKEM768-RSA2048-SHA3-256\"?$" }
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "KeyGenerator.getInstance('{algo}') — BouncyCastle Composite ML-KEM (FIPS 203 ML-KEM-768 paired with RSA-2048-OAEP). The ML-KEM component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1083"
+when.api = "^javax\\.crypto\\.KeyGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLKEM768-RSA3072-SHA3-256\"?$" }
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "KeyGenerator.getInstance('{algo}') — BouncyCastle Composite ML-KEM (FIPS 203 ML-KEM-768 paired with RSA-3072-OAEP). The ML-KEM component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1084"
+when.api = "^javax\\.crypto\\.KeyGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLKEM768-RSA4096-SHA3-256\"?$" }
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "KeyGenerator.getInstance('{algo}') — BouncyCastle Composite ML-KEM (FIPS 203 ML-KEM-768 paired with RSA-4096-OAEP). The ML-KEM component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1085"
+when.api = "^javax\\.crypto\\.KeyGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLKEM768-X25519-SHA3-256\"?$" }
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "KeyGenerator.getInstance('{algo}') — BouncyCastle Composite ML-KEM (FIPS 203 ML-KEM-768 paired with X25519). The ML-KEM component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1086"
+when.api = "^javax\\.crypto\\.KeyGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLKEM768-ECDH-P256-SHA3-256\"?$" }
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "KeyGenerator.getInstance('{algo}') — BouncyCastle Composite ML-KEM (FIPS 203 ML-KEM-768 paired with ECDH P-256). The ML-KEM component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1087"
+when.api = "^javax\\.crypto\\.KeyGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLKEM768-ECDH-P384-SHA3-256\"?$" }
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "KeyGenerator.getInstance('{algo}') — BouncyCastle Composite ML-KEM (FIPS 203 ML-KEM-768 paired with ECDH P-384). The ML-KEM component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1088"
+when.api = "^javax\\.crypto\\.KeyGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLKEM768-ECDH-BP256-SHA3-256\"?$" }
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "KeyGenerator.getInstance('{algo}') — BouncyCastle Composite ML-KEM (FIPS 203 ML-KEM-768 paired with ECDH brainpoolP256r1). The ML-KEM component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1089"
+when.api = "^javax\\.crypto\\.KeyGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLKEM1024-RSA3072-SHA3-256\"?$" }
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "KeyGenerator.getInstance('{algo}') — BouncyCastle Composite ML-KEM (FIPS 203 ML-KEM-1024 paired with RSA-3072-OAEP). The ML-KEM component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1090"
+when.api = "^javax\\.crypto\\.KeyGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLKEM1024-ECDH-P384-SHA3-256\"?$" }
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "KeyGenerator.getInstance('{algo}') — BouncyCastle Composite ML-KEM (FIPS 203 ML-KEM-1024 paired with ECDH P-384). The ML-KEM component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1091"
+when.api = "^javax\\.crypto\\.KeyGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLKEM1024-ECDH-BP384-SHA3-256\"?$" }
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "KeyGenerator.getInstance('{algo}') — BouncyCastle Composite ML-KEM (FIPS 203 ML-KEM-1024 paired with ECDH brainpoolP384r1). The ML-KEM component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1092"
+when.api = "^javax\\.crypto\\.KeyGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLKEM1024-X448-SHA3-256\"?$" }
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "KeyGenerator.getInstance('{algo}') — BouncyCastle Composite ML-KEM (FIPS 203 ML-KEM-1024 paired with X448). The ML-KEM component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1093"
+when.api = "^javax\\.crypto\\.KeyGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLKEM1024-ECDH-P521-SHA3-256\"?$" }
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "KeyGenerator.getInstance('{algo}') — BouncyCastle Composite ML-KEM (FIPS 203 ML-KEM-1024 paired with ECDH P-521). The ML-KEM component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
