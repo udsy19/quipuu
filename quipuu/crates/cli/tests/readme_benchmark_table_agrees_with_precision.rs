@@ -102,8 +102,12 @@ fn readme_speed_figures_agree_with_the_benchmark_table() {
     // "| Per project | median 175ms · mean 1575ms · p90 1.19s · max 126.7s |"
     let table_median = token_before(&readme, "ms · mean");
     let table_mean = token_before(&readme, "ms · p90");
-    // "| Wall-clock time | 236.6s (3m 57s) for all 150 |"
-    let table_wallclock = token_before(&readme, "s (3m");
+    // "| Wall-clock time | 236.6s (3m 57s) for all 150 |" — scoped to the row so the
+    // anchor doesn't depend on which minute digit the parenthetical happens to show.
+    let wallclock_row_start = readme.find("| Wall-clock time |").unwrap_or_else(|| {
+        panic!("README.md no longer contains \"| Wall-clock time |\" — update this test to match the new wording")
+    });
+    let table_wallclock = token_before(&readme[wallclock_row_start..], "s (");
 
     // "Median project scans in 175ms; the mean is 1575ms — see the benchmark table"
     let lede_median = token_before(&readme, "ms; the mean");
