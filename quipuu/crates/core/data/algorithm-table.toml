@@ -1248,6 +1248,15 @@ quantum_status = "PqcFinal"
 notes = "IANA codepoint 4589 (0x11ED)."
 
 [[algorithm]]
+id = "x448-mlkem1024"
+display_name = "X448MLKEM1024 (OpenSSL hybrid KEM)"
+family = "Hybrid-KEM"
+primitive = "combiner"
+nist_quantum_security_level = 5
+quantum_status = "PqcFinal"
+notes = "OpenSSL 3.5 EVP_PKEY key type (docs.openssl.org/master/man7/EVP_PKEY-MLX-KEM/). Unlike its three siblings above, no IANA TLS supported_groups codepoint is assigned as of 2026-09-01 — not currently negotiable in a TLS handshake, usable only via the generic EVP_PKEY keygen/KEM API."
+
+[[algorithm]]
 id = "x25519-kyber768-draft00"
 display_name = "X25519Kyber768Draft00 (LEGACY)"
 family = "Hybrid-KEM-Draft"

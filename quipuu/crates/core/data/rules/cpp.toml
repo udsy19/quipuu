@@ -1106,6 +1106,47 @@ algorithm_id = "slh-dsa-shake-256f"
 severity_hint = "auto"
 message = "OpenSSL generic keygen(\"{alg}\") — SLH-DSA-SHAKE-256f, FIPS 205, quantum-resistant."
 
+# OpenSSL 3.5's hybrid PQ/T KEM key types (docs.openssl.org/master/man7/EVP_PKEY-MLX-KEM/,
+# fetched 2026-09-01) — the same four names java.toml's setNamedGroups and this file's
+# SSL_CTX_set1_groups_list rules above already classify as TLS groups, reachable here through
+# the generic keygen entry points instead. Reuses those algorithm ids rather than adding
+# protocol-specific duplicates, per the same convention CRYPTO-909-911 already set.
+[[classify]]
+id = "CRYPTO-1065"
+when.api = "^openssl\\.(EVP_PKEY_CTX_new_from_name|EVP_PKEY_Q_keygen)$"
+when.args.alg = { regex = "(?i)^X25519MLKEM768$" }
+algorithm_id = "x25519-mlkem768"
+severity_hint = "auto"
+message = "OpenSSL generic keygen(\"{alg}\") — hybrid X25519 + ML-KEM-768 (FIPS 203). Migrated key-establishment."
+
+[[classify]]
+id = "CRYPTO-1066"
+when.api = "^openssl\\.(EVP_PKEY_CTX_new_from_name|EVP_PKEY_Q_keygen)$"
+when.args.alg = { regex = "(?i)^SecP256r1MLKEM768$" }
+algorithm_id = "secp256r1-mlkem768"
+severity_hint = "auto"
+message = "OpenSSL generic keygen(\"{alg}\") — hybrid secp256r1 + ML-KEM-768 (FIPS 203). Migrated key-establishment."
+
+[[classify]]
+id = "CRYPTO-1067"
+when.api = "^openssl\\.(EVP_PKEY_CTX_new_from_name|EVP_PKEY_Q_keygen)$"
+when.args.alg = { regex = "(?i)^SecP384r1MLKEM1024$" }
+algorithm_id = "secp384r1-mlkem1024"
+severity_hint = "auto"
+message = "OpenSSL generic keygen(\"{alg}\") — hybrid secp384r1 + ML-KEM-1024 (FIPS 203). Meets the CNSA 2.0 ML-KEM parameter set."
+
+# Unlike its three siblings above, X448MLKEM1024 has no IANA TLS supported_groups codepoint
+# (checked against iana.org/assignments/tls-parameters, 2026-09-01: entries run through 4591,
+# none named X448MLKEM1024) — it is an EVP_PKEY key type only, not currently negotiable in a
+# TLS handshake, which is why there is no matching arm on SSL_CTX_set1_groups_list above.
+[[classify]]
+id = "CRYPTO-1068"
+when.api = "^openssl\\.(EVP_PKEY_CTX_new_from_name|EVP_PKEY_Q_keygen)$"
+when.args.alg = { regex = "(?i)^X448MLKEM1024$" }
+algorithm_id = "x448-mlkem1024"
+severity_hint = "auto"
+message = "OpenSSL generic keygen(\"{alg}\") — hybrid X448 + ML-KEM-1024 (FIPS 203). Migrated key-establishment."
+
 # ============================================================================
 # OpenSSL 3.5+ — EVP_PKEY_encapsulate / EVP_PKEY_decapsulate, the generic KEM
 # *operation* API (as opposed to keygen, which CPP-064/065 above already

@@ -3894,6 +3894,10 @@ fn scans_c_openssl_generic_keygen() {
         ("CRYPTO-485", "ecdsa-unattributed"), // EVP_PKEY_CTX_new_from_name(libctx, "EC", NULL)
         ("CRYPTO-486", "dh-unattributed"),  // EVP_PKEY_Q_keygen(libctx, NULL, "DH")
         ("CRYPTO-489", "ml-kem-1024"),      // EVP_PKEY_Q_keygen(libctx, NULL, "ML-KEM-1024")
+        ("CRYPTO-1065", "x25519-mlkem768"), // EVP_PKEY_Q_keygen(libctx, NULL, "X25519MLKEM768")
+        ("CRYPTO-1066", "secp256r1-mlkem768"), // EVP_PKEY_Q_keygen(libctx, NULL, "SecP256r1MLKEM768")
+        ("CRYPTO-1067", "secp384r1-mlkem1024"), // EVP_PKEY_Q_keygen(libctx, NULL, "SecP384r1MLKEM1024")
+        ("CRYPTO-1068", "x448-mlkem1024"),      // EVP_PKEY_Q_keygen(libctx, NULL, "X448MLKEM1024")
     ];
     for (rule_id, algorithm_id) in want {
         assert!(

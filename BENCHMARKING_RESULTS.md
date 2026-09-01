@@ -6041,3 +6041,88 @@ aws-lc-rs `kem`/`signature` module gap remain open, neither this cycle's to take
 #ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT` remain open, neither this cycle's to resolve.
 
 PRECISION: 97.18%
+
+## Measurement, 2026-09-01 (Track A cycle 80 — README rule-2 boundary and `#Y91` speed-figure drift fixed; `#Y92` OpenSSL 3.5 hybrid PQ/T KEM keygen coverage)
+
+Read the backlog and Precision-Tracker for the highest-value unfinished item. Synthesis cycle 32
+(2026-09-01) ranked three fully-specified items in order: `#Y90` (internal "adjudicator"/`OPEN-ASK`/
+`DECISION #` vocabulary live in the public `README.md`, ranked above everything else because it is
+rule 2's public/private boundary being crossed, not merely at risk), `#Y91` (the README lede and
+comparison table quoting a superseded benchmark run's speed figures against the benchmark table's
+own newer numbers — the same drift shape `#Y84` fixed for the finding-count total 31 hours earlier),
+and `#Y92` (OpenSSL 3.5's hybrid PQ/T KEM key-type names invisible to `cpp.toml`'s generic keygen
+list). All three confirmed still live by direct `grep`/read before touching anything.
+
+**`#Y90` and `#Y91`, both docs-only, no detection code touched.** Reworded the five README sentences
+naming "the adjudicator", `DECISION #ESTIMATOR2` and `OPEN-ASK #ESTIMATOR1`/`#CORPUSDRIFT` to state
+the same facts and figures without the internal nouns — `git diff` preserves every number and claim,
+removes only the three vocabulary items rule 2 flags. Propagated the benchmark table's own
+175ms/1575ms/236.6s to the lede (line 13) and the comparison table's `Scan speed` row, replacing the
+stale 205ms/1847ms/277s both were still quoting. Added
+`readme_speed_figures_agree_with_the_benchmark_table` to
+`crates/cli/tests/readme_benchmark_table_agrees_with_precision.rs`, mirroring that file's existing
+`readme_benchmark_table_total_matches_the_precision_denominator` shape exactly (locate digits next to
+fixed anchor text, no table parsing) — confirmed it fails against the pre-fix README (`left: "205",
+right: "175"`) and passes after, per "a gate that cannot fail is not a gate." No `PRECISION:` claim
+for either — nothing in `crates/` or `crates/core/data/` changed.
+
+**`#Y92`, checked before building, not assumed.** The filing's own two-part shape (four new
+`EVP_PKEY_CTX_new_from_name`/`EVP_PKEY_Q_keygen` classify arms, plus a fifth `X448MLKEM1024` arm on
+the sibling `SSL_CTX_set1_groups_list` TLS-group rule) does not survive independent verification.
+`docs.openssl.org/master/man7/EVP_PKEY-MLX-KEM/` (fetched 2026-09-01) confirms all four hybrid names
+— `X25519MLKEM768`, `X448MLKEM1024`, `SecP256r1MLKEM768`, `SecP384r1MLKEM1024` — as real EVP_PKEY key
+types. But `iana.org/assignments/tls-parameters` (same fetch) lists codepoints for the first three
+(4588/4587/4589) and **no entry for `X448MLKEM1024`** anywhere in the registry (checked through
+4591). `SSL_CTX_set1_groups_list` negotiates by IANA `supported_groups` codepoint; a name with none
+assigned is not TLS-negotiable regardless of what OpenSSL's `EVP_PKEY` layer supports it for. Built
+only the four generic-keygen arms — real, verified EVP_PKEY key types, independent of TLS
+negotiability — and left the `SSL_CTX_set1_groups_list` half unbuilt, recorded as a negative result
+rather than assumed correct from the filing.
+
+**Shipped:** `cpp.toml` `CRYPTO-1065`–`CRYPTO-1068` on the existing
+`EVP_PKEY_CTX_new_from_name`/`EVP_PKEY_Q_keygen` classify list (`when.args.alg` regex-matched to each
+hybrid name), reusing the `x25519-mlkem768`/`secp256r1-mlkem768`/`secp384r1-mlkem1024` algorithm ids
+`SSL_CTX_set1_groups_list`'s own `CRYPTO-909`–`911` already define, plus one new id,
+`x448-mlkem1024` (`algorithm-table.toml`, `Hybrid-KEM`/`combiner`, level 5, notes stating explicitly
+that it has no TLS wire codepoint) — the same reuse-over-duplication convention `CRYPTO-909`–`911`
+themselves set. `Hybrid-KEM` already maps to `None` in `crates/cbom/src/emit.rs`'s
+`canonicalize_family`, so no CBOM emitter change was needed. New fixture coverage:
+`tests/fixtures/cpp/crypto.c` gained a four-call-site function; `scans_c_openssl_generic_keygen`
+(`scan_test.rs`) extended with all four `(rule_id, algorithm_id)` pairs.
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change binary built from commit `7600331` in a worktree · post-change
+binary from this cycle's tree · dumps `work/y92_pre.json` ↔ `work/y92_post.json`, both 1911
+findings, both produced by the repo's own `benchmarks/corpus-b-realworld/dump_findings.py`.**
+
+**0 findings added, 0 removed, 0 reclassified.** No corpus B project — including
+`openssl/openssl`, `aws/aws-lc` and `google/boringssl`, the three that already exercise this same
+API for classical and pure-PQC algorithm names — calls it with any of the four hybrid names. Expected
+and stated in advance: these are brand-new OpenSSL 3.5 preview key types, the same "no measured
+corpus demand yet" shape `#Y43`'s .NET native MLKem/MLDsa/SlhDsa coverage found. Coverage verified
+instead against the fixture above (0→4 detected).
+
+**Precision 97.18% (persisted) → 97.17%, arithmetically unrelated to this change.**
+`bin/precision.py work/y92_pre.json work/y92_post.json --write-readme` found the byte-identical
+1911-finding dumps it expected (0 added, 0 removed — correctly refused to accept `--added-tp`/
+`--added-fp` since none were owed) and reported the *persisted* anchor, 635/97.17%, not the
+636/97.18% headline the previous cycle (`#T8`) had published. This is `OPEN-ASK #ESTIMATORPERSIST`
+recurring a third time: `state/estimator.json` was never advanced past its pre-`#T8` values, so any
+fresh `precision.py` run reproduces the stale persisted anchor rather than the last-published figure
+— exactly the gap `#Y88`'s cycle-78 entry and `#T8`'s cycle-79 entry both already named. Left
+`state/estimator.json` untouched, since moving the persisted anchor is the human adjudicator's call,
+not this cycle's. `--write-readme` also updated the two rule-pack-count sentences this cycle's own
+new classify arms moved (128 extract / 730→734 classify total, C/C++ 126→130) — both confirmed
+correct against a fresh `grep -c '^\[\[classify\]\]'` before the tool ran.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets --workspace -- -D warnings` clean; `cargo test --release --workspace` all
+passing (148 `scan_test.rs` cases, `scans_c_openssl_generic_keygen` extended rather than a new case
+added; both `readme_benchmark_table_agrees_with_precision.rs` tests and `readme_rule_pack_counts.rs`
+passing against the updated figures). Both trust-invariant tests untouched and pass.
+
+**Not done, said out loud:** the `SSL_CTX_set1_groups_list` `X448MLKEM1024` arm the filing proposed
+is not built — negative result above, not an oversight. `OPEN-ASK #ESTIMATORPERSIST` (demonstrated a
+third time this cycle) and `OPEN-ASK #CORPUSDRIFT` remain open, neither this cycle's to resolve.
+
+PRECISION: 97.17%

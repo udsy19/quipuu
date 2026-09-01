@@ -230,6 +230,19 @@ void openssl_generic_keygen_ml_kem(OSSL_LIB_CTX *libctx) {
     EVP_PKEY *kem_key = EVP_PKEY_Q_keygen(libctx, NULL, "ML-KEM-1024");
 }
 
+/* CRYPTO-1065..1068 — OpenSSL 3.5's hybrid PQ/T KEM key types, reachable
+   through the same generic keygen entry points (backlog #Y92). Verified
+   against docs.openssl.org/master/man7/EVP_PKEY-MLX-KEM/, fetched
+   2026-09-01. X448MLKEM1024 has no IANA TLS supported_groups codepoint as
+   of that fetch, so unlike its three siblings it has no matching arm on
+   SSL_CTX_set1_groups_list above — only on this generic keygen API. */
+void openssl_generic_keygen_hybrid(OSSL_LIB_CTX *libctx) {
+    EVP_PKEY *hybrid1 = EVP_PKEY_Q_keygen(libctx, NULL, "X25519MLKEM768");
+    EVP_PKEY *hybrid2 = EVP_PKEY_Q_keygen(libctx, NULL, "SecP256r1MLKEM768");
+    EVP_PKEY *hybrid3 = EVP_PKEY_Q_keygen(libctx, NULL, "SecP384r1MLKEM1024");
+    EVP_PKEY *hybrid4 = EVP_PKEY_Q_keygen(libctx, NULL, "X448MLKEM1024");
+}
+
 /* CPP-066 / CPP-067, CRYPTO-960 / CRYPTO-961 — OpenSSL 3.5+ generic KEM
    operation API (EVP_PKEY_encapsulate/decapsulate). Neither call carries an
    algorithm argument of its own — it lives on the EVP_PKEY_CTX built earlier
