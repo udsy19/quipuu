@@ -533,7 +533,7 @@ fn scans_java_keypairgenerator_ed25519_and_xdh() {
         .expect("scan succeeds");
 
     for (rule_id, algorithm_id) in [
-        ("CRYPTO-1063", "ed25519"),         // KeyPairGenerator.getInstance("Ed25519")
+        ("CRYPTO-1063", "ed25519"), // KeyPairGenerator.getInstance("Ed25519")
         ("CRYPTO-1064", "xdh-unattributed"), // KeyPairGenerator.getInstance("XDH")
     ] {
         assert!(
