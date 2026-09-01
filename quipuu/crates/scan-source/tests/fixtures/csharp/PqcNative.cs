@@ -162,4 +162,12 @@ public class PqcNativeFixture
     {
         using var rsa = new RSACng(key);
     }
+
+    // #Y106 — CompositeMLKem, the KEM-side sibling of CompositeMLDsa. Every
+    // named member degrades to the same ml-kem-unattributed sentinel, so one
+    // literal-member call site is enough to exercise the rule.
+    public static void CompositeMlKem()
+    {
+        using var composite = CompositeMLKem.GenerateKey(CompositeMLKemAlgorithm.MLKem768WithX25519);
+    }
 }

@@ -1696,3 +1696,46 @@ when.api = "^Org\\.BouncyCastle\\.Pqc\\.Crypto\\.Lms\\.HssKeyGenerationParameter
 algorithm_id = "hss"
 severity_hint = "auto"
 message = "new HssKeyGenerationParameters(lmsParameters[], random) — RFC 8554 / NIST SP 800-208 multi-tree HSS, quantum-resistant. A depth-1 array is single-tree LMS in all but name; if CNSA 2.0 conformance is being asserted, verify the configured depth — CNSA 2.0 takes single-tree LMS only and lists multi-tree HSS as disallowed."
+
+# ============================================================================
+# CompositeMLKem — .NET 10+ first-party hybrid PQ/T KEM class, the KEM-side
+# sibling of CompositeMLDsa above (#Y106). Merged into dotnet/runtime on
+# 2026-08-28 (commits 1595d607, 632117ec), [Experimental] like MLKem/MLDsa/
+# SlhDsa/CompositeMLDsa were before this file covered them. GenerateKey
+# (CompositeMLKemAlgorithm) is the identical static-factory-with-member-access
+# shape as CompositeMLDsa.GenerateKey above and MLKem.GenerateKey further up
+# this file. CompositeMLKemAlgorithm's twelve named members each pair
+# ML-KEM-768/1024 with a distinct classical algorithm, but algorithm-table.toml
+# has no composite-family row to publish that pairing as its own id, so every
+# member degrades to the same ml-kem-unattributed sentinel the plain
+# MLKem.GenerateKey fallback already uses — one rule covers the literal and
+# non-literal argument shapes alike, mirroring CompositeMLDsa's treatment.
+# CompositeMLKemCng (the CNG-backed sibling) has no implementation in
+# dotnet/runtime yet — API-reviewed but not built, so deliberately not covered
+# here, matching this file's standing "don't build for a reviewed-but-
+# unimplemented API" discipline.
+# ============================================================================
+
+[[extract]]
+id = "CSH-082"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "CompositeMLKem")
+    name: (identifier) @fn (#eq? @fn "GenerateKey"))
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "CompositeMLKemAlgorithm")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", fn = "ident", paramcls = "ident", paramset = "ident" }
+api = "System.Security.Cryptography.CompositeMLKem.GenerateKey"
+description = "CompositeMLKem.GenerateKey(CompositeMLKemAlgorithm.MLKem768WithX25519) — .NET 10+ first-party composite PQ/T KEM key generation, draft-ietf-lamps-pq-composite-kem."
+
+[[classify]]
+id = "CRYPTO-1094"
+when.api = "^System\\.Security\\.Cryptography\\.CompositeMLKem\\.GenerateKey$"
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "CompositeMLKem.GenerateKey(CompositeMLKemAlgorithm…) — composite PQ/T KEM key generation (FIPS 203 ML-KEM paired with a classical algorithm). The ML-KEM component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."

@@ -6518,3 +6518,67 @@ neither this cycle's to resolve — this cycle could not have caused either (byt
 docs-only) were not started this cycle.
 
 PRECISION: 97.17%
+
+## Measurement, 2026-09-01 (Track A cycle 204 — `#Y106`, .NET `CompositeMLKem`, the KEM-side sibling of `CompositeMLDsa`)
+
+Took `#Y106` as filed by the eighth same-day synthesis pass: `dotnet/runtime`'s `CompositeMLKem`
+(`System.Security.Cryptography`, `[Experimental]`, merged 2026-08-28) ships the KEM-side counterpart
+of `CompositeMLDsa` (`#Y95`), and `csharp.toml` had zero coverage. Re-verified directly against the
+filing's own cited merge commits (`1595d607`, `632117ec` on `dotnet/runtime` `main`) rather than
+taken on the lens's word: `GenerateKey(CompositeMLKemAlgorithm)` is byte-for-byte the same
+static-factory-with-member-access shape `CompositeMLDsa.GenerateKey` already extracts, confirmed by
+reading `csharp.toml:1602-1624`'s existing block before writing the new one. `CompositeMLKemAlgorithm`
+pairs ML-KEM-768/1024 with a classical algorithm across twelve named members, but
+`algorithm-table.toml` has no composite-family row to publish the pairing as its own id — mirroring
+`CompositeMLDsa`'s own resolution, every member degrades to the same `ml-kem-unattributed` sentinel
+`MLKem.GenerateKey`'s non-literal fallback already uses, so one extract/classify pair covers all
+twelve literal and non-literal argument shapes alike. `CompositeMLKemCng` (the CNG-backed sibling) has
+no implementation file in `dotnet/runtime` yet, only a reviewed API — out of scope, per this file's
+standing "don't build for a reviewed-but-unimplemented API" discipline, applied identically to
+`CompositeMLDsaCng` at the time it *was* implemented and to OpenSSL's unreleased `curveSM2MLKEM768`
+before that.
+
+One new extract/classify pair (`CSH-082`/`CRYPTO-1094`) appended to `csharp.toml`, plus one
+`CSHARP_CALLEE_APIS` row in `scanner.rs` — the classify rule matches no api the extract layer emits
+until that row exists, caught by `every_classify_rule_targets_an_api_the_extractor_can_emit` before
+it could ship silently broken (it did, on the first build, exactly as designed).
+
+**Coverage verified against the fixture, not corpus B.** `tests/fixtures/csharp/PqcNative.cs` gains
+one call site (`CompositeMLKem.GenerateKey(CompositeMLKemAlgorithm.MLKem768WithX25519)`), asserted in
+`scans_csharp_native_mlkem_mldsa_slhdsa` (`CRYPTO-1094`/`ml-kem-unattributed`). Independently
+re-confirmed against the release binary on a standalone fixture: 0→1 finding, the exact prediction
+the filing made.
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change binary built from this cycle's pre-edit tree (commit `c525f92`) ·
+dump `work/y106_pre.json` (1916) · post-change binary from this cycle's tree · dump
+`work/y106_post.json` (1916), both produced by the repo's own
+`benchmarks/corpus-b-realworld/dump_findings.py`.**
+
+**0 findings added, 0 removed, 0 reclassified — the expected result, not a surprise.** `CompositeMLKem`
+is a .NET 10 preview API merged four days before this measurement; no project in the 150-project
+manifest depends on a `dotnet/runtime` build recent enough to expose it, the same evidentiary tier
+already accepted for `#Y95`'s `CompositeMLDsa`/`CompositeMLDsaCng` and `#Y100`'s BouncyCastle.NET
+LMS/HSS.
+
+**Precision 97.17%, held exactly.** `bin/precision.py work/y106_pre.json work/y106_post.json
+--write-readme` confirms row-identity on the two byte-identical 1916-finding dumps and reports the
+fresh stratified populations (`A=797, B=1119`, sample `A 262/271`, `B 355/364`) at 97.175%, rounding
+to the same published two-decimal figure; `--write-readme` found the headline and comparison-table
+figures already correct. The rule-pack-count sentences (`134 extract blocks and 759 classify arms`,
+C#'s `122`) were updated by hand in the same diff — `135`/`760`/`123` — confirmed against a fresh
+`grep -c '^\[\[extract\]\]'`/`'^\[\[classify\]\]'` before committing.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --all` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (one new arm added to the
+existing `scans_csharp_native_mlkem_mldsa_slhdsa` test rather than a new test function, since the
+fixture and assertion list already existed for this exact API family). Both trust-invariant tests
+untouched and pass. `readme_rule_pack_counts_match_the_rule_packs` confirmed failing before the
+README edit (134/759/122), passing after (135/760/123).
+
+**Not done, said out loud:** `#Y104` (BC Java `CompositeSignatures` attribution), `#Y107` (`MCP.md`
+subcommand-name fix), and `#Y108` (`needs-human-approval`, `cargo deny` enforcement gap) remain open
+from the same synthesis pass, none started this cycle. `OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2`
+and `#CORPUSDRIFT` remain open, none bearing on a byte-identical-dump coverage addition.
+
+PRECISION: 97.17%
