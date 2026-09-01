@@ -147,7 +147,7 @@ not perform.
 
 **HTML report** — self-contained, auditor-grade. Every finding includes a "Why this matters" explanation tied to NIST IR 8547 policy, a severity rollup, and explicit HNDL flagging for findings that expose data to long-term harvest attacks. Open it in any browser; no server required.
 
-*What is verified:* the HNDL flag is **computed from the active policy's `[hndl_flag]` block**, not asserted. Until 2026-08-28 it was not computed at all: every scanner wrote a hard-coded `false` and `summary.json.totals.hndl_critical` was `0` for every input. Today an X.509 certificate whose public key is a key-agreement key — the fixture is X25519, OID `1.3.101.110` — is flagged, and the same certificate's long-lived *signature* is not. **The scope is certificate findings.** Source and dependency findings still report zero, because `scan-source` fixes two of the flag's three inputs (`usage_context`, `shelf_life_bucket`) at compile time; over the benchmark corpus the count is **0 of 1853** (149 of 150 scanned, one recorded `unscannable`, none errored). Making it non-zero there means making those axes vary, which moves severity bands across the whole corpus, and that is a calibration change we have not made. Gated by `hndl_critical_is_reachable_end_to_end` and three sibling checks in `crates/cli/tests/hndl_flag.rs`. **The HTML report used to contradict that sentence.** Its HNDL section filtered on `hndl_critical || severity == Critical`, so on one RSA-2048/SHA-256 certificate it rendered **2** `HNDL-CRITICAL` badges while `summary.json` from the same scan reported `hndl_critical: 0` — and its own HNDL card, three sections above the badges, reported 0 as well. It now filters on the flag alone; on the X25519 fixture the flag, the card and the badge count are all **1**, and the certificate's Ed25519 signature — Critical, not HNDL — is no longer badged. Gated by `every_artifact_reports_the_same_hndl_count` in `crates/cli/tests/artifact_agreement.rs`, the first test in the repo that reads the HTML.
+*What is verified:* the HNDL flag is **computed from the active policy's `[hndl_flag]` block**, not asserted. Until 2026-08-28 it was not computed at all: every scanner wrote a hard-coded `false` and `summary.json.totals.hndl_critical` was `0` for every input. Today an X.509 certificate whose public key is a key-agreement key — the fixture is X25519, OID `1.3.101.110` — is flagged, and the same certificate's long-lived *signature* is not. **The scope is certificate findings.** Source and dependency findings still report zero, because `scan-source` fixes two of the flag's three inputs (`usage_context`, `shelf_life_bucket`) at compile time; over the benchmark corpus the count is **0 of 1911** (149 of 150 scanned, one recorded `unscannable`, none errored). Making it non-zero there means making those axes vary, which moves severity bands across the whole corpus, and that is a calibration change we have not made. Gated by `hndl_critical_is_reachable_end_to_end` and three sibling checks in `crates/cli/tests/hndl_flag.rs`. **The HTML report used to contradict that sentence.** Its HNDL section filtered on `hndl_critical || severity == Critical`, so on one RSA-2048/SHA-256 certificate it rendered **2** `HNDL-CRITICAL` badges while `summary.json` from the same scan reported `hndl_critical: 0` — and its own HNDL card, three sections above the badges, reported 0 as well. It now filters on the flag alone; on the X25519 fixture the flag, the card and the badge count are all **1**, and the certificate's Ed25519 signature — Critical, not HNDL — is no longer badged. Gated by `every_artifact_reports_the_same_hndl_count` in `crates/cli/tests/artifact_agreement.rs`, the first test in the repo that reads the HTML.
 
 **SARIF 2.1.0** — drop into GitHub Advanced Security (`security-events: write`) or GitLab Advanced Security. Findings appear inline on PRs. Rule IDs (`CRYPTO-NNN`) are stable and documented.
 
@@ -159,7 +159,7 @@ not perform.
 
 **JSON summary** — machine-readable finding counts by severity, ecosystem, and algorithm family. Pipe it into your CI dashboard, Slack alerts, or compliance reports.
 
-*What is verified:* a finding whose `algorithm_id` has no algorithm-table row is reported as **`unscored`**, in every artifact, and is not folded into a band. `algorithm_vulnerability` is 40 of the 100 points the risk engine assigns and is read entirely from that row, so there is nothing to band. Until 2026-08-28 each surface decided this privately and they disagreed: on one `openssl = "0.10"` line in a `Cargo.toml` — which `scan-deps` reports with its `unknown` sentinel — stdout printed `?`, `summary.json` and the HTML report said **Medium**, SARIF said `warning` with `security-severity: 5.0`, and the TUI said **Safe**. Four answers, one finding, and the loudest of them asserted a mid-band CVSS to GitHub Advanced Security for a finding we decline to score. `totals.unscored` is a new field; `totals.medium` no longer counts these rows, SARIF emits level `none` and omits `security-severity`, and `--fail-on` still skips them and says how many it skipped. Over the benchmark corpus this is **13 of 1853 findings (0.70 %)**, all `DEP-001`. It read 131 of 1399 (9.4 %) until 2026-08-29, when the corpus scope repair stopped four projects being scanned over their whole repository: 119 of those 131 were root `Cargo.toml` and `pom.xml` manifests that the projects' declared scopes excluded. Gated by `an_unscored_finding_is_unscored_in_every_artifact` and by a source-text check that fails when a new surface derives its own band instead of calling `quipuu_core::score_of`.
+*What is verified:* a finding whose `algorithm_id` has no algorithm-table row is reported as **`unscored`**, in every artifact, and is not folded into a band. `algorithm_vulnerability` is 40 of the 100 points the risk engine assigns and is read entirely from that row, so there is nothing to band. Until 2026-08-28 each surface decided this privately and they disagreed: on one `openssl = "0.10"` line in a `Cargo.toml` — which `scan-deps` reports with its `unknown` sentinel — stdout printed `?`, `summary.json` and the HTML report said **Medium**, SARIF said `warning` with `security-severity: 5.0`, and the TUI said **Safe**. Four answers, one finding, and the loudest of them asserted a mid-band CVSS to GitHub Advanced Security for a finding we decline to score. `totals.unscored` is a new field; `totals.medium` no longer counts these rows, SARIF emits level `none` and omits `security-severity`, and `--fail-on` still skips them and says how many it skipped. Over the benchmark corpus this is **13 of 1911 findings (0.68 %)**, all `DEP-001`. It read 131 of 1399 (9.4 %) until 2026-08-29, when the corpus scope repair stopped four projects being scanned over their whole repository: 119 of those 131 were root `Cargo.toml` and `pom.xml` manifests that the projects' declared scopes excluded. Gated by `an_unscored_finding_is_unscored_in_every_artifact` and by a source-text check that fails when a new surface derives its own band instead of calling `quipuu_core::score_of`.
 
 **MCP server** — `quipuu mcp-serve` exposes every scan verb over newline-delimited JSON-RPC on stdio, following the Model Context Protocol. Agentic clients use this interface to drive the scanner programmatically. The JSON schemas for `Finding`, `CryptoAsset`, and `RiskScore` live in `crates/core/schema/`.
 
@@ -176,38 +176,37 @@ with nothing to find, which `corpus-integrity.toml` records as `files_scanned = 
 
 | Metric | Value |
 |---|---|
-| Total findings | 1853 |
+| Total findings | 1911 |
 | Projects scanned | 149 of 150, 1 `unscannable`, **0 errored** |
-| Wall-clock time | 277.3s (4m 37s) for all 150 |
-| Per project | median 205ms · mean 1847ms · p90 1.23s · max 149.6s |
+| Wall-clock time | 236.6s (3m 57s) for all 150 |
+| Per project | median 175ms · mean 1575ms · p90 1.19s · max 126.7s |
 | Languages covered | 7 (Go, Python, Java, JavaScript/TypeScript, C/C++, Rust, C#) |
 
 Every row above comes from **one run**: `python3 scan_corpus.py --include-safe`, flags
 `--source --deps --include-safe`, profile `nist-default`, release build, single-threaded,
-on **2 cores of an AMD EPYC 9354P with 7 GB RAM**, 2026-08-31. It wrote
+on **2 cores of an AMD EPYC 9354P with 7 GB RAM**, 2026-09-01. It wrote
 `results/summary.json`. `results/all_findings.json` is the per-finding dump from
-`dump_findings.py` under the same binary, flags and corpus; the two agree at **1853** by
+`dump_findings.py` under the same binary, flags and corpus; the two agree at **1911** by
 independent count, ecosystem by ecosystem, and that population is what the precision figure
 below is sampled from.
 
 **Read the mean and the median as different facts.** The 9.0× gap between them is three
-repositories: `aws-sdk-go-v2` alone takes 149.6s, and with `aws-sdk-go` (31.1s) and `wolfssl`
-(15.4s) the top three are 70.8% of the total wall-clock. **129 of 150 projects finish in under
+repositories: `aws-sdk-go-v2` alone takes 126.7s, and with `aws-sdk-go` (27.7s) and `wolfssl`
+(14.1s) the top three are 71.2% of the total wall-clock. **131 of 150 projects finish in under
 a second.** The mean describes a corpus deliberately stocked with vendored AWS SDKs; the
 median describes a project. Neither is the number to quote alone.
 
 **Wall-clock on this box moves between runs.** Earlier passes over the same corpus with the
-same flags gave 230.0s, 281.1s, 282.0s, 294.9s, 329.0s and 367.4s against the 277.3s above —
-the 367.4s pass was over a wider corpus scope than this one. Read the whole-corpus figure as
-"between four and six minutes on two shared cores", not as three significant figures. The
-finding counts do not move for timing reasons: this run's **1853** is reproduced exactly by an
-independent `dump_findings.py` pass on the same binary. The steps down from 1570 — 91 findings,
-then 80 — are the two false-positive suppressions recorded in `BENCHMARKING_RESULTS.md`, and the
-step from 1399 to 1056 is the 2026-08-29 corpus scope repair described there and below. Every
-commit since then through `2ba189c` added rule-pack coverage rather than removed findings,
-taking the total from 1056 to **1853** — this table had gone stale against that climb for two
-days and two coverage cycles before this run, which is why it now cites the same run
-(`2026-08-31`) as the precision paragraph below instead of a run 38 lines and two days apart.
+same flags gave 230.0s, 277.3s, 281.1s, 282.0s, 294.9s, 329.0s and 367.4s against the 236.6s
+above — the 367.4s pass was over a wider corpus scope than this one. Read the whole-corpus
+figure as "between four and six minutes on two shared cores", not as three significant
+figures. The finding counts do not move for timing reasons: this run's **1911** is reproduced
+exactly by an independent `dump_findings.py` pass on the same binary. The steps down from
+1570 — 91 findings, then 80 — are the two false-positive suppressions recorded in
+`BENCHMARKING_RESULTS.md`, and the step from 1399 to 1056 is the 2026-08-29 corpus scope
+repair described there and below. Every commit since then added rule-pack coverage rather
+than removed findings, taking the total from 1056 to 1853 and now, with this cycle's Go
+`crypto/mldsa` coverage, to **1911**.
 
 **These figures replace a published `~22s / ~150ms`, which was wrong.** That pair came from
 `results/summary.json` at `include_safe:false`, in a run where **9 of 150 clones were
@@ -218,7 +217,7 @@ not the machine named above, and `BENCHMARKING_RESULTS.md` reported the same run
 claiming the scanner got 16× slower; we are retracting a number that described 141 projects,
 under one flag set, on an unnamed machine, and presenting one that names all three.
 
-Audit-validated precision: **97.16%** (95% CI: 95.9%–98.5%) — measured 2026-09-01 on **635 audited findings** out of 1853, every one labelled by opening its cited `file:line`. Methodology, the full label set and per-finding verdicts are in `BENCHMARKING_RESULTS.md`, `PRECISION_AUDIT_V4.md` and `PRECISION_AUDIT_V3.md`.
+Audit-validated precision: **97.37%** (95% CI: 96.2%–98.6%) — measured 2026-09-01 on **693 audited findings** out of 1911, every one labelled by opening its cited `file:line`. Methodology, the full label set and per-finding verdicts are in `BENCHMARKING_RESULTS.md`, `PRECISION_AUDIT_V4.md` and `PRECISION_AUDIT_V3.md`.
 
 **This reverts the 97.71% published above the `#Y64`/`#Y65` Go SHA-256 fix below — not a new measurement, but `DECISION #ESTIMATOR2` (2026-08-30) undoing the fold that produced it.** `#Y64` appended a 100%-census audit of its own new rule's near-tautologically-true-positive targets (139 findings, 0 FP) directly into the anchor's per-stratum sample; `#Y65` added 12 more on top. Both moves passed `gate_precision` because the gate only blocks a drop past -0.5pp and lets any rise through unexamined — but auditing every target a brand-new rule produces and folding the result into the very sample it is measured against inflates the reported rate regardless of whether real-world precision improved, since the fold is not a random draw from the stratum. The adjudicator reverted `state/estimator.json` to its pre-`#Y64` state (`a_tp` 335→262, `b_tp` 420→354, matching `#Y63`'s last gate-passed 97.11% exactly) and ruled that `#Y64`/`#Y65`'s 151 audited findings are real coverage evidence, not anchor-sample inputs, until a periodic re-draw mechanism exists (`OPEN-ASK #ESTIMATOR1`, still open). The two paragraphs below describe what `#Y64`/`#Y65` actually shipped — real, hand-verified detection gains — separately from the anchor-sample question this correction resolves.
 
@@ -263,9 +262,9 @@ coverage is verified against a five-site fixture instead. Full accounting in
 
 **The 90.9% this number replaces was itself not comparable to the 86.5% published three releases before it, and that difference was not all gain either.** 86.5% carried 964 of 1570 findings — 61% of the corpus — at a constant 87.1%, taken from an audit whose per-row labels no longer identify any row. That stratum has since been re-sampled and re-labelled: 150 rows, uniform, seed 20260828, each read at its cited line. Reading the labels instead of the constant moved *the same scan of the same corpus* from 86.5% to **80.0%** before a line of code changed. Three false-positive suppressions then moved it to 84.7%, 89.9% and **90.9%**, and the 2026-08-29 corpus scope repair then moved it to **88.8%**. Under the old constant the first two of those releases read 87.3% and 87.3%, because a stratum held at a constant cannot show its own false positives being deleted; the third reads 88.3% only because the defect it fixes lives in the stratum that is measured rather than held. Both readings, the sample and the arithmetic are in `PRECISION_AUDIT_V4.md` §§ 3 and 6 — we publish the label-derived one because it is the one whose verdicts can be checked line by line.
 
-**What that interval is.** A two-stratum weighted estimate over 635 findings audited by opening every cited `file:line` — 271 rows from stratum A, 364 from stratum B (populations re-derived fresh this run at A=797, B=1056). The interval is the stratified normal approximation `Var = Σ wᵢ² pᵢ(1−pᵢ)/nᵢ`, not a Wilson interval on a pooled sample; its lower bound is 95.9%. Both strata's populations are re-derived fresh from the live dump on every run rather than carried forward, so they move cycle to cycle with `OPEN-ASK #CORPUSDRIFT`'s corpus-count drift independent of any detection change. **This cycle's own change (`#Y87`, .NET `MLKemCng`/`MLDsaCng`) added 0 corpus findings and moved nothing** — corpus B has no call site for either class. Stratum B's audited composition read 371/380 in the previous published figure and reads 355/364 here because `#Y85`'s +16-TP fold was never persisted to `state/estimator.json`, the exact gap `OPEN-ASK #ESTIMATORPERSIST` already names; this cycle did not cause the fold to drop and is not the one to fix the persistence mechanism.
+**What that interval is.** A two-stratum weighted estimate over 693 findings audited by opening every cited `file:line` — 271 rows from stratum A, 422 from stratum B (populations re-derived fresh this run at A=797, B=1114). The interval is the stratified normal approximation `Var = Σ wᵢ² pᵢ(1−pᵢ)/nᵢ`, not a Wilson interval on a pooled sample; its lower bound is 96.2%. Both strata's populations are re-derived fresh from the live dump on every run rather than carried forward, so they move cycle to cycle with `OPEN-ASK #CORPUSDRIFT`'s corpus-count drift independent of any detection change. **This cycle's own change (Go stdlib `crypto/mldsa` gaining coverage, `#V5`) added 58 corpus findings, all in stratum B, all hand-labelled true positive** — stratum A is untouched (271/271 rows, same as before). Stratum B's audited composition moves from 355/364 to **413/422**: the 58 added rows are the entire delta, and all 58 are TP, so its own precision rises slightly (97.5% → 97.9%) alongside the population growing that stratum's weight.
 
-**What the denominator excludes.** `precision = TP / (TP + FP)`. The 635 audited rows are **617 TP, 18 FP and 0 DEPENDS** — every DEPENDS-shaped ambiguity found in earlier samples has since been closed by the grounding fixes described below, so nothing is excluded on this pass. A DEPENDS row, when one exists, is one whose operation is real but whose `algorithm_id` asserts a parameter the cited line does not state, typically an RSA modulus supplied by a caller. Every figure quoted here uses the same convention, so they are comparable to each other — and any figure quoted against a scanner that uses a different one is not.
+**What the denominator excludes.** `precision = TP / (TP + FP)`. The 693 audited rows are **675 TP, 18 FP and 0 DEPENDS** — every DEPENDS-shaped ambiguity found in earlier samples has since been closed by the grounding fixes described below, so nothing is excluded on this pass. A DEPENDS row, when one exists, is one whose operation is real but whose `algorithm_id` asserts a parameter the cited line does not state, typically an RSA modulus supplied by a caller. Every figure quoted here uses the same convention, so they are comparable to each other — and any figure quoted against a scanner that uses a different one is not.
 
 **Why this number first moved down.** The figures published here before — 84.5%, then 85.2% and 87.1% — were measured against a corpus in which **46 of the 150 projects had empty working trees**. `clone_all.sh` clones `--no-checkout`, and the manifest's `commit_sha` pins had been shuffled across project files, so the checkout failed, printed a warning, and the project was still counted as cloned. Those numbers were taken on a biased two-thirds sample. Re-measured on the fully populated corpus the same scanner gave **81.8%** — lower, and published as such, because a benchmark you cannot reproduce is worth nothing.
 
@@ -344,7 +343,7 @@ quipuu scan .
 
 **SiteContext (Phase 16)** is the current-generation context-aware filtering pass. Where earlier phases fired on any algorithm-identifier string, Phase 16 requires the match to appear in a cryptographic operation context — a signing call argument, a key constructor, a type parameter — rather than in a parser config array, a test assertion, or a generated protobuf enum table. This is the primary precision driver in the roadmap.
 
-**Rule format.** Rules live in `crates/core/data/rules/<lang>.toml` as two-layer extract-then-classify pairs. The classify layer maps captured values to an `algorithm_id` from the algorithm table, a severity hint, and a SARIF message template; it is the live layer and the source of truth for classification. The extract layer records the intended tree-sitter S-expression for each call shape, but the queries are not executed — matching is done by a hand-written walker in `scan-source/src/scanner.rs`, and a build gate fails when a classify rule names an API that walker cannot emit. The rule-authoring pattern — declarative, tuple-based classification over extracted values — draws on cryptobom-forge (Santandersecurityresearch/cryptobom-forge) as prior art; the two schemas do not share field names and are not file-format compatible. 126 extract blocks and 718 classify arms across 7 files; every one is plain text, readable in under a minute.
+**Rule format.** Rules live in `crates/core/data/rules/<lang>.toml` as two-layer extract-then-classify pairs. The classify layer maps captured values to an `algorithm_id` from the algorithm table, a severity hint, and a SARIF message template; it is the live layer and the source of truth for classification. The extract layer records the intended tree-sitter S-expression for each call shape, but the queries are not executed — matching is done by a hand-written walker in `scan-source/src/scanner.rs`, and a build gate fails when a classify rule names an API that walker cannot emit. The rule-authoring pattern — declarative, tuple-based classification over extracted values — draws on cryptobom-forge (Santandersecurityresearch/cryptobom-forge) as prior art; the two schemas do not share field names and are not file-format compatible. 127 extract blocks and 721 classify arms across 7 files; every one is plain text, readable in under a minute.
 
 ---
 
@@ -361,7 +360,7 @@ quipuu scan .
 | MCP server | Yes | No | No | No | No |
 | Auditable open rule format | Yes (TOML) | No (binary) | Yes (QL) | No | Yes (YAML) |
 | Languages (crypto-specific) | 7 | 7+ | 7+ | Java, Python, Go, C# (comprehensive rules merged 2026-08-26) | Any |
-| Published precision (crypto findings) | 97.16% (635 audited rows, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
+| Published precision (crypto findings) | 97.37% (693 audited rows, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
 | Published recall | 100.0% (Go stdlib, 401/401 in-scope sites); 41.9% cross-language (49/117 planted sites, 7 languages) | Not published | Not published | Not published | Not published |
 | Scan speed | 205ms median project; 277s for the 150-project corpus (2 cores) | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
 
@@ -401,7 +400,7 @@ All primary sources — NIST IR 8547 IPD, FIPS 203/204/205, CycloneDX 1.7 schema
 ## Roadmap
 
 - **Clear 85% at the lower CI bound.** Phase 18 reached an 84.5% point estimate but a 78.5% lower bound. Closing that gap means both raising the point estimate and shrinking the interval with a larger audited sample.
-- **Broader language coverage:** the Go rule pack is the least developed among the four largest packs today (95 classify arms vs. Java's 181, C/C++'s 126, and C#'s 118 — C/C++ grew past its earlier last-place position via the OpenSSL/liboqs PQC keygen and fetch coverage added across cycles 44–67). Expanding Go classify rules is the highest-leverage near-term coverage move.
+- **Broader language coverage:** the Go rule pack is the least developed among the four largest packs today (98 classify arms vs. Java's 181, C/C++'s 126, and C#'s 118 — C/C++ grew past its earlier last-place position via the OpenSSL/liboqs PQC keygen and fetch coverage added across cycles 44–67). Expanding Go classify rules is the highest-leverage near-term coverage move.
 - **Community rule packs:** the TOML rule format is public and stable. The path to community contributions is a contributed-rules directory and a CI gate that runs new rules against the benchmark corpus before merge.
 - **Agentic remediation:** a companion engine that consumes the MCP output and proposes verified migration patches, gated on ACVP known-answer tests, oqs-provider interop, and semantic-preservation differential testing.
 - **Continuous CBOM drift monitoring:** weekly re-scans, CBOM diff between runs, and a one-paragraph alert per material change in your cryptographic inventory.

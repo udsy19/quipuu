@@ -1443,6 +1443,20 @@ const GO_CALLEE_APIS: &[(&str, &str)] = &[
     ("mlkem.NewDecapsulationKey1024", "crypto/mlkem.KeyOp"),
     ("mlkem.NewEncapsulationKey768", "crypto/mlkem.KeyOp"),
     ("mlkem.NewEncapsulationKey1024", "crypto/mlkem.KeyOp"),
+    // crypto/mldsa — Go's own stdlib ML-DSA (Go 1.27), the sibling #V5 named
+    // alongside crypto/mlkem above. Unlike crypto/mlkem, GenerateKey/
+    // NewPrivateKey/NewPublicKey/Verify take a Parameters value as an
+    // argument instead of baking the parameter set into the function name,
+    // and the only way to construct one is to call MLDSA44/MLDSA65/MLDSA87 —
+    // so, same reasoning as circl's per-package rows above, that constructor
+    // call is the signal, not the operation it is later passed into. The
+    // callee text alone cannot tell the stdlib package from a same-API
+    // third-party predecessor (boringssl's ssl/test/runner imports
+    // "filippo.io/mldsa" under the local name "mldsa"), so the algorithm_id
+    // is asserted but the classify message does not claim a specific import.
+    ("mldsa.MLDSA44", "crypto/mldsa.ParamSet"),
+    ("mldsa.MLDSA65", "crypto/mldsa.ParamSet"),
+    ("mldsa.MLDSA87", "crypto/mldsa.ParamSet"),
 ];
 
 /// Exact-match lookup in one of the callee → api tables.
@@ -1558,11 +1572,15 @@ fn match_go_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> 
     // capture IS the parameter set (768 vs. 1024 is baked into the function
     // name, there being only one `mlkem` package), so the classify layer
     // reads `args.fn` rather than a package name.
+    // `crypto/mldsa.ParamSet` is the same shape as `crypto/mlkem.KeyOp`: the
+    // `fn` capture (MLDSA44/65/87) IS the parameter set, there being only one
+    // `mldsa` package.
     if (api == "crypto/rsa.Op"
         || api == "crypto/ecdsa.Op"
         || api == "crypto/ed25519.Op"
         || api == "crypto/dsa.Op"
-        || api == "crypto/mlkem.KeyOp")
+        || api == "crypto/mlkem.KeyOp"
+        || api == "crypto/mldsa.ParamSet")
         && let Some(fn_name) = callee.split('.').nth(1)
     {
         args.insert("fn".into(), ArgValue::Str(fn_name.into()));

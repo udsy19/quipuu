@@ -5815,3 +5815,60 @@ none of the three CNG wrapper classes carry the parameter set at the constructor
 .NET CNG-backed PQC class is known to be missing after this; `RSACng`/`DSACng`/`ECDsaCng` remain
 explicitly out of scope as classical. `OPEN-ASK #ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT`
 remain open, neither this cycle's to resolve.
+
+## Measurement, 2026-09-01 (Track A cycle 77 — Go stdlib `crypto/mldsa`, `#V5`'s remaining half)
+
+**What shipped.** `#V5` named two gaps: `crypto/mlkem` (shipped by `#Y30` part (a), already covered)
+and its FIPS 204 sibling `crypto/mldsa` (Go 1.27), which had zero coverage in either `go.toml` or
+`scanner.rs`. Unblocked this cycle because `#T3` (cycle 76) made `Severity::Safe` reachable — `#V5`
+was explicitly sequenced behind it so a migrated codebase would not score worse than an unmigrated
+one. Verified before writing any rule that the real-world call shape differs from `crypto/mlkem`'s:
+`GenerateKey`/`NewPrivateKey`/`NewPublicKey`/`Verify` take a `Parameters` value as an argument
+rather than baking the parameter set into the function name, and the only way to construct one is
+`MLDSA44()`/`MLDSA65()`/`MLDSA87()` — checked against `lestrrat-go/jwx`'s real `crypto/mldsa`
+integration (`jws/mldsa.go`, `jwk/mldsa.go`), which stores the `Parameters` value in a variable
+and passes it on, never inlining the constructor inside `GenerateKey`. A query anchored on
+`GenerateKey`'s argument list (the `crypto/mlkem` shape) would have missed every real site the
+corpus has, so the rule keys on the `MLDSA44/65/87()` constructor call itself — one `GO_CALLEE_APIS`
+row per parameter set (`crypto/mldsa.ParamSet`) plus a matching `[[extract]]`/`[[classify]]` triple
+in `go.toml` (`GO-077`/`CRYPTO-1053..1055`), following the same reasoning circl's per-package rows
+already use: the constructor call is the signal, not the operation it is later passed into.
+
+**Caught by the corpus, not assumed:** boringssl's `ssl/test/runner` imports `"filippo.io/mldsa"`
+under the local name `mldsa` — a third-party package with an identical API, predating the stdlib
+one. The callee-text matcher cannot distinguish it from `crypto/mldsa`, so the classify messages
+were written to assert the `algorithm_id` (correct either way — both packages genuinely construct
+FIPS 204 ML-DSA-44/65/87 parameter sets) without claiming a specific import or Go version; the
+first draft said "Go stdlib (1.27+)" unconditionally and was corrected before commit.
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change binary built from commit `d1c0e99` in a worktree · post-change
+binary from this cycle's tree · dumps `work/v5_pre.json` (1853) → `work/v5_post2.json` (1911).**
+
+**58 findings added, 0 removed, 0 reclassified** — `CRYPTO-1053` (ml-dsa-44) 18, `CRYPTO-1054`
+(ml-dsa-65) 26, `CRYPTO-1055` (ml-dsa-87) 14, across two projects: `go-modules:lestrrat-go/jwx` (43,
+its own `crypto/mldsa` integration, both production files and their tests) and
+`crypto-adjacent:google/boringssl` (15, the `filippo.io/mldsa` sites above). **All 58 hand-labelled
+by opening the cited `file:line`: 58 TP, 0 FP, 0 DEPENDS.** Every site is a real call to
+`MLDSA44()`/`MLDSA65()`/`MLDSA87()` — key generation (`mldsa.GenerateKey(mldsa.MLDSA65())` in jwx's
+tests), signer/verifier registration (`jws/mldsa.go`'s `init()`), and X.509 signature-algorithm /
+OID dispatch (boringssl's `certs.go`) — none inside a branch a test requires to fail; the parameter-
+set constructor is a pure accessor that cannot fail independently of the surrounding call.
+
+**Precision 97.16% → 97.37% (95% CI 96.2–98.6), audited 635 → 693 of 1853 → 1911.**
+`bin/precision.py work/v5_pre.json work/v5_post2.json --added-tp 58 --added-fp 0 --write-readme`
+reproduced the anchored 97.16% baseline before printing anything else; stratified-fresh (97.372%),
+carried-constants (97.351%) and pooled Wilson (97.403%) estimators agree within 0.05pp. Delta lands
+entirely in stratum B.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets --workspace -- -D warnings` clean; `cargo test --release --workspace` all
+passing (146 `scan_test.rs` cases, one new). Both trust-invariant tests untouched and pass.
+`readme_rule_pack_counts` required updating 126→127 extract / 718→721 classify (total) and Go's
+95→98 (per-language) — confirmed failing before the fix, passing after.
+
+**Not done, said out loud:** the `#V5`-named `crypto/tls` `MLKEM768`/`MLKEM1024` `CurveID` gap
+turned out to already be closed (`CRYPTO-044`–`CRYPTO-047`, shipped alongside `#Y30`) — verified at
+`pkg.go.dev/crypto/tls#CurveID` that Go 1.27 exports no pure, non-hybrid `MLKEM768` constant (only
+`MLKEM1024`), so there was nothing left to build there; `#V5` is now fully closed. `OPEN-ASK
+#ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT` remain open, neither this cycle's to resolve.

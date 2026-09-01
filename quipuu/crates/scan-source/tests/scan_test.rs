@@ -196,6 +196,36 @@ fn go_stdlib_mlkem_is_classified() {
     }
 }
 
+/// Go's own `crypto/mldsa` (stdlib, Go 1.27) — backlog `#V5`, the sibling
+/// `#Y30` left uncovered when it shipped `crypto/mlkem` above. The parameter
+/// set is not baked into `GenerateKey`'s name (unlike `mlkem.GenerateKey768`);
+/// it is read off the `MLDSA44/65/87()` constructor call, whether inline as
+/// an argument or standalone (the shape real usage — lestrrat-go/jwx — uses
+/// to build a dispatch table).
+#[test]
+fn go_stdlib_mldsa_is_classified() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let path = fixtures_root().join("go/stdlib_mldsa.go");
+    let findings = scanner.scan_path(&path).expect("scan succeeds");
+
+    for (rule, algorithm_id, line) in [
+        ("CRYPTO-1053", "ml-dsa-44", 16),
+        ("CRYPTO-1055", "ml-dsa-87", 20),
+        ("CRYPTO-1053", "ml-dsa-44", 24),
+        ("CRYPTO-1054", "ml-dsa-65", 24),
+        ("CRYPTO-1055", "ml-dsa-87", 24),
+    ] {
+        assert!(
+            findings.iter().any(|f| f.rule_id == rule
+                && f.algorithm_id == algorithm_id
+                && f.location.line == Some(line)),
+            "expected {rule}/{algorithm_id} at line {line} in stdlib_mldsa.go, got {:#?}",
+            findings,
+        );
+    }
+}
+
 /// liboqs-go's `oqs.KeyEncapsulation{}` / `oqs.Signature{}` construction —
 /// backlog `#Y77`. The algorithm name arrives on a later `.Init(name, nil)`
 /// call this extractor does not trace, so both sites degrade to the generic

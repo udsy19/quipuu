@@ -994,6 +994,56 @@ algorithm_id = "ml-kem-1024"
 severity_hint = "auto"
 message = "crypto/mlkem ML-KEM-1024 ({fn}) — FIPS 203, quantum-resistant, Go stdlib (1.24+)."
 
+# crypto/mldsa — Go's own stdlib ML-DSA (Go 1.27), the sibling #V5 named
+# alongside crypto/mlkem above and #Y30 did not ship. Unlike crypto/mlkem,
+# GenerateKey/NewPrivateKey/NewPublicKey/Verify take a Parameters value as an
+# argument rather than baking the parameter set into the function name, and
+# the only way to construct one is to call MLDSA44()/MLDSA65()/MLDSA87() —
+# so, same reasoning as circl's per-package capture above, that constructor
+# call is the signal, not the operation it is later passed into. Confirmed
+# against real usage before writing this: lestrrat-go/jwx's crypto/mldsa
+# integration (go-modules corpus) never inlines the constructor inside
+# GenerateKey — it stores the Parameters value and passes the variable to
+# NewPrivateKey/NewPublicKey/RegisterSigner instead — so a query anchored on
+# GenerateKey's argument list would miss every real call site the corpus
+# actually has.
+[[extract]]
+id = "GO-077"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "mldsa")
+    field: (field_identifier) @fn (#match? @fn "^(MLDSA44|MLDSA65|MLDSA87)$")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "crypto/mldsa.ParamSet"
+description = "ML-DSA parameter-set construction via a package-local `mldsa` identifier — Go 1.27's stdlib crypto/mldsa, or a same-API third-party predecessor such as filippo.io/mldsa (confirmed in the corpus at boringssl's ssl/test/runner)."
+
+[[classify]]
+id = "CRYPTO-1053"
+when.api = "^crypto/mldsa\\.ParamSet$"
+when.args.fn = "MLDSA44"
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "ML-DSA-44 parameter set ({fn}) — FIPS 204, quantum-resistant. Go 1.27 crypto/mldsa or a same-API third-party package (e.g. filippo.io/mldsa) — the callee text alone does not distinguish them."
+
+[[classify]]
+id = "CRYPTO-1054"
+when.api = "^crypto/mldsa\\.ParamSet$"
+when.args.fn = "MLDSA65"
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "ML-DSA-65 parameter set ({fn}) — FIPS 204, quantum-resistant. Go 1.27 crypto/mldsa or a same-API third-party package (e.g. filippo.io/mldsa) — the callee text alone does not distinguish them."
+
+[[classify]]
+id = "CRYPTO-1055"
+when.api = "^crypto/mldsa\\.ParamSet$"
+when.args.fn = "MLDSA87"
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "ML-DSA-87 parameter set ({fn}) — FIPS 204, quantum-resistant. Go 1.27 crypto/mldsa or a same-API third-party package (e.g. filippo.io/mldsa) — the callee text alone does not distinguish them."
+
 [[extract]]
 id = "GO-073"
 language = "go"
