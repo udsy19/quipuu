@@ -261,6 +261,107 @@ fn cnsa2_leaves_approved_algorithms_alone() {
 }
 
 #[test]
+fn pqc_final_scores_safe_not_medium() {
+    // `#T3`: a migrated PqcFinal algorithm must score Safe outright — none of
+    // the other four axes may add up to an alert band on their own, or a
+    // migrated codebase scores worse than an unmigrated one.
+    let b = load_builtins().expect("builtins");
+    let ml_kem_1024 = b.algorithms.get("ml-kem-1024").expect("ml-kem-1024");
+    let finding = Finding {
+        rule_id: "CRYPTO-XXX".into(),
+        algorithm_id: "ml-kem-1024".into(),
+        location: Location {
+            location: "svc.go".into(),
+            line: Some(7),
+            offset: None,
+            symbol: None,
+            snippet: None,
+        },
+        message: String::new(),
+        confidence: Confidence::TypeName,
+        usage_context: UsageContext::KeyEstablishmentLongLived,
+        exposure: Exposure::PublicInternet,
+        shelf_life_bucket: "long".into(),
+        hndl_critical: false,
+    };
+
+    let score = QuantumRiskScore::compute(&finding, ml_kem_1024, &b.policy);
+    assert_eq!(score.algorithm_vulnerability, 0);
+    assert_eq!(score.usage_context, 0);
+    assert_eq!(score.data_shelf_life, 0);
+    assert_eq!(score.exposure, 0);
+    assert_eq!(score.detection_confidence, 0);
+    assert_eq!(score.total, 0);
+    assert_eq!(score.severity, Severity::Safe);
+}
+
+#[test]
+fn pqc_final_disallowed_by_cnsa2_still_alerts() {
+    // The Safe gate must key off the resolved algorithm_vulnerability score,
+    // not off the quantum_status alone: ml-kem-768 is PqcFinal (same status as
+    // ml-kem-1024 above) but CNSA 2.0 disallows it, which resolves to the full
+    // axis weight via `Policy::disallows` before quantum_status is consulted —
+    // it must not be gated to Safe just because its status says "final".
+    let b = load_builtins().expect("builtins");
+    let cnsa2 = Policy::from_preset("nsa-cnsa2")
+        .expect("listed")
+        .expect("loads");
+    let ml_kem_768 = b.algorithms.get("ml-kem-768").expect("ml-kem-768");
+    let finding = Finding {
+        rule_id: "CRYPTO-XXX".into(),
+        algorithm_id: "ml-kem-768".into(),
+        location: Location {
+            location: "svc.go".into(),
+            line: Some(7),
+            offset: None,
+            symbol: None,
+            snippet: None,
+        },
+        message: String::new(),
+        confidence: Confidence::TypeName,
+        usage_context: UsageContext::KeyEstablishmentLongLived,
+        exposure: Exposure::PublicInternet,
+        shelf_life_bucket: "long".into(),
+        hndl_critical: false,
+    };
+
+    let score = QuantumRiskScore::compute(&finding, ml_kem_768, &cnsa2);
+    assert_eq!(score.algorithm_vulnerability, 40);
+    assert_ne!(score.severity, Severity::Safe);
+    assert_eq!(score.severity, Severity::Critical);
+}
+
+#[test]
+fn pqc_draft_is_not_gated_to_safe() {
+    // PqcDraft = 5 under nist-default is deliberately nonzero (FN-DSA is
+    // present but not yet final FIPS); the Safe gate must not fire for it.
+    let b = load_builtins().expect("builtins");
+    let fn_dsa = b.algorithms.get("fn-dsa-512").expect("fn-dsa-512");
+    let finding = Finding {
+        rule_id: "CRYPTO-XXX".into(),
+        algorithm_id: "fn-dsa-512".into(),
+        location: Location {
+            location: "svc.go".into(),
+            line: Some(7),
+            offset: None,
+            symbol: None,
+            snippet: None,
+        },
+        message: String::new(),
+        confidence: Confidence::TypeName,
+        usage_context: UsageContext::KeyEstablishmentLongLived,
+        exposure: Exposure::PublicInternet,
+        shelf_life_bucket: "long".into(),
+        hndl_critical: false,
+    };
+
+    let score = QuantumRiskScore::compute(&finding, fn_dsa, &b.policy);
+    assert_eq!(score.algorithm_vulnerability, 5);
+    assert!(score.total > 0);
+    assert_ne!(score.severity, Severity::Safe);
+}
+
+#[test]
 fn documented_preset_names_match_the_shipped_ones() {
     let shipped = shipped_names();
     let root = repo_root();

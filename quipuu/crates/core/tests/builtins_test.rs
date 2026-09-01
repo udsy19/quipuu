@@ -234,9 +234,12 @@ fn risk_score_aes_256_local_ephemeral_is_safe() {
         hndl_critical: false,
     };
     let score = QuantumRiskScore::compute(&finding, aes, &b.policy);
-    // AlgVuln 0 (QuantumSafe) + Usage 5 + Shelf 0 + Exp 1 + Conf 8 = 14 → Low.
-    assert_eq!(score.severity, Severity::Low);
-    assert_eq!(score.total, 14);
+    // `#T3`: AlgVuln 0 (QuantumSafe) gates the whole score to 0/Safe — the
+    // other four axes summing to a nonzero total on their own (as they did
+    // before the gate existed: Usage 5 + Shelf 0 + Exp 1 + Conf 8 = 14, Low)
+    // is exactly the bug this test's own name always said was wrong.
+    assert_eq!(score.severity, Severity::Safe);
+    assert_eq!(score.total, 0);
 }
 
 #[test]

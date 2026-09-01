@@ -24,19 +24,36 @@ impl QuantumRiskScore {
     /// Compute the score given a finding, the algorithm record it refers to,
     /// and the active policy.
     pub fn compute(finding: &Finding, algorithm: &AlgorithmRecord, policy: &Policy) -> Self {
-        let av = score_algorithm_vulnerability(algorithm, policy);
-        let uc = score_usage_context(finding.usage_context, policy);
-        let ds = score_data_shelf_life(&finding.shelf_life_bucket, policy);
-        let ex = score_exposure(finding.exposure, policy);
-        let dc = score_detection_confidence(finding.confidence, policy);
+        let av = score_algorithm_vulnerability(algorithm, policy)
+            .min(policy.risk_weights.algorithm_vulnerability);
 
-        // Each axis is capped at its weight in policy.risk_weights, so the sum
-        // can never exceed 100. We cap each axis defensively all the same.
-        let av = av.min(policy.risk_weights.algorithm_vulnerability);
-        let uc = uc.min(policy.risk_weights.usage_context);
-        let ds = ds.min(policy.risk_weights.data_shelf_life);
-        let ex = ex.min(policy.risk_weights.exposure);
-        let dc = dc.min(policy.risk_weights.detection_confidence);
+        // A policy that scores this quantum_status at 0 has made a categorical
+        // judgement that the algorithm is not vulnerable — `disallows` always
+        // returns the full weight, never 0, so this never fires for a
+        // jurisdiction-excluded algorithm. The remaining axes describe how a
+        // vulnerable algorithm is being used; letting them add up to an alert
+        // band on their own would score a migrated codebase worse than an
+        // unmigrated one, so a zero algorithm-vulnerability term zeroes the
+        // whole score instead of leaving it to arithmetic.
+        if av == 0 {
+            return Self {
+                algorithm_vulnerability: 0,
+                usage_context: 0,
+                data_shelf_life: 0,
+                exposure: 0,
+                detection_confidence: 0,
+                total: 0,
+                severity: map_severity(0, policy),
+            };
+        }
+
+        let uc = score_usage_context(finding.usage_context, policy)
+            .min(policy.risk_weights.usage_context);
+        let ds = score_data_shelf_life(&finding.shelf_life_bucket, policy)
+            .min(policy.risk_weights.data_shelf_life);
+        let ex = score_exposure(finding.exposure, policy).min(policy.risk_weights.exposure);
+        let dc = score_detection_confidence(finding.confidence, policy)
+            .min(policy.risk_weights.detection_confidence);
 
         let total = (av as u16 + uc as u16 + ds as u16 + ex as u16 + dc as u16).min(100) as u8;
         let severity = map_severity(total, policy);
