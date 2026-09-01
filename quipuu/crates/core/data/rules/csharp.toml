@@ -1518,16 +1518,19 @@ severity_hint = "auto"
 message = "SlhDsa.ImportFromPem(…) — FIPS 205, quantum-resistant, but the parameter set is carried inside the PEM-encoded key material and is not statically knowable at this call site."
 
 # ============================================================================
-# MLKemCng / MLDsaCng — Windows-CNG-backed PQC wrappers (#Y87)
+# MLKemCng / MLDsaCng / SlhDsaCng — Windows-CNG-backed PQC wrappers (#Y87,
+# SlhDsaCng added in the synthesis follow-up naming it as #Y87's own direct
+# sibling)
 #
-# `MLKemCng`/`MLDsaCng` (learn.microsoft.com, MLKemCng confirmed a `sealed
-# class MLKemCng : MLKem` with exactly one constructor, `MLKemCng(CngKey)`;
-# MLDsaCng corroborated the same shape) carry the algorithm/parameter set on
-# the `CngKey` argument, not the constructor call — the same
-# receiver-carries-the-identity gap `MLDSAMuHasher` (#Y86) and Java's
-# `Signature`/`KeyPairGenerator` operation classes already degrade
-# gracefully for, rather than guessing. Classical CNG classes (`RSACng`,
-# `DSACng`, `ECDsaCng`) are explicitly out of scope for this item.
+# `MLKemCng`/`MLDsaCng`/`SlhDsaCng` (learn.microsoft.com, MLKemCng confirmed a
+# `sealed class MLKemCng : MLKem` with exactly one constructor,
+# `MLKemCng(CngKey)`; MLDsaCng and SlhDsaCng each corroborated the same
+# shape) carry the algorithm/parameter set on the `CngKey` argument, not the
+# constructor call — the same receiver-carries-the-identity gap
+# `MLDSAMuHasher` (#Y86) and Java's `Signature`/`KeyPairGenerator` operation
+# classes already degrade gracefully for, rather than guessing. Classical CNG
+# classes (`RSACng`, `DSACng`, `ECDsaCng`) are explicitly out of scope for
+# this item.
 # ============================================================================
 
 [[extract]]
@@ -1565,3 +1568,21 @@ when.api = "^System\\.Security\\.Cryptography\\.MLDsaCng\\.new$"
 algorithm_id = "ml-dsa-unattributed"
 severity_hint = "auto"
 message = "new MLDsaCng(cngKey) — FIPS 204, quantum-resistant, via the Windows CNG interop path. The parameter set is carried on the CngKey argument and is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-077"
+language = "csharp"
+query = """
+(object_creation_expression
+  type: (identifier) @cls (#eq? @cls "SlhDsaCng"))
+"""
+captures = { cls = "ident" }
+api = "System.Security.Cryptography.SlhDsaCng.new"
+description = "new SlhDsaCng(cngKey) — .NET 10+ Windows-CNG-backed FIPS 205 SLH-DSA wrapper; the parameter set lives on the CngKey argument, not this call site."
+
+[[classify]]
+id = "CRYPTO-1052"
+when.api = "^System\\.Security\\.Cryptography\\.SlhDsaCng\\.new$"
+algorithm_id = "slh-dsa-unattributed"
+severity_hint = "auto"
+message = "new SlhDsaCng(cngKey) — FIPS 205, quantum-resistant, via the Windows CNG interop path. The parameter set is carried on the CngKey argument and is not statically knowable at this call site."

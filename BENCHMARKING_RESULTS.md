@@ -5770,3 +5770,48 @@ established. `6ed6e1f`'s own recorded gap — a family-agnostic marker for those
 since one is demonstrably reachable for Ed25519 as well — is not built here either; it was that
 commit's own stated future work, not part of the fix this cycle restored. `OPEN-ASK
 #ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT` remain open, neither this cycle's to resolve.
+
+## Measurement, 2026-09-01 (Track A cycle 75 — .NET `SlhDsaCng` gains coverage, `#Y87`'s own
+## direct sibling)
+
+**What shipped.** `#Y87` (2026-08-31) shipped `MLKemCng`/`MLDsaCng` — .NET 10's Windows-CNG-backed
+FIPS 203/204 wrapper classes — but its own filing only named those two, leaving FIPS 205's
+identical CNG interop path, `SlhDsaCng`, uncovered. Confirmed via `learn.microsoft.com`'s
+`SlhDsaCng` API page that it is the same shape: a sealed wrapper class whose algorithm/parameter
+set lives on the `CngKey` constructor argument, not the call site. Shipped one `[[extract]]`/
+`[[classify]]` pair (`CSH-077`/`CRYPTO-1052`) in `csharp.toml`, copy-pasted from `#Y87`'s
+`MLDsaCng` pair with the class name and `slh-dsa-unattributed` swapped in — `slh-dsa-unattributed`
+already exists in `algorithm-table.toml` (used by the existing `SlhDsa.ImportFromPem` rule), so no
+new algorithm-table row was needed. Also added the identifier to `CSHARP_CALLEE_APIS` in
+`scanner.rs` — the declarative `[[extract]]` query documents the shape but is not itself executed
+(matching is a hand-written walker), and `every_classify_rule_targets_an_api_the_extractor_can_emit`
+correctly failed the build until this was done, catching the omission rather than missing it.
+Extended the `#Y87` fixture (`tests/fixtures/csharp/PqcNative.cs`) with `new SlhDsaCng(key)` and the
+`scans_csharp_native_mlkem_mldsa_slhdsa` test with `("CRYPTO-1052", "slh-dsa-unattributed")`.
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change binary built from commit `249df5f` in a throwaway worktree ·
+post-change binary from this cycle's tree · dumps `work/slhdsacng_pre.json` ↔
+`work/slhdsacng_post.json`, both 1853 findings.**
+
+**Precision held exactly, 97.16% — a falsification, not a re-derivation.** `bin/precision.py
+work/slhdsacng_pre.json work/slhdsacng_post.json --write-readme` reports **0 findings added, 0
+removed**: none of the 150 corpus projects (including vendored `microsoft/SymCrypt`) construct
+`SlhDsaCng`, matching the expectation the synthesis note that surfaced this item stated in advance
+(Windows-specific C#, under-represented in this corpus's Maven/npm/pip-weighted composition).
+Coverage is verified against the fixture, not the corpus. Fresh (97.163%), carried-constants
+(97.159%) and pooled Wilson (97.165%) estimators agree within 0.006pp, same spread as the prior
+cycle's re-derivation.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets --workspace -- -D warnings` clean; `cargo test --workspace` all passing
+(145 `scan_test.rs` cases, one new). Both trust-invariant tests untouched and pass.
+`readme_rule_pack_counts` required updating 717→718 classify (total; extract 125→126) and C#'s
+117→118 (per-language) — confirmed failing before the fix, passing after.
+
+**Not done, said out loud:** the `BCryptSetProperty`/`NCryptImportKey` parameter-set trace named
+in cycle 73's Win32 CNG entry is unrelated to this item and remains unbuilt for the same reason —
+none of the three CNG wrapper classes carry the parameter set at the constructor call. No further
+.NET CNG-backed PQC class is known to be missing after this; `RSACng`/`DSACng`/`ECDsaCng` remain
+explicitly out of scope as classical. `OPEN-ASK #ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT`
+remain open, neither this cycle's to resolve.

@@ -135,6 +135,11 @@ public class PqcNativeFixture
         using var dsa = new MLDsaCng(key);
     }
 
+    public static void SlhDsaCng(CngKey key)
+    {
+        using var slh = new SlhDsaCng(key);
+    }
+
     // Classical CNG control — RSACng is explicitly out of scope for #Y87
     // and intentionally produces no finding.
     public static void RsaCngControl(CngKey key)
