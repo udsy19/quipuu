@@ -479,6 +479,86 @@ severity_hint = "auto"
 message = "rcgen::KeyPair::generate_for(SIG_ALG) — signing key pair; SIG_ALG is not a literal here, so the curve is unknown and so, strictly, is the family: rcgen also offers Ed25519, RSA and ML-DSA. Resolve SIG_ALG before reading this as ECDSA."
 
 # ============================================================================
+# aws-lc-rs — DecapsulationKey::generate (kem module) / PqdsaKeyPair::generate
+# (signature module)
+# ============================================================================
+# Both constructors take the parameter set as their sole argument — a
+# `&'static` associated constant, the identical shape rcgen::KeyPair::
+# generate_for uses above, so `rust_arg_const_name` captures it the same way.
+# Confirmed via docs.rs: `aws_lc_rs::kem` exports `ML_KEM_512`/`768`/`1024`
+# (`&Algorithm`); `aws_lc_rs::signature` exports `ML_DSA_44`/`65`/`87_SIGNING`
+# (`&PqdsaSigningAlgorithm`) for `PqdsaKeyPair::generate` specifically — the
+# bare `ML_DSA_*` constants (no `_SIGNING` suffix) are verification-only and
+# never appear at this call site. No corpus B project calls either
+# constructor; coverage verified against a fixture.
+
+[[classify]]
+id = "CRYPTO-1069"
+when.api = "^aws_lc_rs\\.kem\\.DecapsulationKey\\.generate$"
+when.args.alg = "ML_KEM_512"
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "aws-lc-rs DecapsulationKey::generate(&ML_KEM_512) — ML-KEM-512, FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1070"
+when.api = "^aws_lc_rs\\.kem\\.DecapsulationKey\\.generate$"
+when.args.alg = "ML_KEM_768"
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "aws-lc-rs DecapsulationKey::generate(&ML_KEM_768) — ML-KEM-768, FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1071"
+when.api = "^aws_lc_rs\\.kem\\.DecapsulationKey\\.generate$"
+when.args.alg = "ML_KEM_1024"
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "aws-lc-rs DecapsulationKey::generate(&ML_KEM_1024) — ML-KEM-1024, FIPS 203, quantum-resistant."
+
+# The fallback, and the only arm that fires when the argument is a variable.
+# It must stay last: the classify layer takes the first matching rule.
+[[classify]]
+id = "CRYPTO-1072"
+when.api = "^aws_lc_rs\\.kem\\.DecapsulationKey\\.generate$"
+algorithm_id = "kem-unattributed"
+severity_hint = "auto"
+message = "aws-lc-rs DecapsulationKey::generate(ALG) — post-quantum KEM key pair generated; ALG is not a literal here, so the parameter set is unknown."
+
+[[classify]]
+id = "CRYPTO-1073"
+when.api = "^aws_lc_rs\\.signature\\.PqdsaKeyPair\\.generate$"
+when.args.alg = "ML_DSA_44_SIGNING"
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "aws-lc-rs PqdsaKeyPair::generate(&ML_DSA_44_SIGNING) — ML-DSA-44, FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1074"
+when.api = "^aws_lc_rs\\.signature\\.PqdsaKeyPair\\.generate$"
+when.args.alg = "ML_DSA_65_SIGNING"
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "aws-lc-rs PqdsaKeyPair::generate(&ML_DSA_65_SIGNING) — ML-DSA-65, FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1075"
+when.api = "^aws_lc_rs\\.signature\\.PqdsaKeyPair\\.generate$"
+when.args.alg = "ML_DSA_87_SIGNING"
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "aws-lc-rs PqdsaKeyPair::generate(&ML_DSA_87_SIGNING) — ML-DSA-87, FIPS 204, quantum-resistant."
+
+# The fallback, and the only arm that fires when the argument is a variable.
+# It must stay last: the classify layer takes the first matching rule.
+[[classify]]
+id = "CRYPTO-1076"
+when.api = "^aws_lc_rs\\.signature\\.PqdsaKeyPair\\.generate$"
+algorithm_id = "sig-unattributed"
+severity_hint = "auto"
+message = "aws-lc-rs PqdsaKeyPair::generate(ALG) — post-quantum signature key pair generated; ALG is not a literal here, so the parameter set is unknown."
+
+# ============================================================================
 # pbkdf2 crate — PBKDF2 with HMAC-SHA*
 # ============================================================================
 # Two API shapes (Phase 11):

@@ -2782,6 +2782,52 @@ fn rcgen_generate_for_reads_the_signature_algorithm_argument() {
     );
 }
 
+// ── aws-lc-rs: ML-KEM / ML-DSA parameter set is the argument ───────────────
+//
+// DecapsulationKey::generate and PqdsaKeyPair::generate take the parameter
+// set as an associated-constant argument, the same shape rcgen's
+// generate_for uses. A variable there yields the unattributed sentinel
+// rather than a guess.
+
+#[test]
+fn scans_rust_aws_lc_rs_ml_kem_ml_dsa() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/aws_lc_rs_pqc.rs"))
+        .expect("scan succeeds");
+
+    let expected = [
+        (13, "CRYPTO-1069", "ml-kem-512"),
+        (14, "CRYPTO-1070", "ml-kem-768"),
+        (15, "CRYPTO-1071", "ml-kem-1024"),
+        (19, "CRYPTO-1073", "ml-dsa-44"),
+        (20, "CRYPTO-1074", "ml-dsa-65"),
+        (21, "CRYPTO-1075", "ml-dsa-87"),
+        (25, "CRYPTO-1072", "kem-unattributed"),
+    ];
+
+    let mut wrong = Vec::new();
+    for (line, rule_id, algorithm_id) in expected {
+        let hit = findings.iter().find(|f| f.location.line == Some(line));
+        match hit {
+            Some(f) if f.rule_id == rule_id && f.algorithm_id == algorithm_id => {}
+            Some(f) => wrong.push(format!(
+                "line {line}: expected {rule_id} → {algorithm_id}, got {} → {}",
+                f.rule_id, f.algorithm_id
+            )),
+            None => wrong.push(format!("line {line}: no finding at all")),
+        }
+    }
+    assert!(
+        wrong.is_empty(),
+        "{}/{} aws-lc-rs call sites misclassified:\n  {}",
+        wrong.len(),
+        expected.len(),
+        wrong.join("\n  "),
+    );
+}
+
 // ── Phase 9: Go algorithm-registration patterns ────────────────────────────
 //
 // Phase 7 handled `switch alg { case "RS256": ... }`. But the canonical

@@ -6125,4 +6125,59 @@ passing against the updated figures). Both trust-invariant tests untouched and p
 is not built — negative result above, not an oversight. `OPEN-ASK #ESTIMATORPERSIST` (demonstrated a
 third time this cycle) and `OPEN-ASK #CORPUSDRIFT` remain open, neither this cycle's to resolve.
 
+## Measurement, 2026-09-01 (Track A cycle 81 — aws-lc-rs `kem`/`signature` module coverage, the
+## backlog's own standing "real, unclaimed" candidate since cycle 74)
+
+Read the Backlog and Precision-Tracker; every item cycles 72–80 had ranked was closed. The only
+named-but-unbuilt candidate left on record was cycle 74's own research note: aws-lc-rs's `kem` and
+`signature` modules construct ML-KEM/ML-DSA key pairs from a parameter set passed as an associated
+constant — real API, verified then via docs.rs, no `RUST_CALLEE_APIS` entry, no corpus hit.
+Re-verified the API shape directly against a fresh `docs.rs/aws-lc-rs` fetch rather than trusting
+the four-day-old note: `DecapsulationKey::generate(&'static Algorithm)` in `aws_lc_rs::kem`
+(`ML_KEM_512`/`768`/`1024`) is unchanged, but `PqdsaKeyPair::generate` takes `&'static
+PqdsaSigningAlgorithm` — the **`ML_DSA_44_SIGNING`/`65_SIGNING`/`87_SIGNING`** constants, not the
+bare `ML_DSA_44`/`65`/`87` names the cycle-74 note assumed (those are verification-only). Building
+against the note's literal constant names would have shipped classify arms that never fire.
+
+**What shipped:** two `RUST_CALLEE_APIS` entries plus a shared match arm reusing
+`rust_arg_const_name` — the identical associated-constant-as-argument shape `rcgen::KeyPair::
+generate_for` already established, so no new extraction primitive was needed, only two more callers
+of the existing one. Eight new `rust.toml` classify arms (`CRYPTO-1069`–`1076`): three ML-KEM
+parameter sets plus a `kem-unattributed` fallback, three ML-DSA parameter sets plus a
+`sig-unattributed` fallback — all four algorithm ids reused from the existing table, no new rows.
+Coverage verified against a new fixture, `tests/fixtures/rust/aws_lc_rs_pqc.rs` (7 call sites: three
+ML-KEM literals, three ML-DSA literals, one local-variable argument exercising the fallback), and a
+new test, `scans_rust_aws_lc_rs_ml_kem_ml_dsa`.
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change dump `work/y92_post.json` (1911, commit `da4f574`) ·
+post-change binary from this cycle's tree · dump `work/awslcrs_post.json` (1911), both produced by
+the repo's own `benchmarks/corpus-b-realworld/dump_findings.py`.**
+
+**0 findings added, 0 removed, 0 reclassified — the stated expectation, not a surprise.** The
+corpus's own `crypto-adjacent/aws-lc` clone is the C library (`aws-lc`), not the Rust wrapper
+crate (`aws-lc-rs`); no `crates-io` project in the corpus depends on `aws-lc-rs` at all, so neither
+new callee shape has a call site to match. Real API, zero measured corpus demand — the same
+"coverage without corpus demand" shape `#Y43`/`#Y80`/`#Y87`/`#Y92` all already recorded.
+
+**Precision 97.17% (persisted), held exactly.** `bin/precision.py work/y92_post.json
+work/awslcrs_post.json --write-readme` found the byte-identical 1911-finding dumps it expected (0
+added, 0 removed) and reproduced the persisted anchor without needing `--added-tp`/`--added-fp`.
+`--write-readme` found the headline sentence already correct and made no README edit for the
+figure itself; the rule-pack-count sentence was updated by hand in the same diff (128 extract /
+734→742 classify total — Rust is not one of the four per-language-called-out packs, so no
+per-language sentence needed a change), confirmed against a fresh `grep -c '^\[\[classify\]\]'`
+before committing.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets --workspace -- -D warnings` clean; `cargo test --release --workspace` all
+passing (149 `scan_test.rs` cases, one new). Both trust-invariant tests untouched and pass.
+`readme_rule_pack_counts.rs` confirmed failing before the README edit, passing after.
+
+**Not done, said out loud:** `OPEN-ASK #ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT` remain open,
+neither this cycle's to resolve — this cycle could not have caused either (byte-identical dumps).
+The Java two-hop generic-name traces (`#Y80`/`#Y81`/LMS/HSS) and `sntrup761x25519-sha512` for a
+non-Go SSH library remain the standing unclaimed items; no new ready-to-build Track A candidate was
+identified while closing this one.
+
 PRECISION: 97.17%

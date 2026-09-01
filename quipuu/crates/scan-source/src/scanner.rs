@@ -2756,6 +2756,15 @@ const RUST_CALLEE_APIS: &[(&str, &str)] = &[
     ("ServerConfig::builder", "rustls.ServerConfig.builder"),
     // rcgen — used by rustls-webpki / webpki test utilities.
     ("KeyPair::generate_for", "rcgen.KeyPair.generate_for"),
+    // aws-lc-rs — ML-KEM (`kem` module) and ML-DSA (`signature` module).
+    (
+        "DecapsulationKey::generate",
+        "aws_lc_rs.kem.DecapsulationKey.generate",
+    ),
+    (
+        "PqdsaKeyPair::generate",
+        "aws_lc_rs.signature.PqdsaKeyPair.generate",
+    ),
     ("pbkdf2", "pbkdf2.pbkdf2"),
     ("pbkdf2_hmac", "pbkdf2.pbkdf2_hmac"),
     ("pbkdf2_hmac_array", "pbkdf2.pbkdf2_hmac"),
@@ -3281,6 +3290,20 @@ fn populate_args(
             // unattributed arm, the same shape as WebCrypto above.
             if let Some(name) = rust_arg_const_name(args_node, 0, source) {
                 out.insert("sig_alg".into(), ArgValue::Str(name));
+            }
+        }
+        (
+            Language::Rust,
+            "aws_lc_rs.kem.DecapsulationKey.generate" | "aws_lc_rs.signature.PqdsaKeyPair.generate",
+        ) => {
+            // DecapsulationKey::generate(&aws_lc_rs::kem::ML_KEM_768) /
+            // PqdsaKeyPair::generate(&aws_lc_rs::signature::ML_DSA_65_SIGNING)
+            // — same associated-constant-as-argument shape rcgen's
+            // generate_for uses above, so the same capture applies. Where
+            // the argument is a variable there is no capture and the
+            // classify layer falls through to the unattributed sentinel.
+            if let Some(name) = rust_arg_const_name(args_node, 0, source) {
+                out.insert("alg".into(), ArgValue::Str(name));
             }
         }
         (
