@@ -4,6 +4,7 @@ using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Kems;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
+using Org.BouncyCastle.Pqc.Crypto.Lms;
 using Org.BouncyCastle.Security;
 
 public class PqcFixture
@@ -63,5 +64,23 @@ public class PqcFixture
     {
         var signer = new MLDsaSigner(MLDsaParameters.ml_dsa_87, false);
         signer.Init(true, priv);
+    }
+
+    // CSH-080 / CRYPTO-1080 — single-tree LMS key generation (#Y100)
+    public static void LmsKeyPair(LmsParameters lmsParameters)
+    {
+        var random = new SecureRandom();
+        var generator = new LmsKeyPairGenerator();
+        generator.Init(new LmsKeyGenerationParameters(lmsParameters, random));
+        var keyPair = generator.GenerateKeyPair();
+    }
+
+    // CSH-081 / CRYPTO-1081 — multi-tree HSS key generation (#Y100)
+    public static void HssKeyPair(LmsParameters[] lmsParameters)
+    {
+        var random = new SecureRandom();
+        var generator = new HssKeyPairGenerator();
+        generator.Init(new HssKeyGenerationParameters(lmsParameters, random));
+        var keyPair = generator.GenerateKeyPair();
     }
 }

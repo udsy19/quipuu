@@ -3023,6 +3023,14 @@ const CSHARP_CTOR_APIS: &[(&str, &str)] = &[
         "CompositeMLDsaCng",
         "System.Security.Cryptography.CompositeMLDsaCng.new",
     ),
+    (
+        "LmsKeyGenerationParameters",
+        "Org.BouncyCastle.Pqc.Crypto.Lms.LmsKeyGenerationParameters.new",
+    ),
+    (
+        "HssKeyGenerationParameters",
+        "Org.BouncyCastle.Pqc.Crypto.Lms.HssKeyGenerationParameters.new",
+    ),
 ];
 
 fn match_csharp_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {

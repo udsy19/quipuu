@@ -1646,3 +1646,53 @@ when.api = "^System\\.Security\\.Cryptography\\.CompositeMLDsaCng\\.new$"
 algorithm_id = "ml-dsa-unattributed"
 severity_hint = "auto"
 message = "new CompositeMLDsaCng(cngKey) — composite PQ/T signature key (FIPS 204 ML-DSA paired with a classical algorithm), via the Windows CNG interop path. The parameter set is carried on the CngKey argument and is not statically knowable at this call site."
+
+# ============================================================================
+# BouncyCastle.NET — LmsKeyGenerationParameters / HssKeyGenerationParameters
+# (#Y100). Verified directly against bcgit/bc-csharp tag release-2.7.0,
+# Org.BouncyCastle.Pqc.Crypto.Lms: `LmsKeyGenerationParameters(LmsParameters,
+# SecureRandom)` is always single-tree, and `HssKeyGenerationParameters
+# (LmsParameters[], SecureRandom)` is always multi-tree (array length =
+# tree depth, RFC 8554 §6) — the constructor name alone disambiguates lms
+# from hss, unlike Java BC's single ambiguous "LMS" JCA service name
+# (java.toml, deliberately left unclassified). LmsParameters itself is
+# built from a nested constructor, not a static field, so there is no
+# parameter-set literal to capture here — same bare-constructor-name shape
+# already shipped for MLKemCng/MLDsaCng/SlhDsaCng/CompositeMLDsaCng above.
+# ============================================================================
+
+[[extract]]
+id = "CSH-080"
+language = "csharp"
+query = """
+(object_creation_expression
+  type: (identifier) @cls (#eq? @cls "LmsKeyGenerationParameters"))
+"""
+captures = { cls = "ident" }
+api = "Org.BouncyCastle.Pqc.Crypto.Lms.LmsKeyGenerationParameters.new"
+description = "new LmsKeyGenerationParameters(lmsParameters, random) — BouncyCastle.NET's single-tree LMS (RFC 8554 / NIST SP 800-208) key generation; always single-tree, unlike its HssKeyGenerationParameters sibling below."
+
+[[classify]]
+id = "CRYPTO-1080"
+when.api = "^Org\\.BouncyCastle\\.Pqc\\.Crypto\\.Lms\\.LmsKeyGenerationParameters\\.new$"
+algorithm_id = "lms"
+severity_hint = "auto"
+message = "new LmsKeyGenerationParameters(lmsParameters, random) — RFC 8554 / NIST SP 800-208 single-tree LMS, quantum-resistant. CNSA 2.0 approves single-tree LMS for software and firmware signing."
+
+[[extract]]
+id = "CSH-081"
+language = "csharp"
+query = """
+(object_creation_expression
+  type: (identifier) @cls (#eq? @cls "HssKeyGenerationParameters"))
+"""
+captures = { cls = "ident" }
+api = "Org.BouncyCastle.Pqc.Crypto.Lms.HssKeyGenerationParameters.new"
+description = "new HssKeyGenerationParameters(lmsParameters[], random) — BouncyCastle.NET's multi-tree HSS (RFC 8554 / NIST SP 800-208) key generation; the array length is the tree depth and is not resolved here."
+
+[[classify]]
+id = "CRYPTO-1081"
+when.api = "^Org\\.BouncyCastle\\.Pqc\\.Crypto\\.Lms\\.HssKeyGenerationParameters\\.new$"
+algorithm_id = "hss"
+severity_hint = "auto"
+message = "new HssKeyGenerationParameters(lmsParameters[], random) — RFC 8554 / NIST SP 800-208 multi-tree HSS, quantum-resistant. A depth-1 array is single-tree LMS in all but name; if CNSA 2.0 conformance is being asserted, verify the configured depth — CNSA 2.0 takes single-tree LMS only and lists multi-tree HSS as disallowed."

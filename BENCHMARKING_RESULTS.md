@@ -6370,3 +6370,75 @@ was the missing measurement itself, not a defect in the fix (`parked/20260901T19
 now merged and deleted).
 
 PRECISION: 97.17%
+
+## Measurement, 2026-09-01 (Track A cycle 200 — `#Y100`, BouncyCastle.NET LMS/HSS key generation)
+
+Took `#Y100` as filed by cycle-35 synthesis's ecosystem lens: `csharp.toml` had zero coverage for
+BouncyCastle.NET's stateful hash-based signature classes. Re-verified directly against
+`bcgit/bc-csharp`, tag `release-2.7.0` (`raw.githubusercontent.com`, not taken from the lens's
+citation alone): `Org.BouncyCastle.Pqc.Crypto.Lms.LmsKeyGenerationParameters(LmsParameters,
+SecureRandom)` is always single-tree, and the sibling `HssKeyGenerationParameters(LmsParameters[],
+SecureRandom)` is always multi-tree (array length = tree depth, RFC 8554 §6, validated 1–8 in the
+constructor itself) — the constructor name alone disambiguates `lms` from `hss`, unlike Java BC's
+single ambiguous `"LMS"` JCA service name (`java.toml:514-520`, deliberately left unclassified).
+`LmsParameters` is itself built from a nested constructor, not a static field, so — matching the
+filing's own read — there is no parameter-set literal to capture; two extract/classify pairs
+(`CSH-080`/`CRYPTO-1080` for lms, `CSH-081`/`CRYPTO-1081` for hss) match on the bare constructor
+class name, the same shape already shipped for `MLKemCng`/`MLDsaCng`/`SlhDsaCng`/`CompositeMLDsaCng`.
+`scanner.rs`'s `CSHARP_CTOR_APIS` table gains the two matching rows — the classify rules match no
+api the extract layer emits until this row exists, caught by `every_classify_rule_targets_an_api_the_extractor_can_emit`
+before it could ship silently broken.
+
+**The hss classify message conditions rather than asserts, per the filing's own counter-argument.**
+A depth-1 `HssKeyGenerationParameters` array is legal and cryptographically identical to single-tree
+LMS (SP 800-208); the message reads "verify the configured depth" rather than an unconditional
+CNSA 2.0 prohibition claim.
+
+**`algorithm-table.toml`'s `lms`/`hss` rows had their own `undetectable` reason removed, not merely
+reworded, once this change made them reachable — `every_algorithm_id_is_emitted_or_says_why_not`
+fails a row that carries a stale reason once an emitter exists, and did fail here first. The `xmss`
+row's neighbouring note ("no OID needed, unlike lms/hss above") was also stale as of this change and
+is corrected to "same as lms above" in the same diff, per rule 4.**
+
+**Coverage verified against the fixture, not corpus B.** `tests/fixtures/csharp/Pqc.cs` gains two
+call sites (`new LmsKeyGenerationParameters(lmsParameters, random)`, `new
+HssKeyGenerationParameters(lmsParameters, random)`), asserted in the new
+`scans_csharp_bouncycastle_lms_hss` test (`CRYPTO-1080`/`lms`, `CRYPTO-1081`/`hss`). No BouncyCastle
+XMSS namespace exists in C# BC at all (confirmed against the release tag's own directory listing),
+closing that question rather than leaving it open; a deeper nested-argument extraction that would
+recover the exact NIST parameter set is explicitly not attempted (scope creep past what the filing's
+own R1 needs).
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change dump `work/y98_post.json` (1916, commit `e94fb4a`) · post-change
+binary from this cycle's tree · dump `work/y100_post.json` (1916), both produced by the repo's own
+`benchmarks/corpus-b-realworld/dump_findings.py`.**
+
+**0 findings added, 0 removed, 0 reclassified — the expected result, not a surprise.** `work/corpus-clones`
+has no `nuget` directory at all (confirmed directly: `crates-io`, `crypto-adjacent`, `go-modules`,
+`maven`, `npm`, `pypi` only), so no C# project in corpus B can reach BouncyCastle.NET's LMS/HSS
+classes regardless of this change — same evidentiary tier already accepted for `#Y95`'s
+`CompositeMLDsa`/`CompositeMLDsaCng` two commits before this one.
+
+**Precision 97.17%, held exactly.** `bin/precision.py work/y98_post.json work/y100_post.json
+--write-readme` confirms row-identity on the two byte-identical 1916-finding dumps and reports the
+fresh stratified populations (`A=797, B=1119`, sample `A 262/271`, `B 355/364`) at 97.175%, rounding
+to the same published two-decimal figure. `--write-readme` found the headline and comparison-table
+figures already correct; the rule-pack-count sentences (`133 extract blocks and 747 classify arms`,
+C#'s `122`) were updated by hand in the same diff, confirmed against a fresh `grep -c
+'^\[\[extract\]\]'`/`'^\[\[classify\]\]'` before committing.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --all` clean; `cargo clippy --release
+--all-targets --workspace -- -D warnings` clean; `cargo test --release --workspace` all passing (one
+new test function, `scans_csharp_bouncycastle_lms_hss`). Both trust-invariant tests untouched and
+pass. `readme_rule_pack_counts_match_the_rule_packs` confirmed failing before the README edit
+(131/745/120), passing after (133/747/122).
+`every_algorithm_id_is_emitted_or_says_why_not` confirmed failing before the `undetectable`-field
+removal (flagging `["hss", "lms"]` as stale), passing after.
+
+**Not done, said out loud:** `OPEN-ASK #ESTIMATORPERSIST2` remains open, not this cycle's to resolve
+— this cycle could not have caused it (byte-identical dumps). `#Y99` (pyca X.509 `.sign()` ML-DSA
+coverage), the next-ranked item from the same synthesis cycle, was not started this cycle. `#Y94`/`#Y96`
+remain outside `crates/`/`README.md`, this track's write authority.
+
+PRECISION: 97.17%

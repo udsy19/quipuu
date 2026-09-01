@@ -1751,6 +1751,35 @@ fn scans_csharp_bouncycastle_mlkem_and_mldsa() {
 }
 
 #[test]
+fn scans_csharp_bouncycastle_lms_hss() {
+    // #Y100 — LmsKeyGenerationParameters is always single-tree,
+    // HssKeyGenerationParameters is always multi-tree; the constructor name
+    // alone disambiguates lms from hss, no parameter-set literal to capture.
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("csharp/Pqc.cs"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-1080", "lms"), // new LmsKeyGenerationParameters(lmsParameters, random)
+        ("CRYPTO-1081", "hss"), // new HssKeyGenerationParameters(lmsParameters, random)
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in C# BouncyCastle LMS/HSS fixture; findings: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+}
+
+#[test]
 fn scans_csharp_native_mlkem_mldsa_slhdsa() {
     let b = load_builtins().unwrap();
     let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
