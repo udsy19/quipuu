@@ -147,7 +147,7 @@ not perform.
 
 **HTML report** — self-contained, auditor-grade. Every finding includes a "Why this matters" explanation tied to NIST IR 8547 policy, a severity rollup, and explicit HNDL flagging for findings that expose data to long-term harvest attacks. Open it in any browser; no server required.
 
-*What is verified:* the HNDL flag is **computed from the active policy's `[hndl_flag]` block**, not asserted. Until 2026-08-28 it was not computed at all: every scanner wrote a hard-coded `false` and `summary.json.totals.hndl_critical` was `0` for every input. Today an X.509 certificate whose public key is a key-agreement key — the fixture is X25519, OID `1.3.101.110` — is flagged, and the same certificate's long-lived *signature* is not. **The scope is certificate findings.** Source and dependency findings still report zero, because `scan-source` fixes two of the flag's three inputs (`usage_context`, `shelf_life_bucket`) at compile time; over the benchmark corpus the count is **0 of 1911** (149 of 150 scanned, one recorded `unscannable`, none errored). Making it non-zero there means making those axes vary, which moves severity bands across the whole corpus, and that is a calibration change we have not made. Gated by `hndl_critical_is_reachable_end_to_end` and three sibling checks in `crates/cli/tests/hndl_flag.rs`. **The HTML report used to contradict that sentence.** Its HNDL section filtered on `hndl_critical || severity == Critical`, so on one RSA-2048/SHA-256 certificate it rendered **2** `HNDL-CRITICAL` badges while `summary.json` from the same scan reported `hndl_critical: 0` — and its own HNDL card, three sections above the badges, reported 0 as well. It now filters on the flag alone; on the X25519 fixture the flag, the card and the badge count are all **1**, and the certificate's Ed25519 signature — Critical, not HNDL — is no longer badged. Gated by `every_artifact_reports_the_same_hndl_count` in `crates/cli/tests/artifact_agreement.rs`, the first test in the repo that reads the HTML.
+*What is verified:* the HNDL flag is **computed from the active policy's `[hndl_flag]` block**, not asserted. Until 2026-08-28 it was not computed at all: every scanner wrote a hard-coded `false` and `summary.json.totals.hndl_critical` was `0` for every input. Today an X.509 certificate whose public key is a key-agreement key — the fixture is X25519, OID `1.3.101.110` — is flagged, and the same certificate's long-lived *signature* is not. **The scope is certificate findings.** Source and dependency findings still report zero, because `scan-source` fixes two of the flag's three inputs (`usage_context`, `shelf_life_bucket`) at compile time; over the benchmark corpus the count is **0 of 1916** (149 of 150 scanned, one recorded `unscannable`, none errored). Making it non-zero there means making those axes vary, which moves severity bands across the whole corpus, and that is a calibration change we have not made. Gated by `hndl_critical_is_reachable_end_to_end` and three sibling checks in `crates/cli/tests/hndl_flag.rs`. **The HTML report used to contradict that sentence.** Its HNDL section filtered on `hndl_critical || severity == Critical`, so on one RSA-2048/SHA-256 certificate it rendered **2** `HNDL-CRITICAL` badges while `summary.json` from the same scan reported `hndl_critical: 0` — and its own HNDL card, three sections above the badges, reported 0 as well. It now filters on the flag alone; on the X25519 fixture the flag, the card and the badge count are all **1**, and the certificate's Ed25519 signature — Critical, not HNDL — is no longer badged. Gated by `every_artifact_reports_the_same_hndl_count` in `crates/cli/tests/artifact_agreement.rs`, the first test in the repo that reads the HTML.
 
 **SARIF 2.1.0** — drop into GitHub Advanced Security (`security-events: write`) or GitLab Advanced Security. Findings appear inline on PRs. Rule IDs (`CRYPTO-NNN`) are stable and documented.
 
@@ -159,7 +159,7 @@ not perform.
 
 **JSON summary** — machine-readable finding counts by severity, ecosystem, and algorithm family. Pipe it into your CI dashboard, Slack alerts, or compliance reports.
 
-*What is verified:* a finding whose `algorithm_id` has no algorithm-table row is reported as **`unscored`**, in every artifact, and is not folded into a band. `algorithm_vulnerability` is 40 of the 100 points the risk engine assigns and is read entirely from that row, so there is nothing to band. Until 2026-08-28 each surface decided this privately and they disagreed: on one `openssl = "0.10"` line in a `Cargo.toml` — which `scan-deps` reports with its `unknown` sentinel — stdout printed `?`, `summary.json` and the HTML report said **Medium**, SARIF said `warning` with `security-severity: 5.0`, and the TUI said **Safe**. Four answers, one finding, and the loudest of them asserted a mid-band CVSS to GitHub Advanced Security for a finding we decline to score. `totals.unscored` is a new field; `totals.medium` no longer counts these rows, SARIF emits level `none` and omits `security-severity`, and `--fail-on` still skips them and says how many it skipped. Over the benchmark corpus this is **13 of 1911 findings (0.68 %)**, all `DEP-001`. It read 131 of 1399 (9.4 %) until 2026-08-29, when the corpus scope repair stopped four projects being scanned over their whole repository: 119 of those 131 were root `Cargo.toml` and `pom.xml` manifests that the projects' declared scopes excluded. Gated by `an_unscored_finding_is_unscored_in_every_artifact` and by a source-text check that fails when a new surface derives its own band instead of calling `quipuu_core::score_of`.
+*What is verified:* a finding whose `algorithm_id` has no algorithm-table row is reported as **`unscored`**, in every artifact, and is not folded into a band. `algorithm_vulnerability` is 40 of the 100 points the risk engine assigns and is read entirely from that row, so there is nothing to band. Until 2026-08-28 each surface decided this privately and they disagreed: on one `openssl = "0.10"` line in a `Cargo.toml` — which `scan-deps` reports with its `unknown` sentinel — stdout printed `?`, `summary.json` and the HTML report said **Medium**, SARIF said `warning` with `security-severity: 5.0`, and the TUI said **Safe**. Four answers, one finding, and the loudest of them asserted a mid-band CVSS to GitHub Advanced Security for a finding we decline to score. `totals.unscored` is a new field; `totals.medium` no longer counts these rows, SARIF emits level `none` and omits `security-severity`, and `--fail-on` still skips them and says how many it skipped. Over the benchmark corpus this is **13 of 1916 findings (0.68 %)**, all `DEP-001`. It read 131 of 1399 (9.4 %) until 2026-08-29, when the corpus scope repair stopped four projects being scanned over their whole repository: 119 of those 131 were root `Cargo.toml` and `pom.xml` manifests that the projects' declared scopes excluded. Gated by `an_unscored_finding_is_unscored_in_every_artifact` and by a source-text check that fails when a new surface derives its own band instead of calling `quipuu_core::score_of`.
 
 **MCP server** — `quipuu mcp-serve` exposes every scan verb over newline-delimited JSON-RPC on stdio, following the Model Context Protocol. Agentic clients use this interface to drive the scanner programmatically. The JSON schemas for `Finding`, `CryptoAsset`, and `RiskScore` live in `crates/core/schema/`.
 
@@ -176,7 +176,7 @@ with nothing to find, which `corpus-integrity.toml` records as `files_scanned = 
 
 | Metric | Value |
 |---|---|
-| Total findings | 1911 |
+| Total findings | 1916 |
 | Projects scanned | 149 of 150, 1 `unscannable`, **0 errored** |
 | Wall-clock time | 236.6s (3m 57s) for all 150 |
 | Per project | median 175ms · mean 1575ms · p90 1.19s · max 126.7s |
@@ -186,7 +186,7 @@ Every row above comes from **one run**: `python3 scan_corpus.py --include-safe`,
 `--source --deps --include-safe`, profile `nist-default`, release build, single-threaded,
 on **2 cores of an AMD EPYC 9354P with 7 GB RAM**, 2026-09-01. It wrote
 `results/summary.json`. `results/all_findings.json` is the per-finding dump from
-`dump_findings.py` under the same binary, flags and corpus; the two agree at **1911** by
+`dump_findings.py` under the same binary, flags and corpus; the two agree at **1916** by
 independent count, ecosystem by ecosystem, and that population is what the precision figure
 below is sampled from.
 
@@ -200,13 +200,13 @@ median describes a project. Neither is the number to quote alone.
 same flags gave 230.0s, 277.3s, 281.1s, 282.0s, 294.9s, 329.0s and 367.4s against the 236.6s
 above — the 367.4s pass was over a wider corpus scope than this one. Read the whole-corpus
 figure as "between four and six minutes on two shared cores", not as three significant
-figures. The finding counts do not move for timing reasons: this run's **1911** is reproduced
+figures. The finding counts do not move for timing reasons: this run's **1916** is reproduced
 exactly by an independent `dump_findings.py` pass on the same binary. The steps down from
 1570 — 91 findings, then 80 — are the two false-positive suppressions recorded in
 `BENCHMARKING_RESULTS.md`, and the step from 1399 to 1056 is the 2026-08-29 corpus scope
 repair described there and below. Every commit since then added rule-pack coverage rather
-than removed findings, taking the total from 1056 to 1853 and now, with this cycle's Go
-`crypto/mldsa` coverage, to **1911**.
+than removed findings, taking the total from 1056 to 1911 and now, with this cycle's circl
+`kem/xwing` (X-Wing hybrid PQ/T KEM) coverage, to **1916**.
 
 **These figures replace a published `~22s / ~150ms`, which was wrong.** That pair came from
 `results/summary.json` at `include_safe:false`, in a run where **9 of 150 clones were
@@ -217,7 +217,7 @@ not the machine named above, and `BENCHMARKING_RESULTS.md` reported the same run
 claiming the scanner got 16× slower; we are retracting a number that described 141 projects,
 under one flag set, on an unnamed machine, and presenting one that names all three.
 
-Audit-validated precision: **97.17%** (95% CI: 95.9%–98.5%) — measured 2026-09-01 on **635 audited findings** out of 1911, every one labelled by opening its cited `file:line`. Methodology, the full label set and per-finding verdicts are in `BENCHMARKING_RESULTS.md`, `PRECISION_AUDIT_V4.md` and `PRECISION_AUDIT_V3.md`.
+Audit-validated precision: **97.19%** (95% CI: 95.9%–98.5%) — measured 2026-09-01 on **640 audited findings** out of 1916, every one labelled by opening its cited `file:line`. Methodology, the full label set and per-finding verdicts are in `BENCHMARKING_RESULTS.md`, `PRECISION_AUDIT_V4.md` and `PRECISION_AUDIT_V3.md`.
 
 **This reverts the 97.71% published above the `#Y64`/`#Y65` Go SHA-256 fix below — not a new measurement, but a correction undoing the fold that produced it, 2026-08-30.** `#Y64` appended a 100%-census audit of its own new rule's near-tautologically-true-positive targets (139 findings, 0 FP) directly into the anchor's per-stratum sample; `#Y65` added 12 more on top. Both moves passed `gate_precision` because the gate only blocks a drop past -0.5pp and lets any rise through unexamined — but auditing every target a brand-new rule produces and folding the result into the very sample it is measured against inflates the reported rate regardless of whether real-world precision improved, since the fold is not a random draw from the stratum. `state/estimator.json` was reverted to its pre-`#Y64` state (`a_tp` 335→262, `b_tp` 420→354, matching `#Y63`'s last gate-passed 97.11% exactly): `#Y64`/`#Y65`'s 151 audited findings are real coverage evidence, not anchor-sample inputs, until a periodic re-sampling mechanism exists for this case — still an open question. The two paragraphs below describe what `#Y64`/`#Y65` actually shipped — real, hand-verified detection gains — separately from the anchor-sample question this correction resolves.
 
@@ -360,7 +360,7 @@ quipuu scan .
 | MCP server | Yes | No | No | No | No |
 | Auditable open rule format | Yes (TOML) | No (binary) | Yes (QL) | No | Yes (YAML) |
 | Languages (crypto-specific) | 7 | 7+ | 7+ | Java, Python, Go, C# (comprehensive rules merged 2026-08-26) | Any |
-| Published precision (crypto findings) | 97.17% (635 audited rows, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
+| Published precision (crypto findings) | 97.19% (640 audited rows, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
 | Published recall | 100.0% (Go stdlib, 401/401 in-scope sites); 41.9% cross-language (49/117 planted sites, 7 languages) | Not published | Not published | Not published | Not published |
 | Scan speed | 175ms median project; 236.6s for the 150-project corpus (2 cores) | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
 

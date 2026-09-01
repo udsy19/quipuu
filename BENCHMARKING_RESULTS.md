@@ -6181,3 +6181,48 @@ non-Go SSH library remain the standing unclaimed items; no new ready-to-build Tr
 identified while closing this one.
 
 PRECISION: 97.17%
+
+## Measurement, 2026-09-01 (Track A cycle 82 — circl `kem/xwing` (X-Wing hybrid PQ/T KEM) gains Go coverage)
+
+X-Wing (`draft-connolly-cfrg-xwing-kem`) combines X25519 with ML-KEM-768 through its own SHA3-256
+combiner for HPKE/KEM APIs — distinct from the already-covered TLS `X25519MLKEM768` supported_group.
+`go.toml` gains extract/classify rule `CRYPTO-1077` and `scanner.rs` gains callee-table wiring for
+circl's `kem/xwing` package; the same call shape also catches Google Tink's internal
+`hybrid/internal/xwing` package, which shares the same function names under the same local
+identifier `xwing`, verified against the live corpus rather than assumed. `go.toml` classify arms
+105 → 106.
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change binary built from commit `235cf0d` · post-change binary from
+this cycle's tree · dumps `work/awslcrs_post.json` (1911) ↔ `work/xwing_post.json.stale-parked-cycle`
+(1916), both produced by the repo's own `benchmarks/corpus-b-realworld/dump_findings.py`.**
+
+**5 findings added, 0 removed, 0 reclassified.** All five are inside `crypto-adjacent/tink-go`'s own
+X-Wing KEM wrapper (`hybrid/internal/hpke/xwing_kem.go:31,35`, `hybrid/hpke/key.go:129,176`,
+`hybrid/hpke/public_key_manager_test.go:334`) — opened each cited `file:line` directly: two are
+`xwing.Encapsulate`/`xwing.Decapsulate` calls inside tink-go's own KEM interface implementation, two
+are `xwing.PublicFromSecret` calls deriving/validating a public key from private key material, one is
+the identical call inside a test exercising the real API (test-code crypto operations count as TP by
+this benchmark's established convention). All five TP, 0 FP.
+
+**Precision 97.17% → 97.19% (95% CI 95.92–98.47), stratified fresh populations.**
+`bin/precision.py work/awslcrs_post.json work/xwing_post.json.stale-parked-cycle --added-tp 5
+--added-fp 0 --write-readme` reproduced the persisted 97.17% anchor on the pre dump, confirmed the
+delta lands entirely in stratum B (crypto-adjacent), and applied the figure to the README headline
+and comparison table. Sample: A 262/271, B 360/369 (365 → 369 audited rows in B); populations
+re-derived fresh at A=797, B=1119. Neither of the two new findings is HNDL-flagged or unscored, so
+the HNDL (`0 of N`) and DEP-001-unscored (`13 of N`) sentences move only their denominator, 1911 →
+1916, not their numerator — confirmed against the dump directly.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all --check`, `cargo clippy
+--all-targets -- -D warnings`, `cargo test --workspace` (one new fixture-backed test,
+`go_circl_xwing_is_classified`) all clean. Both trust-invariant tests untouched and pass.
+`readme_benchmark_table_total_matches_the_precision_denominator` passes against 1916 in both
+locations.
+
+**Not done, said out loud:** the whole-corpus wall-clock table is not re-run this cycle — the finding
+counts are the only figures this change can move, and a scan_corpus.py pass costs several minutes on
+this box for a number this diff does not depend on. `OPEN-ASK #ESTIMATORPERSIST` and `OPEN-ASK
+#CORPUSDRIFT` remain open, neither this cycle's to resolve.
+
+PRECISION: 97.19%
