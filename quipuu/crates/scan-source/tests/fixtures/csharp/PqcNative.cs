@@ -122,6 +122,14 @@ public class PqcNativeFixture
         using var slh = SlhDsa.ImportFromPem(source);
     }
 
+    // #Y95 — CompositeMLDsa, .NET 10's hybrid PQ/T signature class. Every
+    // named member degrades to the same ml-dsa-unattributed sentinel, so one
+    // literal-member call site is enough to exercise the rule.
+    public static void CompositeMlDsa()
+    {
+        using var composite = CompositeMLDsa.GenerateKey(CompositeMLDsaAlgorithm.MLDsa65WithECDsaP256);
+    }
+
     // #Y87 — MLKemCng/MLDsaCng, the Windows-CNG-backed wrapper classes.
     // The parameter set lives on the CngKey argument, not this call, so
     // both can only ever produce their *-unattributed algorithm id.

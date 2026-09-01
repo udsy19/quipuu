@@ -2917,6 +2917,10 @@ const CSHARP_CALLEE_APIS: &[(&str, &str)] = &[
         "System.Security.Cryptography.SlhDsa.GenerateKey",
     ),
     (
+        "CompositeMLDsa.GenerateKey",
+        "System.Security.Cryptography.CompositeMLDsa.GenerateKey",
+    ),
+    (
         "MLKem.ImportEncapsulationKey",
         "System.Security.Cryptography.MLKem.ImportEncapsulationKey",
     ),

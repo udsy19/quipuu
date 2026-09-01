@@ -1767,6 +1767,7 @@ fn scans_csharp_native_mlkem_mldsa_slhdsa() {
         ("CRYPTO-1046", "ml-kem-unattributed"), // new MLKemCng(key) — #Y87
         ("CRYPTO-1047", "ml-dsa-unattributed"), // new MLDsaCng(key) — #Y87
         ("CRYPTO-1052", "slh-dsa-unattributed"), // new SlhDsaCng(key) — #Y87 sibling
+        ("CRYPTO-1078", "ml-dsa-unattributed"), // CompositeMLDsa.GenerateKey(…) — #Y95
     ];
     for (rule_id, algorithm_id) in want {
         assert!(

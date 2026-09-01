@@ -6226,3 +6226,64 @@ this box for a number this diff does not depend on. `OPEN-ASK #ESTIMATORPERSIST`
 #CORPUSDRIFT` remain open, neither this cycle's to resolve.
 
 PRECISION: 97.19%
+
+## Measurement, 2026-09-01 (Track A cycle 84 — `#Y95` closed: .NET `CompositeMLDsa`, hybrid PQ/T signature keygen)
+
+`csharp.toml` had zero rule for .NET 10's first-party `CompositeMLDsa` class
+(`System.Security.Cryptography`, `[Experimental("SYSLIB5006")]` — the identical attribute-and-code
+`MLKem`/`MLDsa`/`SlhDsa` themselves shipped under before this file covered them, so "experimental" is
+not a reason to withhold coverage). Re-fetched `learn.microsoft.com/.../compositemldsaalgorithm`
+directly rather than trusting the standing research note's citation, and it undercounts by one: the
+class exposes **18** named algorithm members (`MLDsa44WithECDsaP256` … `MLDsa87WithRSA4096Pss`), not
+17. `CompositeMLDsa.GenerateKey(CompositeMLDsaAlgorithm.<member>)` is the identical
+static-factory-with-member-access shape `MLKem.GenerateKey` already covers — `scanner.rs` gains one
+`CSHARP_CALLEE_APIS` row, `csharp.toml` gains extract `CSH-078` and one classify arm, `CRYPTO-1078`.
+
+**Deliberately one classify arm, not 18.** Every member pairs one of ML-DSA-44/65/87 with a distinct
+classical algorithm, but `algorithm-table.toml` has no composite-family row to publish that pairing as
+its own id — every existing PQC classify arm in this codebase already resolves to an id the table
+defines, and inventing 18 new composite ids (or per-member sentinels that would all carry the same
+`ml-dsa-unattributed` output anyway) is the same class of change `#Y43` deferred for this exact reason
+in 2026-08-29. One rule, keyed only on `when.api`, covers both the literal-member and the
+non-literal/variable argument shapes identically, since both degrade to the same id. `csharp.toml`
+classify arms 118 → 119; extract blocks 129 → 130.
+
+**Coverage verified against the fixture, not corpus B.** `tests/fixtures/csharp/PqcNative.cs` gains
+one call site (`CompositeMLDsa.GenerateKey(CompositeMLDsaAlgorithm.MLDsa65WithECDsaP256)`), asserted
+in `scans_csharp_native_mlkem_mldsa_slhdsa` (`CRYPTO-1078`, `ml-dsa-unattributed`). A direct scan
+before this change produced 0 findings for that line; after, 1.
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` · profile
+`nist-default` · pre-change dump `work/xwing_post.json.stale-parked-cycle` (1916, commit `89e9ea6`) ·
+post-change binary from this cycle's tree · dump `work/y95_post.json` (1916), both produced by the
+repo's own `benchmarks/corpus-b-realworld/dump_findings.py`.**
+
+**0 findings added, 0 removed, 0 reclassified — the expected result, not a surprise.** `[Experimental]`,
+GA seven months ago with no corpus adopter yet, `net-11.0` also listed as a target moniker (the shape
+can still move before it stabilizes) — a brand-new preview API with no measured corpus demand on
+either side of this change, same evidentiary tier as `#Y43`'s own three native classes and `#Y92`'s
+OpenSSL hybrid keygen arms.
+
+**Precision 97.19% (last published) → 97.17% (persisted anchor), arithmetically unrelated to this
+change.** `bin/precision.py work/xwing_post.json.stale-parked-cycle work/y95_post.json --write-readme`
+asserts row-identity on the two byte-identical dumps (0 added, 0 removed) and reports the
+stratified-fresh estimator from the carried sample (`A 262/271`, `B 355/364`) rather than the
+640-audited figure cycle 82 published by folding its own `--added-tp 5` — the exact gap `OPEN-ASK
+#ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` already names, demonstrated again on a change that could not
+have caused it (a byte-identical corpus dump). `state/estimator.json` left untouched, the persisted
+anchor's re-derivation is the human adjudicator's call, not this cycle's.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all --check`, `cargo clippy --release
+--all-targets --workspace -- -D warnings`, `cargo test --release --workspace` all clean (151
+`scan_test.rs` cases, one new). Both trust-invariant tests untouched and pass.
+`readme_rule_pack_counts_match_the_rule_packs` confirmed failing before the README edit (129/743/118),
+passing after (130/744/119).
+
+**Not done, said out loud:** `CompositeMLDsaCng`, the CNG-backed sibling the API page lists as
+`CompositeMLDsa`'s only derived class, is unbuilt — its constructor shape was not fetched and
+confirmed this cycle. `OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` remain open, neither this
+cycle's to resolve; `#Y94` (the `bin/adjudicate.py` near-miss detector gap) and `#Y96` (the
+`BENCHMARKING_RESULTS.md` vocabulary-leak growth gate) are both outside `crates/`/`README.md` and
+this track's write authority.
+
+PRECISION: 97.17%

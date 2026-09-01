@@ -1586,3 +1586,39 @@ when.api = "^System\\.Security\\.Cryptography\\.SlhDsaCng\\.new$"
 algorithm_id = "slh-dsa-unattributed"
 severity_hint = "auto"
 message = "new SlhDsaCng(cngKey) — FIPS 205, quantum-resistant, via the Windows CNG interop path. The parameter set is carried on the CngKey argument and is not statically knowable at this call site."
+
+# CompositeMLDsa — .NET 10+ first-party hybrid PQ/T signature class
+# (System.Security.Cryptography, [Experimental("SYSLIB5006")], same attribute
+# MLKem/MLDsa/SlhDsa themselves shipped under before this file covered them,
+# per backlog #Y95). GenerateKey(CompositeMLDsaAlgorithm) is the identical
+# static-factory-with-member-access shape as MLKem.GenerateKey above.
+# CompositeMLDsaAlgorithm's 18 named members (learn.microsoft.com, fetched
+# directly, net-10.0 — the standing research note undercounted this at 17)
+# each pair one of ML-DSA-44/65/87 with a distinct classical algorithm, but
+# algorithm-table.toml has no composite-family row to publish that pairing
+# as its own id, so every member degrades to the same ml-dsa-unattributed
+# sentinel the plain MLDsa.GenerateKey fallback already uses — one rule
+# covers the literal and non-literal argument shapes alike.
+[[extract]]
+id = "CSH-078"
+language = "csharp"
+query = """
+(invocation_expression
+  function: (member_access_expression
+    expression: (identifier) @cls (#eq? @cls "CompositeMLDsa")
+    name: (identifier) @fn (#eq? @fn "GenerateKey"))
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "CompositeMLDsaAlgorithm")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", fn = "ident", paramcls = "ident", paramset = "ident" }
+api = "System.Security.Cryptography.CompositeMLDsa.GenerateKey"
+description = "CompositeMLDsa.GenerateKey(CompositeMLDsaAlgorithm.MLDsa65WithECDsaP256) — .NET 10+ first-party composite PQ/T signature key generation, draft-ietf-lamps-cms-composite-sigs."
+
+[[classify]]
+id = "CRYPTO-1078"
+when.api = "^System\\.Security\\.Cryptography\\.CompositeMLDsa\\.GenerateKey$"
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "CompositeMLDsa.GenerateKey(CompositeMLDsaAlgorithm…) — composite PQ/T signature key generation (FIPS 204 ML-DSA paired with a classical algorithm). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
