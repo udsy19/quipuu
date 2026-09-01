@@ -1614,7 +1614,7 @@ query = """
 """
 captures = { cls = "ident", fn = "ident", paramcls = "ident", paramset = "ident" }
 api = "System.Security.Cryptography.CompositeMLDsa.GenerateKey"
-description = "CompositeMLDsa.GenerateKey(CompositeMLDsaAlgorithm.MLDsa65WithECDsaP256) — .NET 10+ first-party composite PQ/T signature key generation, draft-ietf-lamps-cms-composite-sigs."
+description = "CompositeMLDsa.GenerateKey(CompositeMLDsaAlgorithm.MLDsa65WithECDsaP256) — .NET 10+ first-party composite PQ/T signature key generation, draft-ietf-lamps-pq-composite-sigs."
 
 [[classify]]
 id = "CRYPTO-1078"
