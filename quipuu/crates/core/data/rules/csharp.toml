@@ -1622,3 +1622,27 @@ when.api = "^System\\.Security\\.Cryptography\\.CompositeMLDsa\\.GenerateKey$"
 algorithm_id = "ml-dsa-unattributed"
 severity_hint = "auto"
 message = "CompositeMLDsa.GenerateKey(CompositeMLDsaAlgorithm…) — composite PQ/T signature key generation (FIPS 204 ML-DSA paired with a classical algorithm). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+# CompositeMLDsaCng — the CNG-backed sibling of CompositeMLDsa named but not
+# built in #Y95 ("constructor shape was not fetched and confirmed"). Fetched
+# learn.microsoft.com directly: `sealed class CompositeMLDsaCng :
+# CompositeMLDsa` with exactly one constructor, `CompositeMLDsaCng(CngKey)` —
+# the identical receiver-carries-the-identity shape as MLKemCng/MLDsaCng/
+# SlhDsaCng above, not the GenerateKey(member) shape of the base class.
+[[extract]]
+id = "CSH-079"
+language = "csharp"
+query = """
+(object_creation_expression
+  type: (identifier) @cls (#eq? @cls "CompositeMLDsaCng"))
+"""
+captures = { cls = "ident" }
+api = "System.Security.Cryptography.CompositeMLDsaCng.new"
+description = "new CompositeMLDsaCng(cngKey) — .NET 10+ Windows-CNG-backed composite PQ/T signature wrapper; the parameter set lives on the CngKey argument, not this call site."
+
+[[classify]]
+id = "CRYPTO-1079"
+when.api = "^System\\.Security\\.Cryptography\\.CompositeMLDsaCng\\.new$"
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "new CompositeMLDsaCng(cngKey) — composite PQ/T signature key (FIPS 204 ML-DSA paired with a classical algorithm), via the Windows CNG interop path. The parameter set is carried on the CngKey argument and is not statically knowable at this call site."

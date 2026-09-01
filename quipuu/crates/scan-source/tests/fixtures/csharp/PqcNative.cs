@@ -148,6 +148,14 @@ public class PqcNativeFixture
         using var slh = new SlhDsaCng(key);
     }
 
+    // CompositeMLDsaCng — the CNG-backed sibling of CompositeMLDsa; same
+    // receiver-carries-the-identity shape as MLKemCng/MLDsaCng/SlhDsaCng
+    // above, so this can only ever produce ml-dsa-unattributed.
+    public static void CompositeMlDsaCng(CngKey key)
+    {
+        using var composite = new CompositeMLDsaCng(key);
+    }
+
     // Classical CNG control — RSACng is explicitly out of scope for #Y87
     // and intentionally produces no finding.
     public static void RsaCngControl(CngKey key)

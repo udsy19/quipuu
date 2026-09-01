@@ -3019,6 +3019,10 @@ const CSHARP_CTOR_APIS: &[(&str, &str)] = &[
     ("MLKemCng", "System.Security.Cryptography.MLKemCng.new"),
     ("MLDsaCng", "System.Security.Cryptography.MLDsaCng.new"),
     ("SlhDsaCng", "System.Security.Cryptography.SlhDsaCng.new"),
+    (
+        "CompositeMLDsaCng",
+        "System.Security.Cryptography.CompositeMLDsaCng.new",
+    ),
 ];
 
 fn match_csharp_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {

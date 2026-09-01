@@ -6287,3 +6287,51 @@ cycle's to resolve; `#Y94` (the `bin/adjudicate.py` near-miss detector gap) and 
 this track's write authority.
 
 PRECISION: 97.17%
+
+## Measurement, 2026-09-01 (Track A cycle 85 — `CompositeMLDsaCng`, `#Y95`'s own named-unbuilt CNG sibling)
+
+`#Y95`'s own closing note named the gap directly: "`CompositeMLDsaCng`, the CNG-backed sibling of
+`CompositeMLDsa`, is unbuilt — its constructor shape was not fetched and confirmed." Fetched
+`learn.microsoft.com/.../compositemldsacng` directly this cycle: `sealed class CompositeMLDsaCng :
+CompositeMLDsa` with exactly one constructor, `CompositeMLDsaCng(CngKey)` — the identical
+receiver-carries-the-identity shape `MLKemCng`/`MLDsaCng`/`SlhDsaCng` (`#Y87`) already cover, not the
+`GenerateKey(member)` shape `CompositeMLDsa` itself uses. `scanner.rs` gains one `CSHARP_CTOR_APIS`
+row, `csharp.toml` gains extract `CSH-079` and classify arm `CRYPTO-1079` (130→131 extract, 119→120
+C# classify, 744→745 total), copying the `MLKemCng` rule shape verbatim.
+
+**Coverage verified against the fixture, not corpus B.** `tests/fixtures/csharp/PqcNative.cs` gains
+one call site (`new CompositeMLDsaCng(key)`), asserted in `scans_csharp_native_mlkem_mldsa_slhdsa`
+(`CRYPTO-1079`, `ml-dsa-unattributed` — the parameter set lives on the `CngKey` argument, not this
+call site, the same degrade-gracefully shape every other CNG wrapper already uses). A direct scan
+before this change produced 0 findings for that line; after, 1.
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` · profile
+`nist-default` · pre-change dump `work/y95_post.json` (1916, commit `01366bf`) · post-change binary
+from this cycle's tree · dump `work/y96cng_post.json` (1916), both produced by the repo's own
+`benchmarks/corpus-b-realworld/dump_findings.py`.**
+
+**0 findings added, 0 removed, 0 reclassified — the expected result, not a surprise.** Same
+evidentiary tier as `#Y95` itself: `[Experimental]`, no corpus adopter for the base `CompositeMLDsa`
+class let alone its CNG-backed derived class, and the corpus's `dotnet`/`nuget`-adjacent projects do
+not touch Windows CNG interop at all.
+
+**Precision 97.17%, held exactly.** `bin/precision.py work/y95_post.json work/y96cng_post.json
+--write-readme` asserts row-identity on the two byte-identical 1916-finding dumps (0 added, 0
+removed) and reports the carried stratified-fresh sample (`A 262/271`, `B 355/364`) unchanged.
+`--write-readme` found the headline sentence already correct; the rule-pack-count sentences (extract
+total, classify total, C#'s per-language count) were updated by hand in the same diff, confirmed
+against a fresh `grep -c '^\[\[extract\]\]'`/`'^\[\[classify\]\]'` before committing.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --all` clean; `cargo clippy --release
+--all-targets --workspace -- -D warnings` clean; `cargo test --release --workspace` all passing (one
+new assertion row in the existing `scans_csharp_native_mlkem_mldsa_slhdsa` test, no new test
+function). Both trust-invariant tests untouched and pass.
+`readme_rule_pack_counts_match_the_rule_packs` confirmed failing before the README edit (130/744/119),
+passing after (131/745/120).
+
+**Not done, said out loud:** `OPEN-ASK #ESTIMATORPERSIST2` remains open, not this cycle's to resolve
+— this cycle could not have caused it (byte-identical dumps). `#Y94`/`#Y96` remain outside
+`crates/`/`README.md`, this track's write authority. No further named CNG-backed .NET PQC class is
+known to be unbuilt after this cycle.
+
+PRECISION: 97.17%
