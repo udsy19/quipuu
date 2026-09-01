@@ -301,13 +301,13 @@ Every API in the ground truth, constructor and operation alike, is now at 100% i
 
 The benchmark corpus and reproduce scripts live in `benchmarks/corpus-b-realworld/`. Run `./clone_all.sh`, then `python3 scan_corpus.py --include-safe` for the speed and finding counts, `python3 dump_findings.py` for the per-finding dump the precision audit samples, and `python3 recall_check.py` for the recall figures; all three take `--clones` if the corpus lives outside the repo. Verify the numbers yourself.
 
-**Cross-language recall: 41.9% (49/117), measured 2026-08-30.** `benchmarks/corpus-a-ground-truth/`
+**Cross-language recall: 49.6% (58/117), measured 2026-09-01.** `benchmarks/corpus-a-ground-truth/`
 is 117 hand-planted call sites, one idiomatic invocation per line, spanning all seven supported
 languages and ~17 algorithm families — a probe we designed independently of `data/rules/`, not
 derived from real-world projects the way corpus B and the Go recall figure above are. Scored at
 family level (a `rsa-2048` finding and an `rsa-unattributed` finding both count as a hit for
 `family = "rsa"`) with `python3 recall_check.py`. Read the number with its own README before
-quoting it: 23 of the 117 sites (`hmac`/`scrypt`/`bcrypt`/`argon2`) can never score a hit because
+quoting it: 20 of the 117 sites (`hmac`/`scrypt`/`bcrypt`/`argon2`) can never score a hit because
 `algorithm-table.toml` carries no MAC or password-KDF family yet, and the `cpp` file's 0% includes
 several call shapes no real C code would actually write. Not a CI gate — narrowing an over-broad
 rule to kill a false positive can cost a true positive at the same site, so recall is measured and
@@ -363,7 +363,7 @@ quipuu scan .
 | Auditable open rule format | Yes (TOML) | No (binary) | Yes (QL) | No | Yes (YAML) |
 | Languages (crypto-specific) | 7 | 7+ | 7+ | Java, Python, Go, C# (comprehensive rules merged 2026-08-26) | Any |
 | Published precision (crypto findings) | 97.17% (635 audited rows, DEPENDS excluded) | ~49–76% (published benchmarks) | High (full data-flow) | Not published | Not published |
-| Published recall | 100.0% (Go stdlib, 401/401 in-scope sites); 41.9% cross-language (49/117 planted sites, 7 languages) | Not published | Not published | Not published | Not published |
+| Published recall | 100.0% (Go stdlib, 401/401 in-scope sites); 49.6% cross-language (58/117 planted sites, 7 languages) | Not published | Not published | Not published | Not published |
 | Scan speed | 175ms median project; 236.6s for the 150-project corpus (2 cores) | Cloud-dependent | 5–15 min/repo | Not benchmarked | ~minutes |
 
 **Where CodeQL wins:** CodeQL has full inter-procedural data-flow. It can trace a key from generation through storage to use and flag misuse that a pattern-based scanner cannot see. If you need that depth and can absorb the scan time, CodeQL delivers it. quipuu does not attempt to replicate data-flow analysis — it trades that capability for speed, locality, and PQC specificity.

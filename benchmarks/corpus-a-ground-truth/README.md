@@ -34,21 +34,21 @@ finding both count as a hit for `family = "rsa"`. This is coarser than the preci
 and attributed to the right primitive at all, across languages whose extract queries and
 callee tables are entirely independent code paths — see `FAMILY_ALIASES` in
 `recall_check.py` for the exact mapping, and its docstring for what it deliberately cannot
-score (`hmac`/`scrypt`/`bcrypt`/`argon2` — 23 of 117 sites — map to no `algorithm-table.toml`
+score (`hmac`/`scrypt`/`bcrypt`/`argon2` — 20 of 117 sites — map to no `algorithm-table.toml`
 family at all, so those tags miss unconditionally; that is the recall gap, not a scoring bug).
 
-## Measured 2026-08-30
+## Measured 2026-09-01
 
-**41.9% (49/117)** against release binary `1963a2c`.
+**49.6% (58/117)** against release binary `549cf56`.
 
 | language | recall |
 |---|---|
-| csharp | 60.0% (9/15) |
-| java | 55.6% (10/18) |
-| js | 47.4% (9/19) |
-| go | 44.4% (8/18) |
-| python | 41.2% (7/17) |
-| rust | 40.0% (6/15) |
+| csharp | 66.7% (10/15) |
+| java | 61.1% (11/18) |
+| go | 55.6% (10/18) |
+| rust | 53.3% (8/15) |
+| python | 52.9% (9/17) |
+| js | 52.6% (10/19) |
 | cpp | **0.0% (0/15)** |
 
 **The `cpp` row needs a caveat this cycle did not have time to fix in the corpus itself.**

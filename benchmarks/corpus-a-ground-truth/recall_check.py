@@ -25,7 +25,7 @@ extract queries and callee tables are entirely independent code paths. See
 FAMILY_ALIASES below for the exact id-family -> EXPECT-tag mapping, and read
 it before trusting a number: `hmac`, `scrypt`, `bcrypt`, and `argon2` map to
 nothing, on purpose — `algorithm-table.toml` carries no MAC or password-KDF
-family at all, so those four EXPECT tags (27 of 117 sites) can never score a
+family at all, so those four EXPECT tags (20 of 117 sites) can never score a
 hit no matter what the scanner does. That is not a scoring bug; it is the
 recall gap this corpus exists to make visible instead of erasing it from the
 denominator.
