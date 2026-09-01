@@ -5709,3 +5709,61 @@ rather than a traced one. `NCryptImportKey`/`BCryptSignHash`/`BCryptVerifySignat
 in the Microsoft examples and the Chromium test) are not covered — none names the algorithm in its
 own arguments either. `OPEN-ASK #ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT` remain open, neither
 this cycle's to resolve.
+
+## Measurement, 2026-09-01 (Track A cycle 74 — rcgen `generate_for` signature-algorithm recovery)
+
+**Not new work — recovery of a lost commit.** `03-Product/Precision-Tracker.md`'s 2026-08-28
+`#T2a`/`#T2b` entry describes a fix reading the rcgen `KeyPair::generate_for(SIG_ALG)` argument
+instead of always publishing `ecdsa-unattributed`, built from tree range `e072c3e..6ed6e1f`. That
+range was absent from `main` — `git merge-base --is-ancestor 6ed6e1f HEAD` failed, and `git fsck
+--lost-found` found it dangling — the same vault/tree divergence pattern
+[[cryptoscope-vault-tree-divergence]] already named: a cycle's commits recorded as done in the vault
+while `main` had been reset behind them. `d39a09c` ("rules: read the rcgen signature algorithm
+instead of assuming ECDSA") is the actual code commit; `6ed6e1f` is a benchmarks-only doc commit
+whose own numbers describe a corpus state (1570 findings) this repo no longer has, so only
+`d39a09c` was recovered, via `git cherry-pick -n d39a09c`, resolving one textual conflict in
+`scanner.rs` (an adjacent, unrelated `match` arm added after `d39a09c` was cut — both arms kept,
+no logic changed) and no conflict in `rust.toml` or the tests.
+
+**The bug this restores a fix for:** `rcgen::KeyPair::generate_for(SIG_ALG)` selects ECDSA (three
+curves), Ed25519, RSA (three digests) or ML-DSA (three parameter sets) from one associated
+constant argument; the un-recovered code on `main` read only the callee name and always published
+`ecdsa-unattributed`, so `generate_for(&rcgen::PKCS_ML_DSA_44)` — a site that has already migrated
+to FIPS 204 — was reported as a quantum-vulnerable ECDSA finding. `rust_arg_const_name` (new,
+`scanner.rs`) reads the constant's final path segment from `&rcgen::PKCS_ML_DSA_44`,
+`rcgen::PKCS_ML_DSA_44` and a bare imported `PKCS_ML_DSA_44` alike, exposed as `sig_alg`; eleven new
+`rust.toml` classify arms (`CRYPTO-571`–`579`, `588`, `589`) consume it, ordered before the
+pre-existing `CRYPTO-570` fallback, which still fires — now correctly labelled — when the argument
+is a variable, a field, or another form the matcher cannot read a name from. Fixture
+`tests/fixtures/rust/rcgen_keypair.rs` and `rcgen_generate_for_reads_the_signature_algorithm_argument`
+cover all eleven identified shapes plus three unresolvable ones.
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change dump `work/cng_post.json` (1853, matching commit `28e88c3`) ·
+post-change binary from this cycle's tree · dump `work/rcgen_post.json` (1853).**
+
+**Precision 97.16% → 97.17% (`bin/precision.py work/cng_post.json work/rcgen_post.json --added-tp 2
+--added-fp 0 --write-readme`).** 0 call sites added or removed; **2 locations re-classified** (this
+corpus's current state carries only 2 of the original 4 rcgen call sites the `#T2a` measurement
+found — the other two are corpus drift, `OPEN-ASK #CORPUSDRIFT`, not this change's). Both are the
+same source line in `crates-io/webpki` and `crates-io/rustls-webpki` (both vendor the same test
+helper): `crates-io/webpki/src/trust_anchor.rs:145` and `crates-io/rustls-webpki/src/trust_anchor.rs:145`,
+`KeyPair::generate_for(&rcgen::PKCS_ECDSA_P256_SHA256)` — read directly, genuinely ECDSA P-256, so
+`CRYPTO-570 ecdsa-unattributed → CRYPTO-575 ecdsa-p256` is a true-positive re-identification, not a
+new detection. `bin/precision.py` reproduces the anchored 97.16% on the pre dump before printing
+anything else; CI 95.9–98.5% unchanged, audited count 635 → 637.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets --workspace -- -D warnings` clean; `cargo test --release --workspace` all
+passing (145 `scan_test.rs` cases, one recovered). Both trust-invariant tests untouched and pass.
+`readme_rule_pack_counts` required updating 706→717 classify (total; extract unchanged at 125) —
+confirmed failing before the fix, passing after.
+
+**Not done, said out loud:** the twenty-six rcgen sites that still publish `ecdsa-unattributed`
+from an argument the matcher cannot read (a local variable, a struct field, a re-exported alias)
+remain unattributed by design — `rust_arg_const_name` returns `None` rather than guess, the same
+"do not smuggle a number through a method change" discipline the estimator-of-record ask already
+established. `6ed6e1f`'s own recorded gap — a family-agnostic marker for those twenty-six sites,
+since one is demonstrably reachable for Ed25519 as well — is not built here either; it was that
+commit's own stated future work, not part of the fix this cycle restored. `OPEN-ASK
+#ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT` remain open, neither this cycle's to resolve.

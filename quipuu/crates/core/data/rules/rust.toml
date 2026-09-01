@@ -357,17 +357,126 @@ message = "rustls::ServerConfig::builder() — TLS server configured. Algorithm 
 # rcgen — KeyPair::generate_for(SIG_ALG)
 # ============================================================================
 # rcgen is the canonical key-pair generator used by rustls-webpki / webpki
-# test utilities. Default signature algorithm is ECDSA P-256 SHA-256
-# (rcgen::PKCS_ECDSA_P256_SHA256). Without arg parsing we can't tell which
-# specific algorithm was selected, so we default to ECDSA P-256 — the
-# upstream rcgen default and the value used by both rustls-webpki and webpki.
+# test utilities. The algorithm is *entirely* the argument: one associated
+# constant selects ECDSA on three curves, Ed25519, RSA with three digests, or
+# ML-DSA at all three parameter sets. So there is no default to fall back on
+# and reading the callee alone decides nothing.
+#
+# It used to publish `ecdsa-p256` here, then `ecdsa-unattributed`, on the
+# reasoning that P-256 is rcgen's own default. Both were an identity read from
+# the library's documentation rather than from the cited line, and on
+# `generate_for(&rcgen::PKCS_ML_DSA_44)` the result was a quantum-vulnerable
+# High raised against code that had already migrated — the worst error a PQC
+# migration scanner can make. `sig_alg` carries the constant's final path
+# segment (see `rust_arg_const_name`); where the caller passed a variable
+# there is no capture and CRYPTO-570 below still says only that a key pair was
+# generated.
+#
+# The arms match on a prefix, not the whole constant, wherever rcgen offers
+# several digests over one key type: `PKCS_ECDSA_P521_SHA256/SHA384/SHA512`
+# all name P-521, and the digest is not what this finding is about.
 
+[[classify]]
+id = "CRYPTO-571"
+when.api = "^rcgen\\.KeyPair\\.generate_for$"
+when.args.sig_alg = "PKCS_ML_DSA_44"
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "rcgen::KeyPair::generate_for(PKCS_ML_DSA_44) — ML-DSA-44 (FIPS 204). Quantum-resistant; migrated signing key pair."
+
+[[classify]]
+id = "CRYPTO-572"
+when.api = "^rcgen\\.KeyPair\\.generate_for$"
+when.args.sig_alg = "PKCS_ML_DSA_65"
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "rcgen::KeyPair::generate_for(PKCS_ML_DSA_65) — ML-DSA-65 (FIPS 204). Quantum-resistant; migrated signing key pair."
+
+[[classify]]
+id = "CRYPTO-573"
+when.api = "^rcgen\\.KeyPair\\.generate_for$"
+when.args.sig_alg = "PKCS_ML_DSA_87"
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "rcgen::KeyPair::generate_for(PKCS_ML_DSA_87) — ML-DSA-87 (FIPS 204). Quantum-resistant; migrated signing key pair."
+
+[[classify]]
+id = "CRYPTO-574"
+when.api = "^rcgen\\.KeyPair\\.generate_for$"
+when.args.sig_alg = "PKCS_ED25519"
+algorithm_id = "ed25519"
+severity_hint = "auto"
+message = "rcgen::KeyPair::generate_for(PKCS_ED25519) — Ed25519 signing key pair, quantum-vulnerable. Migrate to ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-575"
+when.api = "^rcgen\\.KeyPair\\.generate_for$"
+when.args.sig_alg = { regex = "^PKCS_ECDSA_P256_" }
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "rcgen::KeyPair::generate_for(PKCS_ECDSA_P256_*) — ECDSA on P-256, quantum-vulnerable. Migrate to ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-576"
+when.api = "^rcgen\\.KeyPair\\.generate_for$"
+when.args.sig_alg = { regex = "^PKCS_ECDSA_P384_" }
+algorithm_id = "ecdsa-p384"
+severity_hint = "auto"
+message = "rcgen::KeyPair::generate_for(PKCS_ECDSA_P384_*) — ECDSA on P-384, quantum-vulnerable. Migrate to ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-577"
+when.api = "^rcgen\\.KeyPair\\.generate_for$"
+when.args.sig_alg = { regex = "^PKCS_ECDSA_P521_" }
+algorithm_id = "ecdsa-p521"
+severity_hint = "auto"
+message = "rcgen::KeyPair::generate_for(PKCS_ECDSA_P521_*) — ECDSA on P-521, quantum-vulnerable. Migrate to ML-DSA-87."
+
+# The RSA constants. rcgen rejects them from `generate_for` — RSA key pairs go
+# through `generate_rsa_for`, which is where the key size is stated — so the
+# modulus is not knowable here and the family id is what the line supports.
+# The arms exist so an RSA constant is not swept into the ECDSA fallback.
+
+[[classify]]
+id = "CRYPTO-578"
+when.api = "^rcgen\\.KeyPair\\.generate_for$"
+when.args.sig_alg = "PKCS_RSA_SHA256"
+algorithm_id = "rsa-pkcs1-sha256"
+severity_hint = "auto"
+message = "rcgen::KeyPair::generate_for(PKCS_RSA_SHA256) — RSA PKCS#1 v1.5 with SHA-256, quantum-vulnerable. The modulus is stated at generate_rsa_for, not here. Migrate to ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-579"
+when.api = "^rcgen\\.KeyPair\\.generate_for$"
+when.args.sig_alg = "PKCS_RSA_SHA384"
+algorithm_id = "rsa-pkcs1-sha384"
+severity_hint = "auto"
+message = "rcgen::KeyPair::generate_for(PKCS_RSA_SHA384) — RSA PKCS#1 v1.5 with SHA-384, quantum-vulnerable. The modulus is stated at generate_rsa_for, not here. Migrate to ML-DSA-65."
+
+[[classify]]
+id = "CRYPTO-588"
+when.api = "^rcgen\\.KeyPair\\.generate_for$"
+when.args.sig_alg = "PKCS_RSA_SHA512"
+algorithm_id = "rsa-pkcs1-sha512"
+severity_hint = "auto"
+message = "rcgen::KeyPair::generate_for(PKCS_RSA_SHA512) — RSA PKCS#1 v1.5 with SHA-512, quantum-vulnerable. The modulus is stated at generate_rsa_for, not here. Migrate to ML-DSA-87."
+
+[[classify]]
+id = "CRYPTO-589"
+when.api = "^rcgen\\.KeyPair\\.generate_for$"
+when.args.sig_alg = "PKCS_RSA_PSS_SHA256"
+algorithm_id = "rsa-pss-sha256"
+severity_hint = "auto"
+message = "rcgen::KeyPair::generate_for(PKCS_RSA_PSS_SHA256) — RSA-PSS with SHA-256, quantum-vulnerable. The modulus is stated at generate_rsa_for, not here. Migrate to ML-DSA-65."
+
+# The fallback, and the only arm that fires when the argument is a variable.
+# It must stay last: the classify layer takes the first matching rule.
 [[classify]]
 id = "CRYPTO-570"
 when.api = "^rcgen\\.KeyPair\\.generate_for$"
 algorithm_id = "ecdsa-unattributed"
 severity_hint = "auto"
-message = "rcgen::KeyPair::generate_for(SIG_ALG) — keypair generated; the algorithm is the argument, which this matcher does not capture. ECDSA is quantum-vulnerable at every curve."
+message = "rcgen::KeyPair::generate_for(SIG_ALG) — signing key pair; SIG_ALG is not a literal here, so the curve is unknown and so, strictly, is the family: rcgen also offers Ed25519, RSA and ML-DSA. Resolve SIG_ALG before reading this as ECDSA."
 
 # ============================================================================
 # pbkdf2 crate — PBKDF2 with HMAC-SHA*

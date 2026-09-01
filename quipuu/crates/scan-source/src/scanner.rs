@@ -3138,6 +3138,18 @@ fn populate_args(
                 out.insert("bits".into(), ArgValue::Int(bits));
             }
         }
+        (Language::Rust, "rcgen.KeyPair.generate_for") => {
+            // generate_for(&rcgen::PKCS_ML_DSA_44) — the whole algorithm is
+            // the argument, and it is an associated constant rather than a
+            // string. `rcgen::PKCS_*` names ECDSA, Ed25519, RSA *and* ML-DSA,
+            // so reading the callee alone says nothing: the constant is the
+            // only evidence at this line. Where it is a variable we insert no
+            // capture and the classify layer falls through to the
+            // unattributed arm, the same shape as WebCrypto above.
+            if let Some(name) = rust_arg_const_name(args_node, 0, source) {
+                out.insert("sig_alg".into(), ArgValue::Str(name));
+            }
+        }
         (
             Language::JavaScript | Language::TypeScript,
             "node:crypto.createCipheriv"
@@ -3199,6 +3211,31 @@ fn populate_args(
 
 /// Return the Nth real argument node of an `arguments` list, skipping the
 /// punctuation and comment children tree-sitter interleaves.
+/// Final path segment of a Rust constant passed at argument position `n`.
+///
+/// Accepts the three shapes a `&'static` associated constant arrives in —
+/// `&rcgen::PKCS_ML_DSA_44`, `rcgen::PKCS_ML_DSA_44` and a bare imported
+/// `PKCS_ML_DSA_44` — and returns `PKCS_ML_DSA_44` for each. Anything else
+/// (`alg`, `self.inner`, a call, a literal) yields `None`, because the
+/// constant a variable was bound to is not stated at this line and a classify
+/// arm must not be handed a name the caller did not write here.
+///
+/// `RCGEN_SIGNATURE_ALG` is an identifier and so *is* returned; it names no
+/// algorithm, matches no classify arm, and falls through exactly as a `None`
+/// would. The distinction that matters is literal-vs-computed, not
+/// recognised-vs-unrecognised.
+fn rust_arg_const_name(args: Node<'_>, n: usize, source: &[u8]) -> Option<String> {
+    let mut arg = nth_real_arg(args, n)?;
+    if arg.kind() == "reference_expression" {
+        arg = arg.child_by_field_name("value")?;
+    }
+    match arg.kind() {
+        "identifier" => Some(node_text(arg, source)),
+        "scoped_identifier" => Some(node_text(arg.child_by_field_name("name")?, source)),
+        _ => None,
+    }
+}
+
 fn nth_real_arg(args: Node<'_>, n: usize) -> Option<Node<'_>> {
     let mut cursor = args.walk();
     args.children(&mut cursor)

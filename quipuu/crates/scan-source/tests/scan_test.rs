@@ -2568,16 +2568,21 @@ fn y29_rust_openssl_rsa_generate_literal_and_variable_bits() {
 fn phase10_rust_rcgen_keypair_generate_for() {
     // BUG-C: rcgen::KeyPair::generate_for is the rustls-webpki test-utils
     // key generator; previously unrecognized.
+    //
+    // This line passes `&rcgen::PKCS_ECDSA_P256_SHA256`, so the curve is
+    // stated at the call site. It used to report the unattributed sentinel
+    // anyway, because nothing read the argument; the full argument matrix is
+    // `rcgen_generate_for_reads_the_signature_algorithm_argument`.
     let b = load_builtins().expect("builtins");
     let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
     let findings = scanner
         .scan_path(&fixtures_root().join("rust/rust_advanced.rs"))
         .expect("scan succeeds");
-    let cr570 = findings
+    let hit = findings
         .iter()
-        .find(|f| f.rule_id == "CRYPTO-570")
-        .expect("CRYPTO-570 must fire for rcgen::KeyPair::generate_for");
-    assert_eq!(cr570.algorithm_id, "ecdsa-unattributed");
+        .find(|f| f.rule_id == "CRYPTO-575")
+        .expect("CRYPTO-575 must fire for rcgen::KeyPair::generate_for(PKCS_ECDSA_P256_*)");
+    assert_eq!(hit.algorithm_id, "ecdsa-p256");
 }
 
 #[test]
@@ -2620,6 +2625,69 @@ fn phase10_rust_main_fixture_unchanged() {
     // Whatever the count was before, it must remain — assert non-empty
     // and that no new false positives appeared.
     assert!(!findings.is_empty(), "main.rs must still produce findings");
+}
+
+// ── rcgen: the signature algorithm is the argument ─────────────────────────
+//
+// `KeyPair::generate_for(SIG_ALG)` selects ECDSA, Ed25519, RSA or ML-DSA from
+// one constant, so the callee decides nothing. It used to publish an ECDSA id
+// unconditionally, which raised a quantum-vulnerable High against
+// `generate_for(&rcgen::PKCS_ML_DSA_44)` — an alarm on code that has already
+// migrated, the worst error class available to a PQC migration scanner.
+
+#[test]
+fn rcgen_generate_for_reads_the_signature_algorithm_argument() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/rcgen_keypair.rs"))
+        .expect("scan succeeds");
+
+    // (line, rule id, algorithm id). The algorithm matters as much as the hit:
+    // the ML-DSA lines are the defect, and an ECDSA id on them is the bug.
+    let expected = [
+        (16, "CRYPTO-571", "ml-dsa-44"),
+        (17, "CRYPTO-573", "ml-dsa-87"),
+        (18, "CRYPTO-572", "ml-dsa-65"),
+        (22, "CRYPTO-575", "ecdsa-p256"),
+        (23, "CRYPTO-576", "ecdsa-p384"),
+        (25, "CRYPTO-577", "ecdsa-p521"),
+        (26, "CRYPTO-574", "ed25519"),
+        (27, "CRYPTO-579", "rsa-pkcs1-sha384"),
+        // Not stated at the line: no capture, so the unattributed arm.
+        (31, "CRYPTO-570", "ecdsa-unattributed"),
+        (32, "CRYPTO-570", "ecdsa-unattributed"),
+        (33, "CRYPTO-570", "ecdsa-unattributed"),
+    ];
+
+    let mut wrong = Vec::new();
+    for (line, rule_id, algorithm_id) in expected {
+        let hit = findings.iter().find(|f| f.location.line == Some(line));
+        match hit {
+            Some(f) if f.rule_id == rule_id && f.algorithm_id == algorithm_id => {}
+            Some(f) => wrong.push(format!(
+                "line {line}: expected {rule_id} → {algorithm_id}, got {} → {}",
+                f.rule_id, f.algorithm_id
+            )),
+            None => wrong.push(format!("line {line}: no finding at all")),
+        }
+    }
+    assert!(
+        wrong.is_empty(),
+        "{}/{} rcgen call sites misclassified:\n  {}",
+        wrong.len(),
+        expected.len(),
+        wrong.join("\n  "),
+    );
+
+    // The point of the whole fixture, stated as its own assertion so a
+    // regression names the defect rather than a line number.
+    assert!(
+        !findings
+            .iter()
+            .any(|f| f.algorithm_id.starts_with("ecdsa") && f.message.contains("PKCS_ML_DSA")),
+        "a call site naming an ML-DSA parameter set is classified as ECDSA"
+    );
 }
 
 // ── Phase 9: Go algorithm-registration patterns ────────────────────────────
