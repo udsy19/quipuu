@@ -1250,6 +1250,37 @@ algorithm_id = "slh-dsa-unattributed"
 severity_hint = "auto"
 message = "circl SLH-DSA key generation via slhdsa.GenerateKey with a non-inline parameter-set argument — the value is not statically knowable at this call site. FIPS 205, quantum-resistant regardless of parameter set."
 
+# X-Wing (draft-connolly-cfrg-xwing-kem) — the X25519+ML-KEM-768 hybrid KEM
+# combiner used by HPKE, distinct from the TLS X25519MLKEM768 supported_group
+# above despite sharing its two underlying primitives. Both circl's own
+# `kem/xwing` package and Google Tink's internal `hybrid/internal/xwing`
+# package (corpus: crypto-adjacent/tink-go, called from its HPKE hybrid
+# decrypt/encrypt path — previously invisible: 0 findings on that call site)
+# export the same function names under the same local package identifier
+# "xwing", so callee text alone cannot tell them apart. No parameter-set
+# ambiguity results, since both are genuinely the X-Wing combiner; only the
+# message stays generic about which implementation, same reasoning as the
+# `crypto/mldsa`/filippo.io ambiguity noted above.
+[[extract]]
+id = "GO-079"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#match? @pkg "^xwing$")
+    field: (field_identifier) @fn (#match? @fn "^(GenerateKeyPair|GenerateKeyPairPacked|DeriveKeyPair|DeriveKeyPairPacked|Encapsulate|Decapsulate|EncapsulateTo|DecapsulateTo|PublicFromSecret)$")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "circl/kem/xwing.Op"
+description = "X-Wing hybrid KEM (X25519 + ML-KEM-768) key generation/encapsulation/decapsulation."
+
+[[classify]]
+id = "CRYPTO-1077"
+when.api = "^circl/kem/xwing\\.Op$"
+algorithm_id = "x-wing"
+severity_hint = "auto"
+message = "X-Wing hybrid KEM {fn} — X25519 + ML-KEM-768 (FIPS 203) combiner, draft-connolly-cfrg-xwing-kem. Quantum-resistant."
+
 # ============================================================================
 # Phase 7: Go string-table dispatch — `switch alg { case "RS256": ... }`
 #

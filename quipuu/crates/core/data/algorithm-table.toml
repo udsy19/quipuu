@@ -1265,6 +1265,15 @@ quantum_status = "PqcDraft"
 replacement = "x25519-mlkem768"
 notes = "IANA codepoint 25497 (0x6399) marked Deprecated. Was Chrome 116-130 default."
 
+[[algorithm]]
+id = "x-wing"
+display_name = "X-Wing (hybrid PQ/T KEM combiner)"
+family = "Hybrid-KEM"
+primitive = "combiner"
+nist_quantum_security_level = 3
+quantum_status = "PqcFinal"
+notes = "draft-connolly-cfrg-xwing-kem (ISE stream, -10, 2026-03-02) — not yet an RFC, but a distinct, already-shipping construction from the TLS x25519-mlkem768 supported_group above: X-Wing combines X25519 and ML-KEM-768 (FIPS 203, final) through its own SHA3-256 combiner for use in HPKE/KEM APIs, not a TLS handshake. Implemented by Cloudflare CIRCL (`kem/xwing`), Google Tink (Go and Java), BoringSSL, Conscrypt, BouncyCastle and pyca/cryptography's Rust backend."
+
 # ============================================================================
 # SENTINELS — generic ids used by the network scanner when we know a TLS
 # handshake happened but cannot attribute it to a specific group.

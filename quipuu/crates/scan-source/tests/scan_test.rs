@@ -266,6 +266,33 @@ fn go_stdlib_mldsa_is_classified() {
     }
 }
 
+/// X-Wing (draft-connolly-cfrg-xwing-kem) — the X25519+ML-KEM-768 hybrid KEM
+/// combiner used by HPKE, reached through circl's own `kem/xwing` package;
+/// Google Tink's internal `hybrid/internal/xwing` package exports the same
+/// function names under the same local identifier and is caught by the same
+/// rule, verified separately against the vendored tink-go corpus clone.
+#[test]
+fn go_circl_xwing_is_classified() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let path = fixtures_root().join("go/circl_xwing.go");
+    let findings = scanner.scan_path(&path).expect("scan succeeds");
+
+    for (rule, algorithm_id, line) in [
+        ("CRYPTO-1077", "x-wing", 15),
+        ("CRYPTO-1077", "x-wing", 19),
+        ("CRYPTO-1077", "x-wing", 23),
+    ] {
+        assert!(
+            findings.iter().any(|f| f.rule_id == rule
+                && f.algorithm_id == algorithm_id
+                && f.location.line == Some(line)),
+            "expected {rule}/{algorithm_id} at line {line} in circl_xwing.go, got {:#?}",
+            findings,
+        );
+    }
+}
+
 /// liboqs-go's `oqs.KeyEncapsulation{}` / `oqs.Signature{}` construction —
 /// backlog `#Y77`. The algorithm name arrives on a later `.Init(name, nil)`
 /// call this extractor does not trace, so both sites degrade to the generic

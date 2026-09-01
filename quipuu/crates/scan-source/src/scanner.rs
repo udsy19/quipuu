@@ -1465,6 +1465,25 @@ const GO_CALLEE_APIS: &[(&str, &str)] = &[
     ("mldsa.MLDSA44", "crypto/mldsa.ParamSet"),
     ("mldsa.MLDSA65", "crypto/mldsa.ParamSet"),
     ("mldsa.MLDSA87", "crypto/mldsa.ParamSet"),
+    // X-Wing (draft-connolly-cfrg-xwing-kem), the X25519+ML-KEM-768 hybrid
+    // KEM combiner used by HPKE. Both circl's own `kem/xwing` package and
+    // Google Tink's internal `hybrid/internal/xwing` package (used by
+    // tink-go's HPKE hybrid decrypt/encrypt path, corpus:
+    // crypto-adjacent/tink-go) export the same function names under the
+    // same local package identifier "xwing" — callee text alone cannot
+    // tell them apart, but both are genuinely the X-Wing combiner, so the
+    // algorithm_id is correct either way; only the message stays generic
+    // about which implementation, same reasoning as the mldsa/filippo.io
+    // ambiguity noted above.
+    ("xwing.GenerateKeyPair", "circl/kem/xwing.Op"),
+    ("xwing.GenerateKeyPairPacked", "circl/kem/xwing.Op"),
+    ("xwing.DeriveKeyPair", "circl/kem/xwing.Op"),
+    ("xwing.DeriveKeyPairPacked", "circl/kem/xwing.Op"),
+    ("xwing.Encapsulate", "circl/kem/xwing.Op"),
+    ("xwing.Decapsulate", "circl/kem/xwing.Op"),
+    ("xwing.EncapsulateTo", "circl/kem/xwing.Op"),
+    ("xwing.DecapsulateTo", "circl/kem/xwing.Op"),
+    ("xwing.PublicFromSecret", "circl/kem/xwing.Op"),
 ];
 
 /// Exact-match lookup in one of the callee → api tables.
@@ -1590,7 +1609,8 @@ fn match_go_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> 
         || api == "crypto/ed25519.Op"
         || api == "crypto/dsa.Op"
         || api == "crypto/mlkem.KeyOp"
-        || api == "crypto/mldsa.ParamSet")
+        || api == "crypto/mldsa.ParamSet"
+        || api == "circl/kem/xwing.Op")
         && let Some(fn_name) = callee.split('.').nth(1)
     {
         args.insert("fn".into(), ArgValue::Str(fn_name.into()));
