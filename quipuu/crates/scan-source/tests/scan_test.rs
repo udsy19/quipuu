@@ -279,9 +279,9 @@ fn go_circl_xwing_is_classified() {
     let findings = scanner.scan_path(&path).expect("scan succeeds");
 
     for (rule, algorithm_id, line) in [
-        ("CRYPTO-1077", "x-wing", 15),
-        ("CRYPTO-1077", "x-wing", 19),
-        ("CRYPTO-1077", "x-wing", 23),
+        ("CRYPTO-1077", "x-wing", 16),
+        ("CRYPTO-1077", "x-wing", 20),
+        ("CRYPTO-1077", "x-wing", 24),
     ] {
         assert!(
             findings.iter().any(|f| f.rule_id == rule
