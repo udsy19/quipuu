@@ -772,6 +772,14 @@ fn walk(
     {
         out.push(m);
     }
+    // Go `KeyExchanges: []string{ssh.KeyExchangeMLKEM768X25519, …}` — SSH's
+    // counterpart to CurvePreferences (`#Y88`, RFC 10042).
+    if language == Language::Go
+        && kind == "keyed_element"
+        && let Some(ms) = match_go_ssh_key_exchanges(node, source)
+    {
+        out.extend(ms);
+    }
     // Go `oqs.KeyEncapsulation{}` / `oqs.Signature{}` — liboqs-go's
     // zero-value-then-`.Init(name, ...)` construction, backlog `#Y77`.
     if language == Language::Go
@@ -1475,6 +1483,8 @@ const STRUCTURAL_APIS: &[&str] = &[
     "crypto/tls.Config.CurvePreferences",
     // match_go_tls_min_version
     "crypto/tls.Config.MinVersion",
+    // match_go_ssh_key_exchanges
+    "golang.org/x/crypto/ssh.Config.KeyExchanges",
     // match_java_set_named_groups
     "javax.net.ssl.SSLParameters.setNamedGroups",
     // match_bc_named_groups
@@ -2077,6 +2087,110 @@ fn match_go_curve_preferences(keyed: Node<'_>, source: &[u8]) -> Option<Vec<RawM
             symbol: format!("tls.{}", curve),
             snippet: node_text(element, source),
             site_context: quipuu_core::SiteContext::Call,
+        });
+    }
+
+    if results.is_empty() {
+        None
+    } else {
+        Some(results)
+    }
+}
+
+/// Go constant name → wire identifier string, for the
+/// `golang.org/x/crypto/ssh` `KeyExchange*` constants this table classifies.
+/// `ssh.Config.KeyExchanges` is `[]string`, so a caller may write either the
+/// package constant (`ssh.KeyExchangeMLKEM768X25519`) or the raw wire string
+/// (`"mlkem768x25519-sha256"`) — both must resolve to the same value before
+/// classify sees them, or the two spellings of the same group would need two
+/// sets of arms.
+const GO_SSH_KEX_CONST_NAMES: &[(&str, &str)] = &[
+    ("KeyExchangeMLKEM768X25519", "mlkem768x25519-sha256"),
+    ("KeyExchangeCurve25519", "curve25519-sha256"),
+    ("KeyExchangeECDHP256", "ecdh-sha2-nistp256"),
+    ("KeyExchangeECDHP384", "ecdh-sha2-nistp384"),
+    ("KeyExchangeECDHP521", "ecdh-sha2-nistp521"),
+];
+
+/// Match Go `KeyExchanges: []string{ssh.KeyExchangeMLKEM768X25519, "mlkem768nistp256-sha256", ...}`
+/// inside a `golang.org/x/crypto/ssh` `Config` literal (`#Y88`, RFC 10042).
+///
+/// Same `keyed_element` shape [`match_go_curve_preferences`] matches, but the
+/// field is a plain `[]string` rather than a typed `[]tls.CurveID`, so the
+/// slice-element-type guard checks a bare `type_identifier` "string" instead
+/// of a `qualified_type`, and each element may be a string literal or an
+/// `ssh.`-qualified selector — [`GO_SSH_KEX_CONST_NAMES`] normalises the
+/// latter to the wire string the former already is.
+fn match_go_ssh_key_exchanges(keyed: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch>> {
+    let key_le = keyed.named_child(0)?;
+    let value_le = keyed.named_child(1)?;
+
+    let key_inner = key_le.named_child(0)?;
+    if key_inner.kind() != "identifier" || node_text(key_inner, source) != "KeyExchanges" {
+        return None;
+    }
+
+    let composite = value_le.named_child(0)?;
+    if composite.kind() != "composite_literal" {
+        return None;
+    }
+
+    let slice_type = composite.child_by_field_name("type")?;
+    if slice_type.kind() != "slice_type" {
+        return None;
+    }
+    let element_type = slice_type.named_child(0)?;
+    if element_type.kind() != "type_identifier" || node_text(element_type, source) != "string" {
+        return None;
+    }
+
+    let body = composite.child_by_field_name("body")?;
+    if body.kind() != "literal_value" {
+        return None;
+    }
+
+    let mut results = Vec::new();
+    let mut cursor = body.walk();
+    for element in body.children(&mut cursor) {
+        if element.kind() != "literal_element" {
+            continue;
+        }
+        let Some(inner) = element.named_child(0) else {
+            continue;
+        };
+        let kex = match inner.kind() {
+            "interpreted_string_literal" | "raw_string_literal" => node_text(inner, source)
+                .trim_matches(|c| c == '"' || c == '`')
+                .to_string(),
+            "selector_expression" => {
+                let Some(operand) = inner.child_by_field_name("operand") else {
+                    continue;
+                };
+                let Some(field) = inner.child_by_field_name("field") else {
+                    continue;
+                };
+                if operand.kind() != "identifier" || node_text(operand, source) != "ssh" {
+                    continue;
+                }
+                let const_name = node_text(field, source);
+                let Some(wire) = lookup(GO_SSH_KEX_CONST_NAMES, &const_name) else {
+                    continue;
+                };
+                wire.to_string()
+            }
+            _ => continue,
+        };
+        let mut args = HashMap::new();
+        args.insert("kex".into(), ArgValue::Str(kex.clone()));
+        let start = element.start_position();
+        results.push(RawMatch {
+            api: "golang.org/x/crypto/ssh.Config.KeyExchanges".into(),
+            args,
+            line: (start.row + 1) as u32,
+            offset: element.start_byte() as u32,
+            symbol: kex,
+            snippet: node_text(element, source),
+            site_context: quipuu_core::SiteContext::StructLiteral,
         });
     }
 

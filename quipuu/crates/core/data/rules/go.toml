@@ -469,6 +469,85 @@ algorithm_id = "x25519-kyber768-draft00"
 severity_hint = "auto"
 message = "TLS group X25519Kyber768Draft00 — pre-standard Kyber, obsoleted by draft-ietf-tls-ecdhe-mlkem. Replace with tls.X25519MLKEM768."
 
+# golang.org/x/crypto/ssh Config.KeyExchanges — SSH's counterpart to
+# CurvePreferences above (#Y88). RFC 10042 (Informational, Aug 2026)
+# registers three hybrid ML-KEM SSH KEX identifiers; OpenSSH has shipped
+# mlkem768x25519-sha256 as its default KEX since 10.0 (Apr 2025) and
+# golang.org/x/crypto/ssh exposes it as ssh.KeyExchangeMLKEM768X25519 since
+# Go 1.24. Unlike tls.CurveID, KeyExchanges is a plain []string, so the
+# extractor accepts either the package constant or the raw wire identifier
+# string and normalises both to the same algorithm_id.
+
+[[extract]]
+id = "GO-078"
+language = "go"
+query = """
+(keyed_element
+  (literal_element (identifier) @key (#eq? @key "KeyExchanges"))
+  (literal_element (composite_literal
+    type: (slice_type element: (type_identifier) @elem_t (#eq? @elem_t "string"))
+    body: (literal_value (literal_element _) @kex))))
+"""
+captures = { key = "ident", elem_t = "ident", kex = "literal_string" }
+api = "golang.org/x/crypto/ssh.Config.KeyExchanges"
+description = "SSH key-exchange algorithm preference list (ssh.Config.KeyExchanges)."
+
+[[classify]]
+id = "CRYPTO-1056"
+when.api = "^golang.org/x/crypto/ssh\\.Config\\.KeyExchanges$"
+when.args.kex = "mlkem768x25519-sha256"
+algorithm_id = "x25519-mlkem768"
+severity_hint = "auto"
+message = "SSH KEX mlkem768x25519-sha256 — hybrid X25519 + ML-KEM-768 (RFC 10042, FIPS 203). Migrated key-establishment config; OpenSSH's default KEX since 10.0."
+
+[[classify]]
+id = "CRYPTO-1057"
+when.api = "^golang.org/x/crypto/ssh\\.Config\\.KeyExchanges$"
+when.args.kex = "mlkem768nistp256-sha256"
+algorithm_id = "secp256r1-mlkem768"
+severity_hint = "auto"
+message = "SSH KEX mlkem768nistp256-sha256 — hybrid secp256r1 + ML-KEM-768 (RFC 10042, FIPS 203). Migrated key-establishment config."
+
+[[classify]]
+id = "CRYPTO-1058"
+when.api = "^golang.org/x/crypto/ssh\\.Config\\.KeyExchanges$"
+when.args.kex = "mlkem1024nistp384-sha384"
+algorithm_id = "secp384r1-mlkem1024"
+severity_hint = "auto"
+message = "SSH KEX mlkem1024nistp384-sha384 — hybrid secp384r1 + ML-KEM-1024 (RFC 10042, FIPS 203). Meets the CNSA 2.0 ML-KEM parameter set."
+
+[[classify]]
+id = "CRYPTO-1059"
+when.api = "^golang.org/x/crypto/ssh\\.Config\\.KeyExchanges$"
+when.args.kex = "curve25519-sha256"
+algorithm_id = "x25519"
+severity_hint = "auto"
+message = "SSH KEX curve25519-sha256 — classical ECDH, vulnerable to Shor. Add mlkem768x25519-sha256 first in the list (Go 1.24+)."
+
+[[classify]]
+id = "CRYPTO-1060"
+when.api = "^golang.org/x/crypto/ssh\\.Config\\.KeyExchanges$"
+when.args.kex = "ecdh-sha2-nistp256"
+algorithm_id = "ecdh-p256"
+severity_hint = "auto"
+message = "SSH KEX ecdh-sha2-nistp256 — classical ECDH, quantum-vulnerable. Add mlkem768x25519-sha256 / mlkem768nistp256-sha256 first."
+
+[[classify]]
+id = "CRYPTO-1061"
+when.api = "^golang.org/x/crypto/ssh\\.Config\\.KeyExchanges$"
+when.args.kex = "ecdh-sha2-nistp384"
+algorithm_id = "ecdh-p384"
+severity_hint = "auto"
+message = "SSH KEX ecdh-sha2-nistp384 — classical ECDH, quantum-vulnerable. Add mlkem1024nistp384-sha384 first."
+
+[[classify]]
+id = "CRYPTO-1062"
+when.api = "^golang.org/x/crypto/ssh\\.Config\\.KeyExchanges$"
+when.args.kex = "ecdh-sha2-nistp521"
+algorithm_id = "ecdh-p521"
+severity_hint = "auto"
+message = "SSH KEX ecdh-sha2-nistp521 — classical ECDH, quantum-vulnerable. Migrate to an ML-KEM hybrid SSH KEX group."
+
 # crypto/ecdh — direct ECDH key-agreement usage (independent of TLS).
 
 [[extract]]

@@ -5872,3 +5872,88 @@ turned out to already be closed (`CRYPTO-044`–`CRYPTO-047`, shipped alongside 
 `pkg.go.dev/crypto/tls#CurveID` that Go 1.27 exports no pure, non-hybrid `MLKEM768` constant (only
 `MLKEM1024`), so there was nothing left to build there; `#V5` is now fully closed. `OPEN-ASK
 #ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT` remain open, neither this cycle's to resolve.
+
+## Measurement, 2026-09-01 (Track A cycle 78 — `golang.org/x/crypto/ssh` `Config.KeyExchanges`, `#Y88`, RFC 10042)
+
+Read the backlog and Precision-Tracker for the highest-value unfinished item. `#Y88` (filed by the
+2026-09-01 cycle-31 synthesis) was the one fully-specified, ready-to-build coverage item on the
+list: RFC 10042 (Informational, Aug 2026) registers three hybrid ML-KEM SSH key-exchange
+identifiers, OpenSSH has shipped `mlkem768x25519-sha256` as its default KEX since 10.0 (Apr 2025),
+and `golang.org/x/crypto/ssh` exposes it as `ssh.KeyExchangeMLKEM768X25519` since Go 1.24 — verified
+directly against a vendored copy of the package in the corpus clones
+(`work/corpus-clones/go-modules/kubernetes/vendor/golang.org/x/crypto/ssh/common.go`), not assumed
+from the filing.
+
+**What shipped.** `ssh.Config.KeyExchanges` is a plain `[]string` (unlike `tls.Config
+.CurvePreferences`'s typed `[]tls.CurveID`), so a caller can name a group either via the package
+constant or the raw wire-identifier string — both forms are matched. One new structural matcher,
+`match_go_ssh_key_exchanges` (`scanner.rs`), mirrors `match_go_curve_preferences`'s `keyed_element`
+shape with a `type_identifier "string"` slice-element guard in place of the qualified-type one, and
+normalises the constant spelling to the wire string via a small lookup table before handing it to
+classify. `go.toml` gained one `[[extract]]` (`GO-078`) and seven `[[classify]]` arms
+(`CRYPTO-1056`–`1062`): three for the RFC 10042 hybrid identifiers and four for the classical KEX
+groups they replace, mirroring `CurvePreferences`'s classical-plus-migrated shape exactly. **No new
+algorithm-table rows** — the three hybrid identifiers and four classical groups reuse the exact ids
+`crypto/tls.Config.CurvePreferences` and `javax.net.ssl.SSLParameters.setNamedGroups` already
+created for the identical underlying primitives (`x25519-mlkem768`, `secp256r1-mlkem768`,
+`secp384r1-mlkem1024`, `x25519`, `ecdh-p256`, `ecdh-p384`, `ecdh-p521`); the filing's own text
+suggested new rows, but `java.toml`'s `setNamedGroups` arms already establish that this table's ids
+name a mechanism, not a protocol, so a fourth protocol reusing them is the no-bloat move, not a
+scope cut. `sntrup761x25519-sha512` (RFC 9941) — the filing's own lower-ranked, library-support-
+unverified second row — is not built this cycle.
+
+**Verified against a new fixture, not the corpus.** `tests/fixtures/go/ssh_kex.go`: one
+`ssh.ServerConfig` with two hybrid identifiers in constant form and one in string-literal form, one
+`ssh.ClientConfig` with all four classical groups in constant form. New test
+`go_ssh_key_exchanges_are_classified` (`scan_test.rs`) pins all seven rules to their exact fixture
+line. `STRUCTURAL_APIS` gained `golang.org/x/crypto/ssh.Config.KeyExchanges`, confirmed required by
+`every_classify_rule_targets_an_api_the_extractor_can_emit` (fails without it).
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change binary built from commit `028d7c4` in a worktree (via `git
+stash`) · post-change binary from this cycle's tree · dumps `work/y88_pre.json` ↔
+`work/y88_post.json`, both 1911 findings, byte-identical.**
+
+**0 findings added, 0 removed, 0 reclassified — a falsification, not a re-derivation.** No corpus B
+project, including the `crypto-adjacent:golang.org/x/crypto` clone itself and the `moby`/`minio`
+projects that do call `ssh.Config{KeyExchanges: ...}`, writes the list as a literal — `minio/cmd/
+sftp-server.go:479` passes a variable (`allowKexAlgos`), which is out of scope by the same
+non-literal-argument convention every other unattributed-fallback rule in this codebase already
+follows, and no rule was written to degrade it, matching the filing's own "near-zero" expectation.
+
+**Precision.** `bin/precision.py work/y88_pre.json work/y88_post.json --write-readme` →
+`PRECISION: 97.17%`, unchanged between pre and post (both dumps identical, so the estimator computes
+the same figure for each — proof of "held," not a new measurement). **The published README figure
+this replaces was 97.37% (693 audited), not 97.17% (635 audited) — a 0.20pp drop this change did not
+cause.** `state/estimator.json`'s persisted audit constants (`a_tp=262 a_fp=9 b_tp=355 b_fp=9`,
+summing to exactly 635) predate cycle 77's `#V5` (`028d7c4`, this cycle's own pre-change commit),
+which reported 693 audited via `--added-tp 58` but — as `OPEN-ASK #ESTIMATORPERSIST` has named since
+before `#V5` ran — the tool has no mechanism to persist an `--added-tp` result back into
+`estimator.json` for the next cycle to build on. This cycle neither introduces nor resolves that
+gap; it is the same 635-constant `#V5`'s own entry names as its *pre-change* figure, surfacing again
+because `estimator.json` was never advanced. Fixed the one now-inconsistent copy of the audited
+composition in `README.md` (see next paragraph) but left `state/estimator.json` and `OPEN-ASK
+#ESTIMATORPERSIST` alone — moving the persisted anchor is the human adjudicator's call, not a
+coverage cycle's.
+
+**README, corrected in full, not just the headline.** `--write-readme` updated the headline (97.37%
+→ 97.17%) and comparison-table cells; per rule 4, grepped the file for the old `693`/`675 TP` figures
+it left behind and found one more copy at the "What the denominator excludes" paragraph, corrected
+to `635`/`617 TP` with a one-line pointer to this entry rather than silently diverging from the
+headline three paragraphs up. The `#V5`-specific narrative two paragraphs above it (which describes
+*that* cycle's own 58-finding delta as "this cycle's own change") is left as historical prose, not
+rewritten, since re-narrating a different cycle's own measurement is out of this change's scope.
+`readme_rule_pack_counts` required updating 127→128 extract / 721→728 classify (total) and Go's
+98→105 (per-language) — confirmed failing before the fix, passing after.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets --workspace -- -D warnings` clean; `cargo test --release --workspace` all
+passing (147 `scan_test.rs` cases, one new). Both trust-invariant tests untouched and pass.
+
+**Not done, said out loud:** `sntrup761x25519-sha512` (RFC 9941) is unbuilt, per the filing's own
+lower ranking. `OPEN-ASK #ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT` remain open, neither this
+cycle's to resolve — `#ESTIMATORPERSIST` in particular is now demonstrated a second time, on a
+completely unrelated change, which is evidence for whoever picks it up that it recurs by default
+rather than needing an unusual trigger.
+
+PRECISION: 97.17%

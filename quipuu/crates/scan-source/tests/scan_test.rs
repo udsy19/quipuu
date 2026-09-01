@@ -170,6 +170,46 @@ fn go_tls_hybrid_groups_are_classified() {
     );
 }
 
+/// `golang.org/x/crypto/ssh` `Config.KeyExchanges` — SSH's counterpart to
+/// `CurvePreferences`, backlog `#Y88` (RFC 10042). Covers both spellings a
+/// caller can use: the package constant and the raw wire identifier string.
+#[test]
+fn go_ssh_key_exchanges_are_classified() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let path = fixtures_root().join("go/ssh_kex.go");
+    let findings = scanner.scan_path(&path).expect("scan succeeds");
+
+    // migratedServer: one constant-form hybrid, two string-literal-form hybrids.
+    for (rule, algorithm_id, line) in [
+        ("CRYPTO-1056", "x25519-mlkem768", 17),
+        ("CRYPTO-1057", "secp256r1-mlkem768", 18),
+        ("CRYPTO-1058", "secp384r1-mlkem1024", 19),
+    ] {
+        let f = findings
+            .iter()
+            .find(|f| f.rule_id == rule)
+            .unwrap_or_else(|| panic!("{rule} must fire on the fixture"));
+        assert_eq!(f.algorithm_id, algorithm_id, "{rule} algorithm_id");
+        assert_eq!(f.location.line, Some(line), "{rule} line");
+    }
+
+    // classicalOnlyClient: four classical KEX groups, all constant-form.
+    for (rule, algorithm_id) in [
+        ("CRYPTO-1059", "x25519"),
+        ("CRYPTO-1060", "ecdh-p256"),
+        ("CRYPTO-1061", "ecdh-p384"),
+        ("CRYPTO-1062", "ecdh-p521"),
+    ] {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule && f.algorithm_id == algorithm_id),
+            "{rule} must fire for {algorithm_id} in classicalOnlyClient",
+        );
+    }
+}
+
 /// Go's own `crypto/mlkem` (stdlib, Go 1.24) — backlog `#Y30` part (a).
 /// `circl`'s third-party mlkem768/1024 packages already fire (`CRYPTO-076..078`
 /// above); before this, the zero-dependency stdlib package fired on nothing.
