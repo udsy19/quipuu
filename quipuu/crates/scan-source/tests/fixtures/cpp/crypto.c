@@ -276,3 +276,37 @@ void openssl_md_fetch(OSSL_LIB_CTX *libctx) {
     EVP_MD *sha3_512_md = EVP_MD_fetch(libctx, "SHA3-512", NULL);
     EVP_MD *mldsamu_md = EVP_MD_fetch(libctx, "ML-DSA-MU", NULL);
 }
+
+/* CPP-070 / CRYPTO-1050 — Windows CNG BCryptGenerateKeyPair against the
+   ML-KEM pseudo-handle, Microsoft's own cng-mlkem-examples idiom. */
+void cng_mlkem_generate(void) {
+    BCRYPT_KEY_HANDLE hKeyPair;
+    BCryptGenerateKeyPair(BCRYPT_MLKEM_ALG_HANDLE, &hKeyPair, 0, 0);
+}
+
+/* CPP-071 / CRYPTO-1050 — the server-side ML-KEM import half of the same
+   Microsoft example. */
+void cng_mlkem_import(unsigned char *blob, unsigned long cbBlob) {
+    BCRYPT_KEY_HANDLE hKeyPair;
+    BCryptImportKeyPair(BCRYPT_MLKEM_ALG_HANDLE, NULL,
+                         BCRYPT_MLKEM_ENCAPSULATION_BLOB, &hKeyPair, blob,
+                         cbBlob, 0);
+}
+
+/* CPP-072 / CRYPTO-1051 — Windows CNG BCryptOpenAlgorithmProvider against
+   ML-DSA, Microsoft's own cng-mldsa-examples idiom; must not fire on a
+   classical algorithm through the same entry point. */
+void cng_mldsa_open_provider(void) {
+    BCRYPT_ALG_HANDLE hAlg;
+    BCryptOpenAlgorithmProvider(&hAlg, BCRYPT_MLDSA_ALGORITHM,
+                                 MS_PRIMITIVE_PROVIDER, NULL);
+    BCRYPT_ALG_HANDLE hRsaAlg;
+    BCryptOpenAlgorithmProvider(&hRsaAlg, BCRYPT_RSA_ALGORITHM, NULL, 0);
+}
+
+/* CPP-073 / CRYPTO-1051 — Windows CNG NCryptIsAlgSupported against ML-DSA, a
+   real call site independently found in Chromium's
+   net/ssl/ssl_platform_key_win_unittest.cc. */
+void cng_mldsa_is_supported(NCRYPT_PROV_HANDLE prov) {
+    NCryptIsAlgSupported(prov, BCRYPT_MLDSA_ALGORITHM, NCRYPT_SILENT_FLAG);
+}

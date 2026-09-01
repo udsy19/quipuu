@@ -5642,3 +5642,70 @@ first. Checked rather than assumed whether this explains any prior `OPEN-ASK #CO
 and this cycle does not generalize its own finding beyond the one scratch-script run it caught it in.
 `OPEN-ASK #ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT` remain open, neither this cycle's to
 resolve.
+
+## Measurement, 2026-09-01 (Track A cycle 73 — Windows CNG native layer, `BCryptGenerateKeyPair`/
+## `BCryptOpenAlgorithmProvider`/`BCryptImportKeyPair`/`NCryptIsAlgSupported` against ML-KEM/ML-DSA)
+
+Tuple, per `#S12`: **corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change dump `work/y77_post_clean.json` (1853, matching commit
+`52a567f`, unchanged by the intervening `1738dc3` docs-only test commit) · post-change binary from
+this cycle's tree · dump `work/cng_post.json` (1853).**
+
+**Picked as the item the Backlog's own blocking condition named:** every other remaining item was
+`needs-human-approval` or an `OPEN-ASK` this track lacks authority to resolve. The Win32 CNG native
+layer was filed "blocked, not ready-to-build" pending exactly one condition — "a corpus grep
+broader than the single vendored `symcrypt` repo... returning at least one literal call site" —
+and that condition is now met. A GitHub code search for `BCRYPT_MLDSA_ALGORITHM` (61 results, read
+in full, not sampled) surfaced a real, independent, non-Microsoft call site: Chromium's own
+`net/ssl/ssl_platform_key_win_unittest.cc` calls `NCryptIsAlgSupported(prov.get(),
+BCRYPT_MLDSA_ALGORITHM, NCRYPT_SILENT_FLAG)` guarding its ML-DSA client-certificate test path
+(`status = NCryptIsAlgSupported(...); if (status == NTE_NOT_SUPPORTED) GTEST_SKIP()...`), fetched
+and read directly from `raw.githubusercontent.com`, not taken on the search snippet alone. A
+parallel search for `BCRYPT_MLKEM_ALG_HANDLE` (25 results, also read in full) found none beyond
+Microsoft's own docs/generated-bindings repos — confirming, not merely repeating, the original
+symcrypt-only negative for the KEM side specifically.
+
+**What shipped:** four `C_CALLEE_APIS` entries in `scanner.rs` (`BCryptGenerateKeyPair`,
+`BCryptImportKeyPair`, `BCryptOpenAlgorithmProvider`, `NCryptIsAlgSupported`) plus matching
+`cpp.toml` extract/classify pairs (`CPP-070`..`073`, `CRYPTO-1050`/`1051`). Scoping decision, stated
+so a future cycle doesn't re-derive it: `BCryptGenerateKeyPair`/`BCryptImportKeyPair` classify only
+when their algorithm-handle argument is literally `BCRYPT_MLKEM_ALG_HANDLE` (Microsoft's own
+cng-mlkem-examples idiom — the ML-KEM pseudo-handle is passed directly, no separate
+`BCryptOpenAlgorithmProvider` step); `BCryptOpenAlgorithmProvider`/`NCryptIsAlgSupported` classify
+only when their algorithm-id argument is literally `BCRYPT_MLDSA_ALGORITHM` (cng-mldsa-examples,
+and the Chromium call site). None of these four functions is PQC-specific — all four are the
+general-purpose CNG entry points used constantly for classical algorithms — so every other
+algorithm identifier passed through them is extracted but produces no classify match, the same
+"extract broadly, classify narrowly" shape `EVP_PKEY_CTX_new_from_name`'s RSA/EC arms already use.
+No `BCryptSetProperty(BCRYPT_PARAMETER_SET_NAME, ...)` trace to the specific parameter set — the
+same "no argument inspection" scoping `#Y87`'s `MLKemCng`/`MLDsaCng` rule already used — so both
+degrade to the `ml-kem-unattributed`/`ml-dsa-unattributed` sentinel. Verified against a new fixture
+(`tests/fixtures/cpp/crypto.c`, four new functions transcribing Microsoft's own code samples and the
+Chromium call shape) and a new test (`scans_c_windows_cng_mlkem_mldsa`), which also asserts the
+fixture's classical `BCryptOpenAlgorithmProvider(&hRsaAlg, BCRYPT_RSA_ALGORITHM, ...)` sibling call
+produces no finding.
+
+**Corpus B effect: 0 findings, either side — the expected zero, not a surprise.** None of the 150
+corpus projects, including the vendored `symcrypt`/`symcrypt-openssl` clones, call any of these four
+functions with either PQC constant; Chromium and `dotnet/runtime` (the other real usage this cycle's
+search surfaced, via C# CNG interop already covered by `#Y87`'s `MLKemCng`/`MLDsaCng` rule) are not
+corpus B projects. `bin/precision.py work/y77_post_clean.json work/cng_post.json --write-readme`
+reproduces **97.16%** (95% CI 95.9–98.5%) with 0 added, 0 removed — a falsification, not a
+re-derivation, matching the same zero-corpus-effect shape `#Y77`/`#Y87` both had.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --check` clean; `cargo clippy
+--release --all-targets --workspace -- -D warnings` clean; `cargo test --workspace` all passing
+(144 `scan_test.rs` cases, one new). Both trust-invariant tests untouched and pass.
+`readme_rule_pack_counts` required updating 121→125 extract / 704→706 classify (total) and C/C++'s
+124→126 (per-language) in the same diff — confirmed failing before the fix, passing after.
+
+**Not done, said out loud:** no `BCryptSetProperty` trace to the parameter set, per the scoping
+decision above — a future cycle wanting 512/768/1024 or 44/65/87 attribution needs the two-call
+trace the original filing described, which this cycle did not build. `BCryptEncapsulate`/
+`BCryptDecapsulate` (named in the original filing alongside `BCryptGenerateKeyPair`) are not
+covered — neither takes an algorithm argument of its own (the algorithm lives on the key handle
+built earlier), the same shape `EVP_PKEY_encapsulate`/`decapsulate` already left as a stated gap
+rather than a traced one. `NCryptImportKey`/`BCryptSignHash`/`BCryptVerifySignature` (also present
+in the Microsoft examples and the Chromium test) are not covered — none names the algorithm in its
+own arguments either. `OPEN-ASK #ESTIMATORPERSIST` and `OPEN-ASK #CORPUSDRIFT` remain open, neither
+this cycle's to resolve.

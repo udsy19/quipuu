@@ -1454,3 +1454,89 @@ when.args.alg = { regex = "(?i)^ML-DSA-MU$" }
 algorithm_id = "ml-dsa-unattributed"
 severity_hint = "auto"
 message = "OpenSSL EVP_MD_fetch(\"{alg}\") — FIPS 204 ML-DSA external-mu message representative, quantum-resistant, but the parameter set is carried by the signing/verification context this call site does not expose."
+
+# ============================================================================
+# Windows CNG — ML-KEM's pseudo-handle (BCRYPT_MLKEM_ALG_HANDLE) passed
+# straight into BCryptGenerateKeyPair/BCryptImportKeyPair, no separate
+# BCryptOpenAlgorithmProvider step (Microsoft's own cng-mlkem-examples).
+# ML-DSA instead names itself via BCRYPT_MLDSA_ALGORITHM, passed to
+# BCryptOpenAlgorithmProvider (cng-mldsa-examples) or, per a real call site
+# independently found in Chromium's net/ssl/ssl_platform_key_win_unittest.cc,
+# to NCryptIsAlgSupported. None of these four functions is PQC-specific —
+# all four are used constantly for classical algorithms too — so only the
+# two named identifiers classify; every other algorithm passed through them
+# is extracted but produces no finding, same pattern as
+# EVP_PKEY_CTX_new_from_name's RSA/EC arms above. No BCryptSetProperty
+# (BCRYPT_PARAMETER_SET_NAME, ...) trace to the parameter set — the same
+# "no argument inspection" scoping #Y87's MLKemCng/MLDsaCng rule used.
+# ============================================================================
+
+[[extract]]
+id = "CPP-070"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "BCryptGenerateKeyPair")
+  arguments: (argument_list
+    (identifier) @alg))
+"""
+captures = { fn = "ident", alg = "ident" }
+api = "cng.BCryptGenerateKeyPair"
+description = "Windows CNG BCryptGenerateKeyPair(hAlgorithm, ...) — hAlgorithm is either a provider handle from BCryptOpenAlgorithmProvider or a pseudo-handle macro naming the algorithm directly."
+
+[[extract]]
+id = "CPP-071"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "BCryptImportKeyPair")
+  arguments: (argument_list
+    (identifier) @alg))
+"""
+captures = { fn = "ident", alg = "ident" }
+api = "cng.BCryptImportKeyPair"
+description = "Windows CNG BCryptImportKeyPair(hAlgorithm, ...) — same hAlgorithm shape as BCryptGenerateKeyPair."
+
+[[extract]]
+id = "CPP-072"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "BCryptOpenAlgorithmProvider")
+  arguments: (argument_list
+    (_)
+    (identifier) @alg))
+"""
+captures = { fn = "ident", alg = "ident" }
+api = "cng.BCryptOpenAlgorithmProvider"
+description = "Windows CNG BCryptOpenAlgorithmProvider(&hAlg, pszAlgId, ...) — pszAlgId names the algorithm directly."
+
+[[extract]]
+id = "CPP-073"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "NCryptIsAlgSupported")
+  arguments: (argument_list
+    (_)
+    (identifier) @alg))
+"""
+captures = { fn = "ident", alg = "ident" }
+api = "cng.NCryptIsAlgSupported"
+description = "Windows CNG NCryptIsAlgSupported(hProvider, pszAlgId, ...) — pszAlgId names the algorithm directly. Real call site: Chromium's net/ssl/ssl_platform_key_win_unittest.cc."
+
+[[classify]]
+id = "CRYPTO-1050"
+when.api = "^cng\\.(BCryptGenerateKeyPair|BCryptImportKeyPair)$"
+when.args.alg = { regex = "^BCRYPT_MLKEM_ALG_HANDLE$" }
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "Windows CNG {fn}(BCRYPT_MLKEM_ALG_HANDLE, ...) — FIPS 203 ML-KEM, quantum-resistant, but the parameter set (512/768/1024) is set on a later BCryptSetProperty call this rule does not trace."
+
+[[classify]]
+id = "CRYPTO-1051"
+when.api = "^cng\\.(BCryptOpenAlgorithmProvider|NCryptIsAlgSupported)$"
+when.args.alg = { regex = "^BCRYPT_MLDSA_ALGORITHM$" }
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "Windows CNG {fn}(..., BCRYPT_MLDSA_ALGORITHM, ...) — FIPS 204 ML-DSA, quantum-resistant, but the parameter set (44/65/87) is set on a later BCryptSetProperty call this rule does not trace."

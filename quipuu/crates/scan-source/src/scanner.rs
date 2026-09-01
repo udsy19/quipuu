@@ -2510,6 +2510,26 @@ const C_CALLEE_APIS: &[(&str, &str)] = &[
     // covers FIPS 204's external-mu pseudo-digest (EVP_MD_fetch(libctx,
     // "ML-DSA-MU", propq)), added in OpenSSL 4.0.0. Backlog #Y85.
     ("EVP_MD_fetch", "openssl.EVP_MD_fetch"),
+    // Windows CNG — ML-KEM's pseudo-handle is passed straight into keypair
+    // generation/import (no separate BCryptOpenAlgorithmProvider step, per
+    // Microsoft's own cng-mlkem-examples). ML-DSA instead names itself via
+    // BCryptOpenAlgorithmProvider's algorithm-id argument (cng-mldsa-examples)
+    // or, per a real call site independently found in Chromium's
+    // net/ssl/ssl_platform_key_win_unittest.cc, NCryptIsAlgSupported's.
+    // Neither function is PQC-specific — both are used constantly for
+    // classical algorithms too — so only the two named identifiers classify;
+    // every other algorithm passed through these entry points is extracted
+    // but produces no finding, same pattern as EVP_PKEY_CTX_new_from_name's
+    // RSA/EC arms above. No BCryptSetProperty(BCRYPT_PARAMETER_SET_NAME, ...)
+    // trace to the parameter set, same "no argument inspection" scoping
+    // #Y87's MLKemCng/MLDsaCng rule already used. Backlog: Win32 CNG item.
+    ("BCryptGenerateKeyPair", "cng.BCryptGenerateKeyPair"),
+    ("BCryptImportKeyPair", "cng.BCryptImportKeyPair"),
+    (
+        "BCryptOpenAlgorithmProvider",
+        "cng.BCryptOpenAlgorithmProvider",
+    ),
+    ("NCryptIsAlgSupported", "cng.NCryptIsAlgSupported"),
 ];
 
 fn match_c_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
@@ -3023,6 +3043,26 @@ fn populate_args(
             // EVP_MD_fetch(libctx, name, propq) — arg 1 is the digest name
             // string, including FIPS 204's external-mu pseudo-digest name.
             if let Some(alg) = nth_arg_string(args_node, 1, source) {
+                out.insert("alg".into(), ArgValue::Str(alg));
+            }
+        }
+        (Language::C | Language::Cpp, "cng.BCryptGenerateKeyPair" | "cng.BCryptImportKeyPair") => {
+            // BCryptGenerateKeyPair(hAlgorithm, ...) /
+            // BCryptImportKeyPair(hAlgorithm, ...) — arg 0 is either a
+            // provider handle variable or a pseudo-handle macro
+            // (BCRYPT_MLKEM_ALG_HANDLE) naming the algorithm directly.
+            if let Some(alg) = nth_arg_call_ident(args_node, 0, source) {
+                out.insert("alg".into(), ArgValue::Str(alg));
+            }
+        }
+        (
+            Language::C | Language::Cpp,
+            "cng.BCryptOpenAlgorithmProvider" | "cng.NCryptIsAlgSupported",
+        ) => {
+            // BCryptOpenAlgorithmProvider(&hAlg, pszAlgId, ...) /
+            // NCryptIsAlgSupported(hProvider, pszAlgId, ...) — arg 1 names
+            // the algorithm directly (BCRYPT_MLDSA_ALGORITHM).
+            if let Some(alg) = nth_arg_call_ident(args_node, 1, source) {
                 out.insert("alg".into(), ArgValue::Str(alg));
             }
         }

@@ -3856,6 +3856,55 @@ fn scans_c_openssl_md_fetch() {
     }
 }
 
+/// Windows CNG had zero coverage for any native algorithm, classical or
+/// PQC — the Backlog's Win32 CNG item, blocked pending a broader corpus
+/// check than the single vendored `symcrypt` clone. That check now returns
+/// a real call site: Chromium's own `net/ssl/ssl_platform_key_win_unittest.cc`
+/// calls `NCryptIsAlgSupported(prov, BCRYPT_MLDSA_ALGORITHM, ...)`.
+/// `BCryptGenerateKeyPair`/`BCryptImportKeyPair` against the ML-KEM
+/// pseudo-handle and `BCryptOpenAlgorithmProvider` against ML-DSA are
+/// Microsoft's own documented idiom for the same two algorithms. All four
+/// entry points are used constantly for classical algorithms too, so the
+/// classical `BCryptOpenAlgorithmProvider(&hRsaAlg, BCRYPT_RSA_ALGORITHM, ...)`
+/// call in the fixture must NOT produce a finding.
+#[test]
+fn scans_c_windows_cng_mlkem_mldsa() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-1050", "ml-kem-unattributed"), // BCryptGenerateKeyPair(BCRYPT_MLKEM_ALG_HANDLE, ...)
+        ("CRYPTO-1050", "ml-kem-unattributed"), // BCryptImportKeyPair(BCRYPT_MLKEM_ALG_HANDLE, ...)
+        ("CRYPTO-1051", "ml-dsa-unattributed"), // BCryptOpenAlgorithmProvider(&hAlg, BCRYPT_MLDSA_ALGORITHM, ...)
+        ("CRYPTO-1051", "ml-dsa-unattributed"), // NCryptIsAlgSupported(prov, BCRYPT_MLDSA_ALGORITHM, ...)
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in cpp/crypto.c; got: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+    assert!(
+        !findings
+            .iter()
+            .any(|f| f.message.contains("BCRYPT_RSA_ALGORITHM")),
+        "classical BCryptOpenAlgorithmProvider(BCRYPT_RSA_ALGORITHM) call must not be flagged; got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
 /// Backlog `#Y47`: pyca/cryptography's own first-party ML-KEM/ML-DSA classes
 /// had no classify arm at all — `python.toml` recognized every classical
 /// primitive in the library but not the two it migrated to FIPS 203/204.
