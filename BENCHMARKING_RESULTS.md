@@ -6335,3 +6335,38 @@ passing after (131/745/120).
 known to be unbuilt after this cycle.
 
 PRECISION: 97.17%
+
+## Measurement, 2026-09-01 (Track A cycle 199 — `#Y98`, `CompositeMLDsa`'s IETF draft citation
+corrected)
+
+Cycle 198 left `csharp.toml`'s `CompositeMLDsa.GenerateKey` description citing
+`draft-ietf-lamps-cms-composite-sigs`, a draft name that does not exist — the actual document is
+`draft-ietf-lamps-pq-composite-sigs`, the same one `knowledge/05-x509-pqc/README.md` cites five times
+elsewhere in the tree. A repo-wide grep confirmed this was the only site carrying the wrong name.
+Fixed the string; no query, capture, or classify logic touched.
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` · profile
+`nist-default` · pre-change dump `work/y96cng_post.json` (1916, commit `b9261a4`) · post-change binary
+from this cycle's tree · dump `work/y98_post.json` (1916), both produced by the repo's own
+`benchmarks/corpus-b-realworld/dump_findings.py`.**
+
+**0 findings added, 0 removed — the expected result.** A description string is not part of
+`finding_key` (project, rule_id, file, line, algorithm_id, severity) and does not appear in the dump
+at all; only `message` does, which this change never touched. `bin/precision.py
+work/y96cng_post.json work/y98_post.json --write-readme` confirms row-identity on the two
+byte-identical 1916-finding dumps and reports the carried stratified-fresh sample (`A 262/271`, `B
+355/364`) unchanged. `--write-readme` found the headline and comparison-table figures already
+correct at `97.17%` — the more precise re-derived value (97.175%) rounds to the same published
+two-decimal figure, so nothing needed writing.
+
+**Precision 97.17%, held exactly.**
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --all` clean; `cargo clippy
+--all-targets --workspace -- -D warnings` clean; `cargo test --workspace` all passing, no new test
+function (no detection-logic change to cover). Both trust-invariant tests untouched and pass.
+
+**Not done, said out loud:** nothing else in this cycle's scope; the gate failure this cycle repaired
+was the missing measurement itself, not a defect in the fix (`parked/20260901T193418-gate-red`,
+now merged and deleted).
+
+PRECISION: 97.17%
