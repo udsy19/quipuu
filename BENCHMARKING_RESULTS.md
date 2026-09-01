@@ -5183,8 +5183,9 @@ such cross-statement trace exists anywhere in `java.toml`/`scanner.rs` today (EC
 left similarly unattributed for the identical reason), and building one is a larger scanner change
 than this item's scope, matching how `#Y80`'s own filing scoped its "first concrete change." BC's
 other fourth-round PQC-candidate providers (BIKE, Classic McEliece) are untouched — the filing
-checked only HQC's own shape. `OPEN-ASK #ESTIMATOR1`/`#ESTIMATOROFRECORD` and `OPEN-ASK
-#CORPUSDRIFT` remain open, neither this cycle's to resolve.
+checked only HQC's own shape. `#ESTIMATOROFRECORD` applied 2026-08-30 (`state/precision.json`'s `estimator_by`
+field); `#ESTIMATOR1` was superseded and resolved via `#ESTIMATOR2`. `OPEN-ASK
+#CORPUSDRIFT` remains open, not this cycle's to resolve.
 
 ## `#Y81`: BouncyCastle BIKE/Classic McEliece JCA coverage (2026-08-30)
 
@@ -5242,8 +5243,9 @@ not the sample, same as every prior cycle that has hit this).
 `Cipher.getInstance("BIKE128")` call is not built, same standing gap `#Y80` already named for HQC
 — no cross-statement trace exists anywhere in `java.toml`/`scanner.rs` today. Classic McEliece's
 32+ parameter sets are not individually attributed, per this entry's own stated policy.
-`OPEN-ASK #ESTIMATOR1`/`#ESTIMATOROFRECORD` and `OPEN-ASK #CORPUSDRIFT` remain open, neither this
-cycle's to resolve.
+`#ESTIMATOROFRECORD` applied 2026-08-30 (`state/precision.json`'s `estimator_by`
+field); `#ESTIMATOR1` was superseded and resolved via `#ESTIMATOR2`. `OPEN-ASK
+#CORPUSDRIFT` remains open, not this cycle's to resolve.
 
 ## `#Y83`: BouncyCastle XMSS/XMSS^MT (NIST SP 800-208 stateful hash-based signatures) gain coverage — 2026-08-31
 
@@ -5319,8 +5321,9 @@ exercised and clean after the `algorithm-table.toml` fix above). Both trust-inva
 above — the two-hop trace from `getInstance("LMS")` to a later `LMSHSSKeyGenParameterSpec` would
 resolve it, the same structural gap `#Y80`/`#Y81` already named for HQC/BIKE's own generic-name
 cases. The `<DIGEST>WITHXMSS(MT)` alias family is a real, smaller remaining gap, named above.
-`OPEN-ASK #ESTIMATOR1`/`#ESTIMATOROFRECORD` and `OPEN-ASK #CORPUSDRIFT` remain open, neither this
-cycle's to resolve.
+`#ESTIMATOROFRECORD` applied 2026-08-30 (`state/precision.json`'s `estimator_by`
+field); `#ESTIMATOR1` was superseded and resolved via `#ESTIMATOR2`. `OPEN-ASK
+#CORPUSDRIFT` remains open, not this cycle's to resolve.
 
 ## `#Y86`: pyca `MLDSAMuHasher` (FIPS 204 external-mu incremental hashing) gains coverage — 2026-08-31
 
