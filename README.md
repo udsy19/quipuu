@@ -3,7 +3,7 @@
 **A single Rust binary that finds the cryptography in your codebase, classifies each finding against NIST's post-quantum migration timeline, and tells you exactly which ones a quantum adversary can harvest today.** It detects constructors and key-generation sites precisely rather than every call site exhaustively — [measured recall is below](#benchmark-numbers).
 
 ```bash
-cargo install quipuu
+cargo install --git https://github.com/udsy19/quipuu --locked
 quipuu scan .
 open reports/quipuu.html
 ```
@@ -55,8 +55,8 @@ The trust invariants are tested directly in `crates/cli/tests/mcp_integration.rs
 ## Quick start
 
 ```bash
-# Install (Rust 1.96+)
-cargo install quipuu
+# Install (Rust 1.96+; not yet published to crates.io — installs from git)
+cargo install --git https://github.com/udsy19/quipuu --locked
 
 # Initialise a project config
 quipuu init
@@ -96,7 +96,7 @@ detection. Measured on the 150-project benchmark corpus: the two profiles
 produce the **same 898 findings**, of which **80 (8.9 %) land in a different
 severity band**. The precision figure below therefore holds under both.
 
-**Pre-built binaries** are available on the [Releases page](https://github.com/udsy19/quipuu/releases). The binary is fully static on Linux (musl), single-file on macOS and Windows. No JVM, no Node, no Python runtime, no Docker.
+**No pre-built binaries yet** — the [Releases page](https://github.com/udsy19/quipuu/releases) is empty and no crate is published to crates.io; `cargo install --git` above is the only supported install path today. Once a release is cut, the binary will be fully static on Linux (musl), single-file on macOS and Windows: no JVM, no Node, no Python runtime, no Docker.
 
 ---
 

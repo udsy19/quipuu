@@ -14,7 +14,7 @@ The fastest path: copy one file into your repo.
 
 ```sh
 curl -sSL \
-  https://raw.githubusercontent.com/<TBD>/quipuu/main/.github/workflows/quipuu-template.yml \
+  https://raw.githubusercontent.com/udsy19/quipuu/main/.github/workflows/quipuu-template.yml \
   -o .github/workflows/quipuu.yml
 ```
 
@@ -78,7 +78,7 @@ pre-commit install
 
 ```yaml
 repos:
-  - repo: https://github.com/<TBD>/quipuu
+  - repo: https://github.com/udsy19/quipuu
     rev: v0.1.0   # pin to a release tag
     hooks:
       - id: quipuu-scan
@@ -118,7 +118,7 @@ quipuu scan . --sarif out/quipuu.sarif
 cargo install quipuu --locked
 
 # Option B — from git
-cargo install --git https://github.com/<TBD>/quipuu --locked
+cargo install --git https://github.com/udsy19/quipuu --locked
 ```
 
 ### Minimal GitLab CI example
@@ -128,7 +128,7 @@ quipuu:
   stage: test
   image: rust:latest
   before_script:
-    - cargo install quipuu --locked
+    - cargo install --git https://github.com/udsy19/quipuu --locked
   script:
     - mkdir -p reports
     - quipuu scan . --sarif reports/quipuu.sarif --summary-json reports/quipuu.summary.json
@@ -149,7 +149,7 @@ jobs:
       - checkout
       - run:
           name: Install quipuu
-          command: cargo install quipuu --locked
+          command: cargo install --git https://github.com/udsy19/quipuu --locked
       - run:
           name: Run quipuu scan
           command: |
