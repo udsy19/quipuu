@@ -100,7 +100,7 @@ def load_dump(path: Path) -> dict:
     return data
 
 
-def scan_one(project: dict, binary: Path, clones: Path) -> list[dict]:
+def scan_one(project: dict, binary: Path, clones: Path, policy: str | None) -> list[dict]:
     p = project["project"]
     name = p["name"]
     eco = p["ecosystem"]
@@ -122,6 +122,8 @@ def scan_one(project: dict, binary: Path, clones: Path) -> list[dict]:
             "--deps",
             "--include-safe",  # We audit ALL findings including suppressed.
         ]
+        if policy:
+            cmd += ["--policy", policy]
         try:
             proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
         except subprocess.TimeoutExpired:
@@ -175,6 +177,12 @@ def main() -> int:
         help="Dump anyway when the integrity check fails, and stamp the output "
              "partial so load_dump() refuses it",
     )
+    ap.add_argument(
+        "--policy",
+        default=None,
+        help="Pass --policy NAME through to every quipuu scan invocation "
+             "(default: quipuu's own default profile)",
+    )
     args = ap.parse_args()
 
     if not args.bin.exists():
@@ -209,7 +217,7 @@ def main() -> int:
             # scope: a zero here is the exact ambiguity this dump removes.
             fs: list[dict] = []
         else:
-            fs = scan_one(project, args.bin, args.clones)
+            fs = scan_one(project, args.bin, args.clones, args.policy)
         out.extend(fs)
         projects.append(
             {
