@@ -243,6 +243,13 @@ void openssl_generic_keygen_hybrid(OSSL_LIB_CTX *libctx) {
     EVP_PKEY *hybrid4 = EVP_PKEY_Q_keygen(libctx, NULL, "X448MLKEM1024");
 }
 
+/* CRYPTO-1137 — OpenSSL 3.6's native LMS signature support, reachable through
+   the same generic keygen entry point (backlog #Y113). Verified against
+   docs.openssl.org/3.6/man7/EVP_PKEY-LMS/, fetched 2026-09-02. */
+void openssl_generic_keygen_lms(OSSL_LIB_CTX *libctx) {
+    EVP_PKEY *lms_key = EVP_PKEY_Q_keygen(libctx, NULL, "LMS");
+}
+
 /* CPP-066 / CPP-067, CRYPTO-960 / CRYPTO-961 — OpenSSL 3.5+ generic KEM
    operation API (EVP_PKEY_encapsulate/decapsulate). Neither call carries an
    algorithm argument of its own — it lives on the EVP_PKEY_CTX built earlier

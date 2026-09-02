@@ -1147,6 +1147,19 @@ algorithm_id = "x448-mlkem1024"
 severity_hint = "auto"
 message = "OpenSSL generic keygen(\"{alg}\") — hybrid X448 + ML-KEM-1024 (FIPS 203). Migrated key-establishment."
 
+# OpenSSL 3.6 (GA 2025-10-01) — native LMS signature verification through the
+# same generic keygen/name entry points (docs.openssl.org/3.6/man7/EVP_PKEY-LMS/,
+# EVP_SIGNATURE-LMS/). No distinct HSS algorithm string is documented, so only
+# LMS is covered here — same convention as the hybrid KEM arms above, which do
+# not guess at undocumented names either.
+[[classify]]
+id = "CRYPTO-1137"
+when.api = "^openssl\\.(EVP_PKEY_CTX_new_from_name|EVP_PKEY_Q_keygen)$"
+when.args.alg = { regex = "(?i)^LMS$" }
+algorithm_id = "lms"
+severity_hint = "auto"
+message = "OpenSSL generic keygen(\"{alg}\") — LMS (RFC 8554 / NIST SP 800-208), stateful hash-based signature. Quantum-resistant."
+
 # ============================================================================
 # OpenSSL 3.5+ — EVP_PKEY_encapsulate / EVP_PKEY_decapsulate, the generic KEM
 # *operation* API (as opposed to keygen, which CPP-064/065 above already

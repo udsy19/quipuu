@@ -1187,7 +1187,7 @@ display_name = "LMS (Leighton-Micali Signature)"
 family = "LMS"
 primitive = "signature"
 quantum_status = "QuantumSafe"
-notes = "RFC 8554 / NIST SP 800-208. Stateful: a one-time key reused signs away the private key, so detection matters most in firmware-signing build systems. CNSA 2.0 approves LMS for software and firmware signing, SHA-256/192 preferred. Reachable via csharp.toml's LmsKeyGenerationParameters (BouncyCastle.NET) — no OID needed, same shape as xmss below. No X.509 SPKI OID is vendored yet in oid-table.toml, so a PEM/DER-encoded key or certificate alone still asserts nothing."
+notes = "RFC 8554 / NIST SP 800-208. Stateful: a one-time key reused signs away the private key, so detection matters most in firmware-signing build systems. CNSA 2.0 approves LMS for software and firmware signing, SHA-256/192 preferred. Reachable via csharp.toml's LmsKeyGenerationParameters (BouncyCastle.NET) and cpp.toml's OpenSSL 3.6+ generic keygen (EVP_PKEY_CTX_new_from_name/EVP_PKEY_Q_keygen with alg=\"LMS\") — no OID needed, same shape as xmss below. No X.509 SPKI OID is vendored yet in oid-table.toml, so a PEM/DER-encoded key or certificate alone still asserts nothing."
 
 [[algorithm]]
 id = "hss"

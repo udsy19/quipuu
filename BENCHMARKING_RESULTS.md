@@ -6695,3 +6695,57 @@ open, not started this cycle. `#Y107`/`#Y108` remain open from two cycles ago. `
 #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` and `#CORPUSDRIFT` remain open, neither bearing on this fix.
 
 PRECISION: 97.19%
+
+## Measurement, 2026-09-02 (Track A cycle 213 — `#Y113`, OpenSSL 3.6 native LMS keygen coverage)
+
+**`cpp.toml`'s generic keygen classify list (`EVP_PKEY_CTX_new_from_name`/`EVP_PKEY_Q_keygen`) had
+arms for every ML-KEM/ML-DSA/SLH-DSA parameter set and the OpenSSL 3.5 hybrid PQ/T KEM names, but
+none for LMS** — OpenSSL 3.6 (GA 2025-10-01, now 3.6.4) ships native LMS signature support
+(RFC 8554 / SP 800-208) through the exact same entry points, verified directly against
+`docs.openssl.org/3.6/man7/EVP_PKEY-LMS/` and `EVP_SIGNATURE-LMS/`, fetched 2026-09-02. One new
+classify arm (`CRYPTO-1137`) matches `alg = "LMS"` case-insensitively and reuses the existing `lms`
+algorithm id `algorithm-table.toml` already carries (added for BouncyCastle.NET, `#Y100`) — same
+extension shape as the OpenSSL 3.5 hybrid-KEM arms directly above it in the same file, not new
+ground. No distinct `"HSS"` algorithm string is documented anywhere in OpenSSL's own manpages, so
+only LMS is covered — guessing at an unconfirmed name was explicitly rejected, same call the hybrid
+arms already made for `X448MLKEM1024`'s missing TLS group. `algorithm-table.toml`'s `lms` row note
+updated in the same commit to name the new C/C++ reachability path (rule 4 — the note itself named
+only the C# path before this).
+
+A fixture call (`openssl_generic_keygen_lms`, `crypto.c`) and a new test
+(`scans_c_openssl_native_lms`) assert `CRYPTO-1137`/`lms` fires; `every_classify_rule_targets_an_api_the_extractor_can_emit`
+confirms the rule targets an API the scanner's `CPP_GENERIC_KEYGEN_APIS` table already emits (no
+scanner change needed — same entry points as the existing ML-KEM/ML-DSA/SLH-DSA arms).
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change binary from main at `a23a123` (`work/jose4j_post.json`, 1915
+findings) · post-change binary from this cycle's tree (`work/y113_post.json`, 1915 findings), both
+produced by the repo's own `benchmarks/corpus-b-realworld/dump_findings.py`.**
+
+**0 findings added, 0 removed, 0 reclassified — the expected result, not a surprise.** No corpus B
+project calls `EVP_PKEY_CTX_new_from_name`/`EVP_PKEY_Q_keygen` with `"LMS"` — OpenSSL 3.6 is eleven
+months old and no vendored clone has adopted it yet, the same "real gap, zero corpus recall" shape
+`#Y100`'s BouncyCastle.NET LMS/HSS coverage hit for the identical reason (no `nuget` ecosystem in
+this corpus at all). The fixture, not the corpus, is the instrument for this rule.
+
+**Precision 97.19% (persisted) → 97.17%.** `bin/precision.py work/jose4j_post.json
+work/y113_post.json --write-readme` reproduced the byte-identical 1915-finding dump on both sides
+(0 added, 0 removed) and re-derived the stratified-fresh populations from scratch: `A=796, B=1119`,
+sample `A 262/271, B 355/364` — **635 of 1915 audited** — giving 97.175% (95% CI 95.89–98.46),
+rounding to the published 97.17%. This is the same stratified-fresh-vs-carried-constants estimator
+drift `DECISION #ESTIMATOROFRECORD` already adjudicated (carried constants would have read 97.159%);
+no finding moved, so the change contributes 0 to this delta. `--write-readme` applied the figure to
+both README sites (headline paragraph and comparison table) in this diff.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --all` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing, including the new
+`scans_c_openssl_native_lms` test. Both trust-invariant tests (`test_run_acvp_kats_rejects_code_execution`,
+`test_network_disabled_error`) untouched and pass. `readme_rule_pack_counts_match_the_rule_packs`
+updated for cpp.toml's new 131 classify-arm count (130 → 131; README's two count sentences —
+"803 classify arms" and "C/C++'s 131" — updated in the same diff).
+
+**Not done, said out loud:** `#Y114` (OpenMLS ciphersuite coverage) and `#Y107`/`#Y108` remain open.
+`OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` and `#CORPUSDRIFT` remain open, neither bearing on
+this change.
+
+PRECISION: 97.17%

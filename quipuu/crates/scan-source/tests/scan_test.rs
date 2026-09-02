@@ -4221,6 +4221,29 @@ fn scans_c_windows_cng_mlkem_mldsa() {
     );
 }
 
+/// Backlog `#Y113`: OpenSSL 3.6 shipped native LMS signature support through
+/// the same generic keygen entry point ML-KEM/ML-DSA/SLH-DSA already use, but
+/// `cpp.toml` had zero classify coverage for it — 11 months after GA.
+#[test]
+fn scans_c_openssl_native_lms() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-1137" && f.algorithm_id == "lms"),
+        "expected CRYPTO-1137 (lms) in cpp/crypto.c; got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
 /// Backlog `#Y47`: pyca/cryptography's own first-party ML-KEM/ML-DSA classes
 /// had no classify arm at all — `python.toml` recognized every classical
 /// primitive in the library but not the two it migrated to FIPS 203/204.
