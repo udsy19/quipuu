@@ -292,6 +292,18 @@ severity_hint = "auto"
 message = "rsa::SigningKey::<Sha512>::new — RSA-PKCS1-SHA512 signing key. Quantum-vulnerable."
 
 [[classify]]
+id = "CRYPTO-548"
+when.api = "^rsa\\.SigningKey\\.new$"
+when.args.turbofish = { regex = "Sha1" }
+algorithm_id = "rsa-pkcs1-sha1"
+severity_hint = "auto"
+message = "rsa::SigningKey::<Sha1>::new — RSA-PKCS1-SHA1 signing key. SHA-1 broken classically; quantum-vulnerable."
+
+# Catch-all: the fallback below only fires once the three named digests above
+# and Sha1 have all missed, so it no longer mislabels a Sha1 turbofish as
+# rsa-pkcs1-sha256 (PRECISION_AUDIT_V4.md rows 3/6 — crates-io/rsa's own
+# pkcs1v15.rs:448 and pss.rs:593 test cases, both `SigningKey::<Sha1>::new`).
+[[classify]]
 id = "CRYPTO-547"
 when.api = "^rsa\\.SigningKey\\.new$"
 algorithm_id = "rsa-pkcs1-sha256"

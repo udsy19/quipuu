@@ -7087,3 +7087,65 @@ same fixture, rather than a new test). Both trust-invariant tests
 (`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
 
 PRECISION: 97.17%
+
+## Measurement, 2026-09-02 (Track A cycle 229 — `#Y118` closed: rust.toml's `SigningKey::<Sha1>::new` no longer misrouted to `rsa-pkcs1-sha256`)
+
+Picked up `#Y115`'s self-doubt-audited defect shape (`PRECISION_AUDIT_V4.md` rows 3 and 6) one crate
+over from where `#Y115` itself shipped: `rust.toml`'s `rsa::SigningKey::<Hash>::new` turbofish rule
+(`CRYPTO-544`/`545`/`546`) has named arms for `Sha256`/`Sha384`/`Sha512` only. A `Sha1` turbofish
+matches none of the three and fell through to `CRYPTO-547`'s catch-all, which unconditionally
+publishes `rsa-pkcs1-sha256` — a call whose own turbofish states the digest is SHA-1 was reported as
+SHA-256, both the wrong hash and, since `rsa-pkcs1-sha1` already existed in `algorithm-table.toml`
+(added for a different language's SHA-1 coverage), an avoidable one. One new classify arm
+(`CRYPTO-548`, `when.args.turbofish = { regex = "Sha1" }` → `rsa-pkcs1-sha1`), placed before
+`CRYPTO-547`'s catch-all so first-match-wins routes `Sha1` correctly and only a genuinely
+non-literal/unrecognized digest still falls through. `tests/fixtures/rust/rust_advanced.rs` gained a
+fourth `SigningKey::<...>::new` case; `phase10_rust_signingkey_turbofish_routes_to_hash` extended to
+assert it.
+
+**Corpus effect: 4 reclassified, 0 added, 0 removed — 1917 both sides.** All four sites are
+`crates-io:rsa`'s own test suite (`pkcs1v15.rs:448`, `pss.rs:482/593/655`), every one a real
+`SigningKey::<Sha1>::new(priv_key)` call — hand-verified by opening each cited line. Full pre/post
+dump (`benchmarks/corpus-b-realworld/dump_findings.py`, clones at
+`/opt/cryptoscope/work/corpus-clones`, pre-change binary built in a worktree at this cycle's parent
+commit `5795ca3`, post-change binary this cycle's tree; dumps `work/y120_pre.json` /
+`work/y120_post.json`). All four moved `CRYPTO-547`/`rsa-pkcs1-sha256` → `CRYPTO-548`/`rsa-pkcs1-sha1`,
+same `High` severity before and after — a correctness fix to an already-true-positive site, not a new
+detection.
+
+**Precision 97.17% → 97.19%.** `bin/precision.py work/y120_pre.json work/y120_post.json --added-tp 4
+--added-fp 0 --write-readme` (the tool scores a same-site rule-id change as one add plus one remove,
+so the 4 reclassified rows needed `--added-tp 4` after hand-labelling each TP): stratified-fresh
+97.194% (95% CI 95.92–98.47), stratified-carried 97.180%, pooled Wilson 97.183% — sample `A 266/275,
+B 355/364`, populations `A=798 B=1119`, 639 of 1917 audited. README headline, comparison-table row,
+and the `136 extract blocks and NNN classify arms` sentence (833→834) all updated in the same diff,
+the last one caught by `readme_rule_pack_counts_match_the_rule_packs`.
+
+**Not fixed, said out loud: the padding half of the same two audit rows.** `PRECISION_AUDIT_V4.md`
+row 6 (`pss.rs:593`) also flags the id's `pkcs1` family as wrong — the call is inside `rsa`'s PSS
+module, not PKCS1v15, but both modules define a type literally named `SigningKey`, and `rust.toml`
+does no import-resolution for any language it covers (the same limitation `#Y117`'s `oqs::Kem`/`Sig`
+naming and `#Y29`'s `crypto_sign_keypair` collision both hit). Distinguishing them needs the call
+site's `use` statement traced back to `rsa::pkcs1v15::SigningKey` vs `rsa::pss::SigningKey`/
+`BlindedSigningKey`, new capability this cycle does not add — left as a real, named gap rather than
+guessed at.
+
+**Also checked and declined:** `#Y115`'s own optional follow-up (an `EVP_PKEY_fromdata` arm
+correlated to a preceding `EVP_PKEY_CTX_new_from_name(...,"LMS",...)` on the same context variable)
+is not this cycle's pickup — `EVP_PKEY_fromdata` carries no algorithm-identifying argument of its
+own and OpenSSL uses it to import every key type, not just LMS, so an uncorrelated arm would be a
+real precision risk, and the correlation this needs is same-variable-across-statements tracking
+`cpp.toml` does not have (`match_c_ssl_groups_list`, the pattern `#Y115`'s note pointed to, parses a
+single call's string-list argument, not a cross-statement trace) — a materially larger change than
+"cheap," left open rather than built unsafely under this cycle's clock.
+
+**Held:** `cargo build --release --workspace`, `cargo test --release --workspace` (all passing, one
+extended), `cargo fmt --all`, `cargo clippy --release --all-targets --workspace -- -D warnings` all
+clean. Both trust-invariant tests (`test_run_acvp_kats_rejects_code_execution`,
+`test_network_disabled_error`) untouched and pass.
+
+**Not done, said out loud:** `#Y107`/`#Y108`, `OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2`/
+`#CORPUSDRIFT`, and the standing `needs-human-approval` regulatory queue remain open, none bearing on
+this change.
+
+PRECISION: 97.19%

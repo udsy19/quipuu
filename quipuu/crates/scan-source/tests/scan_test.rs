@@ -2908,7 +2908,9 @@ fn phase10_rust_rcgen_keypair_generate_for() {
 #[test]
 fn phase10_rust_signingkey_turbofish_routes_to_hash() {
     // BUG-F: SigningKey::<Sha256>::new must route to CRYPTO-544 (SHA256),
-    // <Sha384>::new to CRYPTO-545, <Sha512>::new to CRYPTO-546.
+    // <Sha384>::new to CRYPTO-545, <Sha512>::new to CRYPTO-546, <Sha1>::new to
+    // CRYPTO-548 — not fall through to CRYPTO-547's rsa-pkcs1-sha256 catch-all
+    // (PRECISION_AUDIT_V4.md rows 3/6, crates-io/rsa's own test suite).
     let b = load_builtins().expect("builtins");
     let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
     let findings = scanner
@@ -2918,6 +2920,7 @@ fn phase10_rust_signingkey_turbofish_routes_to_hash() {
         ("CRYPTO-544", "rsa-pkcs1-sha256"),
         ("CRYPTO-545", "rsa-pkcs1-sha384"),
         ("CRYPTO-546", "rsa-pkcs1-sha512"),
+        ("CRYPTO-548", "rsa-pkcs1-sha1"),
     ] {
         let f = findings
             .iter()

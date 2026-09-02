@@ -32,7 +32,8 @@ fn shapes(mut rng: impl rand::CryptoRng + rand::RngCore) {
     let priv_key = RsaPrivateKey::new(&mut rng, 2048).unwrap();
     let _ = SigningKey::<Sha256>::new(priv_key.clone()); // CRYPTO-544
     let _ = SigningKey::<Sha384>::new(priv_key.clone()); // CRYPTO-545
-    let _ = SigningKey::<Sha512>::new(priv_key);         // CRYPTO-546
+    let _ = SigningKey::<Sha512>::new(priv_key.clone()); // CRYPTO-546
+    let _ = SigningKey::<Sha1>::new(priv_key);           // CRYPTO-548, was misrouted to CRYPTO-547's rsa-pkcs1-sha256 fallback
 
     // #Y29: openssl crate Rsa::generate — same non-literal-argument gap as
     // BUG-B, one crate over (competitors cycle 12).
