@@ -145,3 +145,31 @@ fn readme_speed_figures_agree_with_the_benchmark_table() {
          {table_wallclock}s"
     );
 }
+
+/// `#Y121`: the "What the denominator excludes" paragraph restates the
+/// headline's audited-findings count as a TP/FP/DEPENDS breakdown. `#Y97`
+/// hand-patched it once for drifting out of sync with the headline; it
+/// drifted again the very next day because the patch fixed the number, not
+/// the recurrence. Nothing upstream of this test re-derives one count from
+/// the other, so this closes the same gap `#Y84`'s test above closed for the
+/// benchmark-table total.
+#[test]
+fn readme_denominator_paragraph_agrees_with_the_precision_headline() {
+    let root = workspace_root();
+    let readme = fs::read_to_string(root.join("../README.md")).expect("README.md readable");
+
+    // "measured 2026-09-02 on **636 audited findings** out of 1907, every one labelled"
+    let headline_audited = number_before(&readme, " audited findings**");
+    // "The 636 audited rows are **618 TP, 18 FP and 0 DEPENDS**"
+    let denominator_paragraph = number_before(&readme, " audited rows are");
+
+    assert_eq!(
+        headline_audited, denominator_paragraph,
+        "README.md's headline says \"{headline_audited} audited findings\", but the \"What the \
+         denominator excludes\" paragraph says \"The {denominator_paragraph} audited rows are\" \
+         — one was updated without the other. See `#Y121` in 03-Product/Backlog.md for why this \
+         drift recurs (the same sentence drifted once already under `#Y97`)."
+    );
+
+    println!("headline and denominator paragraph agree at {headline_audited} audited rows");
+}
