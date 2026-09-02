@@ -287,19 +287,19 @@ determines = "algorithm"
 oid = "2.16.840.1.101.3.4.4.1"
 algorithm_id = "ml-kem-512"
 determines = "algorithm"
-note = "id-alg-ml-kem-512 — RFC 9935."
+note = "id-alg-ml-kem-512 — RFC 9935, RFC 9936 for CMS usage."
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.4.2"
 algorithm_id = "ml-kem-768"
 determines = "algorithm"
-note = "id-alg-ml-kem-768 — RFC 9935."
+note = "id-alg-ml-kem-768 — RFC 9935, RFC 9936 for CMS usage."
 
 [[oid]]
 oid = "2.16.840.1.101.3.4.4.3"
 algorithm_id = "ml-kem-1024"
 determines = "algorithm"
-note = "id-alg-ml-kem-1024 — RFC 9935."
+note = "id-alg-ml-kem-1024 — RFC 9935, RFC 9936 for CMS usage."
 
 # -----------------------------------------------------------------------------
 # PQC — ML-DSA (FIPS 204, RFC 9881)
