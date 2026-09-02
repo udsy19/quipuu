@@ -7035,3 +7035,55 @@ no-finding case in one fixture). Both trust-invariant tests
 (`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
 
 PRECISION: 97.17%
+
+## Measurement, 2026-09-02 (Track A cycle 228 — `jose` `generateKeyPair` gains its full classical JWA set)
+
+Picked up cycle 227's own "not done, said out loud": the whole-library `jose` scope for
+`generateKeyPair` beyond the three ML-DSA arms. Read `jose`'s own `src/key/generate_key_pair.ts`
+switch statement directly (vendored source in corpus B, `npm/jose` 6.2.3) rather than assuming
+RFC 7518's registry — every literal `alg` value that function recognises is now covered: `PS256`/
+`PS384`/`PS512` (RSASSA-PSS), `RS256`/`RS384`/`RS512` (RSASSA-PKCS1-v1_5), `RSA-OAEP`/`-256`/`-384`/
+`-512`, `ES256`/`ES384`/`ES512` (ECDSA), `Ed25519`/`EdDSA`, and `ECDH-ES`(`+A{128,192,256}KW`) — 15
+new `javascript.toml` classify arms (`CRYPTO-1153`–`1167`, no new extract block: same `JST-070`
+shape cycle 227 added).
+
+**RSA-OAEP-384/512 needed two new `algorithm-table.toml` rows.** RFC 7518 § A.3 registers only
+`RSA-OAEP`/`RSA-OAEP-256`; `RSA-OAEP-384`/`-512` are a `jose`-library extension beyond the RFC, per
+the library's own CHANGELOG ("add RSA-OAEP-384 and RSA-OAEP-512 JWE Key Management Algorithms") —
+stated as such in both the table notes and the classify message, not folded into the RFC-registered
+pair. `ECDH-ES` classifies as `ecdh-unattributed`, not a specific curve: the curve is set by a
+separate `crv` option this rule does not capture, so asserting P-256 (jose's default) would be
+naming a parameter the input doesn't carry — the same discipline `#S1`/`#T2` established, and this
+cycle's own `no_emitter_names_a_parameter_its_input_does_not_carry` gate caught the one place a
+first draft of this change got it wrong: `CRYPTO-1165` (`ES512` → `ecdsa-p521`) needed a
+`parameter_source` line (RFC 7518 § 3.4) because `ES512`'s digits (`512`) don't match `ecdsa-p521`'s
+(`521`) — the same P-521-from-ES512 shape `jsonwebtoken`'s `CRYPTO-380` already carries, reused
+verbatim.
+
+**Corpus effect: 0 added, 0 removed, 0 reclassified — 1917 both sides**, confirmed with a full
+pre/post dump (`benchmarks/corpus-b-realworld/dump_findings.py`, clones at
+`/opt/cryptoscope/work/corpus-clones`, pre-change binary built in a worktree at this cycle's parent
+commit `80395ef`, post-change binary this cycle's tree; dumps `work/y118_pre.json` /
+`work/y118_post.json`). Same "real gap, zero corpus recall" shape as cycle 227's ML-DSA arms:
+`npm/jose`'s own call sites pass `alg` as a variable, not a literal.
+
+**Precision unchanged at 97.17%.** `bin/precision.py work/y118_pre.json work/y118_post.json
+--write-readme` (no `--added-tp`/`--added-fp`: the row set is byte-identical) re-derives
+stratified-fresh populations as `A=798, B=1119` (sample `A 262/271, B 355/364`, 635 of 1917 audited)
+giving 97.174% (95% CI 95.89–98.46, pooled Wilson 97.165%) — README already stated this figure, so
+`--write-readme` made no edit. The extract/classify-arm count (`136`/`818`→`136`/`833`) was checked
+and corrected in the same diff, caught by `readme_rule_pack_counts_match_the_rule_packs`.
+
+**Not done, said out loud:** `SignJWT`/`jwtVerify`/`importJWK` and the rest of `jose`'s API surface
+remain uncovered — this closes `generateKeyPair` specifically, not the library. `#Y107`/`#Y108`,
+`OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2`/`#CORPUSDRIFT`, and the standing
+`needs-human-approval` regulatory queue remain open, none bearing on this change.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --all` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (the new coverage extends
+`scans_js_jose_generatekeypair_ml_dsa` to assert all 20 literal calls across the 18 classify arms —
+`CRYPTO-1166`/`-1167` each match two identifiers — plus the no-finding variable-argument case in the
+same fixture, rather than a new test). Both trust-invariant tests
+(`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
+
+PRECISION: 97.17%

@@ -1047,6 +1047,20 @@ fn scans_js_jose_generatekeypair_ml_dsa() {
         ("CRYPTO-1150", "ml-dsa-44"),
         ("CRYPTO-1151", "ml-dsa-65"),
         ("CRYPTO-1152", "ml-dsa-87"),
+        ("CRYPTO-1153", "rsa-pss-sha256"),
+        ("CRYPTO-1154", "rsa-pss-sha384"),
+        ("CRYPTO-1155", "rsa-pss-sha512"),
+        ("CRYPTO-1156", "rsa-pkcs1-sha256"),
+        ("CRYPTO-1157", "rsa-pkcs1-sha384"),
+        ("CRYPTO-1158", "rsa-pkcs1-sha512"),
+        ("CRYPTO-1159", "rsa-oaep"),
+        ("CRYPTO-1160", "rsa-oaep-256"),
+        ("CRYPTO-1161", "rsa-oaep-384"),
+        ("CRYPTO-1162", "rsa-oaep-512"),
+        ("CRYPTO-1163", "ecdsa-p256"),
+        ("CRYPTO-1164", "ecdsa-p384"),
+        ("CRYPTO-1165", "ecdsa-p521"),
+        ("CRYPTO-1167", "ecdh-unattributed"),
     ] {
         assert!(
             findings
@@ -1063,10 +1077,33 @@ fn scans_js_jose_generatekeypair_ml_dsa() {
     assert_eq!(
         findings
             .iter()
-            .filter(|f| f.rule_id.starts_with("CRYPTO-115"))
+            .filter(|f| f.rule_id == "CRYPTO-1166" && f.algorithm_id == "ed25519")
             .count(),
-        3,
-        "a variable algorithm must yield no capture and no finding; findings: {:#?}",
+        2,
+        "expected CRYPTO-1166/ed25519 from both 'Ed25519' and 'EdDSA'; findings: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+
+    assert_eq!(
+        findings
+            .iter()
+            .filter(|f| f.rule_id == "CRYPTO-1167" && f.algorithm_id == "ecdh-unattributed")
+            .count(),
+        2,
+        "expected CRYPTO-1167/ecdh-unattributed from both 'ECDH-ES' and 'ECDH-ES+A128KW'; findings: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+
+    assert_eq!(
+        findings.len(),
+        20,
+        "a variable algorithm must yield no capture and no finding beyond the 20 literal calls; findings: {:#?}",
         findings
             .iter()
             .map(|f| (&f.rule_id, &f.algorithm_id))

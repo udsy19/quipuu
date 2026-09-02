@@ -86,6 +86,30 @@ oid = "1.2.840.113549.1.1.7"
 notes = "RSAES-OAEP with SHA-256 hash + MGF1-SHA256. JWE RFC 7518 § A.3. Same OID as rsa-oaep; algorithm parameters distinguish them. Quantum-vulnerable."
 
 [[algorithm]]
+id = "rsa-oaep-384"
+display_name = "RSA-OAEP-384 (SHA-384 MGF)"
+family = "RSA"
+primitive = "pke"
+classical_security_bits = 112
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-768"
+oid = "1.2.840.113549.1.1.7"
+notes = "RSAES-OAEP with SHA-384 hash + MGF1-SHA384. Not in RFC 7518's own JWA registration (RSA-OAEP, RSA-OAEP-256 only) — a jose (panva/jose) library extension, per its own CHANGELOG (\"add RSA-OAEP-384 and RSA-OAEP-512 JWE Key Management Algorithms\"). Same OID as rsa-oaep/rsa-oaep-256; algorithm parameters distinguish them. Quantum-vulnerable."
+
+[[algorithm]]
+id = "rsa-oaep-512"
+display_name = "RSA-OAEP-512 (SHA-512 MGF)"
+family = "RSA"
+primitive = "pke"
+classical_security_bits = 112
+nist_quantum_security_level = 0
+quantum_status = "BrokenByShor"
+replacement = "ml-kem-768"
+oid = "1.2.840.113549.1.1.7"
+notes = "RSAES-OAEP with SHA-512 hash + MGF1-SHA512. Same jose-library-extension status as rsa-oaep-384. Same OID as rsa-oaep/rsa-oaep-256/rsa-oaep-384; algorithm parameters distinguish them. Quantum-vulnerable."
+
+[[algorithm]]
 id = "rsa-3072"
 display_name = "RSA-3072"
 family = "RSA"

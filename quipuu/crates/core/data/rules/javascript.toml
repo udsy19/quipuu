@@ -272,12 +272,20 @@ message = "Ed25519 keypair generated via generateKeyPair('{algo}'). Quantum-vuln
 # jose's own top-level generateKeyPair takes the JWA algorithm identifier as
 # its first positional argument, not an options object — a different shape
 # from node:crypto's generateKeyPair(type, options) above, so it needs its
-# own extract/api key rather than reusing CRYPTO-320/321/322. Only the three
-# IANA-final ML-DSA identifiers (RFC 9964) are covered; jose's own source
-# only recognises ML-DSA as of this rule's authoring — see RESEARCH.md /
-# Backlog "RFC 9964" entry. A variable `alg` (the common shape when a caller
-# iterates a list of algorithms) yields no literal capture and no finding,
-# by design — see `nth_arg_string`.
+# own extract/api key rather than reusing CRYPTO-320/321/322. Every literal
+# identifier jose's own generate_key_pair.ts switch statement recognises is
+# covered below: the three IANA-final ML-DSA identifiers (RFC 9964) plus the
+# full classical set (RSASSA-PSS, RSASSA-PKCS1-v1_5, RSAES-OAEP, ECDSA,
+# EdDSA/Ed25519, ECDH-ES) — verified directly against the vendored source,
+# not assumed from RFC 7518 alone: RSA-OAEP-384/512 are a jose-specific
+# extension beyond RFC 7518's own two-identifier OAEP set (see the
+# algorithm-table.toml notes on those two ids). ECDH-ES's curve is set by a
+# separate `crv` option this rule does not capture, so it classifies as
+# `ecdh-unattributed` rather than asserting the P-256 default — the same
+# never-assert-an-unobserved-parameter discipline `#S1`/`#T2` established.
+# A variable `alg` (the common shape when a caller iterates a list of
+# algorithms) yields no literal capture and no finding, by design — see
+# `nth_arg_string`.
 
 [[extract]]
 id = "JST-070"
@@ -314,6 +322,127 @@ when.args.algo = { regex = "^['\"]?ML-DSA-87['\"]?$" }
 algorithm_id = "ml-dsa-87"
 severity_hint = "auto"
 message = "jose generateKeyPair('{algo}') — ML-DSA-87, FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1153"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?PS256['\"]?$" }
+algorithm_id = "rsa-pss-sha256"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — RSASSA-PSS with SHA-256 (JWT PS256). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1154"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?PS384['\"]?$" }
+algorithm_id = "rsa-pss-sha384"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — RSASSA-PSS with SHA-384 (JWT PS384). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1155"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?PS512['\"]?$" }
+algorithm_id = "rsa-pss-sha512"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — RSASSA-PSS with SHA-512 (JWT PS512). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1156"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?RS256['\"]?$" }
+algorithm_id = "rsa-pkcs1-sha256"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — RSASSA-PKCS1-v1_5 with SHA-256 (JWT RS256). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1157"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?RS384['\"]?$" }
+algorithm_id = "rsa-pkcs1-sha384"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — RSASSA-PKCS1-v1_5 with SHA-384 (JWT RS384). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1158"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?RS512['\"]?$" }
+algorithm_id = "rsa-pkcs1-sha512"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — RSASSA-PKCS1-v1_5 with SHA-512 (JWT RS512). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1159"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?RSA-OAEP['\"]?$" }
+algorithm_id = "rsa-oaep"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — RSAES-OAEP (SHA-1 MGF). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1160"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?RSA-OAEP-256['\"]?$" }
+algorithm_id = "rsa-oaep-256"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — RSAES-OAEP-256 (SHA-256 MGF). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1161"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?RSA-OAEP-384['\"]?$" }
+algorithm_id = "rsa-oaep-384"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — RSAES-OAEP-384 (SHA-384 MGF, jose library extension beyond RFC 7518). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1162"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?RSA-OAEP-512['\"]?$" }
+algorithm_id = "rsa-oaep-512"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — RSAES-OAEP-512 (SHA-512 MGF, jose library extension beyond RFC 7518). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1163"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?ES256['\"]?$" }
+algorithm_id = "ecdsa-p256"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — ECDSA P-256 (JWT ES256). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1164"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?ES384['\"]?$" }
+algorithm_id = "ecdsa-p384"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — ECDSA P-384 (JWT ES384). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1165"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?ES512['\"]?$" }
+algorithm_id = "ecdsa-p521"
+parameter_source = "RFC 7518 § 3.4: ES512 is ECDSA using P-521 and SHA-512."
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — ECDSA P-521 (JWT ES512). Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1166"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?(Ed25519|EdDSA)['\"]?$" }
+algorithm_id = "ed25519"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — Ed25519. Quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1167"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?ECDH-ES(\\+A(128|192|256)KW)?['\"]?$" }
+algorithm_id = "ecdh-unattributed"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — ECDH keypair; curve set by a separate `crv` option, not stated here. Quantum-vulnerable."
 
 # ============================================================================
 # node:crypto — createSign
