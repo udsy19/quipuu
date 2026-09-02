@@ -1036,6 +1036,45 @@ fn scans_js_generatekeypair_via_esm_named_import() {
 }
 
 #[test]
+fn scans_js_jose_generatekeypair_ml_dsa() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/jose_generatekeypair.mjs"))
+        .expect("scan succeeds");
+
+    for (rule_id, algorithm_id) in [
+        ("CRYPTO-1150", "ml-dsa-44"),
+        ("CRYPTO-1151", "ml-dsa-65"),
+        ("CRYPTO-1152", "ml-dsa-87"),
+    ] {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} via jose generateKeyPair('{algorithm_id}'); findings: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+
+    assert_eq!(
+        findings
+            .iter()
+            .filter(|f| f.rule_id.starts_with("CRYPTO-115"))
+            .count(),
+        3,
+        "a variable algorithm must yield no capture and no finding; findings: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
 fn scans_python_hashlib_named_import() {
     let b = load_builtins().unwrap();
     let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");

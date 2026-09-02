@@ -457,8 +457,10 @@ fn string_literal_value(node: Node<'_>, source: &[u8]) -> String {
 
 /// `const { generateKeyPair } = require('node:crypto')`, the ESM
 /// `import { generateKeyPair } from 'node:crypto'`, and both forms with an
-/// alias (`{ generateKeyPair: generateKeyPair_ }`, `as`). Out of scope, named
-/// per `#Y4`: barrel files, re-exports, dynamic specifiers, `import * as c`.
+/// alias (`{ generateKeyPair: generateKeyPair_ }`, `as`), for every module
+/// [`js_bare_import_module_prefix`] recognises (`node:crypto`/`crypto`,
+/// `jose`). Out of scope, named per `#Y4`: barrel files, re-exports, dynamic
+/// specifiers, `import * as c`.
 fn collect_js_bare_bindings(root: Node<'_>, source: &[u8]) -> HashMap<String, String> {
     let mut out = HashMap::new();
     walk_all(root, &mut |node| match node.kind() {
@@ -478,21 +480,20 @@ fn collect_js_bare_bindings(root: Node<'_>, source: &[u8]) -> HashMap<String, St
             if node_text(function, source) != "require" {
                 return;
             }
-            if !requires_crypto_module(value, source) {
+            let Some(module) = js_required_module_prefix(value, source) else {
                 return;
-            }
-            add_js_pattern_bindings(name, source, &mut out);
+            };
+            add_js_pattern_bindings(name, source, module, &mut out);
         }
         "import_statement" => {
             let Some(source_node) = node.child_by_field_name("source") else {
                 return;
             };
-            if !matches!(
-                string_literal_value(source_node, source).as_str(),
-                "crypto" | "node:crypto"
-            ) {
+            let Some(module) =
+                js_bare_import_module_prefix(&string_literal_value(source_node, source))
+            else {
                 return;
-            }
+            };
             let mut cursor = node.walk();
             for specifier in node
                 .named_children(&mut cursor)
@@ -519,7 +520,7 @@ fn collect_js_bare_bindings(root: Node<'_>, source: &[u8]) -> HashMap<String, St
                     .child_by_field_name("alias")
                     .map(|a| node_text(a, source))
                     .unwrap_or_else(|| original.clone());
-                out.insert(local, format!("crypto.{original}"));
+                out.insert(local, format!("{module}.{original}"));
             }
         }
         _ => {}
@@ -527,33 +528,39 @@ fn collect_js_bare_bindings(root: Node<'_>, source: &[u8]) -> HashMap<String, St
     out
 }
 
-/// Does `require(...)`'s sole argument name the Node `crypto` module?
-fn requires_crypto_module(call: Node<'_>, source: &[u8]) -> bool {
-    let Some(args) = call.child_by_field_name("arguments") else {
-        return false;
-    };
+/// Which bare-import-eligible module (if any) does a specifier name? Returns
+/// the key prefix `collect_js_bare_bindings` resolves a local name against.
+fn js_bare_import_module_prefix(specifier: &str) -> Option<&'static str> {
+    match specifier {
+        "crypto" | "node:crypto" => Some("crypto"),
+        "jose" => Some("jose"),
+        _ => None,
+    }
+}
+
+/// Does `require(...)`'s sole argument name a bare-import-eligible module?
+fn js_required_module_prefix(call: Node<'_>, source: &[u8]) -> Option<&'static str> {
+    let args = call.child_by_field_name("arguments")?;
     let mut cursor = args.walk();
-    args.named_children(&mut cursor)
-        .next()
-        .map(|arg| {
-            matches!(
-                string_literal_value(arg, source).as_str(),
-                "crypto" | "node:crypto"
-            )
-        })
-        .unwrap_or(false)
+    let arg = args.named_children(&mut cursor).next()?;
+    js_bare_import_module_prefix(&string_literal_value(arg, source))
 }
 
 /// Walk a JS destructuring `object_pattern`, recording each bound local name
-/// against its original (pre-alias) property name.
-fn add_js_pattern_bindings(pattern: Node<'_>, source: &[u8], out: &mut HashMap<String, String>) {
+/// against its original (pre-alias) property name, keyed to `module`.
+fn add_js_pattern_bindings(
+    pattern: Node<'_>,
+    source: &[u8],
+    module: &str,
+    out: &mut HashMap<String, String>,
+) {
     let mut cursor = pattern.walk();
     for element in pattern.named_children(&mut cursor) {
         match element.kind() {
             // `{ generateKeyPair }` — key and local name are the same token.
             "shorthand_property_identifier_pattern" => {
                 let name = node_text(element, source);
-                out.insert(name.clone(), format!("crypto.{name}"));
+                out.insert(name.clone(), format!("{module}.{name}"));
             }
             // `{ generateKeyPair: generateKeyPair_ }`
             "pair_pattern" => {
@@ -565,7 +572,7 @@ fn add_js_pattern_bindings(pattern: Node<'_>, source: &[u8], out: &mut HashMap<S
                 };
                 let original = node_text(key, source);
                 let local = node_text(value, source);
-                out.insert(local, format!("crypto.{original}"));
+                out.insert(local, format!("{module}.{original}"));
             }
             _ => {}
         }
@@ -2583,6 +2590,7 @@ const JS_CALLEE_APIS: &[(&str, &str)] = &[
     ("crypto.generateKeyPair", "node:crypto.generateKeyPair"),
     ("crypto.generateKeyPairSync", "node:crypto.generateKeyPair"),
     ("crypto.createSign", "node:crypto.createSign"),
+    ("jose.generateKeyPair", "jose.generateKeyPair"),
     ("subtle.generateKey", "webcrypto.subtle.generateKey"),
     ("subtle.sign", "webcrypto.subtle.sign"),
     ("jwt.sign", "jsonwebtoken.jwt.sign"),
@@ -3418,9 +3426,11 @@ fn populate_args(
             "node:crypto.createCipheriv"
             | "node:crypto.createHash"
             | "node:crypto.generateKeyPair"
-            | "node:crypto.createSign",
+            | "node:crypto.createSign"
+            | "jose.generateKeyPair",
         ) => {
-            // First positional arg is the algorithm/type string, e.g. "des-cbc", "md5", "rsa"
+            // First positional arg is the algorithm/type string, e.g. "des-cbc", "md5", "rsa",
+            // or (jose) a JWA identifier like "ML-DSA-65".
             if let Some(s) = nth_arg_string(args_node, 0, source) {
                 out.insert("algo".into(), ArgValue::Str(s));
             }

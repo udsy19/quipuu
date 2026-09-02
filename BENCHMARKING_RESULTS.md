@@ -6976,3 +6976,62 @@ cycles' "not re-taken" notes. `#Y107`/`#Y108` remain open. `OPEN-ASK #ESTIMATORP
 (`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
 
 PRECISION: 97.18%
+
+## Measurement, 2026-09-02 (Track A cycle 227 — `jose` (panva/jose) `generateKeyPair` gains RFC 9964 ML-DSA coverage)
+
+Closed the Backlog's "RFC 9964 (ML-DSA for JOSE/COSE)" entry (`Backlog.md:12149`) on the narrow side
+of the scope choice it flagged: PQC-arm-only, not a whole-library `jose` ruleset. `javascript.toml`
+had zero coverage of the `jose` npm package for any algorithm, classical or PQC — confirmed by
+`grep`, and independently confirmed corpus-relevant: `npm/jose` (panva/jose 6.2.3) is itself in
+corpus B, and its own source (`src/key/generate_key_pair.ts`) and test suite (`tap/`) already handle
+the three IANA-final RFC 9964 identifiers (`ML-DSA-44`/`-65`/`-87`).
+
+**Root cause and fix.** `jose`'s top-level `generateKeyPair(alg, options)` takes the JWA algorithm
+identifier as a bare first positional argument — a different call shape from `node:crypto`'s
+`generateKeyPair(type, options)`, already covered — and is normally reached through a name import
+(`import { generateKeyPair } from 'jose'`), the bare-call path `collect_js_bare_bindings` (`#Y4`)
+resolves. That resolver was hardcoded to the `crypto`/`node:crypto` module in three places
+(`scanner.rs`'s `variable_declarator`, `import_statement`, and `add_js_pattern_bindings` arms), each
+building a `"crypto.<method>"` key unconditionally. Generalised to
+`js_bare_import_module_prefix`/`js_required_module_prefix`, which resolve any recognised specifier
+(`crypto`/`node:crypto` → `"crypto"`, `jose` → `"jose"`) to its prefix, so `import { generateKeyPair }
+from 'jose'` now resolves to `"jose.generateKeyPair"` — a new `JS_CALLEE_APIS` row, its own
+`populate_args` arm (reusing `nth_arg_string` for the `algo` capture, same as `node:crypto`'s), and
+three new `javascript.toml` classify arms (`CRYPTO-1150`–`1152`, `JST-070` extract), one per ML-DSA
+parameter set. A variable `alg` — the shape every corpus call site of `jose.generateKeyPair` actually
+uses, iterating a list — yields no literal capture and no finding, by construction (`nth_arg_string`
+requires a `string`/`string_literal` node kind, the `#Y105` fix).
+
+**Corpus effect: 0 added, 0 removed, 0 reclassified — 1917 both sides**, confirmed with a full
+pre/post dump (`benchmarks/corpus-b-realworld/dump_findings.py`, clones at
+`/opt/cryptoscope/work/corpus-clones`, pre-change binary built in worktree `928843e`, post-change
+binary this cycle's tree; dumps `work/jose1_pre.json` / `work/jose1_post.json`). This is the "real
+gap, zero corpus recall" shape `#Y113`/`#Y114` already established: `npm/jose`'s own `tap/jws.ts`
+calls `generateKeyPair(alg, …)` with `alg` drawn from an array literal (`['ML-DSA-44', 'ML-DSA-65',
+'ML-DSA-87', …]`), not a literal argument at the call site, so the new rule correctly produces no
+finding there — verified by hand-reading `tap/jws.ts:26-52` before shipping, not assumed.
+
+**Precision 97.18% → 97.17%, a re-derivation artifact, not a regression.** `bin/precision.py
+work/jose1_pre.json work/jose1_post.json --write-readme` (no `--added-tp`/`--added-fp`: the row set
+is byte-identical) re-derives stratified-fresh populations as `A=798, B=1119` (sample `A 262/271, B
+355/364`, 635 of 1917 audited) giving 97.174% (95% CI 95.89–98.46, pooled Wilson 97.165%) — the same
+"fresh populations vs. carried constants" drift this file has documented repeatedly (e.g. the C#
+`SHA384.Create()` and pycryptodome `RSA.generate` entries above); re-running on the unmodified
+pre-change dump against itself would reproduce the same 97.17%, independent of this change. README's
+headline, CI, and audited-row count were updated by `--write-readme`; the `of 1917` denominator and
+the extract/classify-arm-count sentence (`135`→`136` extract, `815`→`818` classify) were checked and
+corrected in the same diff — the latter caught by `readme_rule_pack_counts_match_the_rule_packs`.
+
+**Not done, said out loud:** the whole-library `jose` scope (classical JWA algorithms, `SignJWT`,
+`jwtVerify`, `importJWK`) is explicitly not built — the Backlog item flagged this as the wider option
+and this cycle took the narrower one, matching `#Y117`'s and `#Y114`'s existing PQC-arm-only
+precedent. `#Y107`/`#Y108`, `OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2`/`#CORPUSDRIFT`, and the
+standing `needs-human-approval` regulatory queue remain open, none bearing on this change.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --all` clean; `cargo clippy
+--all-targets --workspace -- -D warnings` clean; `cargo test --release --workspace` all passing, 1 new
+(`scans_js_jose_generatekeypair_ml_dsa`, asserting all three ML-DSA arms plus the variable-argument
+no-finding case in one fixture). Both trust-invariant tests
+(`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
+
+PRECISION: 97.17%

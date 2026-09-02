@@ -267,6 +267,55 @@ severity_hint = "auto"
 message = "Ed25519 keypair generated via generateKeyPair('{algo}'). Quantum-vulnerable."
 
 # ============================================================================
+# jose (panva/jose) — generateKeyPair(alg, options)
+# ============================================================================
+# jose's own top-level generateKeyPair takes the JWA algorithm identifier as
+# its first positional argument, not an options object — a different shape
+# from node:crypto's generateKeyPair(type, options) above, so it needs its
+# own extract/api key rather than reusing CRYPTO-320/321/322. Only the three
+# IANA-final ML-DSA identifiers (RFC 9964) are covered; jose's own source
+# only recognises ML-DSA as of this rule's authoring — see RESEARCH.md /
+# Backlog "RFC 9964" entry. A variable `alg` (the common shape when a caller
+# iterates a list of algorithms) yields no literal capture and no finding,
+# by design — see `nth_arg_string`.
+
+[[extract]]
+id = "JST-070"
+language = "javascript"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "generateKeyPair")
+  arguments: (arguments (string) @algo))
+"""
+captures = { fn = "ident", algo = "literal_string" }
+api = "jose.generateKeyPair"
+description = "jose generateKeyPair(alg, options) — asymmetric key generation from a JWA algorithm identifier."
+
+[[classify]]
+id = "CRYPTO-1150"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?ML-DSA-44['\"]?$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — ML-DSA-44, FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1151"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?ML-DSA-65['\"]?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — ML-DSA-65, FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1152"
+when.api = "^jose\\.generateKeyPair$"
+when.args.algo = { regex = "^['\"]?ML-DSA-87['\"]?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "jose generateKeyPair('{algo}') — ML-DSA-87, FIPS 204, quantum-resistant."
+
+# ============================================================================
 # node:crypto — createSign
 # ============================================================================
 
