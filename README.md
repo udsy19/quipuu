@@ -42,7 +42,7 @@ These four invariants are contractual. They are not configuration options. Any c
 
 **P1 — no LLM at runtime.** Detection is purely deterministic: tree-sitter parses your code, TOML rules classify the output. No model call, no network request, no probabilistic black box. The same source file produces the same findings on every machine.
 
-**P2 — no outbound network by default.** The binary opens no sockets unless you pass `--allow-network`, which scopes network access strictly to TLS probes against hosts you explicitly name. The stdio MCP transport uses no socket of any kind.
+**P2 — no outbound network by default.** The binary opens no sockets unless you pass `--allow-network`. On the CLI, that flag is paired with `--net <host>`, scoping network access strictly to TLS probes against hosts you explicitly name. In MCP mode, `--allow-network` is a launch-time switch — once set, the connected client can name any host per `scan_network`/`scan_certs` call for the session's duration. The stdio MCP transport itself uses no socket of any kind.
 
 **P3 — every finding traces to a specific literal.** No "we think you have crypto somewhere." Every finding carries a file path, line number, and the exact code fragment that triggered it. If you cannot find that line in your editor, it is a false positive — file it.
 
