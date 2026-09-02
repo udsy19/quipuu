@@ -4658,6 +4658,56 @@ fn scans_python_hpke_suite_decoy_no_match() {
     );
 }
 
+/// Backlog `#Y125`: `#Y123`'s own anti-decoy fix for HPKE `Suite()` keyed on
+/// the argument's object being the *exact* identifier `KEM`, which missed the
+/// real pyca API when the `KEM` import is aliased or accessed via a
+/// module-qualified dotted path — both ordinary Python idioms, reproduced
+/// live against the release binary before this fix landed.
+#[test]
+fn scans_python_hpke_suite_aliased_import() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("python/hpke_suite_aliased.py"))
+        .expect("scan succeeds");
+
+    assert_eq!(
+        findings.len(),
+        1,
+        "expected 1 finding for Suite(KemEnum.X25519, ...) with KEM imported as KemEnum; got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+    assert_eq!(findings[0].rule_id, "CRYPTO-1171");
+    assert_eq!(findings[0].algorithm_id, "x25519");
+}
+
+/// Backlog `#Y125`, the dotted-access half: `hpke.Suite(hpke.KEM.X25519,
+/// ...)`, the more common style for a module a codebase imports once and
+/// references qualified thereafter.
+#[test]
+fn scans_python_hpke_suite_dotted_access() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("python/hpke_suite_dotted.py"))
+        .expect("scan succeeds");
+
+    assert_eq!(
+        findings.len(),
+        1,
+        "expected 1 finding for hpke.Suite(hpke.KEM.X25519, ...); got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+    assert_eq!(findings[0].rule_id, "CRYPTO-1171");
+    assert_eq!(findings[0].algorithm_id, "x25519");
+}
+
 /// Backlog `#Y74`: liboqs's own official Python binding (`liboqs-python`)
 /// had zero `python.toml` coverage — `oqs.KeyEncapsulation(alg)` /
 /// `oqs.Signature(alg)` construct via the identical `OQS_KEM_new`/

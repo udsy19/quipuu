@@ -11,7 +11,7 @@
 //! classification. Do not read an `[[extract]]` block as describing what the
 //! scanner actually matches — read `match_*_callee` for that.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, OnceLock, RwLock};
 
@@ -619,6 +619,50 @@ fn collect_python_bare_bindings(root: Node<'_>, source: &[u8]) -> HashMap<String
         }
     });
     out
+}
+
+/// Local names an `import_from_statement` binds to `KEM` via `as` — `from
+/// cryptography.hazmat.primitives.hpke import KEM as KemEnum` binds
+/// `KemEnum`. Scoped narrowly to the `Suite(KEM.<member>, ...)` argument
+/// qualifier check (`#Y123`'s rule): `#Y125` found the exact-identifier check
+/// that rule shipped with missed both an aliased `KEM` import and a
+/// module-qualified dotted access (`hpke.KEM.<member>`, handled separately by
+/// `nth_arg_attr_name_if_object` itself). Not tied to a specific module name
+/// — the caller only consults this set while already deciding whether one
+/// specific argument qualifies as `KEM`, so a same-named import from an
+/// unrelated module poses no realistic collision risk.
+fn collect_python_kem_aliases(root: Node<'_>, source: &[u8]) -> HashSet<String> {
+    let mut out = HashSet::new();
+    walk_all(root, &mut |node| {
+        if node.kind() != "import_from_statement" {
+            return;
+        }
+        let mut cursor = node.walk();
+        for name in node.children_by_field_name("name", &mut cursor) {
+            if name.kind() != "aliased_import" {
+                continue;
+            }
+            let (Some(orig), Some(alias)) = (
+                name.child_by_field_name("name"),
+                name.child_by_field_name("alias"),
+            ) else {
+                continue;
+            };
+            if node_text(orig, source) == "KEM" {
+                out.insert(node_text(alias, source));
+            }
+        }
+    });
+    out
+}
+
+/// Walk up to the root of the tree containing `node`.
+fn ancestor_root(node: Node<'_>) -> Node<'_> {
+    let mut n = node;
+    while let Some(p) = n.parent() {
+        n = p;
+    }
+    n
 }
 
 fn push_include_target(node: Node<'_>, source: &[u8], out: &mut Vec<String>) {
@@ -3371,12 +3415,17 @@ fn populate_args(
         }
         (Language::Python, "cryptography.hazmat.hpke.Suite") => {
             // Suite(KEM.X25519, KDF.HKDF_SHA256, AEAD.AES_128_GCM) — only the
-            // kem argument (arg 0) is quantum-relevant. The object must be
-            // literally `KEM`, not just any attribute access: `Suite` alone
-            // is a common enough name that a same-named, unrelated class
-            // taking an unqualified enum-member first argument (e.g.
-            // `Algo.X25519`) would otherwise match too (#Y123 decoy FP).
-            if let Some(kem) = nth_arg_attr_name_if_object(args_node, 0, "KEM", source) {
+            // kem argument (arg 0) is quantum-relevant. The qualifier must
+            // resolve to `KEM` (directly, aliased, or dotted — see
+            // `nth_arg_attr_name_if_object`), not just any attribute access:
+            // `Suite` alone is a common enough name that a same-named,
+            // unrelated class taking an unqualified enum-member first
+            // argument (e.g. `Algo.X25519`) would otherwise match too (#Y123
+            // decoy FP).
+            let kem_aliases = collect_python_kem_aliases(ancestor_root(args_node), source);
+            if let Some(kem) =
+                nth_arg_attr_name_if_object(args_node, 0, "KEM", &kem_aliases, source)
+            {
                 out.insert("kem".into(), ArgValue::Str(kem));
             }
         }
@@ -3983,18 +4032,25 @@ fn nth_arg_attr_name(args: Node<'_>, n: usize, source: &[u8]) -> Option<String> 
     Some(node_text(arg.child_by_field_name("attribute")?, source))
 }
 
-/// Attribute name of a `object.NAME` attribute at argument position `n`,
-/// only when `object`'s own text matches `object_name` exactly. Same shape
-/// as `nth_arg_attr_name` but additionally checks the qualifier, matching
-/// what `PY-083`'s extract query already declares
-/// (`object: (identifier) @kem_mod (#eq? @kem_mod "KEM")`) — narrows a bare
-/// callee-name match like `Suite(...)` against a same-named, unrelated
-/// class whose own constructor happens to take an unqualified enum member
-/// as its first argument (#Y123's decoy false positive).
+/// Attribute name of a `qualifier.NAME` attribute at argument position `n`,
+/// where `qualifier` resolves to `object_name` — narrows a bare callee-name
+/// match like `Suite(...)` against a same-named, unrelated class whose own
+/// constructor happens to take an unqualified enum member as its first
+/// argument (#Y123's decoy false positive). `qualifier` resolves three ways:
+/// a bare identifier matching `object_name` exactly (`PY-083`'s extract query
+/// — `object: (identifier) @kem_mod (#eq? @kem_mod "KEM")`); a bare
+/// identifier aliased to `object_name` via `object_aliases` (an `as`-import,
+/// e.g. `KEM as KemEnum`); or one level of module-qualified dotted access
+/// whose own attribute name is `object_name` (`hpke.KEM.<member>` — the
+/// module's own local name is not checked, matching `#Y123`'s own working
+/// case where the module happens to share the class's name). The last two
+/// close `#Y125`'s two ordinary-idiom gaps in the exact-identifier-only
+/// check this function shipped with.
 fn nth_arg_attr_name_if_object(
     args: Node<'_>,
     n: usize,
     object_name: &str,
+    object_aliases: &HashSet<String>,
     source: &[u8],
 ) -> Option<String> {
     let arg = nth_real_arg(args, n)?;
@@ -4002,7 +4058,17 @@ fn nth_arg_attr_name_if_object(
         return None;
     }
     let object = arg.child_by_field_name("object")?;
-    if object.kind() != "identifier" || node_text(object, source) != object_name {
+    let qualifies = match object.kind() {
+        "identifier" => {
+            let text = node_text(object, source);
+            text == object_name || object_aliases.contains(&text)
+        }
+        "attribute" => object
+            .child_by_field_name("attribute")
+            .is_some_and(|inner| node_text(inner, source) == object_name),
+        _ => false,
+    };
+    if !qualifies {
         return None;
     }
     Some(node_text(arg.child_by_field_name("attribute")?, source))

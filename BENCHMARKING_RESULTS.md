@@ -7621,3 +7621,52 @@ that real code hits it widely. `OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2`
 remain open, none bearing on this cycle.
 
 PRECISION: 97.18%
+
+## Measurement, 2026-09-02 (`#Y125` closed: Python HPKE `Suite()` argument capture now survives a `KEM` import alias and one level of module-qualified dotted access)
+
+`#Y123`'s own anti-decoy fix (`08b0dd5`) required `Suite(...)`'s first argument's object be the
+*exact* identifier `KEM`, which closed the `class Suite` decoy false positive but missed two
+ordinary idioms on the real pyca API: `from ...hpke import KEM as KemEnum; Suite(KemEnum.X25519,
+...)` and `import ...hpke as hpke; hpke.Suite(hpke.KEM.X25519, ...)` — both reproduced live as 0
+findings against the release binary before this fix. `nth_arg_attr_name_if_object`
+(`crates/scan-source/src/scanner.rs`) now accepts a qualifier that resolves to `object_name`
+three ways: the exact identifier (unchanged), an identifier aliased to it via a new
+`collect_python_kem_aliases` scan of `import_from_statement`'s `aliased_import` nodes (scoped to
+this one call site's argument check, not a general import-binding resolver — the wider
+data-flow-tracking case remains out of scope, same restraint `#Y125`'s own filing named), or one
+level of module-qualified dotted access whose own attribute name is `object_name`, matching
+`#Y123`'s own working case where the module happens to share the class's name. Two new fixtures
+(`hpke_suite_aliased.py`, `hpke_suite_dotted.py`) plus two new tests
+(`scans_python_hpke_suite_aliased_import`, `scans_python_hpke_suite_dotted_access`), each asserting
+exactly 1 finding (`CRYPTO-1171`, `x25519`) where the pre-fix binary produced 0.
+
+**Corpus effect: 0 added, 0 removed — 1907 findings both sides**, confirmed with a full pre/post
+corpus dump using the in-repo `benchmarks/corpus-b-realworld/dump_findings.py` against the full
+150-project corpus (149 scanned): pre-change dump `work/y125_pre.json` (1907, commit `86ec087`),
+post-change dump `work/y125_post.json` (1907, this cycle's binary). Zero corpus recall was the
+expected outcome, not a surprise — the backlog filing itself named this as a fixture gap with no
+corpus B project matching either idiom.
+
+**Precision unchanged at 97.18%.** `bin/precision.py work/y125_pre.json work/y125_post.json
+--write-readme`: stratified-fresh 97.177% (95% CI 95.89–98.46), stratified-carried 97.159%, pooled
+Wilson 97.165% (95% CI 95.56–98.20) — all round to the already-published 97.18%. Sample `A 262/271,
+B 355/364`, populations `A=788 B=1119` (re-derived fresh, `#Y41`-safe). As in every zero-delta
+`--write-readme` run, the tool recomputed the audited-findings count from `state/estimator.json`'s
+persisted constants alone (271+364=635) and reverted the headline/comparison-table row from 636 to
+635 — the same `OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` recurrence prior cycles hit,
+corrected back to 636 by hand in this commit rather than left to drift. No rule-pack counts moved —
+this cycle is a matcher-logic fix, not a new classify arm.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy --release
+--all-targets --workspace -- -D warnings`, `cargo test --release --workspace` all clean (163
+`scan_test.rs` cases, two new). Both trust-invariant tests (`test_run_acvp_kats_rejects_code_execution`,
+`test_network_disabled_error`) untouched and pass.
+
+**Not done, said out loud:** `#Y126` (the sibling gap in `#Y124`'s own JarSigner Builder rule —
+misses the variable-assignment shape) was not attempted this cycle. General import-binding or
+data-flow resolution — the only way to close this class of gap for an arbitrary alias depth or an
+unrelated module sharing a class name — remains out of scope, per the filing's own reasoning.
+`OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` and `#CORPUSDRIFT` remain open, none bearing on
+this cycle.
+
+PRECISION: 97.18%
