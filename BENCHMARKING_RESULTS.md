@@ -7270,3 +7270,64 @@ line" — is not touched this cycle. `#Y107`/`#Y108`, `OPEN-ASK #ESTIMATORPERSIS
 open, none bearing on this change.
 
 PRECISION: 97.18%
+
+## Measurement, 2026-09-02 (Track A cycle 233 — `#Y8`'s outstanding arm closed: `javax.crypto.KEM`
+operation-call coverage, `newEncapsulator`/`newDecapsulator`)
+
+**The gap.** `JAV-040` (`java.toml`) already covers `KEM.getInstance(...)`, the construction site.
+The operation-call surface — `kem.newEncapsulator(publicKey)` / `kem.newDecapsulator(privateKey)`,
+the calls that actually perform FIPS 203 encapsulation/decapsulation — had zero coverage, `#Y8`'s
+standing recommendation since 2026-08-30. This cycle's evidence it is real, not hypothetical (Track
+B synthesis, fourteenth same-day pass, `Backlog.md:12699`): BouncyCastle's own TLS module
+(`bcpkix-jdk18on`'s `KEMSpiUtil.java`) calls both at four production call sites, scoring zero
+findings before this change while the `KEM.getInstance` construction a few lines above it was
+already caught.
+
+**What shipped.** A new hand-written matcher, `match_java_kem_encapsulation` (`scanner.rs`), hooked
+into the `method_invocation` dispatch alongside `match_java_set_named_groups` — the receiver is a
+`KEM` variable, not the literal class name `KEM`, so `match_java_method_invocation`'s
+`JAVA_CALLEE_APIS` exact-text lookup structurally cannot see it (the same reason `#Y8`'s design
+needed a matcher, not a lookup-table row). Matched on method name alone, any receiver:
+`newEncapsulator`/`newDecapsulator` are `javax.crypto.KEM`'s own distinctive method names, not the
+generic `encapsulate`/`decapsulate`/`Sign`/`Verify` verbs `OPEN-ASK #SIGNVERIFY` explicitly declined
+to bare-name match (network/tunneling "encapsulate" being the concrete collision risk that ruled
+those out). The algorithm name is unresolvable at this call site — it lives on the `KEM` object
+built at a separate, earlier `getInstance(...)` call, and quipuu does no cross-statement variable
+tracking for any language (`#SIGNVERIFY`, still deferred as unbuilt capability) — so both new
+classify arms (`CRYPTO-1168`/`1169`) degrade to `ml-kem-unattributed`, the exact sentinel and
+reasoning `CRYPTO-236` already uses for `KEM.getInstance()`'s own non-literal-argument case:
+`javax.crypto.KEM` is ML-KEM-only (JEP 496 defines no classical KEM under it), so the family is
+certain even though the parameter set is not. Two new call sites added to the `Pqc.java` fixture
+(`kemEncapsulate`/`kemDecapsulate`, each building a `KEM` then calling the new operation), asserted
+in `scans_java_pqc_keypairgenerator_and_signature_and_kem`.
+
+**Corpus effect: 0 added, 0 removed, 1906 both sides** — confirmed by diffing `work/y8_pre.json`
+(pre-change binary) against `work/y8_post.json` (post-change binary) on `(project, rule_id, file,
+line)` keys, not assumed. Checked directly: `bcprov-jdk18on` (the artifact corpus B actually clones)
+has no `KEMSpiUtil.java` at all — that file lives in the separate `bcpkix-jdk18on` artifact the
+evidence above cites, which is not in the corpus. Same zero-corpus-recall shape as `#Y113`/`#Y114`/
+`#Y117`/cycle 231, predicted in advance by the evidence itself (`Backlog.md:12714-12719` names this
+exact bound).
+
+**Precision 97.18% → 97.18%, unchanged.** `bin/precision.py work/y8_pre.json work/y8_post.json
+--write-readme`: stratified, fresh populations 97.177% (95% CI 95.89–98.46); stratified, carried
+constants 97.159%; pooled Wilson 97.165% (95% CI 95.56–98.20); sample `A 262/271, B 355/364`
+unchanged, populations `A=787 B=1119` unchanged, 635 of 1906 audited. No `--added-tp`/`--added-fp`:
+zero corpus delta, nothing to fold. README already stated 97.18% from the prior cycle; nothing to
+rewrite.
+
+**Held:** `cargo build --release --workspace`, `cargo test --workspace` (all passing, including the
+new `every_classify_rule_targets_an_api_the_extractor_can_emit` reachability check once
+`javax.crypto.KEM.newEncapsulator`/`.newDecapsulator` were registered in `STRUCTURAL_APIS`), `cargo
+fmt --all`, `cargo clippy --all-targets -- -D warnings` clean. Both trust-invariant tests
+(`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
+README's `136 extract blocks and 834 classify arms` sentence (two new `[[extract]]` blocks) and the
+Go-vs-Java classify-arm comparison sentence (Java 237→239) both updated in the same diff, per rule 4.
+
+**Not done, said out loud:** `#Y107`/`#Y108`, `OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2`/
+`#CORPUSDRIFT`, and the standing `needs-human-approval` regulatory queue remain open, none bearing
+on this change. `#SIGNVERIFY`'s broader same-function receiver-type-tracking design remains unbuilt;
+this cycle closed only the narrower, already-permitted bare-name fallback for two distinctively
+named methods, not the general capability.
+
+PRECISION: 97.18%

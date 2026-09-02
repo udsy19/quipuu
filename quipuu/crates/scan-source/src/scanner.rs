@@ -728,6 +728,16 @@ fn walk(
     {
         out.extend(ms);
     }
+    // Java `kem.newEncapsulator(pub)` / `kem.newDecapsulator(priv)` —
+    // javax.crypto.KEM's operation-call surface, `#Y8`'s outstanding arm.
+    // Runs alongside `match_call`'s `method_invocation` handling, same
+    // reasoning as `match_java_set_named_groups` above.
+    if language == Language::Java
+        && kind == "method_invocation"
+        && let Some(m) = match_java_kem_encapsulation(node, source)
+    {
+        out.push(m);
+    }
     // OpenSSL `SSL_CTX_set1_groups_list(ctx, "P-521:X25519MLKEM768")` /
     // `SSL_set1_groups_list(ssl, "...")` / `SSL_CONF_cmd(ctx, "Groups",
     // "...")` — the colon-separated TLS key-exchange group preference
@@ -1190,6 +1200,55 @@ fn match_bc_named_groups(call: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch>>
     }
 }
 
+/// Match Java `kem.newEncapsulator(publicKey)` / `kem.newDecapsulator(privateKey)`
+/// — `javax.crypto.KEM`'s operation-call surface, backlog `#Y8`'s outstanding
+/// arm. `JAV-040`'s `KEM.getInstance(...)` extract rule (above) only sees the
+/// construction site; the receiver here is a `KEM` variable, so
+/// `match_java_method_invocation`'s `JAVA_CALLEE_APIS` lookup — keyed on
+/// exact `object.method` text — never fires (it would need the receiver text
+/// to literally be `"KEM"`, never true for an instance-method call on a local
+/// variable). Evidence this gap is real, not hypothetical: BouncyCastle's own
+/// TLS module (`bcpkix-jdk18on`'s `KEMSpiUtil.java`) calls both at production
+/// call sites and scored zero findings before this rule existed.
+///
+/// Matched on method name alone, any receiver — the same "method name alone
+/// is specific enough" reasoning `match_java_set_named_groups` above already
+/// relies on. `newEncapsulator`/`newDecapsulator` are `javax.crypto.KEM`'s
+/// own distinctive method names; unlike the generic `encapsulate`/
+/// `decapsulate`/`Sign`/`Verify` verbs `OPEN-ASK #SIGNVERIFY` explicitly
+/// declined to bare-name match, these two do not collide with unrelated
+/// vocabulary (network/tunneling "encapsulate" being the concrete risk that
+/// ruled out the bare verb form).
+///
+/// The algorithm name itself is unresolvable here — it lives on the `KEM`
+/// object built at a separate, earlier `getInstance(...)` call, and quipuu
+/// does no cross-statement variable tracking for any language (`OPEN-ASK
+/// #SIGNVERIFY`, deferred as unbuilt capability) — so this degrades to the
+/// `ml-kem-unattributed` sentinel java.toml's `CRYPTO-236` already uses for
+/// `KEM.getInstance()`'s own non-literal-argument case, on the same
+/// reasoning: `javax.crypto.KEM` is ML-KEM-only (JEP 496 defines no
+/// classical KEM under it), so the family is certain even though the
+/// parameter set is not.
+fn match_java_kem_encapsulation(call: Node<'_>, source: &[u8]) -> Option<RawMatch> {
+    let name = call.child_by_field_name("name")?;
+    let method = node_text(name, source);
+    let api = match method.as_str() {
+        "newEncapsulator" => "javax.crypto.KEM.newEncapsulator",
+        "newDecapsulator" => "javax.crypto.KEM.newDecapsulator",
+        _ => return None,
+    };
+    let start = call.start_position();
+    Some(RawMatch {
+        api: api.into(),
+        args: HashMap::new(),
+        line: (start.row + 1) as u32,
+        offset: call.start_byte() as u32,
+        symbol: method,
+        snippet: node_text(call, source),
+        site_context: quipuu_core::SiteContext::Call,
+    })
+}
+
 /// Match OpenSSL `SSL_CTX_set1_groups_list(ctx, "P-521:X25519MLKEM768")` /
 /// `SSL_set1_groups_list(ssl, "...")` / `SSL_CONF_cmd(ctx, "Groups", "...")`
 /// — C's counterpart to `match_java_set_property_named_groups` above, both
@@ -1635,6 +1694,9 @@ const STRUCTURAL_APIS: &[&str] = &[
     // match_go_oqs_construction
     "liboqs-go/oqs.KeyEncapsulation",
     "liboqs-go/oqs.Signature",
+    // match_java_kem_encapsulation
+    "javax.crypto.KEM.newEncapsulator",
+    "javax.crypto.KEM.newDecapsulator",
 ];
 
 /// The apis reached through `match_java_field_access` — a bare enum-constant

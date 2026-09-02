@@ -28,6 +28,20 @@ public class Pqc {
         KEM kem = KEM.getInstance("ML-KEM-768");
     }
 
+    // JAV-041 / CRYPTO-1168 — ML-KEM encapsulator operation (parameter set
+    // not traceable to this call site; see java.toml's comment above JAV-041)
+    public static void kemEncapsulate(java.security.PublicKey pub) throws Exception {
+        KEM kem = KEM.getInstance("ML-KEM-768");
+        KEM.Encapsulator enc = kem.newEncapsulator(pub);
+    }
+
+    // JAV-042 / CRYPTO-1169 — ML-KEM decapsulator operation (parameter set
+    // not traceable to this call site; see java.toml's comment above JAV-042)
+    public static void kemDecapsulate(java.security.PrivateKey priv) throws Exception {
+        KEM kem = KEM.getInstance("ML-KEM-768");
+        KEM.Decapsulator dec = kem.newDecapsulator(priv);
+    }
+
     // JAV-010 / CRYPTO-770 — SLH-DSA-SHA2-128S keypair generation (BouncyCastle)
     public static void slhDsaKeypair() throws Exception {
         KeyPairGenerator g = KeyPairGenerator.getInstance("SLH-DSA-SHA2-128S", "BC");

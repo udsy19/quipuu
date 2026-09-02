@@ -825,6 +825,64 @@ algorithm_id = "ml-kem-unattributed"
 severity_hint = "auto"
 message = "KEM.getInstance() with a non-literal algorithm argument — FIPS 203, quantum-resistant, but the parameter set is not statically knowable at this call site."
 
+# ----------------------------------------------------------------------------
+# javax.crypto.KEM.newEncapsulator / .newDecapsulator — the operation-call
+# surface JAV-040 above does not cover (backlog #Y8's outstanding arm).
+# Evidence this is real, not hypothetical: BouncyCastle's own TLS module
+# (bcpkix-jdk18on's KEMSpiUtil.java) calls both at production call sites and
+# scored zero findings before this rule existed, while the construction call
+# a few lines above it was already caught by JAV-040.
+#
+# The algorithm name lives on the KEM object built earlier via
+# KEM.getInstance(...), not on this call, and quipuu does no cross-statement
+# variable tracking for any language (OPEN-ASK #SIGNVERIFY, deferred as
+# unbuilt capability) — so this cannot resolve the parameter set and does not
+# try to. Matched on method name alone, any receiver: unlike Sign/Verify
+# (rejected as too generic for bare-name matching under #SIGNVERIFY),
+# newEncapsulator/newDecapsulator are javax.crypto.KEM's own distinctive
+# method names — the same "method name alone is specific enough" reasoning
+# JAV-100's setNamedGroups rule above already relies on. Same sentinel and
+# reasoning as CRYPTO-236 immediately above: javax.crypto.KEM is ML-KEM-only
+# (JEP 496 defines no classical KEM under it), so ml-kem-unattributed states
+# the family with certainty even though the parameter set is unknown.
+# ----------------------------------------------------------------------------
+
+[[extract]]
+id = "JAV-041"
+language = "java"
+query = """
+(method_invocation
+  name: (identifier) @fn (#eq? @fn "newEncapsulator"))
+"""
+captures = { fn = "ident" }
+api = "javax.crypto.KEM.newEncapsulator"
+description = "Java KEM.newEncapsulator(publicKey) — FIPS 203 encapsulator construction; the KEM's algorithm was set at a separate getInstance() call this rule does not trace."
+
+[[classify]]
+id = "CRYPTO-1168"
+when.api = "^javax\\.crypto\\.KEM\\.newEncapsulator$"
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "KEM.newEncapsulator(publicKey) — FIPS 203 key encapsulation operation. The KEM object's algorithm was set at a separate KEM.getInstance(...) call this rule does not trace across statements; javax.crypto.KEM is ML-KEM-only (JEP 496), so the family is certain even though the parameter set is not."
+
+[[extract]]
+id = "JAV-042"
+language = "java"
+query = """
+(method_invocation
+  name: (identifier) @fn (#eq? @fn "newDecapsulator"))
+"""
+captures = { fn = "ident" }
+api = "javax.crypto.KEM.newDecapsulator"
+description = "Java KEM.newDecapsulator(privateKey) — FIPS 203 decapsulator construction; the KEM's algorithm was set at a separate getInstance() call this rule does not trace."
+
+[[classify]]
+id = "CRYPTO-1169"
+when.api = "^javax\\.crypto\\.KEM\\.newDecapsulator$"
+algorithm_id = "ml-kem-unattributed"
+severity_hint = "auto"
+message = "KEM.newDecapsulator(privateKey) — FIPS 203 key decapsulation operation. The KEM object's algorithm was set at a separate KEM.getInstance(...) call this rule does not trace across statements; javax.crypto.KEM is ML-KEM-only (JEP 496), so the family is certain even though the parameter set is not."
+
 # ============================================================================
 # java.security.MessageDigest.getInstance
 # ============================================================================
