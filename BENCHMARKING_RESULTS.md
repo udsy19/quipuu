@@ -1,8 +1,8 @@
 # quipuu — 150-project corpus benchmark
 
 Sections are appended in date order. **The current run is the last dated section**
-(*A JOSE name compared is not a JOSE name used — 2026-08-28*); everything above it is the
-record of an earlier phase and is kept as history, not as a current claim.
+(*RFC 10024 citation swap re-measured, 0 added/removed — 2026-09-02*); everything above it is
+the record of an earlier phase and is kept as history, not as a current claim.
 
 ---
 
@@ -7399,5 +7399,42 @@ probes are one idiomatic call per line by construction — so this fix is corpus
 recall-probe-verified; a probe update is future work, not attempted here. `#Y107`/`#Y108`,
 `OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2`/`#CORPUSDRIFT`, and the standing
 `needs-human-approval` regulatory queue remain open, none bearing on this change.
+
+PRECISION: 97.18%
+
+## Measurement, 2026-09-02 (RFC 10024 citation swap re-measured, 0 added/removed)
+
+**Why this run happened.** `algorithm-table.toml`'s `x25519-mlkem768` row and `rules/go.toml`'s
+`X25519Kyber768Draft00` arm both had their `notes`/`message` string literals edited (the
+draft-ietf-tls-ecdhe-mlkem citation swapped for its published successor, RFC 10024 — see
+`knowledge/11-decisions/verify-resolution.md`). `gate_precision` treats any diff touching
+`crates/core/data/**` as a detection change regardless of which field moved, and correctly
+refused to pass with no measurement attached. Neither field feeds `when.api`/`when.args`
+matching or `finding_key` (`project, rule_id, file, line, algorithm_id, severity`), so no finding
+should appear, disappear, or reclassify — this run exists to confirm that rather than assert it.
+
+**Pre/post dumps.** Pre binary built from `HEAD` at `b15faaf` (the commit immediately before the
+notes/message edit) in a worktree; post binary built from the current tree (`b15faaf` +
+`228b1c5` README-denominator resync + `ace1163` RFC-citation swap). Both dumped with the in-repo
+`benchmarks/corpus-b-realworld/dump_findings.py` against the full 150-project corpus (149
+scanned, 1 `unscannable`): `work/y100_pre.json` and `work/y100_post.json`, **1907 findings each**.
+
+**`bin/precision.py work/y100_pre.json work/y100_post.json`: 0 added, 0 removed** — the two dumps
+are identical finding sets, confirming the citation swap is detection-neutral as expected.
+Stratified-fresh 97.177% (95% CI 95.89–98.46), pooled Wilson 97.165% (95% CI 95.56–98.20), both
+round to the already-published **97.18%** — no regression, no change. Sample `A 262/271, B
+355/364`, populations `A=788 B=1119` (re-derived fresh, `#Y41`-safe).
+
+**README not rewritten this run.** `--write-readme` was deliberately **not** passed: with 0 added
+findings, it would recompute the audited-findings count from `state/estimator.json`'s persisted
+`a_tp`/`b_tp` alone (271+364=635), reverting the headline and comparison-table row from **636**
+back to 635 — undoing `#Y119`'s real, evidenced +1 TP fold (`b15faaf`, confirmed by its own
+pre/post dump) that `state/estimator.json` was never advanced to carry (the standing
+`OPEN-ASK #ESTIMATORPERSIST`/`#CORPUSDRIFT` gap this section does not attempt to close). The
+README already states 97.18%/636/1907 throughout; nothing here disagrees with it.
+
+**Held:** finding count 1907↔1907, no detection drift. Not re-run this section: build/test/fmt/
+clippy (unchanged since `b15faaf`'s own green run) and the full `scan_corpus.py` wall-clock
+pass (no code path changed, only string literals).
 
 PRECISION: 97.18%
