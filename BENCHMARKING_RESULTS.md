@@ -7215,3 +7215,58 @@ built — not corroborated against any real call site in this corpus, per rule 5
 `needs-human-approval` regulatory queue remain open, none bearing on this change.
 
 PRECISION: 97.17%
+
+## Measurement, 2026-09-02 (Track A cycle 232 — jsonwebtoken/PyJWT calls wrapped in a
+test-required-failure assertion are suppressed)
+
+A prior cycle started this exact change, then was killed mid-turn by yielding on a backgrounded
+corpus dump — the process termination that kills a `claude -p` turn kills every job it started in
+the background with it, so the dump died uncounted and the cycle produced nothing recoverable
+except a `parked/` branch. This cycle recovered that branch (`parked/20260902T103201-bg-yield`,
+commit `bf94885`), cherry-picked it clean onto `main`, ran `cargo fmt --all` (six lines of comment
+rewrap, no logic change), and re-ran the corpus measurement itself in the foreground rather than
+trusting the parked commit's own claims.
+
+**The shape being closed** is the first of the two § 6 of `PRECISION_AUDIT_V4.md` named as still
+open: `jsonwebtoken`'s own test suite calls `jwt.sign(...)` inside `expect(() => ...).to.throw(...)`
+/ `.toThrow(...)` (chai / jest), and PyJWT's calls `jwt.encode(...)` inside `with pytest.raises(...):`
+/ `with self.assertRaises(...):` — both wrap a crypto call the test requires to **fail**, the JS/Python
+spelling of the C/C++ `ExpectNull` (fail-required, low-signal) vs `ExpectNotNull` (success-required,
+kept) split `#Y29` already drew for that pair of languages. A new `is_call_asserted_to_fail` in
+`scanner.rs` walks up from the call node (not from an argument, since neither wrapper shape puts the
+crypto call inside the wrapper's own argument list) looking for either construct within 8 frames, and
+routes a match to `SiteContext::TestAssertion` — the same low-signal bucket `classify_site_context`
+already uses for the sibling shapes, reused rather than forked. Every affected rule in `javascript.toml`
+(`CRYPTO-360..369`, `CRYPTO-378..382`) and `python.toml` (`CRYPTO-160..163`) gained
+`when.site_context = ["Call"]` so a caller can still opt back into the suppressed context per rule,
+matching how the C/C++ arms are gated. Two fixtures
+(`tests/fixtures/{javascript,python}/jwt_{sign,encode}_test_assertion.js/py`) each carry one
+suppressed-per-wrapper-spelling case plus one unwrapped real positive that must still fire, and two new
+`scan_test.rs` cases assert exactly one finding survives each fixture.
+
+**Corpus effect: 11 removed, 0 added, 0 reclassified**, full dump on the current corpus
+(`benchmarks/corpus-b-realworld/dump_findings.py`, clones at `/opt/cryptoscope/work/corpus-clones`,
+pre-change dump `work/y120_post.json` — the 1917-finding dump the README's standing 97.17% figure was
+already sampled from — against this cycle's own `work/y119_post.json`, 1906 findings). All 11 removed
+sites are `jsonwebtoken`/`pyjwt` test-file lines matching the shape above (`CRYPTO-360`/`361`/`364`/
+`382` in `npm:jsonwebtoken`, `CRYPTO-161`/`163` in `pypi:pyjwt`) and none were in the audited 635-row
+sample, so no row changes verdict.
+
+**Precision 97.17% → 97.18%.** `bin/precision.py work/y120_post.json work/y119_post.json
+--write-readme`: stratified, fresh populations 97.177% (95% CI 95.89–98.46); stratified, carried
+constants 97.159%; pooled Wilson 97.165% (95% CI 95.56–98.20); sample `A 262/271, B 355/364`
+unchanged (confirming none of the 11 removed rows were sampled), populations `A=787 B=1119` (both
+fall as the removed rows leave the base), 635 of **1906** audited. No `--added-tp`/`--added-fp`: this
+cycle only removed unsampled findings, adding nothing to either stratum's audited count. README
+headline, comparison-table row, and denominator (1917 → 1906) all updated in the same diff.
+
+**Held:** `cargo build --release --workspace`, `cargo test --workspace` (all passing), `cargo fmt
+--all`, `cargo clippy --all-targets -- -D warnings` clean. Both trust-invariant tests
+(`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
+
+**Not done, said out loud:** the second § 6 shape — "an `algorithm_id` that contradicts its own
+line" — is not touched this cycle. `#Y107`/`#Y108`, `OPEN-ASK #ESTIMATORPERSIST`/
+`#ESTIMATORPERSIST2`/`#CORPUSDRIFT`, and the standing `needs-human-approval` regulatory queue remain
+open, none bearing on this change.
+
+PRECISION: 97.18%
