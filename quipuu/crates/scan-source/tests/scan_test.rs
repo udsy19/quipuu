@@ -664,12 +664,14 @@ fn scans_java_bouncycastle_composite_kem_keygenerator() {
     );
 }
 
-/// Backlog `#Y124`: JDK 26's `jarsigner` API (JDK-8371079, RFC 9882) for
-/// ML-DSA-signed JARs. `JarSignerBuilder.java` also carries a classical
-/// `digestAlgorithm("SHA-256")`-only chain (must not classify as PQC) and a
+/// Backlog `#Y124`/`#Y126`: JDK 26's `jarsigner` API (JDK-8371079, RFC 9882)
+/// for ML-DSA-signed JARs. `JarSignerBuilder.java` also carries a classical
+/// `digestAlgorithm("SHA-256")`-only chain (must not classify as PQC), a
 /// same-named `signatureAlgorithm(...)` setter on an unrelated builder that
-/// is not a `new JarSigner.Builder(...)` chain (must not fire at all) —
-/// asserted below via the exact finding count, not just presence.
+/// is not a `new JarSigner.Builder(...)` chain (must not fire at all), and a
+/// builder assigned to a local variable before its setter is called instead
+/// of one fluent chain (`#Y126`, must still fire) — asserted below via the
+/// exact finding count, not just presence.
 #[test]
 fn scans_java_jarsigner_builder_signature_algorithm() {
     let b = load_builtins().unwrap();
@@ -682,6 +684,7 @@ fn scans_java_jarsigner_builder_signature_algorithm() {
         ("CRYPTO-1179", "ml-dsa-44"),
         ("CRYPTO-1180", "ml-dsa-65"),
         ("CRYPTO-1181", "ml-dsa-87"),
+        ("CRYPTO-1180", "ml-dsa-65"),
     ];
     for (rule_id, algorithm_id) in want {
         assert!(
@@ -697,9 +700,10 @@ fn scans_java_jarsigner_builder_signature_algorithm() {
     }
     assert_eq!(
         findings.len(),
-        3,
+        4,
         "digestAlgorithm(\"SHA-256\") and the unrelated builder's same-named \
-         signatureAlgorithm(...) must not classify; findings: {:#?}",
+         signatureAlgorithm(...) must not classify, and the variable-assignment \
+         shape (#Y126) must classify same as the fluent chain; findings: {:#?}",
         findings
             .iter()
             .map(|f| (&f.rule_id, &f.algorithm_id))

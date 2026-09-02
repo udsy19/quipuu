@@ -7670,3 +7670,63 @@ unrelated module sharing a class name — remains out of scope, per the filing's
 this cycle.
 
 PRECISION: 97.18%
+
+## Measurement, 2026-09-02 (`#Y126` closed: JarSigner.Builder's variable-assignment idiom now matches, not just the fluent chain)
+
+`#Y124`'s own `match_java_jarsigner_signature_algorithm` walked `.signatureAlgorithm(...)`'s
+receiver chain back to its root and required the terminal node be an `object_creation_expression`
+naming `JarSigner.Builder` — any other terminal node kind, in particular a plain `identifier` (a
+local variable), hit the final `_ => return None` arm. Assigning the builder to a local variable
+before calling its setters — `JarSigner.Builder b = new JarSigner.Builder(entry); b.signatureAlgorithm("ML-DSA-65");
+JarSigner signer = b.build();` — is at least as ordinary a Java idiom as one unbroken fluent chain,
+arguably the more idiomatic one when a builder needs conditional configuration across statements.
+Reproduced live against the pre-fix release binary: 0 findings on the variable-assignment shape,
+1 on the identical chain shape.
+
+New `resolve_java_local_variable_type` helper (`scanner.rs`) does a one-block lookup, not general
+data flow: from the receiver identifier, walk up to the nearest enclosing `block` and scan its
+`local_variable_declaration` children for a declarator with that name, returning the declared
+type text. It does not check that the declaration precedes the use and does not cross block or
+method boundaries — enough for the idiom this closes, not a general import/data-flow resolver
+(the same scope restraint `#Y125`'s own fix stated). The receiver-chain walk now breaks out with
+`is_jarsigner_builder: bool` instead of unconditionally requiring `object_creation_expression`,
+checking the identifier case via the new helper when the chain terminates in a plain variable
+read. `#Y124`'s existing decoy case (an unrelated builder with the same setter name) is untouched
+by this change — it terminates in an `object_creation_expression` naming a different type, which
+still returns `false`, not `None`, so it still doesn't fire.
+
+New fixture case (`signVariableAssignment`, `JarSignerBuilder.java`) exercises the exact
+variable-assignment shape from the filing; `scans_java_jarsigner_builder_signature_algorithm`'s
+expected count moved 3 → 4, asserting the fourth finding by exact rule/algorithm id
+(`CRYPTO-1180`, `ml-dsa-65`) alongside the existing three.
+
+**Corpus effect: 0 added, 0 removed — 1907 findings both sides**, confirmed with a full pre/post
+corpus dump using the in-repo `benchmarks/corpus-b-realworld/dump_findings.py` against the full
+150-project corpus (149 scanned): pre-change dump `work/y126_pre.json` (1907, commit `c1d2260`),
+post-change dump `work/y126_post.json` (1907, this cycle's binary, built in a worktree at HEAD for
+the pre-change side). Zero corpus recall was the expected outcome per the filing's own "weaker
+incidence evidence" note — `#Y124`'s rule is minutes old at filing time and had never matched
+anything in the wild; this closes a fixture gap in a rule with 0/0 corpus recall either way.
+
+**Precision unchanged at 97.18%.** `bin/precision.py work/y126_pre.json work/y126_post.json
+--write-readme`: stratified-fresh 97.177% (95% CI 95.89–98.46), stratified-carried 97.159%, pooled
+Wilson 97.165% (95% CI 95.56–98.20) — all round to the already-published 97.18%. Sample
+`A 262/271, B 355/364`, populations `A=788 B=1119` (re-derived fresh, `#Y41`-safe). Same
+`OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` recurrence as every zero-delta `--write-readme`
+run: the tool recomputed the audited-findings count from `state/estimator.json`'s persisted
+constants alone (271+364=635) and dipped the headline/comparison-table row from 636 to 635;
+corrected back to 636 by hand in this commit, which restored README to byte-identical with its
+pre-change state since the published figure did not move.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy --release
+--all-targets --workspace -- -D warnings`, `cargo test --release --workspace` all clean (163
+`scan_test.rs` cases, no new `#[test]` fn — an existing test's fixture and assertion were extended).
+Both trust-invariant tests (`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`)
+untouched and pass.
+
+**Not done, said out loud:** general import-binding or cross-block data-flow resolution — the only
+way to close this class of gap for a variable declared in an outer block or reassigned across
+methods — remains out of scope, same restraint `#Y125`'s own fix stated. `OPEN-ASK
+#ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` and `#CORPUSDRIFT` remain open, none bearing on this cycle.
+
+PRECISION: 97.18%

@@ -34,4 +34,14 @@ class JarSignerBuilder {
         // identical.
         NimbusJwtDecoder.withPublicKey(null).signatureAlgorithm("ML-DSA-65").build();
     }
+
+    // Backlog #Y126: the builder assigned to a local variable before its
+    // setters are called, rather than one unbroken fluent chain — at least
+    // as ordinary an idiom as the chain, e.g. when a builder needs
+    // conditional configuration across separate statements.
+    void signVariableAssignment(KeyStore.PrivateKeyEntry entry) throws Exception {
+        JarSigner.Builder b = new JarSigner.Builder(entry);
+        b.signatureAlgorithm("ML-DSA-65");
+        JarSigner signer = b.build();
+    }
 }

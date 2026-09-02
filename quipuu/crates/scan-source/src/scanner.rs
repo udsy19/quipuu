@@ -1318,7 +1318,10 @@ fn match_java_kem_encapsulation(call: Node<'_>, source: &[u8]) -> Option<RawMatc
 /// unrelated builder already in the benchmark corpus (Spring Security's
 /// `NimbusJwtDecoder.withPublicKey(...).signatureAlgorithm(SignatureAlgorithm.ES256)`),
 /// so the receiver chain is walked back to its root and required to be an
-/// actual `new JarSigner.Builder(...)` before firing.
+/// actual `new JarSigner.Builder(...)` before firing — or, per `#Y126`, a
+/// plain identifier whose nearest enclosing block declares it with type
+/// `JarSigner.Builder`, the equally ordinary idiom of assigning the builder
+/// to a local variable before configuring it across separate statements.
 fn match_java_jarsigner_signature_algorithm(call: Node<'_>, source: &[u8]) -> Option<RawMatch> {
     let name = call.child_by_field_name("name")?;
     if node_text(name, source) != "signatureAlgorithm" {
@@ -1328,15 +1331,21 @@ fn match_java_jarsigner_signature_algorithm(call: Node<'_>, source: &[u8]) -> Op
     let algo = nth_arg_string(args, 0, source)?;
 
     let mut root = call.child_by_field_name("object")?;
-    loop {
+    let is_jarsigner_builder = loop {
         match root.kind() {
             "method_invocation" => root = root.child_by_field_name("object")?,
-            "object_creation_expression" => break,
+            "object_creation_expression" => {
+                let type_node = root.child_by_field_name("type")?;
+                break node_text(type_node, source) == "JarSigner.Builder";
+            }
+            "identifier" => {
+                break resolve_java_local_variable_type(root, source).as_deref()
+                    == Some("JarSigner.Builder");
+            }
             _ => return None,
         }
-    }
-    let type_node = root.child_by_field_name("type")?;
-    if node_text(type_node, source) != "JarSigner.Builder" {
+    };
+    if !is_jarsigner_builder {
         return None;
     }
 
@@ -1352,6 +1361,44 @@ fn match_java_jarsigner_signature_algorithm(call: Node<'_>, source: &[u8]) -> Op
         snippet: node_text(call, source),
         site_context: quipuu_core::SiteContext::Call,
     })
+}
+
+/// Resolve a Java local variable's declared type by walking up from a use
+/// site to the nearest enclosing `block` and scanning its
+/// `local_variable_declaration` children for a declarator with this name.
+///
+/// One-block lookup, not general data flow: it does not check that the
+/// declaration precedes the use, and it does not follow the identifier
+/// across nested blocks or into an enclosing method's parameters. That is
+/// enough for the idiom this exists for — `JarSigner.Builder b = new
+/// JarSigner.Builder(entry); b.signatureAlgorithm(...);` — where the
+/// declaration and the use share one block, per `#Y126`.
+fn resolve_java_local_variable_type(identifier: Node<'_>, source: &[u8]) -> Option<String> {
+    let name = node_text(identifier, source);
+    let mut block = identifier.parent();
+    while let Some(b) = block {
+        if b.kind() == "block" {
+            let mut cursor = b.walk();
+            for decl in b
+                .children(&mut cursor)
+                .filter(|c| c.kind() == "local_variable_declaration")
+            {
+                let Some(type_node) = decl.child_by_field_name("type") else {
+                    continue;
+                };
+                let mut dc = decl.walk();
+                let matches_name = decl.children_by_field_name("declarator", &mut dc).any(|d| {
+                    d.child_by_field_name("name")
+                        .is_some_and(|n| node_text(n, source) == name)
+                });
+                if matches_name {
+                    return Some(node_text(type_node, source));
+                }
+            }
+        }
+        block = b.parent();
+    }
+    None
 }
 
 /// Match OpenSSL `SSL_CTX_set1_groups_list(ctx, "P-521:X25519MLKEM768")` /
