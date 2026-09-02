@@ -7475,3 +7475,40 @@ open, none bearing on this cycle — but this cycle is a second data point that 
 0-delta path silently reverts a real prior TP fold, which strengthens the case for resolving them.
 
 PRECISION: 97.18%
+
+## Measurement, 2026-09-02 (`#Y123` closed: Python `pyca/cryptography` HPKE `Suite()` gains coverage)
+
+`python.toml` had no coverage for pyca/cryptography's `hpke.Suite(kem, kdf, aead)` constructor —
+the KEM argument names the ciphersuite by a `KEM.<member>` attribute, verified against pyca's own
+`.pyi` stub and test suite. Eight new classify arms reuse existing `algorithm_id`s; `MLKEM768_X25519`
+is attributed to the X-Wing combiner (matching the existing x-wing algorithm-table row's own note),
+`MLKEM1024_P384` by its PQ component only (a related but distinct combiner with no dedicated row).
+The scanner.rs callee-table entry and arg-capture arm are new — the TOML extract block alone is
+documentation in this codebase; matching happens in the hand-written walker.
+
+**Corpus effect: 0 added, 0 removed — 1907 findings both sides**, confirmed with a full pre/post
+corpus dump using the in-repo `benchmarks/corpus-b-realworld/dump_findings.py` against the full
+150-project corpus (149 scanned). Pre-change dump `work/y122_post.json` (1907, matching the
+currently-published figure, commit `8ebef79`); post-change dump `work/y123_post.json` (1907, this
+cycle's binary, commit `76682cb`). Zero corpus recall was the expected outcome, not a surprise: no
+project in corpus B calls pyca/cryptography's `hpke.Suite()`.
+
+**Precision unchanged at 97.18%.** `bin/precision.py work/y122_post.json work/y123_post.json
+--write-readme`: stratified-fresh 97.177% (95% CI 95.89–98.46), stratified-carried 97.159%, pooled
+Wilson 97.165% (95% CI 95.56–98.20) — all round to the already-published 97.18%. Sample `A 262/271,
+B 355/364`, populations `A=788 B=1119` (re-derived fresh, `#Y41`-safe). As in the two entries above,
+`--write-readme`'s 0-delta path recomputed the audited-findings count from `state/estimator.json`'s
+persisted constants alone (271+364=635) and reverted the headline/comparison-table row from 636 to
+635 — the same `OPEN-ASK #ESTIMATORPERSIST`/`#CORPUSDRIFT` recurrence, corrected back to 636 by hand
+in the same commit rather than left to drift.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy --release
+--all-targets --workspace -- -D warnings`, `cargo test --release --workspace` all clean. Both
+trust-invariant tests (`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`)
+untouched and pass.
+
+**Not done, said out loud:** `OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2`/`#CORPUSDRIFT` remain
+open, none bearing on this cycle — a third data point that `--write-readme`'s 0-delta path silently
+reverts a real prior TP fold.
+
+PRECISION: 97.18%
