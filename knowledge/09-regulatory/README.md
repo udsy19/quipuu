@@ -1,6 +1,6 @@
 # Post-Quantum Cryptography Regulatory Landscape
 
-> Research date: June 2026. Primary sources only. Where no hard deadline was confirmed from a primary source, this file says so explicitly — no deadlines are invented.
+> Research date: June 2026, with items 23–24 and the BSI TR-02102 update in §14 added September 2026. Primary sources only. Where no hard deadline was confirmed from a primary source, this file says so explicitly — no deadlines are invented.
 
 ---
 
@@ -323,7 +323,9 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Joint EU statement:** BSI, ANSSI, and 17 other European national cybersecurity authorities published a joint statement in November 2024 calling for "active transition of the most sensitive applications to quantum-resistant methods by **2030 at the latest**."
 
-**Hard deadline:** No binding German law mandating PQC adoption for private sector. BSI TR guidelines are mandatory for German federal IT systems; the 2030 target is from the joint EU statement.
+**BSI's own sunset schedule (press release, February 11, 2026, restating TR-02102-1 v2026-01):** classical asymmetric encryption should no longer be used alone after **end-2031** (standard protection) or **end-2030** (high-protection applications); classical digital signatures, after **end-2035**. These are BSI's own dates for its own guideline, more specific than the November 2024 joint EU statement above, which remains the only binding-adjacent EU-wide reference point.
+
+**Hard deadline:** No binding German law mandating PQC adoption for private sector. BSI TR guidelines are mandatory for German federal IT systems; the 2030 target is from the joint EU statement, refined by BSI's own end-2030/end-2031/end-2035 schedule above.
 
 **Implication for quipuu:** BSI TR-02102 is the most algorithmically specific European PQC guidance — quipuu findings should map to BSI parameter requirements (Category 3 minimum), not just NIST generic levels.
 
@@ -497,12 +499,49 @@ rather than quoting it verbatim.
 
 ---
 
+### 23. EO 14412 + OMB M-26-15 — Execution of the Migration to Post-Quantum Cryptography
+
+**Issuing body:** Executive Office of the President (EO 14412, signed June 22, 2026) and OMB (M-26-15, issued June 24, 2026).
+**Primary source:** https://www.whitehouse.gov/wp-content/uploads/2026/06/M-26-15-Execution-of-the-Migration-to-Post-Quantum-Cryptography.pdf
+
+**Scope:** Federal Civilian Executive Branch (FCEB) agencies — the successor action to OMB M-23-02 (§1, above), not a replacement for it.
+
+**Exact deadlines:**
+- **October 22, 2026** (120 days after the June 24, 2026 memorandum) — agencies must submit a PQC migration plan and appoint a PQC lead.
+- **Five-phase migration timeline:**
+
+  | Phase | Years | What happens |
+  |---|---|---|
+  | 1 | 2026–2027 | Strategy, inventory of High Value Assets / high-impact systems, governance |
+  | 2 | 2027–2028 | Pilot migrations, plan refinement |
+  | 3 | 2028–2030 | Prioritized key-establishment migration for HVAs/high-impact systems; cryptographic agility required |
+  | 4 | 2031 | Digital-signature migration for the same prioritized systems |
+  | 5 | 2035 | Remaining systems migrated, risk- and product-availability-dependent |
+
+**Implication for quipuu:** the same annual-inventory argument as M-23-02 (§1) applies, sharpened by a named deadline five weeks out at time of writing (October 22, 2026) — an agency building that first migration plan needs the machine-generated inventory `--cbom` produces, not a manual one.
+
+---
+
+### 24. NIST SP 800-227 — Recommendations for Key-Encapsulation Mechanisms
+
+**Issuing body:** NIST
+**Primary source:** https://csrc.nist.gov/pubs/sp/800/227/final
+
+**Status:** Final since **September 18, 2025** — not a draft.
+
+**Scope:** General recommendations for implementing and using KEMs securely, complementing (not duplicating) FIPS 203's ML-KEM specification — the document quipuu's ML-KEM classifications already cite.
+
+**Implication for quipuu:** the direct on-topic NIST reference for any finding quipuu labels as a KEM (`ml-kem-*`, `kem-unattributed`), alongside FIPS 203 and NIST IR 8547 (§5). No new algorithm coverage follows from this citation — it is a completeness fix, closing a document that had been final for a year with no citation anywhere in `knowledge/`.
+
+---
+
 ## DEADLINES THAT MATTER
 
 | Deadline | Instrument | Jurisdiction | Binding? | What triggers it |
 |---|---|---|---|---|
 | **Sep 21, 2026** | FIPS 140-2 → Historical | US (CMVP) | Yes (federal procurement) | FIPS 140-2 modules no longer valid for new procurements |
 | **Sep 11, 2026** | EU CRA Article 14 | EU | Yes | Vulnerability/incident notification requirements live |
+| **Oct 22, 2026** | EO 14412 / OMB M-26-15 | US (FCEB) | Yes | Agency PQC migration plan + lead due (120 days post-memo) |
 | **Annual (ongoing)** | OMB M-23-02 | US (FCEB) | Yes | Annual crypto inventory re-submission |
 | **Jan 1, 2027** | CNSA 2.0 acquisition gate | US (NSS) | Yes (NSS only) | New NSS equipment must default to CNSA 2.0 |
 | **2027** | ANSSI qualification mandate | France | Yes (qualified products) | PQC required for ANSSI-qualified crypto products |
@@ -511,13 +550,19 @@ rather than quoting it verbatim.
 | **2029** | Microsoft internal target | Enterprise benchmark | No | Microsoft's own early-adoption target |
 | **2030** | NIST IR 8547 (IPD) deprecation | US (proposed) | Draft only | RSA-2048, P-256, ECDH deprecated (proposed) |
 | **2030** | BSI/EU joint statement | EU | Guidance | Most sensitive applications quantum-resistant |
+| **End 2030** | BSI TR-02102-1 v2026-01 | Germany | Mandatory (federal IT) | Classical asymmetric encryption sunset, high-protection applications |
+| **2028–2030** | EO 14412 / OMB M-26-15 Phase 3 | US (FCEB) | Yes | Prioritized key-establishment migration for HVAs/high-impact systems |
 | **Dec 31, 2030** | ASD ISM ISM-1917 | Australia | Yes (Commonwealth) | New equipment/software must support ML-DSA-87, ML-KEM-1024, SHA-384/512, AES-256 |
 | **Dec 31, 2030** | CNSA 2.0 firmware signing | US (NSS) | Yes (NSS only) | Exclusive use of CNSA 2.0 for firmware signing |
 | **2030–2032** | G7 CEG critical systems | G7 financial | Guidance | Priority critical financial systems migrate |
 | **Dec 31, 2031** | NSM-10 / CNSA 2.0 | US (NSS) | Yes (NSS) | Vast majority of NSS crypto must be quantum-resistant |
+| **End 2031** | BSI TR-02102-1 v2026-01 | Germany | Mandatory (federal IT) | Classical asymmetric encryption sunset, standard protection |
+| **2031** | EO 14412 / OMB M-26-15 Phase 4 | US (FCEB) | Yes | Digital-signature migration for HVAs/high-impact systems |
 | **2033** | CNSA 2.0 cloud/OS | US (NSS) | Yes (NSS) | Exclusive use for cloud services and operating systems |
 | **2035** | NIST IR 8547 (IPD) disallowance | US (proposed) | Draft only | All quantum-vulnerable public-key algorithms disallowed |
 | **2035** | NSM-10 / CNSA 2.0 | US (all federal) | Yes | Full federal transition target |
+| **2035** | EO 14412 / OMB M-26-15 Phase 5 | US (FCEB) | Yes | Remaining federal systems fully migrated |
+| **End 2035** | BSI TR-02102-1 v2026-01 | Germany | Mandatory (federal IT) | Classical digital signature sunset |
 | **2035** | UK NCSC Phase 3 | UK | Guidance | Full migration of all systems |
 | **2035** | EC/NIS CG Roadmap | EU | Soft law | Remaining EU systems complete migration |
 | **2035** | Japan national target | Japan | Policy direction | National PQC migration complete |
