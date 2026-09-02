@@ -305,6 +305,12 @@ OCC is the first US banking regulator to formally address PQC (Fall 2022, update
 
 **Implication for quipuu:** Phase 1 names the deliverable as a "full discovery exercise" and dates it to 2028 — the obligation is the inventory itself, not a migration.
 
+**NCSC algorithm verdict, separate paper:** https://www.ncsc.gov.uk/paper/next-steps-in-preparing-for-post-quantum-cryptography
+(published 14 August 2024, updated 10 April 2026) names specific algorithms rather than only phase
+deadlines: "The NCSC recommends ML-KEM-768 and ML-DSA-65 as providing appropriate levels of security
+and efficiency for most use cases." Unlike the timeline paper above, this is a parameter-set
+recommendation a scanner can check a finding against directly.
+
 ---
 
 ### 14. Germany BSI TR-02102
