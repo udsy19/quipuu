@@ -6857,3 +6857,42 @@ Rule-pack counts unchanged (the fix rewrites one existing `[[classify]]` arm, ad
 `#ESTIMATORPERSIST2` and `#CORPUSDRIFT` remain open, neither bearing on this change.
 
 PRECISION: 97.17%
+
+## Measurement, 2026-09-02 (Track A cycle 220 — `#Y116`, RFC 9936 citation on ML-KEM OID notes)
+
+**`#Y116` added a citation for RFC 9936** (the CMS `KEMRecipientInfo` profile for ML-KEM,
+published March 2026) alongside the existing RFC 9935 reference on the three `id-alg-ml-kem-*`
+rows in `oid-table.toml`. RFC 9936 reuses RFC 9935's OIDs rather than minting new ones, so the
+`oid`, `algorithm_id`, and `determines` fields are untouched — only the `note` field's text
+changed. `OidMapping.note` (`quipuu/crates/core/src/oid.rs`) is read nowhere outside the struct
+definition: `OidTable::lookup()` returns only `algorithm_id`, so no finding's output can depend on
+this field.
+
+**Tuple, per `#S12`: corpus B (150 projects, 149 scanned — `github.com/rustpq/pqcrypto`'s manifest
+entry does not check out on this box, same as every prior cycle's count) · scanner set `--source
+--deps --include-safe` · profile `nist-default` · pre-change binary built from `main` at `b4f1204`
+(`work/y115_post.json`, reused: `b4f1204` only added `BENCHMARKING_RESULTS.md` prose on top of
+`#Y115`'s `9112887`, no detection-path change, so its dump is `main`'s current dump) · post-change
+binary built from this cycle's tree with `#Y116` applied (`work/y116_post.json`), both produced by
+the repo's own `benchmarks/corpus-b-realworld/dump_findings.py`.**
+
+**0 findings added, 0 removed (1915 → 1915) — the expected result, not a surprise.** A `note`-only
+text edit cannot move a corpus-B count; `oid.rs` confirms nothing in the lookup path reads it.
+
+**Precision 97.17% → 97.17%, unchanged.** `bin/precision.py work/y115_post.json
+work/y116_post.json --write-readme` reproduced the byte-identical 1915-finding dump on both sides
+(0 added, 0 removed) and re-derived the stratified-fresh populations from scratch: `A=796, B=1119`,
+sample `A 262/271, B 355/364` — 635 of 1915 audited — giving 97.175% (95% CI 95.89–98.46, pooled
+Wilson 97.165%), rounding to the published 97.17%. README already stated the matching claim;
+`--write-readme` had nothing to change.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --all` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing. Both trust-invariant
+tests (`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and
+pass. Rule-pack counts unchanged (no `[[classify]]`/`[[extract]]` arm touched — this is an OID
+table `note` field only).
+
+**Not done, said out loud:** `#Y107`/`#Y108` remain open. `OPEN-ASK #ESTIMATORPERSIST`/
+`#ESTIMATORPERSIST2` and `#CORPUSDRIFT` remain open, neither bearing on this change.
+
+PRECISION: 97.17%
