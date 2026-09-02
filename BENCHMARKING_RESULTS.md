@@ -6814,3 +6814,46 @@ block — same reachability shape `match_rust_kx_groups` already established).
 `#ESTIMATORPERSIST2` and `#CORPUSDRIFT` remain open, neither bearing on this change.
 
 PRECISION: 97.17%
+
+## Measurement, 2026-09-02 (Track A cycle 215 — `#Y115`, OpenSSL LMS arm narrowed to the real call shape)
+
+**`CRYPTO-1137` (added `#Y113`) matched `EVP_PKEY_Q_keygen("LMS")`, but that call is not real:**
+LMS/HSS key *generation* is not implemented by any OpenSSL 3.6 provider — SP 800-208 treats it as
+a deliberate out-of-band process, and OpenSSL's own manpages (`docs.openssl.org/3.6/man7/EVP_PKEY-LMS/`)
+document only the import-for-verification path. The only supported OpenSSL-side workflow is
+`EVP_PKEY_CTX_new_from_name()` followed by `EVP_PKEY_fromdata()` to import an externally-generated
+key. `when.api` narrowed from `(EVP_PKEY_CTX_new_from_name|EVP_PKEY_Q_keygen)` to
+`EVP_PKEY_CTX_new_from_name` alone; the classify message reworded from "generic keygen" to the
+operation-neutral "generic key construction" since the matched call no longer generates anything.
+The fixture (`crypto.c`) swapped its `EVP_PKEY_Q_keygen("LMS")` line for the real two-call import
+shape so `scans_c_openssl_native_lms` continues to exercise a call OpenSSL actually exposes.
+
+**Tuple, per `#S12`: corpus B (150 projects, 149 scanned — `github.com/rustpq/pqcrypto`'s manifest
+entry does not check out on this box, same as every prior cycle's count) · scanner set `--source
+--deps --include-safe` · profile `nist-default` · pre-change binary built from `main` at `12ef1a6`
+(`work/y115_pre.json`) · post-change binary built from this cycle's tree with `#Y115` applied
+(`work/y115_post.json`), both produced by the repo's own `benchmarks/corpus-b-realworld/dump_findings.py`.**
+
+**0 findings added, 0 removed (1915 → 1915) — the expected result, not a surprise.** No corpus B
+project calls `EVP_PKEY_CTX_new_from_name`/`EVP_PKEY_Q_keygen` with `"LMS"` at all — the same "real
+gap, zero corpus recall" shape `#Y113`'s own introduction of this arm hit. Narrowing an arm that
+never matched anything in this corpus cannot move a corpus-B count; the fixture, not the corpus, is
+the instrument for this rule.
+
+**Precision 97.17% → 97.17%, unchanged.** `bin/precision.py work/y115_pre.json work/y115_post.json
+--write-readme` reproduced the byte-identical 1915-finding dump on both sides (0 added, 0 removed)
+and re-derived the stratified-fresh populations from scratch: `A=796, B=1119`, sample `A 262/271, B
+355/364` — 635 of 1915 audited — giving 97.175% (95% CI 95.89–98.46, pooled Wilson 97.165%),
+rounding to the published 97.17%. No finding moved, so the change contributes 0 to this figure.
+README already stated the matching claim; `--write-readme` had nothing to change.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --all` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing (unchanged fixture/test
+pair from `#Y113`, still green against the new call shape). Both trust-invariant tests
+(`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
+Rule-pack counts unchanged (the fix rewrites one existing `[[classify]]` arm, adding none).
+
+**Not done, said out loud:** `#Y107`/`#Y108` remain open. `OPEN-ASK #ESTIMATORPERSIST`/
+`#ESTIMATORPERSIST2` and `#CORPUSDRIFT` remain open, neither bearing on this change.
+
+PRECISION: 97.17%
