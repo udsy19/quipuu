@@ -6644,3 +6644,54 @@ started this cycle. `OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` and `#CORP
 neither bearing on this reclassification-plus-one-FP-fix.
 
 PRECISION: 97.18%
+
+## Measurement, 2026-09-02 (Track A cycle 212 — jose4j `RSA_USING_SHA{384,512}`/`RSA_PSS_USING_SHA{384,512}` split off the sha256 catch-all)
+
+**`java.toml`'s two jose4j classify arms (`CRYPTO-260`/`CRYPTO-261`) matched `^RSA_USING_SHA`/
+`^RSA_PSS` with no digest anchor, so every `AlgorithmIdentifiers.RSA_USING_SHA384`/`SHA512` and
+`RSA_PSS_USING_SHA384`/`SHA512` member matched the same broad prefix as its `SHA256` sibling and was
+mislabelled `rsa-pkcs1-sha256`/`rsa-pss-sha256` regardless of which digest it actually names** — not
+cosmetic: `algorithm-table.toml`'s `replacement` field differs between the sha256 and sha384/sha512
+rows (`ml-dsa-65` vs. `ml-dsa-87` for the pkcs1 pair), so the mislabelled rows carried a wrong PQC
+migration recommendation. First found 2026-08-28 (Backlog.md, Track A cycle 10, "surfaced by the fix,
+not fixed"), independently rediscovered 2026-09-02 by a different lens 5 days later with zero
+remediation between findings (backlog `#Y109`-adjacent P1 item, ninth same-day Track B synthesis).
+Fixed the same way the ECDSA arms three rules below in the same file already split per curve: four
+new digest-anchored classify arms (`CRYPTO-1133`/`1134` for `RSA_USING_SHA384`/`SHA512`, `CRYPTO-1135`/
+`1136` for `RSA_PSS_USING_SHA384`/`SHA512`), and `CRYPTO-260`/`CRYPTO-261`'s own regex narrowed from a
+prefix match to an exact `SHA256` match so they stop absorbing the other two digests.
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change binary from main at `cbb1792` (`work/jose4j_pre.json`, 1915
+findings) · post-change binary from this cycle's tree (`work/jose4j_post.json`, 1915 findings), both
+produced by the repo's own `benchmarks/corpus-b-realworld/dump_findings.py`.**
+
+**4 findings added, 4 removed, net 0 (1915 → 1915), all four in one file.** Opened the cited lines
+directly (`maven:org.bitbucket.b_c:jose4j`'s `RsaUsingShaAlgorithm.java`): line 97 is
+`super(AlgorithmIdentifiers.RSA_USING_SHA384, "SHA384withRSA")`, line 105 is `RSA_USING_SHA512`/
+`"SHA512withRSA"`, line 67 is `RSA_PSS_USING_SHA384`/`"SHA384withRSAandMGF1"`, line 78 is
+`RSA_PSS_USING_SHA512`/`"SHA512withRSAandMGF1"` — all four real constructor calls naming the digest
+the new rule now attributes, hand-verified true positive. No other row in the 1915-finding dump
+moved.
+
+**Precision 97.18% (persisted) → 97.19%.** `bin/precision.py work/jose4j_pre.json
+work/jose4j_post.json --added-tp 4 --added-fp 0 --write-readme` reproduced the anchored baseline
+before printing anything else, then folded the 4 hand-labelled TP into stratum A (`262/271` →
+`266/275`, matching the "delta lands in stratum A" output — a reclassified row is a new key
+precision.py cannot match against the old label, so each is treated as a newly sampled row rather
+than a like-for-like swap). Stratified-fresh populations (re-derived this run: A=796, B=1119) give
+97.195% (95% CI 95.92–98.47); pooled Wilson gives 97.183% (95% CI 95.59–98.21); both round to the
+published 97.19%. Sample: A 266/275, B 355/364 — **639 of 1915 audited.**
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --all` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing. Both trust-invariant tests
+(`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
+`readme_rule_pack_counts_match_the_rule_packs` updated and passing against java.toml's new 237
+classify-arm count (233 → 237; README's two count sentences updated in the same diff).
+
+**Not done, said out loud:** `#Y109`/`#Y110`/`#Y111` (README wording/date fixes from the same
+synthesis pass) and `#Y113`/`#Y114` (OpenSSL native LMS, OpenMLS ciphersuite coverage gaps) remain
+open, not started this cycle. `#Y107`/`#Y108` remain open from two cycles ago. `OPEN-ASK
+#ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` and `#CORPUSDRIFT` remain open, neither bearing on this fix.
+
+PRECISION: 97.19%

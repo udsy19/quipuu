@@ -1306,12 +1306,34 @@ severity_hint = "auto"
 message = "nimbus JWEAlgorithm.RSA1_5 — RSA-PKCS1-v1.5 key wrapping (legacy; consider RSA-OAEP-256). Quantum-vulnerable."
 
 # ---------- jose4j (org.jose4j.jws.AlgorithmIdentifiers) ----------
+# RSA_USING_SHA{256,384,512} and RSA_PSS_USING_SHA{256,384,512} — split per
+# digest (same fix pattern as the ECDSA per-curve split below; the jose4j
+# identifiers embed the digest name so a single catch-all arm mislabels the
+# sha384/sha512 members as sha256, including their `replacement` field).
 [[classify]]
 id = "CRYPTO-260"
 when.api = "^org\\.jose4j\\.jws\\.AlgorithmIdentifiers$"
 when.site_context = ["Call", "StringConstant"]
-when.args.member = { regex = "^RSA_USING_SHA" }
+when.args.member = { regex = "^RSA_USING_SHA256$" }
 algorithm_id = "rsa-pkcs1-sha256"
+severity_hint = "auto"
+message = "jose4j AlgorithmIdentifiers.{member} — RSA-PKCS1, quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1133"
+when.api = "^org\\.jose4j\\.jws\\.AlgorithmIdentifiers$"
+when.site_context = ["Call", "StringConstant"]
+when.args.member = { regex = "^RSA_USING_SHA384$" }
+algorithm_id = "rsa-pkcs1-sha384"
+severity_hint = "auto"
+message = "jose4j AlgorithmIdentifiers.{member} — RSA-PKCS1, quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1134"
+when.api = "^org\\.jose4j\\.jws\\.AlgorithmIdentifiers$"
+when.site_context = ["Call", "StringConstant"]
+when.args.member = { regex = "^RSA_USING_SHA512$" }
+algorithm_id = "rsa-pkcs1-sha512"
 severity_hint = "auto"
 message = "jose4j AlgorithmIdentifiers.{member} — RSA-PKCS1, quantum-vulnerable."
 
@@ -1319,8 +1341,26 @@ message = "jose4j AlgorithmIdentifiers.{member} — RSA-PKCS1, quantum-vulnerabl
 id = "CRYPTO-261"
 when.api = "^org\\.jose4j\\.jws\\.AlgorithmIdentifiers$"
 when.site_context = ["Call", "StringConstant"]
-when.args.member = { regex = "^RSA_PSS" }
+when.args.member = { regex = "^RSA_PSS_USING_SHA256$" }
 algorithm_id = "rsa-pss-sha256"
+severity_hint = "auto"
+message = "jose4j AlgorithmIdentifiers.{member} — RSA-PSS, quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1135"
+when.api = "^org\\.jose4j\\.jws\\.AlgorithmIdentifiers$"
+when.site_context = ["Call", "StringConstant"]
+when.args.member = { regex = "^RSA_PSS_USING_SHA384$" }
+algorithm_id = "rsa-pss-sha384"
+severity_hint = "auto"
+message = "jose4j AlgorithmIdentifiers.{member} — RSA-PSS, quantum-vulnerable."
+
+[[classify]]
+id = "CRYPTO-1136"
+when.api = "^org\\.jose4j\\.jws\\.AlgorithmIdentifiers$"
+when.site_context = ["Call", "StringConstant"]
+when.args.member = { regex = "^RSA_PSS_USING_SHA512$" }
+algorithm_id = "rsa-pss-sha512"
 severity_hint = "auto"
 message = "jose4j AlgorithmIdentifiers.{member} — RSA-PSS, quantum-vulnerable."
 
