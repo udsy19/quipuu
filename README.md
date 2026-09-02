@@ -32,7 +32,7 @@ That means:
 - A TLS config builder finding tells you whether the negotiated group is already post-quantum or still classical.
 - A dependency on `com.nimbusds:nimbus-jose-jwt` surfaces every JWT algorithm variant that touches quantum-vulnerable asymmetric crypto.
 
-The competitive gap is not precision — it is that no other tool ships the NIST taxonomy as first-class data, auditable in a TOML file you can read in ten minutes.
+The competitive gap is not precision — it is that no other tool ships the NIST taxonomy as auditable open rule files (TOML), not a black-box model. Start with `algorithm-table.toml` for the taxonomy itself.
 
 ---
 
@@ -92,8 +92,8 @@ ship today:
 | `nsa-cnsa2` | NSA CNSA 2.0, for national security systems | CNSA 2.0 approves AES-256 and SHA-384+ only, so SHA-256 and ChaCha20-Poly1305 stop being quantum-safe inventory and become findings, AES-128 is scored as off-suite rather than Grover-weakened, and SLH-DSA / FN-DSA / the sub-1024 ML-KEM and ML-DSA parameter sets are reported as non-compliant |
 
 A policy reweights findings; it never creates, drops, or reclassifies a
-detection. Measured on the 150-project benchmark corpus (1916 findings,
-2026-09-01): the two profiles produce the **same 1916 findings, identical
+detection. Measured on the 150-project benchmark corpus (1915 findings,
+2026-09-02): the two profiles produce the **same 1915 findings, identical
 `algorithm_id` on every row**, of which **467 (24.4 %) land in a different
 severity band** — mostly SHA-256 and the sub-256-bit PQC parameter sets CNSA
 2.0 does not approve. The precision figure below therefore holds under both.
@@ -220,7 +220,7 @@ not the machine named above, and `BENCHMARKING_RESULTS.md` reported the same run
 claiming the scanner got 16× slower; we are retracting a number that described 141 projects,
 under one flag set, on an unnamed machine, and presenting one that names all three.
 
-Audit-validated precision: **97.19%** (95% CI: 95.9%–98.5%) — measured 2026-09-02 on **639 audited findings** out of 1915, every one labelled by opening its cited `file:line`. Methodology, the full label set and per-finding verdicts are in `BENCHMARKING_RESULTS.md`, `PRECISION_AUDIT_V4.md` and `PRECISION_AUDIT_V3.md`.
+Audit-validated precision: **97.19%** (95% CI: 95.9%–98.5%) — measured 2026-09-02 on **639 audited findings** out of 1915, every one labelled by opening its cited `file:line`. Methodology, the full label set and per-finding verdicts are in `BENCHMARKING_RESULTS.md`, `PRECISION_AUDIT_V4.md` and `PRECISION_AUDIT_V3.md`. **Scope:** this measures whether a finding is a real cryptographic operation, not whether its specific digest or parameter-set attribution is exact — those are audited separately, per rule, in the fixture suite.
 
 **This reverts the 97.71% published above the `#Y64`/`#Y65` Go SHA-256 fix below — not a new measurement, but a correction undoing the fold that produced it, 2026-08-30.** `#Y64` appended a 100%-census audit of its own new rule's near-tautologically-true-positive targets (139 findings, 0 FP) directly into the anchor's per-stratum sample; `#Y65` added 12 more on top. Both moves passed `gate_precision` because the gate only blocks a drop past -0.5pp and lets any rise through unexamined — but auditing every target a brand-new rule produces and folding the result into the very sample it is measured against inflates the reported rate regardless of whether real-world precision improved, since the fold is not a random draw from the stratum. `state/estimator.json` was reverted to its pre-`#Y64` state (`a_tp` 335→262, `b_tp` 420→354, matching `#Y63`'s last gate-passed 97.11% exactly): `#Y64`/`#Y65`'s 151 audited findings are real coverage evidence, not anchor-sample inputs, until a periodic re-sampling mechanism exists for this case — still an open question. The two paragraphs below describe what `#Y64`/`#Y65` actually shipped — real, hand-verified detection gains — separately from the anchor-sample question this correction resolves.
 

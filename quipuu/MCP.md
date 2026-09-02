@@ -1,6 +1,6 @@
 # quipuu MCP wire contract
 
-> **Scope.** This document is the authoritative specification for the `quipuu mcp` subcommand: its transport, protocol, tool surface, schemas, streaming semantics, failure modes, and versioning. Implementation in `crates/cli/src/mcp/` must conform exactly. Any deviation is a bug.
+> **Scope.** This document is the authoritative specification for the `quipuu mcp-serve` subcommand: its transport, protocol, tool surface, schemas, streaming semantics, failure modes, and versioning. Implementation in `crates/cli/src/mcp/` must conform exactly. Any deviation is a bug.
 
 ---
 
@@ -35,7 +35,7 @@ There is no separate binary, no daemon, and no install step beyond the binary it
 
 ### 1.2 Transport
 
-**stdio JSON-RPC 2.0** only. The host process spawns `quipuu mcp` and communicates over stdin/stdout. Each message is a newline-delimited JSON object. No HTTP, no WebSocket, no TCP listener of any kind for the MCP transport path (P2).
+**stdio JSON-RPC 2.0** only. The host process spawns `quipuu mcp-serve` and communicates over stdin/stdout. Each message is a newline-delimited JSON object. No HTTP, no WebSocket, no TCP listener of any kind for the MCP transport path (P2).
 
 ### 1.3 Lifecycle
 
@@ -490,7 +490,7 @@ The server supports one prior major `contractVersion` for a minimum of 6 months 
 
 ### 9.1 The binary (this document)
 
-The `quipuu mcp` subcommand runs entirely within the Rust workspace. No Python, no Node, no JVM. Invariant P1 holds by construction.
+The `quipuu mcp-serve` subcommand runs entirely within the Rust workspace. No Python, no Node, no JVM. Invariant P1 holds by construction.
 
 ### 9.2 Callers above the MCP boundary
 
@@ -498,7 +498,7 @@ An orchestration or agent layer wraps the binary as a child process over stdio a
 
 ### 9.3 Prototype
 
-Agent clients connect to the same MCP server (`quipuu mcp`) over stdio, using the JSON-RPC 2.0 framing described in §1.2. No separate server or wrapper is introduced.
+Agent clients connect to the same MCP server (`quipuu mcp-serve`) over stdio, using the JSON-RPC 2.0 framing described in §1.2. No separate server or wrapper is introduced.
 
 ---
 

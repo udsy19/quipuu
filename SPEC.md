@@ -60,7 +60,7 @@ types in `core` (`AlgorithmRecord`, `Policy`, `Finding`, `QuantumStatus`). A
 separate crate would force every dependent type to become `pub` at the `core`
 boundary for the sole purpose of being re-imported. Keep it inline.
 
-The **MCP wire contract** (`quipuu/MCP.md`) is the architectural spine between this deterministic Rust workspace and any agent layer. It specifies the stdio JSON-RPC 2.0 transport, the full 11-tool surface, streaming semantics, failure modes, and versioning rules for the `quipuu mcp` subcommand. JSON schemas for the core domain types (`Finding`, `CryptoAsset`, `RiskScore`) live in `crates/core/schema/` and are referenced by `$ref` from the wire contract. No schema definitions are duplicated between the workspace and the contract document.
+The **MCP wire contract** (`quipuu/MCP.md`) is the architectural spine between this deterministic Rust workspace and any agent layer. It specifies the stdio JSON-RPC 2.0 transport, the full 11-tool surface, streaming semantics, failure modes, and versioning rules for the `quipuu mcp-serve` subcommand. JSON schemas for the core domain types (`Finding`, `CryptoAsset`, `RiskScore`) live in `crates/core/schema/` and are referenced by `$ref` from the wire contract. No schema definitions are duplicated between the workspace and the contract document.
 
 ## 3. The crypto knowledge base (D-04)
 
