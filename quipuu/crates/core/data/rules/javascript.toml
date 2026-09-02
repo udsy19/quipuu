@@ -911,6 +911,7 @@ description = "jsonwebtoken jwt.sign(payload, secret, {algorithm: ...})."
 id = "CRYPTO-361"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^HS256$" }
+when.site_context = ["Call"]
 algorithm_id = "sha-256"
 severity_hint = "low"
 message = "jsonwebtoken jwt.sign({algorithm:'HS256'}) — HMAC-SHA256. Confirm signing key entropy."
@@ -919,6 +920,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'HS256'}) — HMAC-SHA256. Confirm s
 id = "CRYPTO-362"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^HS384$" }
+when.site_context = ["Call"]
 algorithm_id = "sha-384"
 severity_hint = "low"
 message = "jsonwebtoken jwt.sign({algorithm:'HS384'}) — HMAC-SHA384. Confirm signing key entropy."
@@ -927,6 +929,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'HS384'}) — HMAC-SHA384. Confirm s
 id = "CRYPTO-363"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^HS512$" }
+when.site_context = ["Call"]
 algorithm_id = "sha-512"
 severity_hint = "low"
 message = "jsonwebtoken jwt.sign({algorithm:'HS512'}) — HMAC-SHA512. Confirm signing key entropy."
@@ -936,6 +939,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'HS512'}) — HMAC-SHA512. Confirm s
 id = "CRYPTO-364"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^RS256$" }
+when.site_context = ["Call"]
 algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "auto"
 message = "jsonwebtoken jwt.sign({algorithm:'RS256'}) — RSA-PKCS1-SHA256. Quantum-vulnerable."
@@ -944,6 +948,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'RS256'}) — RSA-PKCS1-SHA256. Quan
 id = "CRYPTO-365"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^RS384$" }
+when.site_context = ["Call"]
 algorithm_id = "rsa-pkcs1-sha384"
 severity_hint = "auto"
 message = "jsonwebtoken jwt.sign({algorithm:'RS384'}) — RSA-PKCS1-SHA384. Quantum-vulnerable."
@@ -952,6 +957,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'RS384'}) — RSA-PKCS1-SHA384. Quan
 id = "CRYPTO-366"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^RS512$" }
+when.site_context = ["Call"]
 algorithm_id = "rsa-pkcs1-sha512"
 severity_hint = "auto"
 message = "jsonwebtoken jwt.sign({algorithm:'RS512'}) — RSA-PKCS1-SHA512. Quantum-vulnerable."
@@ -961,6 +967,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'RS512'}) — RSA-PKCS1-SHA512. Quan
 id = "CRYPTO-367"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^PS256$" }
+when.site_context = ["Call"]
 algorithm_id = "rsa-pss-sha256"
 severity_hint = "auto"
 message = "jsonwebtoken jwt.sign({algorithm:'PS256'}) — RSA-PSS-SHA256. Quantum-vulnerable."
@@ -969,6 +976,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'PS256'}) — RSA-PSS-SHA256. Quantu
 id = "CRYPTO-368"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^PS384$" }
+when.site_context = ["Call"]
 algorithm_id = "rsa-pss-sha384"
 severity_hint = "auto"
 message = "jsonwebtoken jwt.sign({algorithm:'PS384'}) — RSA-PSS-SHA384. Quantum-vulnerable."
@@ -977,6 +985,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'PS384'}) — RSA-PSS-SHA384. Quantu
 id = "CRYPTO-369"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^PS512$" }
+when.site_context = ["Call"]
 algorithm_id = "rsa-pss-sha512"
 severity_hint = "auto"
 message = "jsonwebtoken jwt.sign({algorithm:'PS512'}) — RSA-PSS-SHA512. Quantum-vulnerable."
@@ -986,6 +995,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'PS512'}) — RSA-PSS-SHA512. Quantu
 id = "CRYPTO-378"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^ES256$" }
+when.site_context = ["Call"]
 algorithm_id = "ecdsa-p256"
 severity_hint = "auto"
 message = "jsonwebtoken jwt.sign({algorithm:'ES256'}) — ECDSA P-256. Quantum-vulnerable."
@@ -994,6 +1004,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'ES256'}) — ECDSA P-256. Quantum-v
 id = "CRYPTO-379"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^ES384$" }
+when.site_context = ["Call"]
 algorithm_id = "ecdsa-p384"
 severity_hint = "auto"
 message = "jsonwebtoken jwt.sign({algorithm:'ES384'}) — ECDSA P-384. Quantum-vulnerable."
@@ -1002,6 +1013,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'ES384'}) — ECDSA P-384. Quantum-v
 id = "CRYPTO-380"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^ES512$" }
+when.site_context = ["Call"]
 algorithm_id = "ecdsa-p521"
 parameter_source = "RFC 7518 § 3.4: ES512 is ECDSA using P-521 and SHA-512."
 severity_hint = "auto"
@@ -1012,6 +1024,7 @@ message = "jsonwebtoken jwt.sign({algorithm:'ES512'}) — ECDSA P-521. Quantum-v
 id = "CRYPTO-381"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.algorithm = { regex = "^none$" }
+when.site_context = ["Call"]
 algorithm_id = "jwt-alg-none"
 severity_hint = "critical"
 message = "jsonwebtoken jwt.sign({algorithm:'none'}) — signature verification disabled. CVE-2015-9235 class."
@@ -1023,6 +1036,7 @@ cwe = "CWE-347"
 id = "CRYPTO-382"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
 when.args.key_kind = "string"
+when.site_context = ["Call"]
 algorithm_id = "sha-256"
 parameter_source = "jsonwebtoken signs with HS256 when no algorithm option is given, so a string secret determines HMAC-SHA256 (jsonwebtoken README, sign options)."
 severity_hint = "low"
@@ -1034,6 +1048,7 @@ message = "jsonwebtoken jwt.sign(payload, <string secret>) — HMAC-SHA256 by de
 [[classify]]
 id = "CRYPTO-360"
 when.api = "^jsonwebtoken\\.jwt\\.sign$"
+when.site_context = ["Call"]
 algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "medium"
 message = "jsonwebtoken jwt.sign() called without an explicit algorithm option and a non-string key — algorithm not statically determinable. Confirm algorithm at runtime."

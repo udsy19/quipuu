@@ -393,6 +393,7 @@ description = "PyJWT signing call with explicit algorithm kwarg."
 id = "CRYPTO-160"
 when.api = "^jwt\\.encode$"
 when.args.alg = { regex = "^[\"']?none[\"']?$" }
+when.site_context = ["Call"]
 algorithm_id = "jwt-alg-none"
 severity_hint = "critical"
 message = "JWT algorithm='none' — signature verification disabled."
@@ -401,6 +402,7 @@ message = "JWT algorithm='none' — signature verification disabled."
 id = "CRYPTO-161"
 when.api = "^jwt\\.encode$"
 when.args.alg = { regex = "^[\"']?HS256[\"']?$" }
+when.site_context = ["Call"]
 algorithm_id = "sha-256"   # HMAC-SHA256; treated as symmetric-OK but flag for weak-secret risk in v1.5
 severity_hint = "low"
 message = "JWT HS256 (HMAC-SHA256) — confirm signing key has ≥256 bits of entropy."
@@ -409,6 +411,7 @@ message = "JWT HS256 (HMAC-SHA256) — confirm signing key has ≥256 bits of en
 id = "CRYPTO-162"
 when.api = "^jwt\\.encode$"
 when.args.alg = { regex = "^[\"']?RS256[\"']?$" }
+when.site_context = ["Call"]
 algorithm_id = "rsa-pkcs1-sha256"
 severity_hint = "auto"
 message = "JWT RS256 — RSA-PKCS1 signature, quantum-vulnerable."
@@ -417,6 +420,7 @@ message = "JWT RS256 — RSA-PKCS1 signature, quantum-vulnerable."
 id = "CRYPTO-163"
 when.api = "^jwt\\.encode$"
 when.args.alg = { regex = "^[\"']?ES256[\"']?$" }
+when.site_context = ["Call"]
 algorithm_id = "ecdsa-p256"
 severity_hint = "auto"
 message = "JWT ES256 — ECDSA P-256, quantum-vulnerable."

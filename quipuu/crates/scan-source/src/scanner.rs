@@ -940,10 +940,25 @@ fn match_call(
     // `ExpectNull(...)` wrapper as `TestAssertion`, and falls back to `Call`
     // — identical to the old behavior — when there is no argument to walk
     // from. Other languages are unchanged.
+    //
+    // Python and JS/TS callee-table matches carry the same gap for a
+    // different wrapper shape: `with pytest.raises(...): jwt.encode(...)`
+    // and `expect(() => jwt.sign(...)).to.throw(...)` both call a real crypto
+    // API on a line the test requires to FAIL — PRECISION_AUDIT_V4.md § 6's
+    // "a call the test requires to fail" class, the sibling of `ExpectNull`
+    // this cycle closes for these two languages. `is_call_asserted_to_fail`
+    // walks from the call itself, not an argument, since neither wrapper
+    // shape puts the crypto call directly in the wrapper's own argument
+    // list.
     let site_context = match language {
         Language::C | Language::Cpp => nth_real_arg(args, 0)
             .map(|n| classify_site_context(n, source, language))
             .unwrap_or(quipuu_core::SiteContext::Call),
+        Language::Python | Language::JavaScript | Language::TypeScript
+            if is_call_asserted_to_fail(call, source, language) =>
+        {
+            quipuu_core::SiteContext::TestAssertion
+        }
         _ => quipuu_core::SiteContext::Call,
     };
 
@@ -4356,6 +4371,108 @@ fn is_test_assertion_callee(callee: &str, language: Language) -> bool {
             head,
             "Equal" | "True" | "False" | "Same" | "NotEqual" | "AreEqual"
         ),
+    }
+}
+
+/// True when `call` sits inside a construct the test uses to assert it
+/// FAILS — Python's `with pytest.raises(...):` / `with self.assertRaises(...):`,
+/// or JS/TS's `expect(() => ...).to.throw(...)` / `.toThrow(...)`. Mirrors the
+/// C/C++ `ExpectNull` (fail-required, low-signal) vs `ExpectNotNull`
+/// (success-required, kept) distinction from `#Y29`: only a call the test
+/// requires to fail is suppressed here, never one merely passed to an
+/// assertion of its result.
+///
+/// Unlike `classify_site_context`, this walks from the call node itself —
+/// neither wrapper shape puts the crypto call directly inside the wrapping
+/// construct's own argument list, so `enclosing_callee_matches`' "matched
+/// node sits in this call's arguments" check does not apply.
+fn is_call_asserted_to_fail(call: Node<'_>, source: &[u8], language: Language) -> bool {
+    match language {
+        Language::Python => {
+            let mut walker = call.parent();
+            let mut frames = 0;
+            while let Some(p) = walker {
+                if p.kind() == "with_statement" {
+                    let mut clauses = p.walk();
+                    let raises = p.named_children(&mut clauses).any(|clause| {
+                        if clause.kind() != "with_clause" {
+                            return false;
+                        }
+                        let mut items = clause.walk();
+                        clause.named_children(&mut items).any(|item| {
+                            item.kind() == "with_item"
+                                && item
+                                    .child_by_field_name("value")
+                                    .filter(|v| v.kind() == "call")
+                                    .and_then(|v| v.child_by_field_name("function"))
+                                    .is_some_and(|f| {
+                                        node_text(f, source)
+                                            .to_ascii_lowercase()
+                                            .ends_with("raises")
+                                    })
+                        })
+                    });
+                    if raises {
+                        return true;
+                    }
+                }
+                frames += 1;
+                if frames >= 8 || matches!(p.kind(), "function_definition" | "module") {
+                    break;
+                }
+                walker = p.parent();
+            }
+            false
+        }
+        Language::JavaScript | Language::TypeScript => {
+            let mut walker = call.parent();
+            let mut frames = 0;
+            while let Some(p) = walker {
+                if p.kind() == "call_expression"
+                    && p.child_by_field_name("function")
+                        .is_some_and(|f| callee_head(&node_text(f, source)) == "expect")
+                {
+                    // Found the enclosing `expect(...)` call. Chai spells the
+                    // failure assertion `.to.throw(...)` and jest spells it
+                    // `.toThrow(...)`/`.toThrowError(...)`, chaining a
+                    // different number of `member_expression` property hops
+                    // off the same call (`.to.throw` vs `.toThrow` directly)
+                    // — climb through them checking each property name rather
+                    // than assuming a fixed depth.
+                    let mut anchor = p;
+                    let mut extra_hops = 0;
+                    while let Some(parent) = anchor.parent() {
+                        if parent.kind() != "member_expression" {
+                            break;
+                        }
+                        if parent
+                            .child_by_field_name("property")
+                            .is_some_and(|prop| {
+                                matches!(
+                                    node_text(prop, source).as_str(),
+                                    "throw" | "toThrow" | "toThrowError"
+                                )
+                            })
+                        {
+                            return true;
+                        }
+                        anchor = parent;
+                        extra_hops += 1;
+                        if extra_hops >= 4 {
+                            break;
+                        }
+                    }
+                    return false;
+                }
+                frames += 1;
+                if frames >= 8 || matches!(p.kind(), "function_declaration" | "program") {
+                    break;
+                }
+                walker = p.parent();
+            }
+            false
+        }
+        _ => false,
     }
 }
 

@@ -3708,6 +3708,55 @@ fn phase17_jwt_sign_alg_none_routes_to_sentinel() {
     assert!(line40.message.contains("CVE-2015-9235"));
 }
 
+/// jsonwebtoken's own test suite wraps a `jwt.sign(...)` call it requires to
+/// FAIL in `expect(() => ...).to.throw(...)` / `.toThrow(...)`. Suppressed as
+/// low-signal (`PRECISION_AUDIT_V4.md` § 6); a call outside any such wrapper
+/// stays a genuine positive, the JS spelling of the C/C++
+/// ExpectNull/ExpectNotNull split (`#Y29`).
+#[test]
+fn jwt_sign_wrapped_in_expect_to_throw_is_suppressed() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/jwt_sign_test_assertion.js"))
+        .expect("scan succeeds");
+
+    assert_eq!(
+        findings.len(),
+        1,
+        "only the unwrapped call should fire; got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (f.location.line, &f.rule_id))
+            .collect::<Vec<_>>()
+    );
+    assert_eq!(findings[0].algorithm_id, "ecdsa-p256");
+}
+
+/// PyJWT's own test suite wraps a `jwt.encode(...)` call it requires to FAIL
+/// in `with pytest.raises(...):` / `with self.assertRaises(...):`. Suppressed
+/// as low-signal (`PRECISION_AUDIT_V4.md` § 6, row 141); a call outside any
+/// such wrapper stays a genuine positive.
+#[test]
+fn jwt_encode_wrapped_in_pytest_raises_is_suppressed() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("python/jwt_encode_test_assertion.py"))
+        .expect("scan succeeds");
+
+    assert_eq!(
+        findings.len(),
+        1,
+        "only the unwrapped call should fire; got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (f.location.line, &f.rule_id))
+            .collect::<Vec<_>>()
+    );
+    assert_eq!(findings[0].algorithm_id, "ecdsa-p256");
+}
+
 // ── WebCrypto: classify from the algorithm argument, never from a guess ────
 
 #[test]
@@ -4510,3 +4559,4 @@ fn scans_python_liboqs_python_kem_sig() {
         );
     }
 }
+
