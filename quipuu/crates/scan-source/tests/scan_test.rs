@@ -664,6 +664,49 @@ fn scans_java_bouncycastle_composite_kem_keygenerator() {
     );
 }
 
+/// Backlog `#Y124`: JDK 26's `jarsigner` API (JDK-8371079, RFC 9882) for
+/// ML-DSA-signed JARs. `JarSignerBuilder.java` also carries a classical
+/// `digestAlgorithm("SHA-256")`-only chain (must not classify as PQC) and a
+/// same-named `signatureAlgorithm(...)` setter on an unrelated builder that
+/// is not a `new JarSigner.Builder(...)` chain (must not fire at all) —
+/// asserted below via the exact finding count, not just presence.
+#[test]
+fn scans_java_jarsigner_builder_signature_algorithm() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("java/JarSignerBuilder.java"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-1179", "ml-dsa-44"),
+        ("CRYPTO-1180", "ml-dsa-65"),
+        ("CRYPTO-1181", "ml-dsa-87"),
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in JarSignerBuilder.java fixture; findings: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+    assert_eq!(
+        findings.len(),
+        3,
+        "digestAlgorithm(\"SHA-256\") and the unrelated builder's same-named \
+         signatureAlgorithm(...) must not classify; findings: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
 #[test]
 fn scans_java_bouncycastle_lightweight_pqc_classes() {
     let b = load_builtins().unwrap();

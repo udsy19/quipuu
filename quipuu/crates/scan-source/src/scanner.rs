@@ -738,6 +738,16 @@ fn walk(
     {
         out.push(m);
     }
+    // Java `new JarSigner.Builder(entry).signatureAlgorithm("ML-DSA-65")` —
+    // JDK 26's `jarsigner` API (`#Y124`, JDK-8371079, RFC 9882). Runs
+    // alongside `match_call`'s `method_invocation` handling, same reasoning
+    // as `match_java_set_named_groups` above.
+    if language == Language::Java
+        && kind == "method_invocation"
+        && let Some(m) = match_java_jarsigner_signature_algorithm(node, source)
+    {
+        out.push(m);
+    }
     // OpenSSL `SSL_CTX_set1_groups_list(ctx, "P-521:X25519MLKEM768")` /
     // `SSL_set1_groups_list(ssl, "...")` / `SSL_CONF_cmd(ctx, "Groups",
     // "...")` — the colon-separated TLS key-exchange group preference
@@ -1249,6 +1259,57 @@ fn match_java_kem_encapsulation(call: Node<'_>, source: &[u8]) -> Option<RawMatc
     })
 }
 
+/// Match `new JarSigner.Builder(entry).digestAlgorithm("SHA-256")
+/// .signatureAlgorithm("ML-DSA-65").build()` — JDK 26's `jarsigner` API
+/// (JDK-8371079, RFC 9882 / PKCS#7-CMS ML-DSA) for ML-DSA-signed JARs,
+/// backlog `#Y124`. `Signature.getInstance`'s existing rules cannot see
+/// this: no `Signature.getInstance` call exists anywhere in the chain, and
+/// `.signatureAlgorithm(...)`'s `object` field is itself another
+/// `method_invocation` in the same fluent chain (or the `JarSigner.Builder`
+/// constructor directly), not a plain identifier
+/// `match_java_method_invocation`'s `JAVA_CALLEE_APIS` lookup can key on.
+///
+/// Unlike `match_java_set_named_groups`, this does not match on method name
+/// alone: `signatureAlgorithm` is a real setter name on at least one
+/// unrelated builder already in the benchmark corpus (Spring Security's
+/// `NimbusJwtDecoder.withPublicKey(...).signatureAlgorithm(SignatureAlgorithm.ES256)`),
+/// so the receiver chain is walked back to its root and required to be an
+/// actual `new JarSigner.Builder(...)` before firing.
+fn match_java_jarsigner_signature_algorithm(call: Node<'_>, source: &[u8]) -> Option<RawMatch> {
+    let name = call.child_by_field_name("name")?;
+    if node_text(name, source) != "signatureAlgorithm" {
+        return None;
+    }
+    let args = call.child_by_field_name("arguments")?;
+    let algo = nth_arg_string(args, 0, source)?;
+
+    let mut root = call.child_by_field_name("object")?;
+    loop {
+        match root.kind() {
+            "method_invocation" => root = root.child_by_field_name("object")?,
+            "object_creation_expression" => break,
+            _ => return None,
+        }
+    }
+    let type_node = root.child_by_field_name("type")?;
+    if node_text(type_node, source) != "JarSigner.Builder" {
+        return None;
+    }
+
+    let mut args_map = HashMap::new();
+    args_map.insert("algo".into(), ArgValue::Str(algo.clone()));
+    let start = call.start_position();
+    Some(RawMatch {
+        api: "java.security.JarSigner.Builder.signatureAlgorithm".into(),
+        args: args_map,
+        line: (start.row + 1) as u32,
+        offset: call.start_byte() as u32,
+        symbol: format!("signatureAlgorithm({algo})"),
+        snippet: node_text(call, source),
+        site_context: quipuu_core::SiteContext::Call,
+    })
+}
+
 /// Match OpenSSL `SSL_CTX_set1_groups_list(ctx, "P-521:X25519MLKEM768")` /
 /// `SSL_set1_groups_list(ssl, "...")` / `SSL_CONF_cmd(ctx, "Groups", "...")`
 /// — C's counterpart to `match_java_set_property_named_groups` above, both
@@ -1697,6 +1758,8 @@ const STRUCTURAL_APIS: &[&str] = &[
     // match_java_kem_encapsulation
     "javax.crypto.KEM.newEncapsulator",
     "javax.crypto.KEM.newDecapsulator",
+    // match_java_jarsigner_signature_algorithm
+    "java.security.JarSigner.Builder.signatureAlgorithm",
 ];
 
 /// The apis reached through `match_java_field_access` — a bare enum-constant

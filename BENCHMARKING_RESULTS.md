@@ -7557,3 +7557,67 @@ know for this fix, but if a real script bug produces it again unprompted, it is 
 cycle.
 
 PRECISION: 97.18%
+
+## Measurement, 2026-09-02 (Track A cycle 260 — `#Y124` closed: JDK 26 `JarSigner.Builder.signatureAlgorithm("ML-DSA-65")` coverage)
+
+`java.toml` had zero coverage of JDK 26's `jarsigner` API (JDK-8371079, RFC 9882 / PKCS#7-CMS
+ML-DSA) for ML-DSA-signed JARs. `Signature.getInstance`'s existing rules cannot see this call
+shape at all: no `Signature.getInstance` call exists anywhere in the fluent chain, and
+`.signatureAlgorithm(...)`'s `method_invocation` `object` field is itself another
+`method_invocation` in the same chain (or the `JarSigner.Builder` constructor directly), not a
+plain identifier the existing `JAVA_CALLEE_APIS` lookup can key on — the same class of gap
+`match_java_set_named_groups`/`match_java_kem_encapsulation` were each written to close.
+
+**Verified live before building, per "measure, don't assert."** A fixture calling `new
+JarSigner.Builder(entry).digestAlgorithm("SHA-256").signatureAlgorithm("ML-DSA-65").build()`
+against the pre-change release binary returns 0 findings; direct grep confirms no rule names
+`JarSigner` anywhere in `java.toml`.
+
+**Not matched on method name alone, unlike `setNamedGroups`.** A corpus grep
+(`work/corpus-clones`) surfaces a real, unrelated `.signatureAlgorithm(...)` setter already in
+the benchmark corpus — Spring Security's `NimbusJwtDecoder.withPublicKey(...)
+.signatureAlgorithm(SignatureAlgorithm.ES256)` (`maven/spring-security-crypto`'s own test suite,
+6 call sites) — so `match_java_jarsigner_signature_algorithm` (`scanner.rs`) walks the receiver
+chain back to its root and requires an actual `new JarSigner.Builder(...)` there before firing.
+The corpus's own `NimbusJwtDecoder` sites pass an enum member (`SignatureAlgorithm.ES256`), not a
+string literal, so `nth_arg_string`'s post-`#Y105` strict node-kind check would have filtered them
+regardless — the receiver-chain check is defense against a *future* string-literal call on that
+same unrelated builder, not against today's corpus content. New fixture
+(`tests/fixtures/java/JarSignerBuilder.java`) exercises both: the correct chain (3 ML-DSA arms)
+and the decoy chain (must produce nothing), plus a classical-only `digestAlgorithm("SHA-256")`
+chain that must not classify as PQC — `JDK-8371079` itself states jarsigner auto-infers the
+signature algorithm from the key type, so only the three ML-DSA identifiers get an arm, matching
+the filing's own scope. Three new classify arms (`CRYPTO-1179`–`1181`), reusing the identical
+ML-DSA-44/65/87 regex set `Signature.getInstance`'s own `CRYPTO-224`/`225`/`226` arms already use.
+
+**Corpus effect: 0 added, 0 removed — 1907 findings both sides**, confirmed with a full pre/post
+corpus dump using the in-repo `benchmarks/corpus-b-realworld/dump_findings.py` against the full
+150-project corpus (149 scanned): pre-change dump `work/y124_pre.json` (1907, commit `08b0dd5`),
+post-change dump `work/y124_post.json` (1907, this cycle's binary). Zero corpus recall was the
+expected outcome, not a surprise — `JDK-8371079` GA'd 2026-03-17 and its own bug record notes the
+explicit-override path this rule targets may be uncommon (jarsigner auto-infers by default); no
+corpus B project calls the new API at all.
+
+**Precision unchanged at 97.18%.** `bin/precision.py work/y124_pre.json work/y124_post.json
+--write-readme`: stratified-fresh 97.177% (95% CI 95.89–98.46), stratified-carried 97.159%, pooled
+Wilson 97.165% (95% CI 95.56–98.20) — all round to the already-published 97.18%. Sample `A 262/271,
+B 355/364`, populations `A=788 B=1119` (re-derived fresh, `#Y41`-safe). As in every zero-delta
+`--write-readme` run so far, the tool recomputed the audited-findings count from
+`state/estimator.json`'s persisted constants alone (271+364=635) and reverted the
+headline/comparison-table row from 636 to 635 — the same `OPEN-ASK #ESTIMATORPERSIST`/
+`#ESTIMATORPERSIST2` recurrence, corrected back to 636 by hand in the same commit rather than left
+to drift. README's extract/classify-arm counts moved 139/845 → 140/848 (Java 240→243) and are
+confirmed by `readme_rule_pack_counts_match_the_rule_packs`.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy --release
+--all-targets --workspace -- -D warnings`, `cargo test --release --workspace` all clean (161
+`scan_test.rs` cases, one new). Both trust-invariant tests (`test_run_acvp_kats_rejects_code_execution`,
+`test_network_disabled_error`) untouched and pass.
+
+**Not done, said out loud:** the incidence caveat from the original filing stands — the explicit
+`.signatureAlgorithm(...)` override this rule targets may be the uncommon path, since jarsigner
+auto-infers the algorithm from the key type by default; the fixture proves the rule is missing, not
+that real code hits it widely. `OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` and `#CORPUSDRIFT`
+remain open, none bearing on this cycle.
+
+PRECISION: 97.18%
