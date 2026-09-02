@@ -593,6 +593,102 @@ algorithm_id = "ml-dsa-unattributed"
 severity_hint = "auto"
 message = "MLDSAMuHasher(public_key) — FIPS 204, quantum-resistant, but the parameter set is carried by the public_key argument's type and is not statically knowable at this call site."
 
+# pyca/cryptography — HPKE (cryptography.hazmat.primitives.hpke), GA since
+# 47.0.0. Suite(kem, kdf, aead) takes its KEM as a bare `KEM.<member>`
+# attribute (`from cryptography.hazmat.primitives.hpke import Suite, KEM,
+# KDF, AEAD` then `Suite(KEM.X25519, ...)`, per the library's own test
+# suite) — same bare-identifier call shape #Y47 already established for
+# this file, so only the kem argument is captured; kdf/aead don't affect
+# the quantum-relevant classification. MLKEM768_X25519 is the X-Wing
+# combiner (draft-connolly-cfrg-xwing-kem, HPKE KEM ID 0x647A — confirmed
+# directly against pyca's own Rust backend source, hpke.rs). MLKEM1024_P384
+# uses a related but textually distinct combiner (draft-ietf-hpke-pq, its
+# own "MLKEM1024-P384" label, not X-Wing's) that this table has no
+# dedicated row for, so it is attributed by its PQ component only —
+# ml-kem-1024 — the same restraint #Y114's OpenMLS rule used for a
+# composite id this table doesn't carry.
+
+[[extract]]
+id = "PY-083"
+language = "python"
+query = """
+(call
+  function: (identifier) @fn (#eq? @fn "Suite")
+  arguments: (argument_list
+    (attribute
+      object: (identifier) @kem_mod (#eq? @kem_mod "KEM")
+      attribute: (identifier) @kem)
+    (_)
+    (_)))
+"""
+captures = { fn = "ident", kem_mod = "ident", kem = "ident" }
+api = "cryptography.hazmat.hpke.Suite"
+description = "pyca HPKE suite construction: Suite(KEM.<member>, KDF.<member>, AEAD.<member>)."
+
+[[classify]]
+id = "CRYPTO-1171"
+when.api = "^cryptography\\.hazmat\\.hpke\\.Suite$"
+when.args.kem = "X25519"
+algorithm_id = "x25519"
+severity_hint = "auto"
+message = "HPKE Suite(KEM.X25519, ...) — quantum-vulnerable as a standalone KEM. Use MLKEM768_X25519 (X-Wing)."
+
+[[classify]]
+id = "CRYPTO-1172"
+when.api = "^cryptography\\.hazmat\\.hpke\\.Suite$"
+when.args.kem = "P256"
+algorithm_id = "ecdh-p256"
+severity_hint = "auto"
+message = "HPKE Suite(KEM.P256, ...) — quantum-vulnerable as a standalone KEM."
+
+[[classify]]
+id = "CRYPTO-1173"
+when.api = "^cryptography\\.hazmat\\.hpke\\.Suite$"
+when.args.kem = "P384"
+algorithm_id = "ecdh-p384"
+severity_hint = "auto"
+message = "HPKE Suite(KEM.P384, ...) — quantum-vulnerable as a standalone KEM."
+
+[[classify]]
+id = "CRYPTO-1174"
+when.api = "^cryptography\\.hazmat\\.hpke\\.Suite$"
+when.args.kem = "P521"
+algorithm_id = "ecdh-p521"
+severity_hint = "auto"
+message = "HPKE Suite(KEM.P521, ...) — quantum-vulnerable as a standalone KEM."
+
+[[classify]]
+id = "CRYPTO-1175"
+when.api = "^cryptography\\.hazmat\\.hpke\\.Suite$"
+when.args.kem = "MLKEM768"
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "HPKE Suite(KEM.MLKEM768, ...) — FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1176"
+when.api = "^cryptography\\.hazmat\\.hpke\\.Suite$"
+when.args.kem = "MLKEM1024"
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "HPKE Suite(KEM.MLKEM1024, ...) — FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1177"
+when.api = "^cryptography\\.hazmat\\.hpke\\.Suite$"
+when.args.kem = "MLKEM768_X25519"
+algorithm_id = "x-wing"
+severity_hint = "auto"
+message = "HPKE Suite(KEM.MLKEM768_X25519, ...) — the X-Wing combiner (draft-connolly-cfrg-xwing-kem), quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1178"
+when.api = "^cryptography\\.hazmat\\.hpke\\.Suite$"
+when.args.kem = "MLKEM1024_P384"
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "HPKE Suite(KEM.MLKEM1024_P384, ...) — quantum-resistant; the specific hybrid combiner (draft-ietf-hpke-pq) has no dedicated row, so this is attributed by its PQ component only."
+
 # ============================================================================
 # liboqs's official Python binding (`liboqs-python`, PyPI, PQCA-maintained) —
 # oqs.KeyEncapsulation(alg) / oqs.Signature(alg) construct via the identical

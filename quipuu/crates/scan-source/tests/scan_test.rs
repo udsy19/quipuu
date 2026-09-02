@@ -4541,6 +4541,54 @@ fn scans_python_pqc_native_mlkem_mldsa() {
     );
 }
 
+/// Backlog `#Y123`: pyca/cryptography's HPKE module (`cryptography.hazmat.
+/// primitives.hpke`, GA since 47.0.0) had zero `python.toml` coverage.
+/// `Suite(kem, kdf, aead)` names its KEM as a bare `KEM.<member>` attribute;
+/// MLKEM768_X25519 is the X-Wing combiner (draft-connolly-cfrg-xwing-kem,
+/// confirmed against pyca's own Rust backend source) and MLKEM1024_P384 uses
+/// a related but distinct combiner this table has no dedicated row for, so
+/// it is attributed by its PQ component only (ml-kem-1024).
+#[test]
+fn scans_python_hpke_suite() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("python/hpke_suite.py"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-1171", "x25519"),
+        ("CRYPTO-1172", "ecdh-p256"),
+        ("CRYPTO-1173", "ecdh-p384"),
+        ("CRYPTO-1174", "ecdh-p521"),
+        ("CRYPTO-1175", "ml-kem-768"),
+        ("CRYPTO-1176", "ml-kem-1024"),
+        ("CRYPTO-1177", "x-wing"),
+        ("CRYPTO-1178", "ml-kem-1024"),
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in Python HPKE fixture; findings: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+    assert_eq!(
+        findings.len(),
+        8,
+        "expected exactly 8 Suite() call sites classified, no more no less; got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
 /// Backlog `#Y74`: liboqs's own official Python binding (`liboqs-python`)
 /// had zero `python.toml` coverage — `oqs.KeyEncapsulation(alg)` /
 /// `oqs.Signature(alg)` construct via the identical `OQS_KEM_new`/

@@ -2029,6 +2029,12 @@ const PYTHON_CALLEE_APIS: &[(&str, &str)] = &[
     // this table cannot trace, so it degrades to `ml-dsa-unattributed`.
     ("mldsa.MLDSAMuHasher", "cryptography.hazmat.mldsa.mu_hasher"),
     ("MLDSAMuHasher", "cryptography.hazmat.mldsa.mu_hasher"),
+    // `Suite(kem, kdf, aead)` — pyca's HPKE module (GA since 47.0.0). The
+    // library's own test suite calls this bare (`from
+    // cryptography.hazmat.primitives.hpke import Suite, KEM, ...`), same
+    // constructor-call shape as MLDSAMuHasher above (#Y123).
+    ("hpke.Suite", "cryptography.hazmat.hpke.Suite"),
+    ("Suite", "cryptography.hazmat.hpke.Suite"),
 ];
 
 fn match_python_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
@@ -3298,6 +3304,13 @@ fn populate_args(
             // ssl.SSLContext(ssl.PROTOCOL_TLSv1)
             if let Some(proto) = nth_arg_attr_name(args_node, 0, source) {
                 out.insert("proto".into(), ArgValue::Str(proto));
+            }
+        }
+        (Language::Python, "cryptography.hazmat.hpke.Suite") => {
+            // Suite(KEM.X25519, KDF.HKDF_SHA256, AEAD.AES_128_GCM) — only the
+            // kem argument (arg 0) is quantum-relevant.
+            if let Some(kem) = nth_arg_attr_name(args_node, 0, source) {
+                out.insert("kem".into(), ArgValue::Str(kem));
             }
         }
         (Language::Python, "jwt.encode") => {
