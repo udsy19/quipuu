@@ -798,6 +798,15 @@ fn walk(
     {
         out.extend(ms);
     }
+    // OpenMLS `Ciphersuite::MLS_*_MLKEM*`/`_XWING_*` — a bare enum-variant
+    // path expression, not a call, so it needs its own hook rather than
+    // riding `match_call`'s `call_expression` dispatch. Backlog `#Y114`.
+    if language == Language::Rust
+        && kind == "scoped_identifier"
+        && let Some(m) = match_rust_openmls_ciphersuite(node, source)
+    {
+        out.push(m);
+    }
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
         walk(
@@ -1289,6 +1298,40 @@ fn match_rust_kx_groups(node: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch>> 
     }
 }
 
+/// OpenMLS `Ciphersuite::MLS_*_MLKEM*`/`Ciphersuite::MLS_*_XWING_*` — the
+/// crate's hybrid/PQC ciphersuite enum variants
+/// (draft-ietf-mls-pq-ciphersuites, WG Draft) are named path expressions,
+/// not calls (`let cs = Ciphersuite::MLS_192_MLKEM768_AES256GCM_SHA384_
+/// MLDSA65;`), so this hooks the bare `scoped_identifier` node kind rather
+/// than `call_expression` — the same reason `match_rust_kx_groups` above
+/// hooks `field_initializer`/`const_item`/`static_item` instead. Only the
+/// PQC-named variants are matched; the classical-only variants (e.g.
+/// `MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519`) are out of scope for this
+/// rule. Backlog `#Y114`.
+fn match_rust_openmls_ciphersuite(node: Node<'_>, source: &[u8]) -> Option<RawMatch> {
+    let path = node.child_by_field_name("path")?;
+    if node_text(path, source) != "Ciphersuite" {
+        return None;
+    }
+    let name = node.child_by_field_name("name")?;
+    let variant = node_text(name, source);
+    if !variant.contains("MLKEM") && !variant.contains("XWING") {
+        return None;
+    }
+    let mut args = HashMap::new();
+    args.insert("variant".into(), ArgValue::Str(variant.clone()));
+    let start = node.start_position();
+    Some(RawMatch {
+        api: "openmls.Ciphersuite".into(),
+        args,
+        line: (start.row + 1) as u32,
+        offset: node.start_byte() as u32,
+        symbol: variant,
+        snippet: node_text(node, source),
+        site_context: quipuu_core::SiteContext::Call,
+    })
+}
+
 /// Follow `Cow::Borrowed(&[...])` / `Cow::Owned(&[...])` / a bare `&[...]`
 /// down to the innermost `array_expression`.
 fn find_array_literal(mut node: Node<'_>) -> Option<Node<'_>> {
@@ -1512,6 +1555,8 @@ const STRUCTURAL_APIS: &[&str] = &[
     "openssl.SSL_CTX_set1_groups_list",
     // match_rust_kx_groups
     "rustls.CryptoProvider.kx_groups",
+    // match_rust_openmls_ciphersuite
+    "openmls.Ciphersuite",
     // match_go_oqs_construction
     "liboqs-go/oqs.KeyEncapsulation",
     "liboqs-go/oqs.Signature",

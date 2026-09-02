@@ -794,3 +794,51 @@ when.args.group = "FFDHE4096"
 algorithm_id = "dh-4096"
 severity_hint = "auto"
 message = "rustls kx_groups: FFDHE4096 — finite-field DH (RFC 7919), quantum-vulnerable. Migrate to an ML-KEM hybrid group."
+
+# OpenMLS (Cryspen) — `Ciphersuite::MLS_*` enum variants (draft-ietf-mls-pq-
+# ciphersuites, WG Draft; docs.rs/openmls/latest/openmls/prelude/enum.
+# Ciphersuite.html, verified 2026-09-02) name the MLS protocol's hybrid/PQC
+# ciphersuites literally, e.g. `Ciphersuite::MLS_192_MLKEM768_AES256GCM_
+# SHA384_MLDSA65`. Gated behind a Cargo feature flag named after the draft —
+# experimental, same tier `#Y95`'s .NET CompositeMLDsa shipped at. A bare
+# path expression, not a call, so the matcher hooks `scoped_identifier`
+# directly (`match_rust_openmls_ciphersuite` in scanner.rs) rather than
+# riding the call-expression dispatch every other Rust rule in this file
+# uses. Only the ciphersuite's KEM component gets an algorithm id — the
+# accompanying signature scheme (Ed25519/P256/P384/ML-DSA) is a distinct
+# primitive within the same suite name and not separately attributed here,
+# same restraint `#Y113`'s LMS-only OpenSSL rule and CompositeMLKem's
+# ml-kem-unattributed fallback both used. Order matters: the X25519-hybrid
+# and XWING arms must precede the plain MLKEM768/MLKEM1024 arms below since
+# classify rules stop at the first match. Backlog `#Y114`.
+[[classify]]
+id = "CRYPTO-1138"
+when.api = "^openmls\\.Ciphersuite$"
+when.args.variant = { regex = "XWING" }
+algorithm_id = "x-wing"
+severity_hint = "auto"
+message = "OpenMLS Ciphersuite::{variant} — X-Wing (hybrid X25519 + ML-KEM-768) HPKE KEM. Migrated key-establishment."
+
+[[classify]]
+id = "CRYPTO-1139"
+when.api = "^openmls\\.Ciphersuite$"
+when.args.variant = { regex = "MLKEM768X25519" }
+algorithm_id = "x25519-mlkem768"
+severity_hint = "auto"
+message = "OpenMLS Ciphersuite::{variant} — hybrid X25519 + ML-KEM-768 (FIPS 203) HPKE KEM. Migrated key-establishment."
+
+[[classify]]
+id = "CRYPTO-1140"
+when.api = "^openmls\\.Ciphersuite$"
+when.args.variant = { regex = "MLKEM1024" }
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "OpenMLS Ciphersuite::{variant} — non-hybrid ML-KEM-1024 (FIPS 203) HPKE KEM."
+
+[[classify]]
+id = "CRYPTO-1141"
+when.api = "^openmls\\.Ciphersuite$"
+when.args.variant = { regex = "MLKEM768" }
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "OpenMLS Ciphersuite::{variant} — non-hybrid ML-KEM-768 (FIPS 203) HPKE KEM."

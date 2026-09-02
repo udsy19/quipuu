@@ -6749,3 +6749,68 @@ updated for cpp.toml's new 131 classify-arm count (130 → 131; README's two cou
 this change.
 
 PRECISION: 97.17%
+
+## Measurement, 2026-09-02 (Track A cycle 214 — `#Y114`, OpenMLS `Ciphersuite::MLS_*` PQC coverage)
+
+**`rust.toml` had zero coverage for OpenMLS (Cryspen), the Rust MLS implementation's own named PQC
+ciphersuite enum variants.** `draft-ietf-mls-pq-ciphersuites` (IETF WG Draft) defines hybrid
+ML-KEM/ML-DSA MLS cipher suites; OpenMLS's own `Ciphersuite` enum
+(`docs.rs/openmls/latest/openmls/prelude/enum.Ciphersuite.html`) exposes these as named, literal
+variants — e.g. `Ciphersuite::MLS_192_MLKEM768_AES256GCM_SHA384_MLDSA65` — verified directly
+against the enum's own source (`traits/src/types.rs`, `github.com/openmls/openmls`, fetched
+2026-09-02) rather than trusting the docs.rs render: 9 `MLKEM`-named variants plus a separate
+`MLS_256_XWING_CHACHA20POLY1305_SHA256_Ed25519` (X-Wing combiner). Gated behind a Cargo feature
+flag named after the draft — experimental, the same tier `#Y95`'s .NET `CompositeMLDsa` shipped
+at.
+
+Unlike every other Rust rule in this file, a `Ciphersuite::MLS_*` reference is a bare
+`scoped_identifier` path expression, not a call (`let cs = Ciphersuite::MLS_192_…;`), so it needed
+a new hand-written matcher (`match_rust_openmls_ciphersuite`, `scanner.rs`) hooked on the
+`scoped_identifier` node kind directly, the same reasoning `match_rust_kx_groups` already
+established for hooking `field_initializer`/`const_item`/`static_item` instead of
+`call_expression`. Four new classify arms (`CRYPTO-1138`–`1141`) attribute each variant by its HPKE
+KEM component only — the accompanying signature scheme (Ed25519/P256/P384/ML-DSA) is a distinct
+primitive within the same suite name and is not separately attributed, the same restraint
+`#Y113`'s LMS-only rule and `CompositeMLKem`'s `ml-kem-unattributed` fallback both used: XWING → the
+existing `x-wing` id, `MLKEM768X25519` → the existing `x25519-mlkem768` id, `MLKEM1024` →
+`ml-kem-1024`, plain `MLKEM768` → `ml-kem-768`, reusing ids `algorithm-table.toml` already carries
+rather than adding a composite-family row. Classify rules stop at the first match, so the
+X25519-hybrid and XWING arms are ordered before the plain-KEM arms to avoid the hybrid variant
+falling into the broader `MLKEM768` substring match. `"openmls.Ciphersuite"` registered in
+`STRUCTURAL_APIS` so `every_classify_rule_targets_an_api_the_extractor_can_emit` confirms
+reachability.
+
+A fixture (`rust/openmls_ciphersuite.rs`) and a new test (`scans_rust_openmls_ciphersuite`) cover
+all four arms plus a classical-only variant (`MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519`) that
+must not fire, confirming the matcher's `MLKEM`/`XWING` name filter holds.
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change binary from main at `35d6bbb` (`work/y113_post.json`, 1915
+findings) · post-change binary from this cycle's tree (`work/y114_post.json`, 1915 findings), both
+produced by the repo's own `benchmarks/corpus-b-realworld/dump_findings.py`.**
+
+**0 findings added, 0 removed, 0 reclassified — the expected result, not a surprise.** No corpus B
+project depends on `openmls` (`grep -rl openmls` over the corpus manifest finds nothing) — the same
+"real gap, zero corpus recall" shape `#Y113`'s OpenSSL 3.6 LMS coverage and `#Y100`'s
+BouncyCastle.NET LMS/HSS coverage both hit. The fixture, not the corpus, is the instrument for this
+rule.
+
+**Precision 97.17% → 97.17%, unchanged.** `precision.py work/y113_post.json work/y114_post.json
+--write-readme` reproduced the byte-identical 1915-finding dump on both sides (0 added, 0 removed)
+and re-derived the stratified-fresh populations from scratch: `A=796, B=1119`, sample `A 262/271, B
+355/364` — 635 of 1915 audited — giving 97.175% (95% CI 95.89–98.46), rounding to the published
+97.17%. No finding moved, so the change contributes 0 to this figure. README already stated the
+matching claim; `--write-readme` had nothing to change.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --all` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing, including the new
+`scans_rust_openmls_ciphersuite` test. Both trust-invariant tests
+(`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
+`readme_rule_pack_counts_match_the_rule_packs` updated for rust.toml's new classify-arm count (803
+→ 807 total; the extract-block count, 135, is unchanged since this rule has no TOML `[[extract]]`
+block — same reachability shape `match_rust_kx_groups` already established).
+
+**Not done, said out loud:** `#Y107`/`#Y108` remain open. `OPEN-ASK #ESTIMATORPERSIST`/
+`#ESTIMATORPERSIST2` and `#CORPUSDRIFT` remain open, neither bearing on this change.
+
+PRECISION: 97.17%

@@ -1636,6 +1636,52 @@ fn scans_rust_kx_groups_list() {
     );
 }
 
+#[test]
+fn scans_rust_openmls_ciphersuite() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/openmls_ciphersuite.rs"))
+        .expect("scan succeeds");
+
+    let ciphersuite_findings: Vec<_> = findings
+        .iter()
+        .filter(|f| f.rule_id.starts_with("CRYPTO-1") && (1138..=1141).contains(&rule_num(f)))
+        .collect();
+
+    for (algorithm_id, expected) in [
+        ("x-wing", 1),          // pick_hybrid
+        ("ml-kem-1024", 1),     // pick_mlkem1024
+        ("x25519-mlkem768", 1), // pick_mlkem768_x25519
+        ("ml-kem-768", 2),      // pick_mlkem768_plain + pick_mlkem768_mldsa
+    ] {
+        let n = ciphersuite_findings
+            .iter()
+            .filter(|f| f.algorithm_id == algorithm_id)
+            .count();
+        assert_eq!(
+            n,
+            expected,
+            "expected {expected} finding(s) for {algorithm_id}, got {n}: {:#?}",
+            ciphersuite_findings
+                .iter()
+                .map(|f| &f.algorithm_id)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    // The classical-only variant in `pick_classical` must not fire.
+    assert_eq!(
+        ciphersuite_findings.len(),
+        5,
+        "the classical-only variant must not add a finding: {:#?}",
+        ciphersuite_findings
+            .iter()
+            .map(|f| &f.algorithm_id)
+            .collect::<Vec<_>>()
+    );
+}
+
 // ============================================================================
 // C# fixtures
 // ============================================================================
