@@ -7512,3 +7512,48 @@ open, none bearing on this cycle — a third data point that `--write-readme`'s 
 reverts a real prior TP fold.
 
 PRECISION: 97.18%
+
+## Measurement, 2026-09-02 — `readme_benchmark_table_total_matches_the_precision_denominator` gate
+failure diagnosed: `2069` was never a real corpus total; the prior cycle's own fix ships unchanged
+
+The prior cycle's `#Y123` HPKE `Suite()` decoy fix (`nth_arg_attr_name_if_object`, requiring the
+attribute's object be literally `KEM` — see `#Y123`'s cycle-249 entry above) is correct and kept
+as-is: fixture, `scan_test.rs` case, and the `scanner.rs` change all carry forward unchanged. What
+did not carry forward is that cycle's corpus figure. Its commit message and a `BENCHMARKING_RESULTS.md`
+section both asserted the corpus had grown **1907 → 2069** "since the last anchor" and updated only
+the precision-sentence denominator (not the benchmark table's `Total findings` row, nor the four
+other `1907` references three sections above it) to match — exactly the `#Y84` drift shape the gate
+exists to catch, and the gate caught it.
+
+**2069 was not a corpus change.** A pre/post dump with the canonical, in-repo
+`benchmarks/corpus-b-realworld/dump_findings.py` against the current `work/corpus-clones` — pre
+binary built from `HEAD` (`93b44c2`, the last cycle whose README numbers actually match its own
+benchmark table), post binary built from this tree with the `#Y123` decoy fix applied — gives
+**1907 findings, both sides, 0 added, 0 removed** (`work/y125_pre.json`, `work/y125_post.json`).
+The corpus has not drifted; nothing about this fix touches corpus B (it narrows an already-zero-recall
+shape, same as `#Y123` itself). `2069` was a bad reading from whatever produced it, the same
+`crates-io:rustls-pemfile` double-count failure mode the README's own benchmark-number paragraph
+already documents for a different script — not investigated further since the canonical script's
+1907-both-sides result is sufficient to know the README's pre-existing figures were already correct
+and needed no update.
+
+**Precision unchanged at 97.18%.** `bin/precision.py work/y125_pre.json work/y125_post.json
+--added-tp 1 --added-fp 0 --write-readme`: stratified-fresh 97.182% (95% CI 95.90–98.47),
+stratified-carried 97.164%, pooled Wilson 97.170% (95% CI 95.57–98.20), sample `A 263/272 B 355/364`,
+populations `A=788 B=1119`. `--added-tp 1` reapplies the same `#Y119` hand-verified-TP correction
+`state/estimator.json` does not persist (`OPEN-ASK #ESTIMATORPERSIST`, still open) — without it the
+audited count reverts 636→635, a fourth data point for the same standing gap. README required no
+changes: every figure it produced (97.18%, 636, 1907) was already what was published.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy --release
+--all-targets --workspace -- -D warnings`, `cargo test --release --workspace` all clean. Both
+trust-invariant tests (`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`)
+untouched and pass.
+
+**Not done, said out loud:** did not track down which script or process produced the `2069` reading
+in the parked cycle — the canonical script's byte-clean 1907-both-sides result made it unnecessary to
+know for this fix, but if a real script bug produces it again unprompted, it is still unfound.
+`OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2`/`#CORPUSDRIFT` remain open, none bearing on this
+cycle.
+
+PRECISION: 97.18%

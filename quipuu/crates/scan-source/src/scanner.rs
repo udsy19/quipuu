@@ -3308,8 +3308,12 @@ fn populate_args(
         }
         (Language::Python, "cryptography.hazmat.hpke.Suite") => {
             // Suite(KEM.X25519, KDF.HKDF_SHA256, AEAD.AES_128_GCM) — only the
-            // kem argument (arg 0) is quantum-relevant.
-            if let Some(kem) = nth_arg_attr_name(args_node, 0, source) {
+            // kem argument (arg 0) is quantum-relevant. The object must be
+            // literally `KEM`, not just any attribute access: `Suite` alone
+            // is a common enough name that a same-named, unrelated class
+            // taking an unqualified enum-member first argument (e.g.
+            // `Algo.X25519`) would otherwise match too (#Y123 decoy FP).
+            if let Some(kem) = nth_arg_attr_name_if_object(args_node, 0, "KEM", source) {
                 out.insert("kem".into(), ArgValue::Str(kem));
             }
         }
@@ -3911,6 +3915,31 @@ fn nth_arg_call_attr(args: Node<'_>, n: usize, source: &[u8]) -> Option<String> 
 fn nth_arg_attr_name(args: Node<'_>, n: usize, source: &[u8]) -> Option<String> {
     let arg = nth_real_arg(args, n)?;
     if arg.kind() != "attribute" {
+        return None;
+    }
+    Some(node_text(arg.child_by_field_name("attribute")?, source))
+}
+
+/// Attribute name of a `object.NAME` attribute at argument position `n`,
+/// only when `object`'s own text matches `object_name` exactly. Same shape
+/// as `nth_arg_attr_name` but additionally checks the qualifier, matching
+/// what `PY-083`'s extract query already declares
+/// (`object: (identifier) @kem_mod (#eq? @kem_mod "KEM")`) — narrows a bare
+/// callee-name match like `Suite(...)` against a same-named, unrelated
+/// class whose own constructor happens to take an unqualified enum member
+/// as its first argument (#Y123's decoy false positive).
+fn nth_arg_attr_name_if_object(
+    args: Node<'_>,
+    n: usize,
+    object_name: &str,
+    source: &[u8],
+) -> Option<String> {
+    let arg = nth_real_arg(args, n)?;
+    if arg.kind() != "attribute" {
+        return None;
+    }
+    let object = arg.child_by_field_name("object")?;
+    if object.kind() != "identifier" || node_text(object, source) != object_name {
         return None;
     }
     Some(node_text(arg.child_by_field_name("attribute")?, source))

@@ -4589,6 +4589,32 @@ fn scans_python_hpke_suite() {
     );
 }
 
+/// Self-doubt's nineteenth same-day pass: a locally-defined, HPKE-unrelated
+/// `class Suite` called with an unqualified enum-member first argument
+/// (`Algo.X25519`, not `KEM.X25519`) reproduced a real `CRYPTO-1171` false
+/// positive against the release binary, because the arg-0 capture only
+/// checked the attribute's name, not its object. Confirms the fix requires
+/// the object be literally `KEM`, matching what `PY-083`'s extract query
+/// already declared.
+#[test]
+fn scans_python_hpke_suite_decoy_no_match() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("python/hpke_suite_decoy.py"))
+        .expect("scan succeeds");
+
+    assert_eq!(
+        findings.len(),
+        0,
+        "expected 0 findings for a locally-defined, HPKE-unrelated Suite; got: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
 /// Backlog `#Y74`: liboqs's own official Python binding (`liboqs-python`)
 /// had zero `python.toml` coverage — `oqs.KeyEncapsulation(alg)` /
 /// `oqs.Signature(alg)` construct via the identical `OQS_KEM_new`/
