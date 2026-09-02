@@ -56,3 +56,25 @@ struct Unrelated {
 const OTHER: Unrelated = Unrelated {
     kx_groups: Cow::Borrowed(&[kx_group::SECP256R1]),
 };
+
+// Shape 3: `rustls_post_quantum::DEFAULT_PROVIDER`, referenced by its fully
+// qualified path at a use site — not a field_initializer or a
+// `KX_GROUPS`-named item, so it needs its own matcher.
+mod rustls_post_quantum {
+    pub const DEFAULT_PROVIDER: u8 = 0;
+}
+
+// A sibling crate's own classical-only const of the identical bare name —
+// must NOT fire; only the fully qualified `rustls_post_quantum::` path is
+// PQC here.
+mod rustls_aws_lc_rs {
+    pub const DEFAULT_PROVIDER: u8 = 0;
+}
+
+fn build_pq_config() -> u8 {
+    rustls_post_quantum::DEFAULT_PROVIDER
+}
+
+fn build_classical_config() -> u8 {
+    rustls_aws_lc_rs::DEFAULT_PROVIDER
+}

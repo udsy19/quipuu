@@ -814,6 +814,18 @@ fn walk(
     {
         out.push(m);
     }
+    // `rustls_post_quantum::DEFAULT_PROVIDER` — the rustls-post-quantum
+    // crate's own hybrid `CryptoProvider` constant, referenced by its fully
+    // qualified path at a use site (`Arc::new(rustls_post_quantum::
+    // DEFAULT_PROVIDER)`) rather than assigned to a `kx_groups` field or a
+    // `KX_GROUPS`-named item — `match_rust_kx_groups` above cannot see it.
+    // Same `scoped_identifier` hook as the OpenMLS rule just above.
+    if language == Language::Rust
+        && kind == "scoped_identifier"
+        && let Some(m) = match_rust_post_quantum_provider(node, source)
+    {
+        out.push(m);
+    }
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
         walk(
@@ -1334,6 +1346,47 @@ fn match_rust_openmls_ciphersuite(node: Node<'_>, source: &[u8]) -> Option<RawMa
         line: (start.row + 1) as u32,
         offset: node.start_byte() as u32,
         symbol: variant,
+        snippet: node_text(node, source),
+        site_context: quipuu_core::SiteContext::Call,
+    })
+}
+
+/// `rustls_post_quantum::DEFAULT_PROVIDER` — the `rustls-post-quantum`
+/// crate's own hybrid-KEM `CryptoProvider` constant (`pub const
+/// DEFAULT_PROVIDER: CryptoProvider = CryptoProvider { .. ,
+/// ..rustls_aws_lc_rs::DEFAULT_PROVIDER }`), referenced at a use site by its
+/// fully qualified path — `Arc::new(rustls_post_quantum::DEFAULT_PROVIDER)`
+/// is the crate's own documented usage. Unlike `match_rust_kx_groups` above,
+/// there is no array of group names to walk here; the const's own struct
+/// update inherits `rustls_aws_lc_rs::DEFAULT_PROVIDER`'s `kx_groups`, whose
+/// first (and hybrid-selected) entry is `X25519MLKEM768`, verified directly
+/// against both crates' source.
+///
+/// Matched on the full qualified path, not the bare `DEFAULT_PROVIDER`
+/// segment: `rustls-aws-lc-rs` defines its own, separate, classical-only
+/// `pub const DEFAULT_PROVIDER` of the identical bare name, and `rust.toml`
+/// has no import-resolution mechanism to disambiguate a bare reference (same
+/// limitation named for `#Y117`'s `oqs::Kem`/`Sig` and `#Y118`'s
+/// `rsa::SigningKey`). Reuses the existing `rustls.CryptoProvider.kx_groups`
+/// api / `CRYPTO-920` classify arm rather than adding a new one.
+fn match_rust_post_quantum_provider(node: Node<'_>, source: &[u8]) -> Option<RawMatch> {
+    let path = node.child_by_field_name("path")?;
+    if node_text(path, source) != "rustls_post_quantum" {
+        return None;
+    }
+    let name = node.child_by_field_name("name")?;
+    if node_text(name, source) != "DEFAULT_PROVIDER" {
+        return None;
+    }
+    let mut args = HashMap::new();
+    args.insert("group".into(), ArgValue::Str("X25519MLKEM768".into()));
+    let start = node.start_position();
+    Some(RawMatch {
+        api: "rustls.CryptoProvider.kx_groups".into(),
+        args,
+        line: (start.row + 1) as u32,
+        offset: node.start_byte() as u32,
+        symbol: "rustls_post_quantum::DEFAULT_PROVIDER".into(),
         snippet: node_text(node, source),
         site_context: quipuu_core::SiteContext::Call,
     })

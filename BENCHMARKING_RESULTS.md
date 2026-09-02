@@ -7149,3 +7149,69 @@ clean. Both trust-invariant tests (`test_run_acvp_kats_rejects_code_execution`,
 this change.
 
 PRECISION: 97.19%
+
+## Measurement, 2026-09-02 (Track A cycle 231 — `rustls_post_quantum::DEFAULT_PROVIDER` coverage)
+
+Picked up the thirteenth-same-day-pass ecosystem lens's "ready to build" item (`Backlog.md`, "Track B
+synthesis, thirteenth-same-day-pass reconciliation" § 2): `rust.toml`'s `match_rust_kx_groups`
+(`field_initializer`/`const_item`/`static_item` node kinds only) is blind to `rustls-post-quantum`'s
+own documented usage, `Arc::new(rustls_post_quantum::DEFAULT_PROVIDER)` — a bare `scoped_identifier`
+in a call-argument position, not any of the three shapes the matcher hooks. Verified directly against
+the crate's own live corpus clone before building anything: `rustls_post_quantum/src/lib.rs:32` (`pub
+const DEFAULT_PROVIDER: CryptoProvider = CryptoProvider { .. , ..rustls_aws_lc_rs::DEFAULT_PROVIDER
+}`) and its own `examples/client.rs:19` (`ClientConfig::builder(Arc::new(rustls_post_quantum::
+DEFAULT_PROVIDER))`) — the crate's own documented entry point. The lens's second named shape
+(`with_kx_groups(&[X25519MLKEM768, MLKEM768])`) does **not** exist as a real call anywhere in this
+corpus clone — grepped the whole `rustls-pemfile` checkout and found only unrelated `rustls-test`
+helper functions named `make_client_config_with_kx_groups`/`make_server_config_with_kx_groups` — so,
+per rule 5, only the `DEFAULT_PROVIDER` shape was built; the other is not corroborated and is not
+claimed.
+
+New matcher `match_rust_post_quantum_provider` (`scanner.rs`), hooked to the same `scoped_identifier`
+node kind `match_rust_openmls_ciphersuite` already uses. Matched on the fully qualified two-segment
+path (`path` field text `rustls_post_quantum`, `name` field text `DEFAULT_PROVIDER`), not the bare
+final segment — confirmed directly that `rustls-aws-lc-rs/src/lib.rs:89` defines its own, separate,
+classical-only `pub const DEFAULT_PROVIDER` of the identical bare name, so an unqualified match would
+misattribute that sibling crate's provider as PQC. `rustls_post_quantum::DEFAULT_PROVIDER`'s own
+struct update inherits `rustls_aws_lc_rs::DEFAULT_PROVIDER`'s `kx_groups`, whose first (hybrid-selected)
+entry is `X25519MLKEM768` (`rustls-aws-lc-rs/src/lib.rs:340`) — confirmed by reading the array, not
+assumed. No new classify arm or algorithm-table row: the matcher emits the existing
+`rustls.CryptoProvider.kx_groups` api with `group = "X25519MLKEM768"`, reusing `CRYPTO-920` unchanged.
+`tests/fixtures/rust/kx_groups.rs` gained a third shape (the qualified reference) plus a negative
+control (the sibling crate's classical-only same-bare-name const, which must not fire);
+`scans_rust_kx_groups_list` extended to assert both (6 → 7 group findings, `x25519-mlkem768` 2 → 3).
+
+**Corpus effect: 0 added, 0 removed, 0 reclassified — 1917 both sides**, full pre/post dump
+(`benchmarks/corpus-b-realworld/dump_findings.py`, clones at `/opt/cryptoscope/work/corpus-clones`,
+pre-change binary built in a worktree at this cycle's parent commit `fe198fd`, post-change binary this
+cycle's tree; dumps `work/rustlspq_pre.json` / `work/rustlspq_post.json`). Not a bug: `crates-io:rustls`
+declares `scan_hints.scan_paths = ["rustls/src/"]`, and `rustls-post-quantum` lives at the workspace
+root as a sibling crate, outside that path — the same "real gap, zero corpus recall" shape `#Y113`/
+`#Y114`/`#Y117` hit, and the lens's own synthesis said as much in advance ("No corpus-B prevalence claim
+made — no independent (non-rustls-project) consumer found this pass"). Coverage is verified instead by
+the extended in-repo fixture above, same tier as those three prior items.
+
+**Precision 97.19% → 97.17%, a re-derivation artifact, not a regression from this change (0 findings
+moved).** `bin/precision.py work/rustlspq_pre.json work/rustlspq_post.json --write-readme`: stratified,
+fresh populations 97.174% (95% CI 95.89–98.46); stratified, carried constants 97.159%; pooled Wilson
+97.165% (95% CI 95.56–98.20); sample `A 262/271, B 355/364`, populations `A=798 B=1119`, 635 of 1917
+audited — the same "fresh populations vs. carried constants" drift cycles 227/228 documented, here
+additionally reflecting that `state/estimator.json`'s stratum-A base (`a_tp=262`) was never moved by
+cycle 229's `--added-tp 4` fold (`OPEN-ASK #ESTIMATORPERSIST2`, already open, not this cycle's to
+resolve — recorded here only because this run's own sample count makes the gap visible again). This
+cycle passed no `--added-tp`/`--added-fp` because it added zero findings to any stratum; the number
+reported is exactly what the estimator computes from the unmodified label base, not a chosen figure.
+README headline, comparison-table row, and audited-count denominator (639 → 635) all updated in the
+same diff.
+
+**Held:** `cargo build --release --workspace`, `cargo test --release --workspace` (156 `scan_test.rs`
+cases, one extended in place — no new test function), `cargo fmt --all`, `cargo clippy --release
+--all-targets --workspace -- -D warnings` all clean. Both trust-invariant tests
+(`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
+
+**Not done, said out loud:** the `with_kx_groups` builder-argument shape the lens also named is not
+built — not corroborated against any real call site in this corpus, per rule 5. `#Y107`/`#Y108`,
+`OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2`/`#CORPUSDRIFT`, and the standing
+`needs-human-approval` regulatory queue remain open, none bearing on this change.
+
+PRECISION: 97.17%
