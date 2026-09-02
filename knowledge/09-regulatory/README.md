@@ -560,6 +560,28 @@ rather than quoting it verbatim.
 
 ---
 
+### 26. EU ECCG "Agreed Cryptographic Mechanisms" v3 (EUCC certification)
+
+**Issuing body:** European Cybersecurity Certification Group (ECCG), Sub-group on Cryptography — the body ENISA supports under the EU Cybersecurity Certification Framework
+**Primary sources:**
+- Draft v3 for public review (document `9993abb8-5f27-47d0-bdb2-f6f284cd5141`): https://certification.enisa.europa.eu/document/download/9993abb8-5f27-47d0-bdb2-f6f284cd5141_en?filename=20260507-acm-draft.pdf
+- Companion ENISA report, "Hybridization of traditional cryptographic mechanisms with PQC — Standardisation Status" (document `02f54596-6a99-4c9e-88c4-8c711ebff9c1`), 30 April 2026
+- Hosting page: https://certification.enisa.europa.eu/publications/eucc-guidelines-cryptography_en
+
+**Status: draft, not adopted.** Internally dated April 2026, published for public review 2 June 2026, review closed end of July 2026. **No formal-adoption date found as of 2026-09-02** — the currently-applicable version remains v2 (6 May 2025). Cited here as the operative direction of travel, the same practice this file already applies to BSI TR-02102 (§14) and ANSSI-PG-083 (§15), both revisable technical guidelines rather than primary legislation — captioned as draft, not smoothed over.
+
+**Scope:** Sets the cryptographic-mechanism acceptance table for ICT products undergoing EU Common Criteria (EUCC) certification, binding on national cybersecurity certification authorities (NCCAs) across EU member states once adopted.
+
+**Two-tier classification (exact quotes from the draft):** "recommended mechanisms, that fully reflect the state of the art in cryptography, currently offer a security level of at least 125 bits"; "admissible mechanisms, that are deployed on a large scale, currently offer a security level of at least 100 bits and are considered to provide an acceptable short-term security but should be phased out" — default validity period `A[2033+]` for admissible mechanisms not expected to become vulnerable in the near term.
+
+**Recommended tier (independently confirmed against the draft's own algorithm tables, §5.2/§5.4):** ML-KEM (FIPS 203), FrodoKEM, ML-DSA (FIPS 204, "recommended to use ML-DSA-87 or ML-DSA-65"), SLH-DSA (FIPS 205, **security levels 3 and 5 only** — the draft's own Note 54), XMSS and LMS (SP 800-208).
+
+**Admissible-only tier, all requiring "combin[ation] with a quantum resistant mechanism" where quantum resistance is required (draft's own Note 46/62):** RSA PSS and PKCS#1v1.5, DSA, KCDSA, ECKCDSA, ECDSA (incl. deterministic), ECGDSA, ECSchnorr, EdDSA, DH, EC-DH, X25519, X448.
+
+**Implication for quipuu:** EUCC-seeking vendors will need to demonstrate their product's cryptography sits in the Recommended tier (or admissible-with-hybridization) once v3 is adopted — the Recommended/Admissible split maps directly onto a finding-severity axis distinct from any single member state's own guideline, and the SLH-DSA levels-3/5-only carve-out is a parameter-set constraint no other cited regime in this file states this specifically.
+
+---
+
 ## DEADLINES THAT MATTER
 
 | Deadline | Instrument | Jurisdiction | Binding? | What triggers it |
