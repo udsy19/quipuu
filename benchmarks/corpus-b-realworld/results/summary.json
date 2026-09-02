@@ -10,7 +10,7 @@
       "status": "unscannable"
     }
   ],
-  "total_elapsed_seconds": 236.57,
+  "total_elapsed_seconds": 262.81,
   "by_ecosystem": {
     "pypi": {
       "projects_scanned": 25,
@@ -20,7 +20,7 @@
       "total_findings": 176,
       "audible_findings": 176,
       "suppressed_findings": 0,
-      "total_duration_seconds": 8.319999999999999
+      "total_duration_seconds": 8.76
     },
     "npm": {
       "projects_scanned": 25,
@@ -30,17 +30,17 @@
       "total_findings": 143,
       "audible_findings": 143,
       "suppressed_findings": 0,
-      "total_duration_seconds": 6.11
+      "total_duration_seconds": 6.98
     },
     "maven": {
       "projects_scanned": 25,
       "projects_not_scanned": 0,
       "projects_with_findings": 19,
       "projects_with_errors": 0,
-      "total_findings": 263,
-      "audible_findings": 263,
+      "total_findings": 262,
+      "audible_findings": 262,
       "suppressed_findings": 0,
-      "total_duration_seconds": 15.939999999999998
+      "total_duration_seconds": 16.57
     },
     "crates-io": {
       "projects_scanned": 25,
@@ -50,7 +50,7 @@
       "total_findings": 128,
       "audible_findings": 128,
       "suppressed_findings": 0,
-      "total_duration_seconds": 1.7300000000000006
+      "total_duration_seconds": 1.6400000000000006
     },
     "go-modules": {
       "projects_scanned": 25,
@@ -60,17 +60,17 @@
       "total_findings": 776,
       "audible_findings": 776,
       "suppressed_findings": 0,
-      "total_duration_seconds": 165.29999999999998
+      "total_duration_seconds": 181.59999999999997
     },
     "crypto-adjacent": {
       "projects_scanned": 25,
       "projects_not_scanned": 0,
       "projects_with_findings": 16,
       "projects_with_errors": 0,
-      "total_findings": 425,
-      "audible_findings": 425,
+      "total_findings": 430,
+      "audible_findings": 430,
       "suppressed_findings": 0,
-      "total_duration_seconds": 38.87
+      "total_duration_seconds": 47.08999999999998
     }
   },
   "top_10_by_findings": [
@@ -88,7 +88,7 @@
       "total_findings": 259,
       "audible_findings": 259,
       "suppressed_findings": 0,
-      "duration_seconds": 0.65,
+      "duration_seconds": 0.79,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -198,7 +198,7 @@
       "total_findings": 140,
       "audible_findings": 140,
       "suppressed_findings": 0,
-      "duration_seconds": 4.12,
+      "duration_seconds": 4.65,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -257,7 +257,7 @@
       "total_findings": 129,
       "audible_findings": 129,
       "suppressed_findings": 0,
-      "duration_seconds": 3.9,
+      "duration_seconds": 4.25,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -316,7 +316,7 @@
       "total_findings": 116,
       "audible_findings": 116,
       "suppressed_findings": 0,
-      "duration_seconds": 2.87,
+      "duration_seconds": 3.46,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -381,7 +381,7 @@
       "total_findings": 105,
       "audible_findings": 105,
       "suppressed_findings": 0,
-      "duration_seconds": 0.2,
+      "duration_seconds": 0.22,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -418,10 +418,10 @@
         "signature",
         "jwt"
       ],
-      "total_findings": 78,
-      "audible_findings": 78,
+      "total_findings": 83,
+      "audible_findings": 83,
       "suppressed_findings": 0,
-      "duration_seconds": 1.48,
+      "duration_seconds": 1.05,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -502,7 +502,7 @@
       "total_findings": 72,
       "audible_findings": 72,
       "suppressed_findings": 0,
-      "duration_seconds": 126.69,
+      "duration_seconds": 141.98,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -576,7 +576,7 @@
       "total_findings": 67,
       "audible_findings": 67,
       "suppressed_findings": 0,
-      "duration_seconds": 1.13,
+      "duration_seconds": 1.2,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -615,7 +615,7 @@
       "total_findings": 63,
       "audible_findings": 63,
       "suppressed_findings": 0,
-      "duration_seconds": 0.64,
+      "duration_seconds": 0.69,
       "exit_code": 0,
       "status": "ok",
       "errors": [],

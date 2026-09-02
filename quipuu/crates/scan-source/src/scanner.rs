@@ -3577,6 +3577,15 @@ fn nth_arg_call_ident(args: Node<'_>, n: usize, source: &[u8]) -> Option<String>
 }
 
 /// Extract a string literal value (without surrounding quotes) at position n.
+///
+/// Requires the argument node itself to be a string-literal kind
+/// (`string_literal` in Java/C/C++, `string` in Python/JS/TS) — every caller's
+/// own doc comment states the same contract ("the name is only knowable when
+/// it is a literal. A variable yields no capture"), but this used to grab the
+/// raw text of *any* node at that position, so a bare identifier argument
+/// (`KeyPairGenerator.getInstance(keyType)`) silently produced a capture of
+/// the variable's own name — text indistinguishable downstream from a real,
+/// merely-unrecognized algorithm literal. #Y105.
 fn nth_arg_string(args: Node<'_>, n: usize, source: &[u8]) -> Option<String> {
     let mut cursor = args.walk();
     let mut idx = 0;
@@ -3585,6 +3594,9 @@ fn nth_arg_string(args: Node<'_>, n: usize, source: &[u8]) -> Option<String> {
             continue;
         }
         if idx == n {
+            if !matches!(child.kind(), "string_literal" | "string") {
+                return None;
+            }
             let raw = node_text(child, source);
             // Strip surrounding quotes (single, double, or Java-style)
             let trimmed = raw.trim_matches(|c| c == '"' || c == '\'' || c == '`');

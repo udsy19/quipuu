@@ -6582,3 +6582,65 @@ from the same synthesis pass, none started this cycle. `OPEN-ASK #ESTIMATORPERSI
 and `#CORPUSDRIFT` remain open, none bearing on a byte-identical-dump coverage addition.
 
 PRECISION: 97.17%
+
+## Measurement, 2026-09-02 (Track A cycle 211 — Java BouncyCastle `CompositeSignatures` gains attribution, `#Y104`/`#Y105`)
+
+**BouncyCastle's `CompositeSignatures.Mappings` registers 18 real `KeyPairGenerator`/`Signature`
+algorithm names for `draft-ounsworth-pq-composite-sigs-13`** (verified against release tag
+`r1rv85v2`, not the 31 a prior pass assumed — 14 of the 32 names in `CompositeIndex`'s internal maps
+are never wired into the provider's `Mappings` loop and are not reachable at all). These previously
+fell through to the `jca-unattributed` fallback; 36 new classify arms attribute each to its embedded
+`ml-dsa-{44,65,87}` parameter set instead.
+
+**`#Y105`'s root cause was bigger than filed: `nth_arg_string` grabbed an argument's raw source text
+regardless of node kind**, so a non-literal identifier (`KeyPairGenerator.getInstance(keyType)`)
+populated the same `algo` capture a real string literal would, indistinguishable downstream. Fixed by
+requiring a `string_literal`/`string` node (`quipuu/crates/scan-source/src/scanner.rs`), and the
+existing `CRYPTO-234` non-literal sentinel split into two arms: `CRYPTO-1131` for a literal that
+matches no known algorithm name, `CRYPTO-234` retained for the genuinely non-literal case. This also
+removed a real corpus false positive: `Cipher.getInstance(descriptor.getJCAAlgorithmID())` had
+matched the `(?i)DES` regex only because the variable name `descriptor` contains "des".
+
+**Tuple, per `#S12`: corpus B (150 projects) · scanner set `--source --deps --include-safe` ·
+profile `nist-default` · pre-change binary from main at `5919711` (`work/y106_post.json`, 1916
+findings) · post-change binary from this cycle's tree · dump `work/y105_post.json` (1915 findings),
+both produced by the repo's own `benchmarks/corpus-b-realworld/dump_findings.py` (integrity-checked,
+clone-relative paths).**
+
+**2 findings added, 3 removed, net -1 (1916 → 1915).** Opened every cited line directly:
+- `maven:org.bouncycastle:bcprov-jdk18on` `CompositeMLKEMEngine.java:249` and `:250`
+  (`KeyPairGenerator.getInstance("ECDH")`, once as `tradProv == null` and once with an explicit
+  provider) moved from the non-literal `CRYPTO-234` sentinel to the literal-but-unrecognized
+  `CRYPTO-1131` sentinel — both a real ECDH ephemeral-keypair call, hand-labelled TP under both the
+  old and new rule id. This is a reclassification (more specific: the argument is now correctly seen
+  as the literal `"ECDH"` rather than treated as non-literal), not new coverage, so the 2 added rows
+  and 2 of the 3 removed rows are the same 2 call sites before/after.
+- `maven:org.opensaml:opensaml-xmlsec-api` `AlgorithmRegistry.java:324`
+  (`Cipher.getInstance(descriptor.getJCAAlgorithmID())`) is the one net removal: a false positive
+  fixed by the `nth_arg_string` node-kind check, since `descriptor` is a variable, not a DES literal.
+
+**Precision 97.17% (persisted) → 97.18%.** `bin/precision.py work/y106_post.json work/y105_post.json
+--added-tp 2 --added-fp 0 --write-readme` reproduced the anchored 97.17%/635-row baseline before
+printing anything else, then folded the 2 hand-labelled TP (`CompositeMLKEMEngine.java:249`/`:250`)
+into stratum B (`355/364` → `357/366`, matching the "delta lands in stratum B" output — reclassified
+rows are new keys precision.py cannot match against the old label, so each is treated as a newly
+sampled row rather than a like-for-like swap). Stratified-fresh populations (re-derived this run:
+A=796, B=1119) give 97.183% (95% CI 95.90–98.47); pooled Wilson gives 97.174% (95% CI 95.58–98.21);
+both round to the published 97.18%. Sample: A 262/271, B 357/366 — **637 of 1915 audited.**
+
+**README already stated this figure** — `--write-readme` reported "nothing to write": the headline
+(97.18%, 637 audited, 1915 total) and comparison-table cell were already correct from this cycle's
+own prior edit, confirmed by re-running the measurement rather than trusting the prior pass.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --all` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace --release` all passing, including the
+existing `scan_test.rs` literal-vs-non-literal coverage this cycle's fix extended. Both
+trust-invariant tests (`test_run_acvp_kats_rejects_code_execution`,
+`test_network_disabled_error`) untouched and pass.
+
+**Not done, said out loud:** `#Y107` (`MCP.md` subcommand-name fix) and `#Y108`
+(`needs-human-approval`, `cargo deny` enforcement gap) remain open from the same synthesis pass, not
+started this cycle. `OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` and `#CORPUSDRIFT` remain open,
+neither bearing on this reclassification-plus-one-FP-fix.
+
+PRECISION: 97.18%

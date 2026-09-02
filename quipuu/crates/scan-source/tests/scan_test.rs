@@ -624,7 +624,7 @@ fn scans_java_bouncycastle_composite_kem_keygenerator() {
         .expect("scan succeeds");
 
     let want = [
-        ("CRYPTO-234", "jca-unattributed"), // KeyPairGenerator.getInstance("MLKEM768-X25519-SHA3-256")
+        ("CRYPTO-1131", "jca-unattributed"), // KeyPairGenerator.getInstance("MLKEM768-X25519-SHA3-256") — a real literal, just not one this table's arms recognize (#Y105)
         ("CRYPTO-1082", "ml-kem-unattributed"), // KeyGenerator.getInstance("MLKEM768-RSA2048-SHA3-256")
         ("CRYPTO-1083", "ml-kem-unattributed"), // KeyGenerator.getInstance("MLKEM768-RSA3072-SHA3-256")
         ("CRYPTO-1084", "ml-kem-unattributed"), // KeyGenerator.getInstance("MLKEM768-RSA4096-SHA3-256")

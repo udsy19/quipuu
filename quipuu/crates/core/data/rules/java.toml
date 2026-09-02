@@ -535,6 +535,163 @@ algorithm_id = "xmss-mt"
 severity_hint = "auto"
 message = "KeyPairGenerator.getInstance('{algo}') — RFC 8391 / NIST SP 800-208 multi-tree stateful hash-based signature, quantum-safe but explicitly prohibited by CNSA 2.0 (single-tree XMSS only)."
 
+# BouncyCastle 1.85.2's CompositeSignatures.Mappings registers a
+# KeyPairGenerator.<name> entry for every OID in CompositeIndex's `pairings`
+# map (draft-ounsworth-pq-composite-sigs-13) — 18 literal names, verified
+# directly against the release tag r1rv85v2's own source, not the 31 a prior
+# pass assumed. CompositeIndex's `algorithmNames`/`kpgInitSpecs` maps also
+# carry 14 "HashMLDSA*" entries, but `Mappings.configure()` only iterates
+# `getSupportedIdentifiers()` (== `pairings.keySet()`), which never includes
+# them — so those 14 are not (yet) reachable through
+# KeyPairGenerator.getInstance/Signature.getInstance at all, and get no arm
+# here, same discipline #Y101 used for CompositeKEMs' own unregistered names.
+# Without these arms every one of the 18 fell through to CRYPTO-234 below,
+# an already-correct TP just reported under the JCA-wide sentinel instead of
+# its actual ML-DSA parameter set — an attribution gain, not a recall fix.
+[[classify]]
+id = "CRYPTO-1095"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA44-RSA2048-PSS-SHA256\"?$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-44 paired with RSA-2048 RSASSA-PSS). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1096"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA44-RSA2048-PKCS15-SHA256\"?$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-44 paired with RSA-2048 PKCS#1 v1.5). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1097"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA44-Ed25519-SHA512\"?$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-44 paired with Ed25519). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1098"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA44-ECDSA-P256-SHA256\"?$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-44 paired with ECDSA P-256). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1099"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA65-RSA3072-PSS-SHA512\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-65 paired with RSA-3072 RSASSA-PSS). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1100"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA65-RSA3072-PKCS15-SHA512\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-65 paired with RSA-3072 PKCS#1 v1.5). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1101"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA65-RSA4096-PSS-SHA512\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-65 paired with RSA-4096 RSASSA-PSS). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1102"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA65-RSA4096-PKCS15-SHA512\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-65 paired with RSA-4096 PKCS#1 v1.5). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1103"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA65-ECDSA-P256-SHA512\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-65 paired with ECDSA P-256). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1104"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA65-ECDSA-P384-SHA512\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-65 paired with ECDSA P-384). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1105"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA65-ECDSA-brainpoolP256r1-SHA512\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-65 paired with ECDSA brainpoolP256r1). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1106"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA65-Ed25519-SHA512\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-65 paired with Ed25519). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1107"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA87-ECDSA-P384-SHA512\"?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-87 paired with ECDSA P-384). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1108"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA87-ECDSA-brainpoolP384r1-SHA512\"?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-87 paired with ECDSA brainpoolP384r1). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1109"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA87-Ed448-SHAKE256\"?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-87 paired with Ed448). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1110"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA87-RSA3072-PSS-SHA512\"?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-87 paired with RSA-3072 RSASSA-PSS). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1111"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA87-RSA4096-PSS-SHA512\"?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-87 paired with RSA-4096 RSASSA-PSS). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1112"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA87-ECDSA-P521-SHA512\"?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-87 paired with ECDSA P-521). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
 # `KeyPairGenerator.getInstance(keyType)` with `keyType` a variable (netty's
 # `pkitesting/Algorithms.java` is the corpus's own example) matches none of
 # CRYPTO-210..223 above — none of their regexes match the variable's
@@ -545,6 +702,20 @@ message = "KeyPairGenerator.getInstance('{algo}') — RFC 8391 / NIST SP 800-208
 # call shape), so it degrades to the JCA-wide sentinel rather than guessing
 # a family the source does not state. Placed last so every literal arm above
 # still wins when the algorithm is known.
+#
+# #Y105: split from the non-literal case below. `algo` is captured whenever
+# the argument is a string literal at all (see JAV-010's query above) — this
+# arm fires when that literal simply matches no arm above (an unrecognized
+# but real algorithm name), so its message no longer claims "non-literal"
+# for a call site that plainly passed one.
+[[classify]]
+id = "CRYPTO-1131"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "^.+$" }
+algorithm_id = "jca-unattributed"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — unrecognized algorithm name. Inspect the value; it does not match any JCA algorithm this table knows."
+
 [[classify]]
 id = "CRYPTO-234"
 when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
@@ -862,8 +1033,12 @@ message = "BouncyCastle HashSLHDSASigner instantiated — FIPS 205 pre-hash sign
 # .sphincsplus, still shipped alongside the FIPS-aligned MLDSASigner/SLHDSASigner classes
 # above for callers who have not migrated the class name). Same standardized algorithms
 # under an older name, not a new algorithm family — resolves to the same sentinels, per
-# #Y66. Not FalconSigner (FN-DSA is not yet FIPS-final, same bar #Y43 set for
-# CompositeMLDsa) and not the five non-selected/broken schemes (PicnicSigner et al.).
+# #Y66. Not FalconSigner (FN-DSA itself is not yet FIPS-final) and not the five
+# non-selected/broken schemes (PicnicSigner et al.). CompositeMLDsa/CompositeKEMs are a
+# different question — pairings of the already-final ML-DSA/ML-KEM with a classical
+# primitive, not a not-yet-final algorithm — and got their own coverage in #Y95/#Y101/
+# #Y104 despite pre-GA experimental status; they are not a counter-example to the
+# FN-DSA exclusion above.
 [[classify]]
 id = "CRYPTO-958"
 when.api = "^org\\.bouncycastle\\.DilithiumSigner$"
@@ -1572,6 +1747,157 @@ algorithm_id = "xmss-mt"
 severity_hint = "auto"
 message = "Signature.getInstance('{algo}') — RFC 8391 / NIST SP 800-208 multi-tree stateful hash-based signature, quantum-safe but explicitly prohibited by CNSA 2.0 (single-tree XMSS only)."
 
+# BouncyCastle 1.85.2's CompositeSignatures.Mappings registers the same 18
+# names as Signature.<name>, plus a Signature.<name>-PREHASH sibling for
+# each — same source, same 18-not-31 correction as the KeyPairGenerator
+# block above. Each regex accepts the optional `-PREHASH` suffix so both
+# spellings resolve to the same ML-DSA parameter-set id, matching this
+# file's established pre-hash-suffix convention (e.g. SLH-DSA's
+# `-WITH-<hash>` arms above).
+[[classify]]
+id = "CRYPTO-1113"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA44-RSA2048-PSS-SHA256(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-44 paired with RSA-2048 RSASSA-PSS). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1114"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA44-RSA2048-PKCS15-SHA256(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-44 paired with RSA-2048 PKCS#1 v1.5). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1115"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA44-Ed25519-SHA512(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-44 paired with Ed25519). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1116"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA44-ECDSA-P256-SHA256(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-44 paired with ECDSA P-256). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1117"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA65-RSA3072-PSS-SHA512(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-65 paired with RSA-3072 RSASSA-PSS). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1118"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA65-RSA3072-PKCS15-SHA512(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-65 paired with RSA-3072 PKCS#1 v1.5). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1119"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA65-RSA4096-PSS-SHA512(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-65 paired with RSA-4096 RSASSA-PSS). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1120"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA65-RSA4096-PKCS15-SHA512(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-65 paired with RSA-4096 PKCS#1 v1.5). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1121"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA65-ECDSA-P256-SHA512(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-65 paired with ECDSA P-256). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1122"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA65-ECDSA-P384-SHA512(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-65 paired with ECDSA P-384). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1123"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA65-ECDSA-brainpoolP256r1-SHA512(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-65 paired with ECDSA brainpoolP256r1). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1124"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA65-Ed25519-SHA512(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-65 paired with Ed25519). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1125"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA87-ECDSA-P384-SHA512(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-87 paired with ECDSA P-384). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1126"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA87-ECDSA-brainpoolP384r1-SHA512(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-87 paired with ECDSA brainpoolP384r1). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1127"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA87-Ed448-SHAKE256(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-87 paired with Ed448). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1128"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA87-RSA3072-PSS-SHA512(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-87 paired with RSA-3072 RSASSA-PSS). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1129"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA87-RSA4096-PSS-SHA512(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-87 paired with RSA-4096 RSASSA-PSS). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+[[classify]]
+id = "CRYPTO-1130"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?MLDSA87-ECDSA-P521-SHA512(-PREHASH)?\"?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-87 paired with ECDSA P-521). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
 # `Signature.getInstance(algorithmIdentifier)` with a variable argument (the
 # same netty `pkitesting/Algorithms.java` call site as CRYPTO-234's
 # KeyPairGenerator sibling) matches none of the transformation-string arms
@@ -1579,6 +1905,16 @@ message = "Signature.getInstance('{algo}') — RFC 8391 / NIST SP 800-208 multi-
 # JCA-wide sentinel — the family (RSA, ECDSA, EdDSA, DSA, ML-DSA, ...) is not
 # statically knowable at this call site. Placed last so every literal arm
 # above still wins when the transformation is known.
+#
+# #Y105: split from the non-literal case below, same fix as CRYPTO-234's.
+[[classify]]
+id = "CRYPTO-1132"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "^.+$" }
+algorithm_id = "jca-unattributed"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — unrecognized algorithm name. Inspect the value; it does not match any JCA transformation string this table knows."
+
 [[classify]]
 id = "CRYPTO-235"
 when.api = "^java\\.security\\.Signature\\.getInstance$"
