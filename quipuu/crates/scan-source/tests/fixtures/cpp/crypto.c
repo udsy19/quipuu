@@ -243,11 +243,16 @@ void openssl_generic_keygen_hybrid(OSSL_LIB_CTX *libctx) {
     EVP_PKEY *hybrid4 = EVP_PKEY_Q_keygen(libctx, NULL, "X448MLKEM1024");
 }
 
-/* CRYPTO-1137 — OpenSSL 3.6's native LMS signature support, reachable through
-   the same generic keygen entry point (backlog #Y113). Verified against
-   docs.openssl.org/3.6/man7/EVP_PKEY-LMS/, fetched 2026-09-02. */
-void openssl_generic_keygen_lms(OSSL_LIB_CTX *libctx) {
-    EVP_PKEY *lms_key = EVP_PKEY_Q_keygen(libctx, NULL, "LMS");
+/* CRYPTO-1137 — OpenSSL 3.6's native LMS support (backlog #Y113, narrowed by
+   #Y115). LMS keygen is not implemented by any OpenSSL provider — SP 800-208
+   treats key generation as a deliberate out-of-band process — so the only
+   real call shape is EVP_PKEY_CTX_new_from_name() followed by
+   EVP_PKEY_fromdata() to import an externally-generated key for
+   verification. Verified against docs.openssl.org/3.6/man7/EVP_PKEY-LMS/,
+   fetched 2026-09-02. */
+void openssl_generic_keygen_lms(OSSL_LIB_CTX *libctx, OSSL_PARAM *params) {
+    EVP_PKEY_CTX *lms_ctx = EVP_PKEY_CTX_new_from_name(libctx, "LMS", NULL);
+    EVP_PKEY *lms_key = EVP_PKEY_fromdata(lms_ctx, EVP_PKEY_PUBLIC_KEY, params);
 }
 
 /* CPP-066 / CPP-067, CRYPTO-960 / CRYPTO-961 — OpenSSL 3.5+ generic KEM
