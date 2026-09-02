@@ -1732,11 +1732,11 @@ fn scans_rust_kx_groups_list() {
         .collect();
 
     for (algorithm_id, expected) in [
-        ("x25519-mlkem768", 3), // PROVIDER + DEFAULT_KX_GROUPS + rustls_post_quantum::DEFAULT_PROVIDER
+        ("x25519-mlkem768", 4), // PROVIDER + DEFAULT_KX_GROUPS + rustls_post_quantum::DEFAULT_PROVIDER + with_kx_groups
         ("x25519", 1),          // PROVIDER
         ("secp256r1-mlkem768", 0),
         ("ecdh-p256", 2), // DEFAULT_KX_GROUPS + the unrelated-struct field
-        ("ecdh-p384", 1), // DEFAULT_KX_GROUPS
+        ("ecdh-p384", 2), // DEFAULT_KX_GROUPS + with_kx_groups
     ] {
         let n = group_findings
             .iter()
@@ -1755,11 +1755,11 @@ fn scans_rust_kx_groups_list() {
 
     // The identifier-passthrough and vec![...] macro sites in `build`/
     // `build_vec`, and the classical `rustls_aws_lc_rs::DEFAULT_PROVIDER`
-    // sibling const, must not fire — so the fixture produces exactly the 7
+    // sibling const, must not fire — so the fixture produces exactly the 9
     // group findings counted above, nothing more.
     assert_eq!(
         group_findings.len(),
-        7,
+        9,
         "the identifier-passthrough, vec! macro, and classical sibling-const sites must not add findings: {:#?}",
         group_findings
             .iter()

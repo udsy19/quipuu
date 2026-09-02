@@ -864,7 +864,10 @@ fn walk(
     // Rust's counterpart to Go's CurvePreferences / Java's setNamedGroups.
     // Backlog `#Y62(c)`.
     if language == Language::Rust
-        && matches!(kind, "field_initializer" | "const_item" | "static_item")
+        && matches!(
+            kind,
+            "field_initializer" | "const_item" | "static_item" | "call_expression"
+        )
         && let Some(ms) = match_rust_kx_groups(node, source)
     {
         out.extend(ms);
@@ -1477,16 +1480,19 @@ fn match_c_ssl_groups_list(call: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch
 
 /// Match rustls's TLS key-exchange group preference list — Rust's
 /// counterpart to `match_go_curve_preferences` / `match_java_set_named_groups`
-/// / `match_c_ssl_groups_list` above. Two real shapes, both an array of
+/// / `match_c_ssl_groups_list` above. Three real shapes, all an array of
 /// `provider::kx_group::<NAME>` (or bare `<NAME>`) path elements:
 ///
 /// * a `CryptoProvider { kx_groups: Cow::Borrowed(&[...]), .. }` field
-///   initializer (the shape `#Y62`'s filing named), and
+///   initializer (the shape `#Y62`'s filing named),
 /// * a provider crate's own `pub static DEFAULT_KX_GROUPS: &[&dyn
 ///   SupportedKxGroup] = &[...]` / `ALL_KX_GROUPS` definition — the one that
 ///   actually holds a literal list in rustls-ring/rustls-aws-lc-rs; the
 ///   `CryptoProvider` literal itself usually just names one of these two
-///   constants rather than repeating the list.
+///   constants rather than repeating the list, and
+/// * a `builder.with_kx_groups(&[...])` builder-method call (`#Y62(c)`'s
+///   `rustls-post-quantum` follow-up) — the array sits in the call's
+///   argument list rather than a field/const value.
 ///
 /// `vec![...]` macro bodies are a `macro_invocation` token tree tree-sitter
 /// does not structure into elements, so [`find_array_literal`] does not
@@ -1508,6 +1514,25 @@ fn match_rust_kx_groups(node: Node<'_>, source: &[u8]) -> Option<Vec<RawMatch>> 
                 return None;
             }
             node.child_by_field_name("value")?
+        }
+        // `builder.with_kx_groups(&[X25519MLKEM768, MLKEM768])` — a builder
+        // method call, not a field initializer or `KX_GROUPS`-named item.
+        // `find_array_literal` below already unwraps a `call_expression`'s
+        // first argument (the `Cow::Borrowed(&[...])` case above relies on
+        // the same unwrap), so passing the whole call node through as
+        // `value` reaches the array the same way.
+        "call_expression" => {
+            let function = node.child_by_field_name("function")?;
+            let name = match function.kind() {
+                "field_expression" => node_text(function.child_by_field_name("field")?, source),
+                "identifier" => node_text(function, source),
+                "scoped_identifier" => node_text(function.child_by_field_name("name")?, source),
+                _ => return None,
+            };
+            if name != "with_kx_groups" {
+                return None;
+            }
+            node
         }
         _ => return None,
     };

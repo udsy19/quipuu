@@ -7730,3 +7730,48 @@ methods — remains out of scope, same restraint `#Y125`'s own fix stated. `OPEN
 #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` and `#CORPUSDRIFT` remain open, none bearing on this cycle.
 
 PRECISION: 97.18%
+
+## Measurement, 2026-09-02 (`#Y127` closed: `rustls-post-quantum`'s `with_kx_groups(&[...])` builder call now visible to `rust.toml`)
+
+`match_rust_kx_groups` (`scanner.rs`) covered two shapes of rustls's key-exchange group
+preference list — a `CryptoProvider { kx_groups: Cow::Borrowed(&[...]), .. }` field initializer
+and a provider crate's own `DEFAULT_KX_GROUPS`/`ALL_KX_GROUPS` const — but not the third real
+shape: `builder.with_kx_groups(&[X25519MLKEM768, ...])`, the method `rustls-post-quantum`'s own
+top-level API documents as the way to opt a `ClientConfig`/`ServerConfig` builder into the hybrid
+group list. That call is a `call_expression`, not a `field_initializer`/`const_item`/`static_item`,
+so the existing `kind` guard in `walk()` never reached it. The `walk()` guard now also admits
+`call_expression`; `match_rust_kx_groups` gained a `"call_expression"` arm that resolves the
+callee name through a plain, field, or scoped identifier and requires it be exactly
+`with_kx_groups` before reusing the existing `find_array_literal` unwrap on the call node itself.
+
+New fixture case (`build_with_method`, `kx_groups.rs`) exercises the exact builder-call shape;
+`scans_rust_kx_groups_list`'s per-`algorithm_id` counts and total moved from 7 to 9 findings
+(`x25519-mlkem768` 3→4, `ecdh-p384` 1→2), asserting the two new findings by algorithm id alongside
+the five unchanged ones.
+
+**Corpus effect: 0 added, 0 removed — 1907 findings both sides**, confirmed with a full pre/post
+corpus dump using the in-repo `benchmarks/corpus-b-realworld/dump_findings.py` against the full
+150-project corpus (149 scanned): pre-change dump `work/y126_post.json` (1907, commit `da4db0e`,
+the unchanged HEAD this cycle branched from); post-change dump `work/y127_post.json` (1907, this
+cycle's binary). Zero corpus recall was the expected outcome, not a surprise — no project in
+corpus B calls `with_kx_groups` with a literal array argument.
+
+**Precision unchanged at 97.18%.** `bin/precision.py work/y126_post.json work/y127_post.json
+--write-readme`: stratified-fresh 97.177% (95% CI 95.89–98.46), stratified-carried 97.159%, pooled
+Wilson 97.165% (95% CI 95.56–98.20) — all round to the already-published 97.18%. Sample
+`A 262/271, B 355/364`, populations `A=788 B=1119` (re-derived fresh, `#Y41`-safe). Same
+`OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` recurrence as every zero-delta `--write-readme`
+run: the tool recomputed the audited-findings count from `state/estimator.json`'s persisted
+constants alone (271+364=635) and dipped the headline/comparison-table row from 636 to 635;
+corrected back to 636 by hand in this commit, which restores README to byte-identical with its
+pre-change state since the published figure did not move.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all` (clean, no diff), `cargo clippy
+--release --all-targets --workspace -- -D warnings`, `cargo test --release --workspace` all clean.
+Both trust-invariant tests (`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`)
+untouched and pass.
+
+**Not done, said out loud:** `OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` and `#CORPUSDRIFT`
+remain open, none bearing on this cycle.
+
+PRECISION: 97.18%
