@@ -2980,6 +2980,51 @@ fn scans_rust_aws_lc_rs_ml_kem_ml_dsa() {
     );
 }
 
+// ── oqs (liboqs-rust): ML-KEM / ML-DSA parameter set is the argument ───────
+//
+// Kem::new and Sig::new take the parameter set as an Algorithm-variant
+// argument, the same shape aws-lc-rs's constructors use above. A variable
+// there yields the unattributed sentinel rather than a guess. Backlog #Y117.
+
+#[test]
+fn scans_rust_oqs_ml_kem_ml_dsa() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/oqs_pqc.rs"))
+        .expect("scan succeeds");
+
+    let expected = [
+        (14, "CRYPTO-1142", "ml-kem-512"),
+        (15, "CRYPTO-1143", "ml-kem-768"),
+        (16, "CRYPTO-1144", "ml-kem-1024"),
+        (20, "CRYPTO-1146", "ml-dsa-44"),
+        (21, "CRYPTO-1147", "ml-dsa-65"),
+        (22, "CRYPTO-1148", "ml-dsa-87"),
+        (26, "CRYPTO-1145", "kem-unattributed"),
+    ];
+
+    let mut wrong = Vec::new();
+    for (line, rule_id, algorithm_id) in expected {
+        let hit = findings.iter().find(|f| f.location.line == Some(line));
+        match hit {
+            Some(f) if f.rule_id == rule_id && f.algorithm_id == algorithm_id => {}
+            Some(f) => wrong.push(format!(
+                "line {line}: expected {rule_id} → {algorithm_id}, got {} → {}",
+                f.rule_id, f.algorithm_id
+            )),
+            None => wrong.push(format!("line {line}: no finding at all")),
+        }
+    }
+    assert!(
+        wrong.is_empty(),
+        "{}/{} oqs call sites misclassified:\n  {}",
+        wrong.len(),
+        expected.len(),
+        wrong.join("\n  "),
+    );
+}
+
 // ── Phase 9: Go algorithm-registration patterns ────────────────────────────
 //
 // Phase 7 handled `switch alg { case "RS256": ... }`. But the canonical

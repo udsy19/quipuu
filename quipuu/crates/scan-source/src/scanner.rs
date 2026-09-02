@@ -2834,6 +2834,13 @@ const RUST_CALLEE_APIS: &[(&str, &str)] = &[
         "PqdsaKeyPair::generate",
         "aws_lc_rs.signature.PqdsaKeyPair.generate",
     ),
+    // oqs (liboqs-rust, open-quantum-safe/liboqs-rust on crates.io) — the
+    // official liboqs Rust binding. `Kem`/`Sig` are generic type names, so
+    // (unlike `DecapsulationKey`/`PqdsaKeyPair` above) the collision risk
+    // against an unrelated crate's or the scanned project's own `Kem`/`Sig`
+    // type sits with the classify layer's `MlKem*`/`MlDsa*` arms, not here.
+    ("Kem::new", "oqs.kem.Kem.new"),
+    ("Sig::new", "oqs.sig.Sig.new"),
     ("pbkdf2", "pbkdf2.pbkdf2"),
     ("pbkdf2_hmac", "pbkdf2.pbkdf2_hmac"),
     ("pbkdf2_hmac_array", "pbkdf2.pbkdf2_hmac"),
@@ -3390,6 +3397,17 @@ fn populate_args(
             // — same associated-constant-as-argument shape rcgen's
             // generate_for uses above, so the same capture applies. Where
             // the argument is a variable there is no capture and the
+            // classify layer falls through to the unattributed sentinel.
+            if let Some(name) = rust_arg_const_name(args_node, 0, source) {
+                out.insert("alg".into(), ArgValue::Str(name));
+            }
+        }
+        (Language::Rust, "oqs.kem.Kem.new" | "oqs.sig.Sig.new") => {
+            // Kem::new(Algorithm::MlKem768) / Sig::new(Algorithm::MlDsa65) —
+            // the sole argument is an `Algorithm` enum variant, the same
+            // path-expression-as-argument shape `rust_arg_const_name` already
+            // reads for rcgen's and aws-lc-rs's associated constants above.
+            // Where the argument is a variable there is no capture and the
             // classify layer falls through to the unattributed sentinel.
             if let Some(name) = rust_arg_const_name(args_node, 0, source) {
                 out.insert("alg".into(), ArgValue::Str(name));

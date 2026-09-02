@@ -842,3 +842,85 @@ when.args.variant = { regex = "MLKEM768" }
 algorithm_id = "ml-kem-768"
 severity_hint = "auto"
 message = "OpenMLS Ciphersuite::{variant} — non-hybrid ML-KEM-768 (FIPS 203) HPKE KEM."
+
+# ============================================================================
+# oqs (liboqs-rust) — Kem::new(Algorithm)/Sig::new(Algorithm)
+# ============================================================================
+# open-quantum-safe/liboqs-rust, published as `oqs` on crates.io — the
+# official liboqs Rust binding. `python.toml` and `cpp.toml` already cover
+# liboqs's Python and C bindings, including unattributed fallbacks for
+# non-ML-KEM/ML-DSA families; this closes the same gap for Rust. Both
+# constructors take the parameter set as their sole argument — an
+# `Algorithm` enum variant, the same path-expression-as-argument shape
+# rcgen::KeyPair::generate_for and aws-lc-rs's constructors use above — so
+# `rust_arg_const_name` captures it the same way. Where the argument is a
+# variable there is no capture and the classify layer falls through to the
+# unattributed sentinel. Backlog #Y117.
+
+[[classify]]
+id = "CRYPTO-1142"
+when.api = "^oqs\\.kem\\.Kem\\.new$"
+when.args.alg = "MlKem512"
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "oqs Kem::new(Algorithm::MlKem512) — ML-KEM-512, FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1143"
+when.api = "^oqs\\.kem\\.Kem\\.new$"
+when.args.alg = "MlKem768"
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "oqs Kem::new(Algorithm::MlKem768) — ML-KEM-768, FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1144"
+when.api = "^oqs\\.kem\\.Kem\\.new$"
+when.args.alg = "MlKem1024"
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "oqs Kem::new(Algorithm::MlKem1024) — ML-KEM-1024, FIPS 203, quantum-resistant."
+
+# The fallback, and the only arm that fires when the argument is a variable
+# or a non-ML-KEM Algorithm variant. It must stay last: the classify layer
+# takes the first matching rule.
+[[classify]]
+id = "CRYPTO-1145"
+when.api = "^oqs\\.kem\\.Kem\\.new$"
+algorithm_id = "kem-unattributed"
+severity_hint = "auto"
+message = "oqs Kem::new(ALG) — post-quantum KEM instantiated; ALG is not a recognised ML-KEM literal here, so the parameter set is unknown."
+
+[[classify]]
+id = "CRYPTO-1146"
+when.api = "^oqs\\.sig\\.Sig\\.new$"
+when.args.alg = "MlDsa44"
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "oqs Sig::new(Algorithm::MlDsa44) — ML-DSA-44, FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1147"
+when.api = "^oqs\\.sig\\.Sig\\.new$"
+when.args.alg = "MlDsa65"
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "oqs Sig::new(Algorithm::MlDsa65) — ML-DSA-65, FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1148"
+when.api = "^oqs\\.sig\\.Sig\\.new$"
+when.args.alg = "MlDsa87"
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "oqs Sig::new(Algorithm::MlDsa87) — ML-DSA-87, FIPS 204, quantum-resistant."
+
+# The fallback, and the only arm that fires when the argument is a variable
+# or a non-ML-DSA Algorithm variant (e.g. Falcon, SPHINCS+). It must stay
+# last: the classify layer takes the first matching rule.
+[[classify]]
+id = "CRYPTO-1149"
+when.api = "^oqs\\.sig\\.Sig\\.new$"
+algorithm_id = "sig-unattributed"
+severity_hint = "auto"
+message = "oqs Sig::new(ALG) — post-quantum signature scheme instantiated; ALG is not a recognised ML-DSA literal here, so the parameter set is unknown."
