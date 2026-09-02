@@ -467,7 +467,7 @@ when.api = "^crypto/tls\\.Config\\.CurvePreferences$"
 when.args.curve = "X25519Kyber768Draft00"
 algorithm_id = "x25519-kyber768-draft00"
 severity_hint = "auto"
-message = "TLS group X25519Kyber768Draft00 — pre-standard Kyber, obsoleted by draft-ietf-tls-ecdhe-mlkem. Replace with tls.X25519MLKEM768."
+message = "TLS group X25519Kyber768Draft00 — pre-standard Kyber, obsoleted by RFC 10024. Replace with tls.X25519MLKEM768."
 
 # golang.org/x/crypto/ssh Config.KeyExchanges — SSH's counterpart to
 # CurvePreferences above (#Y88). RFC 10042 (Informational, Aug 2026)

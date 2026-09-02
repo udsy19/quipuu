@@ -13,23 +13,22 @@ Items marked **[VERIFY]** require a fresh registry lookup before shipping.
 
 ### Governing IETF document
 
-`draft-ietf-tls-ecdhe-mlkem` (formerly `draft-kwiatkowski-tls-ecdhe-mlkem`).
-As of mid-2026 the draft is at revision -05 (May 2026, expires Nov 2026); IESG approved the hybrid-design framework via RFC 9794 (Sep 2025).
+`RFC 10024` (Standards Track, published August 2026; formerly `draft-ietf-tls-ecdhe-mlkem`, formerly `draft-kwiatkowski-tls-ecdhe-mlkem`). IESG approved the hybrid-design framework via RFC 9794 (Sep 2025).
 
 | Group name | Decimal | Hex | DTLS-OK | Recommended | Notes |
 |---|---|---|---|---|---|
-| `SecP256r1MLKEM768` | 4587 | `0x11EB` | Y | N | FIPS-compliant hybrid (P-256 + ML-KEM-768); not Chrome default |
+| `SecP256r1MLKEM768` | 4587 | `0x11EB` | Y | **Y** | FIPS-compliant hybrid (P-256 + ML-KEM-768); not Chrome default |
 | `X25519MLKEM768` | 4588 | `0x11EC` | Y | **Y** | The production standard; ~95 % of all PQ handshakes on Cloudflare |
-| `SecP384r1MLKEM1024` | 4589 | `0x11ED` | Y | — | Higher security level; rare in production |
+| `SecP384r1MLKEM1024` | 4589 | `0x11ED` | Y | **Y** | Higher security level; rare in production |
 
-Source: [IANA TLS Supported Groups registry](https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8); [draft-ietf-tls-ecdhe-mlkem](https://datatracker.ietf.org/doc/draft-ietf-tls-ecdhe-mlkem/)
+Source: [IANA TLS Supported Groups registry](https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8); [RFC 10024](https://www.rfc-editor.org/rfc/rfc10024.html)
 
 ### Legacy / pre-standard codepoints
 
 | Group name | Hex | Status | Reference |
 |---|---|---|---|
-| `X25519Kyber768Draft00` | `0x6399` | Deprecated; Recommended: **N** | `draft-tls-westerbaan-xyber768d00-03` |
-| `SecP256r1Kyber768Draft00` | `0x639A` | Deprecated | same draft |
+| `X25519Kyber768Draft00` | `0x6399` | Obsoleted by RFC 10024; Recommended: **N** | `draft-tls-westerbaan-xyber768d00-03` |
+| `SecP256r1Kyber768Draft00` | `0x639A` | Obsoleted by RFC 10024 | same draft |
 
 `0x6399` is formally registered in IANA with the note "Pre-standards version of Kyber768". Chrome 116–130 (Apr 2024 – Oct 2024) used this codepoint; Chrome 131 (Nov 2024) switched to `0x11EC`.
 Source: [draft-tls-westerbaan-xyber768d00](https://datatracker.ietf.org/doc/draft-tls-westerbaan-xyber768d00/)

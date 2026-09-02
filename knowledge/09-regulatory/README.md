@@ -1,6 +1,6 @@
 # Post-Quantum Cryptography Regulatory Landscape
 
-> Research date: June 2026, with items 23–24 and the BSI TR-02102 update in §14 added September 2026. Primary sources only. Where no hard deadline was confirmed from a primary source, this file says so explicitly — no deadlines are invented.
+> Research date: June 2026, with items 23–25 and the BSI TR-02102 update in §14 added September 2026. Primary sources only. Where no hard deadline was confirmed from a primary source, this file says so explicitly — no deadlines are invented.
 
 ---
 
@@ -535,6 +535,25 @@ rather than quoting it verbatim.
 
 ---
 
+### 25. Canada CCCS (`ITSP.40.111` / `ITSM.40.001`)
+
+**Issuing body:** Canadian Centre for Cyber Security (CCCS), a part of the Communications Security Establishment (CSE)
+**Primary source:** https://www.cyber.gc.ca/en/guidance/cryptographic-algorithms-unclassified-protected-protected-b-information-itsp40111 — `ITSP.40.111`, Guidance on Securely Migrating to Post-Quantum Cryptography
+
+**Version:** 5, effective **May 29, 2026**.
+
+**Recommended algorithm set:** the full three-family NIST PQC suite — ML-KEM-512/768/1024 (FIPS 203), ML-DSA-44/65/87 (FIPS 204), all twelve SLH-DSA parameter sets (FIPS 205) — with **no CCCS-specific parameter-set restriction**, unlike Germany BSI's Category-3-minimum stance (§14, above).
+
+**Phase-out dates:**
+- Classical algorithms with no PQC alternative: retired by **end-2035**.
+- RSA/FFC moduli under 3072 bits, and P-224 and binary elliptic curves: retired by **end-2030**.
+
+**Hard deadline: end-2030** for the sub-3072-bit RSA/FFC and small-curve retirement; **end-2035** for the full classical phase-out.
+
+**Implication for quipuu:** CCCS names concrete key-size and curve floors on a fixed timeline, the same shape as BSI TR-02102's Category-3 minimum (§14) — a `--policy` preset for Canada would flag sub-3072-bit RSA/FFC and P-224/binary-curve findings ahead of the 2030 date, without CCCS's stricter parameter-set narrowing.
+
+---
+
 ## DEADLINES THAT MATTER
 
 | Deadline | Instrument | Jurisdiction | Binding? | What triggers it |
@@ -554,6 +573,7 @@ rather than quoting it verbatim.
 | **2028–2030** | EO 14412 / OMB M-26-15 Phase 3 | US (FCEB) | Yes | Prioritized key-establishment migration for HVAs/high-impact systems |
 | **Dec 31, 2030** | ASD ISM ISM-1917 | Australia | Yes (Commonwealth) | New equipment/software must support ML-DSA-87, ML-KEM-1024, SHA-384/512, AES-256 |
 | **Dec 31, 2030** | CNSA 2.0 firmware signing | US (NSS) | Yes (NSS only) | Exclusive use of CNSA 2.0 for firmware signing |
+| **End 2030** | CCCS ITSP.40.111 v5 | Canada | Guidance | RSA/FFC moduli < 3072 bits, P-224, binary curves retired |
 | **2030–2032** | G7 CEG critical systems | G7 financial | Guidance | Priority critical financial systems migrate |
 | **Dec 31, 2031** | NSM-10 / CNSA 2.0 | US (NSS) | Yes (NSS) | Vast majority of NSS crypto must be quantum-resistant |
 | **End 2031** | BSI TR-02102-1 v2026-01 | Germany | Mandatory (federal IT) | Classical asymmetric encryption sunset, standard protection |
@@ -566,4 +586,5 @@ rather than quoting it verbatim.
 | **2035** | UK NCSC Phase 3 | UK | Guidance | Full migration of all systems |
 | **2035** | EC/NIS CG Roadmap | EU | Soft law | Remaining EU systems complete migration |
 | **2035** | Japan national target | Japan | Policy direction | National PQC migration complete |
+| **End 2035** | CCCS ITSP.40.111 v5 | Canada | Guidance | Classical algorithms with no PQC alternative retired |
 

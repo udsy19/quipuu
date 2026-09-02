@@ -20,13 +20,13 @@ All `[VERIFY]` items flagged in the knowledge base have been resolved. Sources a
 
 `Recommended: N` because the underlying draft is not yet RFC-published; the **codepoints are formally allocated**, however.
 
-Three hybrids also live in the registry from `draft-ietf-tls-ecdhe-mlkem-04`:
+Three hybrids also live in the registry, now standardised as `RFC 10024` (formerly `draft-ietf-tls-ecdhe-mlkem-04`):
 
 | Decimal | Name | Recommended |
 |---|---|---|
-| 4587 | SecP256r1MLKEM768 | N |
-| 4588 | X25519MLKEM768 | N |
-| 4589 | SecP384r1MLKEM1024 | N |
+| 4587 | SecP256r1MLKEM768 | **Y** |
+| 4588 | X25519MLKEM768 | **Y** |
+| 4589 | SecP384r1MLKEM1024 | **Y** |
 
 Plus the obsolete pre-standard entries (4590 curveSM2MLKEM768, 25497/25498 Kyber Draft00 marked `D` for deprecated).
 

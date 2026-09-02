@@ -810,7 +810,7 @@ family = "Hybrid-KEM"
 primitive = "combiner"
 nist_quantum_security_level = 3
 quantum_status = "PqcFinal"
-notes = "IANA TLS supported_groups codepoint 4588 (0x11EC). draft-ietf-tls-ecdhe-mlkem."
+notes = "IANA TLS supported_groups codepoint 4588 (0x11EC). RFC 10024."
 
 [[algorithm]]
 id = "secp256r1-mlkem768"
