@@ -4559,4 +4559,3 @@ fn scans_python_liboqs_python_kem_sig() {
         );
     }
 }
-

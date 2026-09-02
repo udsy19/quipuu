@@ -4445,15 +4445,12 @@ fn is_call_asserted_to_fail(call: Node<'_>, source: &[u8], language: Language) -
                         if parent.kind() != "member_expression" {
                             break;
                         }
-                        if parent
-                            .child_by_field_name("property")
-                            .is_some_and(|prop| {
-                                matches!(
-                                    node_text(prop, source).as_str(),
-                                    "throw" | "toThrow" | "toThrowError"
-                                )
-                            })
-                        {
+                        if parent.child_by_field_name("property").is_some_and(|prop| {
+                            matches!(
+                                node_text(prop, source).as_str(),
+                                "throw" | "toThrow" | "toThrowError"
+                            )
+                        }) {
                             return true;
                         }
                         anchor = parent;
