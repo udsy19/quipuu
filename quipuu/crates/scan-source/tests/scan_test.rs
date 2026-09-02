@@ -3714,7 +3714,10 @@ fn phase17_jwt_sign_alg_none_routes_to_sentinel() {
 /// FAIL in `expect(() => ...).to.throw(...)` / `.toThrow(...)`. Suppressed as
 /// low-signal (`PRECISION_AUDIT_V4.md` § 6); a call outside any such wrapper
 /// stays a genuine positive, the JS spelling of the C/C++
-/// ExpectNull/ExpectNotNull split (`#Y29`).
+/// ExpectNull/ExpectNotNull split (`#Y29`). A `sign()` call that merely
+/// shares an `expect(...).to.throw()` block with a *different* call that is
+/// the one actually asserted to fail must NOT be suppressed as collateral
+/// damage — the real corpus shape `#Y119` found and fixed.
 #[test]
 fn jwt_sign_wrapped_in_expect_to_throw_is_suppressed() {
     let b = load_builtins().expect("builtins");
@@ -3725,20 +3728,27 @@ fn jwt_sign_wrapped_in_expect_to_throw_is_suppressed() {
 
     assert_eq!(
         findings.len(),
-        1,
-        "only the unwrapped call should fire; got: {:#?}",
+        2,
+        "the unwrapped call and the setup call sharing a block with a \
+         different asserted-to-throw call should both fire; got: {:#?}",
         findings
             .iter()
             .map(|f| (f.location.line, &f.rule_id))
             .collect::<Vec<_>>()
     );
+    assert_eq!(findings[0].location.line, Some(21));
     assert_eq!(findings[0].algorithm_id, "ecdsa-p256");
+    assert_eq!(findings[1].location.line, Some(27));
+    assert_eq!(findings[1].algorithm_id, "sha-256");
 }
 
 /// PyJWT's own test suite wraps a `jwt.encode(...)` call it requires to FAIL
 /// in `with pytest.raises(...):` / `with self.assertRaises(...):`. Suppressed
 /// as low-signal (`PRECISION_AUDIT_V4.md` § 6, row 141); a call outside any
-/// such wrapper stays a genuine positive.
+/// such wrapper stays a genuine positive. An `encode()` call that merely
+/// shares a `with pytest.raises(...):` block with a *different* call that is
+/// the one actually asserted to fail must NOT be suppressed as collateral
+/// damage — the real corpus shape `#Y119` found and fixed.
 #[test]
 fn jwt_encode_wrapped_in_pytest_raises_is_suppressed() {
     let b = load_builtins().expect("builtins");
@@ -3749,14 +3759,18 @@ fn jwt_encode_wrapped_in_pytest_raises_is_suppressed() {
 
     assert_eq!(
         findings.len(),
-        1,
-        "only the unwrapped call should fire; got: {:#?}",
+        2,
+        "the unwrapped call and the setup call sharing a block with a \
+         different asserted-to-raise call should both fire; got: {:#?}",
         findings
             .iter()
             .map(|f| (f.location.line, &f.rule_id))
             .collect::<Vec<_>>()
     );
+    assert_eq!(findings[0].location.line, Some(26));
     assert_eq!(findings[0].algorithm_id, "ecdsa-p256");
+    assert_eq!(findings[1].location.line, Some(33));
+    assert_eq!(findings[1].algorithm_id, "sha-256");
 }
 
 // ── WebCrypto: classify from the algorithm argument, never from a guess ────

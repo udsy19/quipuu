@@ -19,3 +19,11 @@ expect(() => {
 
 // real positive — no throw assertion wraps this call
 jwt.sign({ foo: "bar" }, privateKey, { algorithm: "ES256" });
+
+// real positive — the sign() call here succeeds; only the verify() call one
+// line below it is the one the assertion requires to throw (`#Y119`, the
+// jsonwebtoken corpus shape at test/wrong_alg.tests.js:44-49)
+expect(function () {
+  var token = jwt.sign({ foo: "bar" }, "secret", { algorithm: "HS256" });
+  jwt.verify(token, "some secret", { algorithms: ["HS384"] });
+}).to.throw(JsonWebTokenError, "invalid algorithm");

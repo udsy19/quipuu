@@ -7331,3 +7331,73 @@ this cycle closed only the narrower, already-permitted bare-name fallback for tw
 named methods, not the general capability.
 
 PRECISION: 97.18%
+
+## Measurement, 2026-09-02 (Track A cycle 234 — `#Y119` closed: `is_call_asserted_to_fail` narrowed
+to the sole statement a test-required-failure assertion actually wraps)
+
+**The gap, confirmed by direct read before touching anything.** Cycle 232's `is_call_asserted_to_fail`
+(`scanner.rs`) walks up from a crypto call looking for an enclosing `with pytest.raises(...):` /
+`expect(...).to.throw()`/`.toThrow()` wrapper and suppresses the call the moment one is found —
+nothing in the walk restricts this to the specific statement the assertion requires to fail, despite
+the function's own doc comment stating the intent is "only a call the test requires to fail... never
+one merely passed to an assertion of its result." Read `npm/jsonwebtoken/test/wrong_alg.tests.js:44-49`
+directly: a genuine, successful `jwt.sign(...)` HMAC-SHA256 call sits one line above the
+`jwt.verify(...)` call that is the one actually asserted to throw, both inside the same
+`expect(function(){...}).to.throw(...)` block — the real `sign()` call was suppressed as collateral
+damage, one of the 11 findings cycle 232 removed from the corpus. Filed as `#Y119`
+(`Backlog.md:12816`) with a fix scope already specified: restrict suppression to the case where the
+crypto call is the sole meaningful statement in the wrapped block.
+
+**What shipped.** `is_call_asserted_to_fail` (`scanner.rs`) now takes a second gate after finding the
+wrapper: Python's `with pytest.raises(...):`/`with self.assertRaises(...):` only suppresses when its
+`body` field's block has exactly one named statement; JS/TS's `expect(fn).to.throw()`/`.toThrow()`
+only suppresses when `fn`'s body is a concise (non-block) expression or a `statement_block` with
+exactly one named statement. A new `block_is_single_statement` helper backs both. Both fixtures
+(`tests/fixtures/{javascript/jwt_sign_test_assertion.js, python/jwt_encode_test_assertion.py}`) gained
+a second case mirroring the real corpus shape — a real op call followed by a second call that is the
+one actually asserted to fail, both inside the same wrapper — and the two existing `scan_test.rs`
+cases were widened from "exactly 1 finding" to "exactly 2, at these lines, these algorithm ids" rather
+than adding new tests, since the new case is a variant of the same fixture's existing claim.
+
+**Corpus effect: 1 added, 0 removed**, confirmed with a full pre/post corpus dump using the
+in-repo `benchmarks/corpus-b-realworld/dump_findings.py` (not a `work/` scratch copy — an ad-hoc
+copy in `work/` was tried first and gave a materially inflated total, `2069` against this script's
+`1907`, which turned out to be that scratch script's own known `crates-io:rustls-pemfile`
+double-count bug the README's benchmark-number paragraph already names; discarded in favour of the
+canonical script once the discrepancy surfaced). Pre-change binary built from `HEAD` (`66446db`) in
+a worktree, dumped to `work/y119c_pre.json` (1906 findings, exactly matching the currently-published
+figure); post-change binary dumped to `work/y119c_post.json` (1907 findings). The one added row:
+`npm:jsonwebtoken`, `CRYPTO-361`, `sha-256`, `test/wrong_alg.tests.js:46` — the exact call `#Y119`
+named, hand-verified TP by opening the line (a genuine `jwt.sign({algorithm:'HS256'})` call whose
+result is used one line later, not itself the value asserted to throw). 0 removed: the narrower gate
+can only ever restore a previously-suppressed call, never suppress a new one, so this direction of
+fix is structurally recall-only.
+
+**Precision 97.18% → 97.18%, unchanged (rounds identical; stratified-fresh moves 97.177%→97.182%).**
+`bin/precision.py work/y119c_pre.json work/y119c_post.json --added-tp 1 --added-fp 0 --write-readme`:
+stratified, fresh populations 97.182% (95% CI 95.90–98.47); stratified, carried constants 97.164%;
+pooled Wilson 97.170% (95% CI 95.57–98.20); sample `A 263/272, B 355/364` (stratum A audited count
++1), populations `A=788 B=1119`, 636 of **1907** audited. README headline, comparison-table row,
+benchmark table (`Total findings` row, wall-clock, per-project timing from a fresh
+`scan_corpus.py --include-safe` run), the HNDL/DEP-001-unscored denominators, and the wall-clock
+variance paragraph's own "down to 1906" sentence all updated to 1907 in the same diff, per rule 4.
+
+**Speed, re-measured rather than assumed.** `scan_corpus.py --include-safe`: 257.1s / 4m17s for 150
+projects (149 scanned), against the prior published 246.3s — inside this box's documented
+230–367s variance band, not a regression. Median project 190ms, mean 1724ms, p90 1.24s, max 141.0s
+(`aws-sdk-go-v2`).
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy --release
+--all-targets --workspace -- -D warnings`, `cargo test --release --workspace` all clean (158
+`scan_test.rs` cases, unchanged in count — two existing cases widened, not added). Both
+trust-invariant tests
+(`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
+
+**Not done, said out loud:** the self-doubt lens's own filing noted the recall probe
+(`corpus-a-ground-truth`) cannot currently detect this failure shape in any language — its planted
+probes are one idiomatic call per line by construction — so this fix is corpus-B-verified but not
+recall-probe-verified; a probe update is future work, not attempted here. `#Y107`/`#Y108`,
+`OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2`/`#CORPUSDRIFT`, and the standing
+`needs-human-approval` regulatory queue remain open, none bearing on this change.
+
+PRECISION: 97.18%

@@ -4474,8 +4474,17 @@ fn is_call_asserted_to_fail(call: Node<'_>, source: &[u8], language: Language) -
                                     })
                         })
                     });
+                    // A `with pytest.raises(...):` block asserts that SOMETHING
+                    // inside it throws, not that every call inside it does. A
+                    // setup call sharing the block with the call that actually
+                    // throws is a real, successful crypto operation and must
+                    // not be suppressed as collateral damage (`#Y119`) — only
+                    // treat the wrapped call as asserted-to-fail when it is the
+                    // block's sole statement.
                     if raises {
-                        return true;
+                        return p
+                            .child_by_field_name("body")
+                            .is_some_and(block_is_single_statement);
                     }
                 }
                 frames += 1;
@@ -4503,6 +4512,7 @@ fn is_call_asserted_to_fail(call: Node<'_>, source: &[u8], language: Language) -
                     // than assuming a fixed depth.
                     let mut anchor = p;
                     let mut extra_hops = 0;
+                    let mut is_throw_assertion = false;
                     while let Some(parent) = anchor.parent() {
                         if parent.kind() != "member_expression" {
                             break;
@@ -4513,7 +4523,8 @@ fn is_call_asserted_to_fail(call: Node<'_>, source: &[u8], language: Language) -
                                 "throw" | "toThrow" | "toThrowError"
                             )
                         }) {
-                            return true;
+                            is_throw_assertion = true;
+                            break;
                         }
                         anchor = parent;
                         extra_hops += 1;
@@ -4521,7 +4532,27 @@ fn is_call_asserted_to_fail(call: Node<'_>, source: &[u8], language: Language) -
                             break;
                         }
                     }
-                    return false;
+                    if !is_throw_assertion {
+                        return false;
+                    }
+                    // `expect(fn).to.throw()` asserts fn throws, not that every
+                    // statement in fn's body does. A setup call sharing the
+                    // wrapped function with the call that actually throws is a
+                    // real, successful crypto operation and must not be
+                    // suppressed as collateral damage (`#Y119`) — only treat the
+                    // wrapped call as asserted-to-fail when it is the sole
+                    // statement of the function `expect` wraps (or the function
+                    // has a concise, non-block body, which is trivially sole).
+                    return p
+                        .child_by_field_name("arguments")
+                        .and_then(|args| {
+                            let mut cursor = args.walk();
+                            args.named_children(&mut cursor).next()
+                        })
+                        .and_then(|func_arg| func_arg.child_by_field_name("body"))
+                        .is_some_and(|body| {
+                            body.kind() != "statement_block" || block_is_single_statement(body)
+                        });
                 }
                 frames += 1;
                 if frames >= 8 || matches!(p.kind(), "function_declaration" | "program") {
@@ -4533,6 +4564,14 @@ fn is_call_asserted_to_fail(call: Node<'_>, source: &[u8], language: Language) -
         }
         _ => false,
     }
+}
+
+/// True when `block`'s only named child is a single statement — the gate
+/// `is_call_asserted_to_fail` uses to tell "the call the assertion wraps" from
+/// "a setup call that merely shares scope with it" (`#Y119`).
+fn block_is_single_statement(block: Node<'_>) -> bool {
+    let mut cursor = block.walk();
+    block.named_children(&mut cursor).count() == 1
 }
 
 /// Process-wide compiled-regex cache.

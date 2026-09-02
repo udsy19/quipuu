@@ -10,27 +10,27 @@
       "status": "unscannable"
     }
   ],
-  "total_elapsed_seconds": 262.81,
+  "total_elapsed_seconds": 257.12,
   "by_ecosystem": {
     "pypi": {
       "projects_scanned": 25,
       "projects_not_scanned": 0,
       "projects_with_findings": 17,
       "projects_with_errors": 0,
-      "total_findings": 176,
-      "audible_findings": 176,
+      "total_findings": 174,
+      "audible_findings": 174,
       "suppressed_findings": 0,
-      "total_duration_seconds": 8.76
+      "total_duration_seconds": 7.9799999999999995
     },
     "npm": {
       "projects_scanned": 25,
       "projects_not_scanned": 0,
       "projects_with_findings": 9,
       "projects_with_errors": 0,
-      "total_findings": 143,
-      "audible_findings": 143,
+      "total_findings": 135,
+      "audible_findings": 135,
       "suppressed_findings": 0,
-      "total_duration_seconds": 6.98
+      "total_duration_seconds": 5.92
     },
     "maven": {
       "projects_scanned": 25,
@@ -40,7 +40,7 @@
       "total_findings": 262,
       "audible_findings": 262,
       "suppressed_findings": 0,
-      "total_duration_seconds": 16.57
+      "total_duration_seconds": 18.71
     },
     "crates-io": {
       "projects_scanned": 25,
@@ -50,7 +50,7 @@
       "total_findings": 128,
       "audible_findings": 128,
       "suppressed_findings": 0,
-      "total_duration_seconds": 1.6400000000000006
+      "total_duration_seconds": 2.4800000000000004
     },
     "go-modules": {
       "projects_scanned": 25,
@@ -60,17 +60,17 @@
       "total_findings": 776,
       "audible_findings": 776,
       "suppressed_findings": 0,
-      "total_duration_seconds": 181.59999999999997
+      "total_duration_seconds": 180.00000000000006
     },
     "crypto-adjacent": {
       "projects_scanned": 25,
       "projects_not_scanned": 0,
-      "projects_with_findings": 16,
+      "projects_with_findings": 17,
       "projects_with_errors": 0,
-      "total_findings": 430,
-      "audible_findings": 430,
+      "total_findings": 432,
+      "audible_findings": 432,
       "suppressed_findings": 0,
-      "total_duration_seconds": 47.08999999999998
+      "total_duration_seconds": 41.76
     }
   },
   "top_10_by_findings": [
@@ -88,7 +88,7 @@
       "total_findings": 259,
       "audible_findings": 259,
       "suppressed_findings": 0,
-      "duration_seconds": 0.79,
+      "duration_seconds": 0.75,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -198,7 +198,7 @@
       "total_findings": 140,
       "audible_findings": 140,
       "suppressed_findings": 0,
-      "duration_seconds": 4.65,
+      "duration_seconds": 5.63,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -257,7 +257,7 @@
       "total_findings": 129,
       "audible_findings": 129,
       "suppressed_findings": 0,
-      "duration_seconds": 4.25,
+      "duration_seconds": 3.71,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -316,7 +316,7 @@
       "total_findings": 116,
       "audible_findings": 116,
       "suppressed_findings": 0,
-      "duration_seconds": 3.46,
+      "duration_seconds": 2.86,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -421,7 +421,7 @@
       "total_findings": 83,
       "audible_findings": 83,
       "suppressed_findings": 0,
-      "duration_seconds": 1.05,
+      "duration_seconds": 1.03,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -502,7 +502,7 @@
       "total_findings": 72,
       "audible_findings": 72,
       "suppressed_findings": 0,
-      "duration_seconds": 141.98,
+      "duration_seconds": 140.95,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -530,43 +530,6 @@
       ]
     },
     {
-      "canonical_id": "npm:jsonwebtoken",
-      "ecosystem": "npm",
-      "integrity": "ok",
-      "scan_paths": [
-        "."
-      ],
-      "total_findings": 69,
-      "audible_findings": 69,
-      "suppressed_findings": 0,
-      "duration_seconds": 0.1,
-      "exit_code": 0,
-      "status": "ok",
-      "errors": [],
-      "sample_findings": [
-        {
-          "algorithm_id": "sha-256",
-          "count": 33
-        },
-        {
-          "algorithm_id": "rsa-pkcs1-sha256",
-          "count": 26
-        },
-        {
-          "algorithm_id": "rsa-unattributed",
-          "count": 6
-        },
-        {
-          "algorithm_id": "jwt-alg-none",
-          "count": 2
-        },
-        {
-          "algorithm_id": "rsa-pss-sha256",
-          "count": 2
-        }
-      ]
-    },
-    {
       "canonical_id": "pypi:pycryptodome",
       "ecosystem": "pypi",
       "integrity": "ok",
@@ -576,7 +539,7 @@
       "total_findings": 67,
       "audible_findings": 67,
       "suppressed_findings": 0,
-      "duration_seconds": 1.2,
+      "duration_seconds": 1.01,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -615,7 +578,7 @@
       "total_findings": 63,
       "audible_findings": 63,
       "suppressed_findings": 0,
-      "duration_seconds": 0.69,
+      "duration_seconds": 0.65,
       "exit_code": 0,
       "status": "ok",
       "errors": [],
@@ -659,6 +622,43 @@
         {
           "algorithm_id": "ecdsa-unattributed",
           "count": 1
+        }
+      ]
+    },
+    {
+      "canonical_id": "npm:jsonwebtoken",
+      "ecosystem": "npm",
+      "integrity": "ok",
+      "scan_paths": [
+        "."
+      ],
+      "total_findings": 61,
+      "audible_findings": 61,
+      "suppressed_findings": 0,
+      "duration_seconds": 0.08,
+      "exit_code": 0,
+      "status": "ok",
+      "errors": [],
+      "sample_findings": [
+        {
+          "algorithm_id": "sha-256",
+          "count": 29
+        },
+        {
+          "algorithm_id": "rsa-pkcs1-sha256",
+          "count": 22
+        },
+        {
+          "algorithm_id": "rsa-unattributed",
+          "count": 6
+        },
+        {
+          "algorithm_id": "jwt-alg-none",
+          "count": 2
+        },
+        {
+          "algorithm_id": "rsa-pss-sha256",
+          "count": 2
         }
       ]
     }
@@ -710,7 +710,6 @@
     "go-modules:github.com/labstack/echo",
     "crypto-adjacent:github.com/wolfSSL/wolfssl",
     "crypto-adjacent:github.com/Mbed-TLS/mbedtls",
-    "crypto-adjacent:github.com/open-quantum-safe/liboqs-rust",
     "crypto-adjacent:github.com/open-quantum-safe/liboqs-python",
     "crypto-adjacent:github.com/microsoft/SymCrypt",
     "crypto-adjacent:github.com/microsoft/SymCrypt-OpenSSL",

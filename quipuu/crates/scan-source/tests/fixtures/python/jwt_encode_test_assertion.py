@@ -24,3 +24,11 @@ class LegacyCase:
 def sign_token():
     # real positive — no raises assertion wraps this call
     return jwt.encode({"hello": "world"}, p256_key, algorithm="ES256")
+
+
+def test_wrong_key_rejected_on_decode():
+    # real positive — the encode() call here succeeds; only the decode() call
+    # one line below it is the one the assertion requires to raise (`#Y119`)
+    with pytest.raises(InvalidSignatureError):
+        token = jwt.encode({"hello": "world"}, hs_key, algorithm="HS256")
+        jwt.decode(token, wrong_key, algorithms=["HS256"])
