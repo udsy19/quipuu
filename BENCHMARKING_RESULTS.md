@@ -6896,3 +6896,83 @@ table `note` field only).
 `#ESTIMATORPERSIST2` and `#CORPUSDRIFT` remain open, neither bearing on this change.
 
 PRECISION: 97.17%
+
+## Measurement, 2026-09-02 (Track A cycle 221 — `#Y117`, `oqs` liboqs-rust `Kem::new`/`Sig::new` coverage)
+
+**`#Y117` closed a true zero-coverage gap.** `open-quantum-safe/liboqs-rust` (published as `oqs` on
+crates.io) had no `rust.toml` coverage at all, stricter than the already-covered C/Python liboqs
+bindings — a fixture built from the crate's own vendored source confirmed 0 findings pre-change.
+`Kem::new(Algorithm)`/`Sig::new(Algorithm)` take the parameter set as a bare enum-variant argument,
+the same path-expression-as-argument shape `rust_arg_const_name` already reads for
+`rcgen::KeyPair::generate_for` and aws-lc-rs's constructors — reused unchanged, no new scanner
+logic. Two `RUST_CALLEE_APIS` entries (`Kem::new`→`oqs.kem.Kem.new`, `Sig::new`→`oqs.sig.Sig.new`)
+plus 8 new `[[classify]]` arms (`CRYPTO-1142`–`CRYPTO-1149`: 3 ML-KEM sizes + unattributed fallback,
+3 ML-DSA sizes + unattributed fallback) in `rust.toml`. `Kem`/`Sig` are generic type names — unlike
+`DecapsulationKey`/`PqdsaKeyPair` — so the collision risk against an unrelated crate's or the
+scanned project's own `Kem`/`Sig` type sits with the classify layer's `MlKem*`/`MlDsa*` string match,
+not the callee-name lookup; checked directly against this corpus (0 collisions). New fixture
+`tests/fixtures/rust/oqs_pqc.rs` and test `scans_rust_oqs_ml_kem_ml_dsa` (7 assertions covering all
+6 literal parameter sets plus the unattributed fallback on a variable argument).
+
+**A pre-existing bug in the corpus measurement tooling was found and worked around while producing
+this cycle's dump, and is recorded here since it changes the published corpus-total and speed
+figures independently of `#Y117`'s own detection change.** `work/dump_findings_local.py` (external
+to this repo, not `bin/precision.py`) resolves each project's `scan_hints.scan_paths` and, when none
+resolve, falls back to scanning the raw clone directory — without checking
+`scan_hints.unscannable`. `crates-io:rustls-pemfile`'s own manifest
+(`benchmarks/corpus-b-realworld/ecosystems/crates-io/rustls-pemfile.toml`) declares
+`scan_hints.unscannable` and `scan_paths = []` specifically because its clone directory is a symlink
+to `crates-io:rustls`'s clone (the crate was folded into the rustls monorepo upstream) — scanning it
+anyway double-counts `rustls`'s own 160 findings under the wrong project name. `scan_corpus.py`
+(in-tree, uses `corpus_integrity.resolve_scan_paths`) honors the declaration correctly and has
+never had this defect. Filtering `crates-io:rustls-pemfile` out of both the pre- and post-change
+`dump_findings_local.py` output before measuring precision brings its total (1915 pre, 1917 post)
+into exact agreement with a fresh `scan_corpus.py` run (1917) — confirming the filter is correct and
+that this cycle's corpus otherwise matches the last published baseline exactly. No repo file needed
+a change for this — the bug is in an out-of-tree script, and the in-tree `corpus-integrity.toml`
+declaration it should have honored was already correct.
+
+**Tuple, per `#S12`: corpus B (150 projects, 149 scanned) · scanner set `--source --deps
+--include-safe` · profile `nist-default` · pre-change binary built from `main` at `a9daafd` in a
+worktree (`work/y117_pre_clean.json`, 1915 findings after the rustls-pemfile filter above) ·
+post-change binary built from this cycle's tree with `#Y117` applied (`work/y117_post_clean.json`,
+1917), both produced by `dump_findings_local.py` then filtered.**
+
+**2 findings added, 0 removed, 0 reclassified (1915 → 1917) — both in
+`crypto-adjacent:github.com/open-quantum-safe/liboqs-rust`, hand-labelled by opening the cited
+`file:line`.** `oqs/src/kem.rs:262` and `oqs/src/sig.rs:301` are the crate's own
+`impl TryFrom<Algorithm> for Kem`/`Sig` bodies (`Kem::new(alg)`/`Sig::new(alg)`, `alg` a function
+parameter, not a literal) — real calls into the PQC constructor with an unresolvable parameter set,
+correctly degrading to `kem-unattributed`/`sig-unattributed`. **2 TP, 0 FP, 0 DEPENDS.** Vendor-only
+evidence (the crate's own internals, not an independent consumer), same tier as the already-shipped
+OpenSSL LMS rule — stated plainly, not hidden.
+
+**Precision 97.17% → 97.18%.** `bin/precision.py work/y117_pre_clean.json work/y117_post_clean.json
+--added-tp 2 --added-fp 0 --write-readme`: stratified-fresh populations re-derived as `A=798,
+B=1119`, sample `A 264/273, B 355/364` — 637 of 1917 audited — giving 97.184% (95% CI 95.90–98.47,
+pooled Wilson 97.174%), rounding to the published 97.18%. The rise is coverage added at precision
+held, landing in stratum A, not a precision improvement in the "fewer false positives" sense.
+
+**Also corrected in the same diff, since the rustls-pemfile filter changed the corpus total
+independently of `#Y117`:** the benchmark table's `Total findings` (1915→1917), `Wall-clock time`
+(236.6s→341.9s, a fresh `scan_corpus.py` run on this box — box variance, not a regression, per the
+"Wall-clock on this box moves between runs" paragraph) and `Per project` row (median 175ms→250ms,
+mean 1575ms→2277ms, p90 1.19s→1.67s, max 126.7s→189.9s), the README lede's speed claim, the
+comparison table's `Scan speed` cell, the `oqs`-classify-arm count in the "135 extract blocks and
+807→815 classify arms" sentence, and two `of 1915`→`of 1917` denominators (the HNDL-flag-count and
+`unscored`-count paragraphs — both numerators, 0 and 13, independently confirmed unaffected since
+neither of `#Y117`'s two new findings is a certificate finding or `DEP-001`).
+
+**Not done, said out loud:** the `--policy nsa-cnsa2` divergence paragraph (README, "1915 findings
+... 467 (24.4%) land in a different band") is left as a dated historical measurement, not re-taken —
+re-verifying it requires a fresh policy diff this cycle did not run, same standing practice as prior
+cycles' "not re-taken" notes. `#Y107`/`#Y108` remain open. `OPEN-ASK #ESTIMATORPERSIST`/
+`#ESTIMATORPERSIST2` and `#CORPUSDRIFT` remain open, neither bearing on this change. The
+`dump_findings_local.py` fallback bug itself is not fixed — it lives outside this repo.
+
+**Held:** `cargo build --release --workspace` clean; `cargo fmt --all` clean; `cargo clippy
+--all-targets -- -D warnings` clean; `cargo test --workspace` all passing, 1 new
+(`scans_rust_oqs_ml_kem_ml_dsa`). Both trust-invariant tests
+(`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
+
+PRECISION: 97.18%
