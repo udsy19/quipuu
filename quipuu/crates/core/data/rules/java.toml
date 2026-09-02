@@ -2140,6 +2140,19 @@ algorithm_id = "dh-4096"
 severity_hint = "auto"
 message = "TLS group ffdhe4096 in setNamedGroups — finite-field DH (RFC 7919), quantum-vulnerable. Migrate to an ML-KEM hybrid group."
 
+# Pre-standard Kyber draft identifier — go.toml's CRYPTO-048 counterpart for
+# the JSSE call shape. Not a hardening baseline like the classical arms above;
+# this is a group name that predates FIPS 203 and is obsoleted by it. Still
+# recognised provider-side (Conscrypt's toBoringSslGroup()) even though no
+# current JDK/BC constant is named this. Backlog #Y122.
+[[classify]]
+id = "CRYPTO-1170"
+when.api = "^javax\\.net\\.ssl\\.SSLParameters\\.setNamedGroups$"
+when.args.group = "X25519Kyber768Draft00"
+algorithm_id = "x25519-kyber768-draft00"
+severity_hint = "auto"
+message = "TLS group X25519Kyber768Draft00 in setNamedGroups — pre-standard Kyber, obsoleted by RFC 10024. Replace with X25519MLKEM768."
+
 # BouncyCastle's raw (non-JSSE) TLS stack — `TlsUtils.addIfSupported(supportedGroups,
 # crypto, new int[]{ NamedGroup.X25519MLKEM768, NamedGroup.x25519, … })`, the array-literal
 # argument an `AbstractTlsClient`/`AbstractTlsServer` subclass passes when overriding

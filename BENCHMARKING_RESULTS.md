@@ -7438,3 +7438,40 @@ clippy (unchanged since `b15faaf`'s own green run) and the full `scan_corpus.py`
 pass (no code path changed, only string literals).
 
 PRECISION: 97.18%
+
+## Measurement, 2026-09-02 (`#Y122` closed: Java `SSLParameters.setNamedGroups` gains the pre-standard-Kyber classify arm)
+
+`java.toml`'s `setNamedGroups` rule (`JAV-100`) classified eleven named-group strings but not
+`X25519Kyber768Draft00` — the pre-standard Kyber identifier `go.toml`'s `CRYPTO-048` already
+classifies for the identical TLS call shape (`CurvePreferences`), reusing the existing
+`x25519-kyber768-draft00` algorithm id. One new classify arm, `CRYPTO-1170`, placed at the end of
+the existing `setNamedGroups` list; no new extract block, no new algorithm-table row. Fixture
+(`TlsGroups.java`) and `scan_test.rs`'s `scans_java_ssl_parameters_set_named_groups` extended with
+a `preStandardKyber` method and the new rule/id pair.
+
+**Corpus effect: 0 added, 0 removed, 0 reclassified — 1907 findings both sides**, confirmed with a
+full pre/post corpus dump using the in-repo `benchmarks/corpus-b-realworld/dump_findings.py`.
+Pre-change dump `work/y100_post.json` (1907, matching the currently-published figure, commit
+`a8414eb`); post-change dump `work/y122_post.json` (1907, this cycle's binary). Zero corpus recall
+was the expected outcome, not a surprise: no project in corpus B calls `setNamedGroups` with this
+literal string.
+
+**Precision unchanged at 97.18%.** `bin/precision.py work/y100_post.json work/y122_post.json
+--write-readme`: stratified-fresh 97.177% (95% CI 95.89–98.46), stratified-carried 97.159%, pooled
+Wilson 97.165% (95% CI 95.56–98.20) — all round to the already-published 97.18%. `--write-readme`
+recomputed the audited-findings count from `state/estimator.json`'s persisted constants alone
+(271+364=635) and reverted the headline/comparison-table row from 636 to 635, the exact
+`OPEN-ASK #ESTIMATORPERSIST`/`#CORPUSDRIFT` recurrence the prior RFC-10024 entry above predicted;
+corrected back to 636 by hand in the same commit rather than left to drift. README's extract/
+classify-arm-count sentence and the Go-vs-Java comparison sentence both updated for `java.toml`'s
+new 240-classify-arm total (837 total across 7 files).
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy --release
+--all-targets --workspace -- -D warnings`, `cargo test --release --workspace` all clean (159
+`scan_test.rs` cases, one widened). Both trust-invariant tests untouched and pass.
+
+**Not done, said out loud:** `OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2`/`#CORPUSDRIFT` remain
+open, none bearing on this cycle — but this cycle is a second data point that `--write-readme`'s
+0-delta path silently reverts a real prior TP fold, which strengthens the case for resolving them.
+
+PRECISION: 97.18%

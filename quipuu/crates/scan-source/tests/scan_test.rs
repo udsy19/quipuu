@@ -730,6 +730,7 @@ fn scans_java_ssl_parameters_set_named_groups() {
         ("CRYPTO-806", "dh-2048"),
         ("CRYPTO-807", "dh-3072"),
         ("CRYPTO-808", "dh-4096"),
+        ("CRYPTO-1170", "x25519-kyber768-draft00"),
     ];
     for (rule_id, algorithm_id) in want {
         assert!(
@@ -747,17 +748,22 @@ fn scans_java_ssl_parameters_set_named_groups() {
     // 10 named-group elements across the two direct calls (secp256r1 appears
     // in both, once per call) + 1 more through the delegating-helper call +
     // 3 more through the #Y24 part (b) System.setProperty comma-delimited
-    // form (secp256r1, ffdhe2048, X25519MLKEM768), plus the pre-existing
-    // CRYPTO-210 RSA finding from the control method and the unrelated
-    // system property (which must not fire) — nothing else.
+    // form (secp256r1, ffdhe2048, X25519MLKEM768) + 1 more through the #Y122
+    // pre-standard-Kyber method, plus the pre-existing CRYPTO-210 RSA finding
+    // from the control method and the unrelated system property (which must
+    // not fire) — nothing else.
     let set_named_groups_count = findings
         .iter()
-        .filter(|f| f.rule_id.starts_with("CRYPTO-79") || f.rule_id.starts_with("CRYPTO-80"))
+        .filter(|f| {
+            f.rule_id.starts_with("CRYPTO-79")
+                || f.rule_id.starts_with("CRYPTO-80")
+                || f.rule_id == "CRYPTO-1170"
+        })
         .count();
     assert_eq!(
         set_named_groups_count,
-        14,
-        "expected exactly 14 setNamedGroups findings (one per array element / property token), got {}: {:#?}",
+        15,
+        "expected exactly 15 setNamedGroups findings (one per array element / property token), got {}: {:#?}",
         set_named_groups_count,
         findings
             .iter()

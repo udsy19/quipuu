@@ -42,4 +42,10 @@ public class TlsGroups {
     void unrelatedSystemProperty() {
         System.setProperty("http.agent", "quipuu-test");
     }
+
+    // #Y122: the pre-standard Kyber draft name, go.toml's CRYPTO-048 sibling
+    // for the JSSE call shape.
+    void preStandardKyber(SSLParameters params) {
+        params.setNamedGroups(new String[]{"X25519Kyber768Draft00"});
+    }
 }
