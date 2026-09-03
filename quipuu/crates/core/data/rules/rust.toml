@@ -936,3 +936,35 @@ when.api = "^oqs\\.sig\\.Sig\\.new$"
 algorithm_id = "sig-unattributed"
 severity_hint = "auto"
 message = "oqs Sig::new(ALG) — post-quantum signature scheme instantiated; ALG is not a recognised ML-DSA literal here, so the parameter set is unknown."
+
+# rustls `SignatureScheme::ML_DSA_{44,65,87}` — the IANA TLS SignatureScheme
+# registry variants governing certificate-based TLS authentication (a custom
+# `ClientCertVerifier`/`ServerCertVerifier`'s `supported_verify_schemes()`),
+# a distinct surface from `CryptoProvider.kx_groups` above (that governs the
+# KEM key-exchange group, not the certificate signature scheme). A bare
+# path expression, not a call — matched by `match_rust_signature_scheme` in
+# scanner.rs, the same `scoped_identifier` hook `openmls.Ciphersuite` above
+# uses. Backlog `#Y142`.
+[[classify]]
+id = "CRYPTO-1199"
+when.api = "^rustls\\.SignatureScheme$"
+when.args.variant = "ML_DSA_44"
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "rustls SignatureScheme::ML_DSA_44 — ML-DSA-44, FIPS 204, quantum-resistant certificate signature scheme."
+
+[[classify]]
+id = "CRYPTO-1200"
+when.api = "^rustls\\.SignatureScheme$"
+when.args.variant = "ML_DSA_65"
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "rustls SignatureScheme::ML_DSA_65 — ML-DSA-65, FIPS 204, quantum-resistant certificate signature scheme."
+
+[[classify]]
+id = "CRYPTO-1201"
+when.api = "^rustls\\.SignatureScheme$"
+when.args.variant = "ML_DSA_87"
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "rustls SignatureScheme::ML_DSA_87 — ML-DSA-87, FIPS 204, quantum-resistant certificate signature scheme."

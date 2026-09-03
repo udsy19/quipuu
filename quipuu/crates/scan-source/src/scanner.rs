@@ -899,6 +899,16 @@ fn walk(
     {
         out.push(m);
     }
+    // rustls `SignatureScheme::ML_DSA_{44,65,87}` — the certificate-
+    // authentication signature-scheme enum, a different surface from
+    // `kx_groups` above. Same bare `scoped_identifier` hook as the OpenMLS
+    // rule. Backlog `#Y142`.
+    if language == Language::Rust
+        && kind == "scoped_identifier"
+        && let Some(m) = match_rust_signature_scheme(node, source)
+    {
+        out.push(m);
+    }
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
         walk(
@@ -1627,6 +1637,47 @@ fn match_rust_post_quantum_provider(node: Node<'_>, source: &[u8]) -> Option<Raw
     })
 }
 
+/// rustls `SignatureScheme::ML_DSA_{44,65,87}` — the certificate-
+/// authentication signature-scheme enum (IANA TLS SignatureScheme registry),
+/// a different API surface from `CryptoProvider::kx_groups` above: this
+/// governs which schemes a custom `ClientCertVerifier`/`ServerCertVerifier`
+/// advertises via `supported_verify_schemes()`, not the KEM key-exchange
+/// group. A bare enum-variant path expression, same shape as
+/// `match_rust_openmls_ciphersuite` above, so this hooks `scoped_identifier`
+/// directly rather than `call_expression`.
+///
+/// A known, disclosed gap: `vec![SignatureScheme::ML_DSA_65, ...]` — the
+/// return type's natural constructor — does not structure into a
+/// `scoped_identifier` node inside a `macro_invocation`'s token tree
+/// (verified directly: tree-sitter-rust flattens `vec![...]`'s contents to
+/// bare `identifier` tokens with no path structure), the same `vec!`
+/// limitation named on `match_rust_kx_groups` above. Only array-literal
+/// (`&[SignatureScheme::ML_DSA_65, ...]`) and standalone references are
+/// caught. Backlog `#Y142`.
+fn match_rust_signature_scheme(node: Node<'_>, source: &[u8]) -> Option<RawMatch> {
+    let path = node.child_by_field_name("path")?;
+    if node_text(path, source) != "SignatureScheme" {
+        return None;
+    }
+    let name = node.child_by_field_name("name")?;
+    let variant = node_text(name, source);
+    if !variant.starts_with("ML_DSA_") {
+        return None;
+    }
+    let mut args = HashMap::new();
+    args.insert("variant".into(), ArgValue::Str(variant.clone()));
+    let start = node.start_position();
+    Some(RawMatch {
+        api: "rustls.SignatureScheme".into(),
+        args,
+        line: (start.row + 1) as u32,
+        offset: node.start_byte() as u32,
+        symbol: variant,
+        snippet: node_text(node, source),
+        site_context: quipuu_core::SiteContext::Call,
+    })
+}
+
 /// Follow `Cow::Borrowed(&[...])` / `Cow::Owned(&[...])` / a bare `&[...]`
 /// down to the innermost `array_expression`.
 fn find_array_literal(mut node: Node<'_>) -> Option<Node<'_>> {
@@ -1854,6 +1905,8 @@ const STRUCTURAL_APIS: &[&str] = &[
     "rustls.CryptoProvider.kx_groups",
     // match_rust_openmls_ciphersuite
     "openmls.Ciphersuite",
+    // match_rust_signature_scheme
+    "rustls.SignatureScheme",
     // match_go_oqs_construction
     "liboqs-go/oqs.KeyEncapsulation",
     "liboqs-go/oqs.Signature",

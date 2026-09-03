@@ -1844,6 +1844,53 @@ fn scans_rust_openmls_ciphersuite() {
     );
 }
 
+#[test]
+fn scans_rust_signature_scheme() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/signature_scheme.rs"))
+        .expect("scan succeeds");
+
+    let scheme_findings: Vec<_> = findings
+        .iter()
+        .filter(|f| f.rule_id.starts_with("CRYPTO-1") && (1199..=1201).contains(&rule_num(f)))
+        .collect();
+
+    for (algorithm_id, expected) in [
+        ("ml-dsa-44", 0), // build_vec's vec! macro — disclosed non-match
+        ("ml-dsa-65", 1), // array_literal
+        ("ml-dsa-87", 1), // standalone
+    ] {
+        let n = scheme_findings
+            .iter()
+            .filter(|f| f.algorithm_id == algorithm_id)
+            .count();
+        assert_eq!(
+            n,
+            expected,
+            "expected {expected} finding(s) for {algorithm_id}, got {n}: {:#?}",
+            scheme_findings
+                .iter()
+                .map(|f| &f.algorithm_id)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    // The classical-only variants in `classical_only`/`standalone`'s ED25519
+    // and `array_literal`'s ED25519 must not fire; `build_vec`'s vec! macro
+    // must not fire either — exactly the 2 array/standalone finds above.
+    assert_eq!(
+        scheme_findings.len(),
+        2,
+        "only the array-literal and standalone ML-DSA references should fire: {:#?}",
+        scheme_findings
+            .iter()
+            .map(|f| &f.algorithm_id)
+            .collect::<Vec<_>>()
+    );
+}
+
 // ============================================================================
 // C# fixtures
 // ============================================================================
