@@ -8508,3 +8508,41 @@ trust-invariant tests untouched and pass. `state/precision.json` and `state/esti
 unmodified — the figure did not move.
 
 PRECISION: 97.33%
+
+---
+
+## `#Y140`: Go `crypto.MLDSAMu` and OpenSSL `curveSM2MLKEM768` coverage, measured
+
+`parked/20260903T165024-gate-red` added `CRYPTO-1208` (Go 1.27's `crypto.MLDSAMu` external-mu
+ML-DSA signalling constant, matched as a call argument since `crypto.Hash` satisfies
+`SignerOpts` by returning itself) and `CRYPTO-1209` (OpenSSL 4.0's `curveSM2MLKEM768` hybrid TLS
+group — GB/T 32918 SM2 + ML-KEM-768 — sharing the existing `SSL_CTX_set1_groups_list` matcher),
+but shipped with no corpus measurement or audit evidence, failing `gate_precision`. Cherry-picked
+both commits unmodified (plus an unrelated `#[cfg(unix)]` guard on two unreadable-file tests that
+don't compile on Windows) and measured them here.
+
+**Corpus effect: 0 added, 0 removed — 2070 findings both sides.** Built a pre-change binary at
+HEAD (`b615d6e`, `work/quipuu-y140-pre`) and a post-change binary after cherry-picking both
+commits (`work/quipuu-y140-post`), dumped both against the full 150-project corpus with the
+canonical `benchmarks/corpus-b-realworld/dump_findings.py`
+(`work/y140_pre.json` ↔ `work/y140_post.json`): identical 2070-finding dumps, confirmed by
+diffing `(file, line, rule)` keys — zero added, zero removed. Neither new rule fires anywhere in
+the corpus: `crypto.MLDSAMu` needs Go 1.27's external-mu ML-DSA signing API and
+`curveSM2MLKEM768` needs OpenSSL 4.0's GB/T hybrid group string, and none of the 150 corpus
+projects call either. Coverage is instead verified by the fixtures the diff updated
+(`tests/fixtures/go/stdlib_mldsa.go`, `tests/fixtures/cpp/crypto.c`), which `cargo test` already
+exercises.
+
+**Precision: unchanged at 97.33%.** `bin/precision.py` on the pre/post dumps reproduces the
+anchored baseline exactly: stratified-fresh **97.331%** (95% CI 96.20–98.46), pooled Wilson
+97.368% (95% CI 96.01–98.27), both rounding to the published **97.33%** — no `--added-tp`/
+`--added-fp` needed since nothing moved. `--write-readme` confirms the README already states
+this figure (152→153 extract blocks and 882→884 classify arms were the only counts needing a
+fix, both already updated in the cherry-picked diff). `state/precision.json` and
+`state/estimator.json` are unmodified.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy
+--all-targets --workspace -- -D warnings`, `cargo test --workspace` all clean. Both
+trust-invariant tests untouched and pass.
+
+PRECISION: 97.33%
