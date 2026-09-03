@@ -419,6 +419,8 @@ rather than quoting it verbatim.
 - CRYPTREC Cryptographic Technology Guideline — Post-Quantum Cryptography — 2024 Edition (published 2024)
 - CRYPTREC Report 2024 (published July 22, 2025)
 - External evaluation of ML-KEM for CRYPTREC completed April 2026
+- ML-KEM added to CRYPTREC Recommended Ciphers List, 2026-03-30 (cryptrec.go.jp/en/whatsnew.html)
+- CRYPTREC Report 2025 (published July 24, 2026)
 
 **National target: 2035** — confirmed by National Cyber Command Office interim report (late 2025). Japan aligns with US, EU, UK, and Canada.
 
