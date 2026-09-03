@@ -312,6 +312,18 @@ message = "rsa::SigningKey::new — RSA signing key construction; hash algorithm
 
 # ============================================================================
 # ed25519_dalek — SigningKey::generate
+#
+# RustCrypto's own `ml-dsa` crate (crates.io/crates/ml-dsa) uses the
+# identical `SigningKey::<Param>::generate()` call shape with the parameter
+# set carried only in the turbofish — `normalize_rust_callee` strips module
+# path and turbofish before the table lookup, so `SigningKey::<MlDsa65>::
+# generate()` collapses to the same `SigningKey::generate` key as
+# ed25519_dalek's call and reaches this same api, same as `oqs::Kem`/`Sig`
+# above. `match_rust_callee` still exposes the turbofish contents as the
+# `turbofish` capture, so the MlDsa44/65/87 arms below dispatch on it and
+# must come first — the classify layer takes the first matching rule, and
+# CRYPTO-550's arm below has no turbofish predicate so it would otherwise
+# also match a ml-dsa call. Backlog `#Y145`.
 # ============================================================================
 
 [[extract]]
@@ -326,6 +338,30 @@ query = """
 captures = { cls = "ident", fn = "ident" }
 api = "ed25519_dalek.SigningKey.generate"
 description = "ed25519_dalek::SigningKey::generate(rng) — Ed25519 key generation."
+
+[[classify]]
+id = "CRYPTO-1205"
+when.api = "^ed25519_dalek\\.SigningKey\\.generate$"
+when.args.turbofish = "MlDsa44"
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "ml_dsa::SigningKey::<MlDsa44>::generate() — ML-DSA-44, FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1206"
+when.api = "^ed25519_dalek\\.SigningKey\\.generate$"
+when.args.turbofish = "MlDsa65"
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "ml_dsa::SigningKey::<MlDsa65>::generate() — ML-DSA-65, FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1207"
+when.api = "^ed25519_dalek\\.SigningKey\\.generate$"
+when.args.turbofish = "MlDsa87"
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "ml_dsa::SigningKey::<MlDsa87>::generate() — ML-DSA-87, FIPS 204, quantum-resistant."
 
 [[classify]]
 id = "CRYPTO-550"
@@ -968,3 +1004,47 @@ when.args.variant = "ML_DSA_87"
 algorithm_id = "ml-dsa-87"
 severity_hint = "auto"
 message = "rustls SignatureScheme::ML_DSA_87 — ML-DSA-87, FIPS 204, quantum-resistant certificate signature scheme."
+
+# ============================================================================
+# RustCrypto's own `ml-kem` crate (crates.io/crates/ml-kem) — a distinct call
+# shape from the already-covered aws-lc-rs (`DecapsulationKey::generate`) and
+# oqs (`Kem::new(Algorithm::MlKemNNN)`) paths above: `generate_keypair()`
+# takes no arguments, with the parameter set carried entirely in the
+# receiver type (`MlKem512`/`768`/`1024`), so no turbofish/argument capture
+# is needed — each parameter set gets its own `RUST_CALLEE_APIS` entry.
+# Backlog `#Y145`.
+# ============================================================================
+
+[[extract]]
+id = "RST-051"
+language = "rust"
+query = """
+(call_expression
+  function: (scoped_identifier
+    path: (identifier) @ty
+    name: (identifier) @fn (#eq? @fn "generate_keypair")))
+"""
+captures = { ty = "ident", fn = "ident" }
+api = "ml_kem.MlKem768.generate_keypair"
+description = "ml_kem::MlKem768::generate_keypair() — ML-KEM key generation (512/768/1024 siblings share this shape)."
+
+[[classify]]
+id = "CRYPTO-1202"
+when.api = "^ml_kem\\.MlKem512\\.generate_keypair$"
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "ml_kem::MlKem512::generate_keypair() — ML-KEM-512, FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1203"
+when.api = "^ml_kem\\.MlKem768\\.generate_keypair$"
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "ml_kem::MlKem768::generate_keypair() — ML-KEM-768, FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1204"
+when.api = "^ml_kem\\.MlKem1024\\.generate_keypair$"
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "ml_kem::MlKem1024::generate_keypair() — ML-KEM-1024, FIPS 203, quantum-resistant."

@@ -8406,3 +8406,68 @@ untouched and pass. Neither `state/precision.json` nor `state/estimator.json` wa
 finding was added, removed or reclassified, so there is nothing for either to fold.
 
 PRECISION: 97.33%
+
+## `#Y145` closed: RustCrypto's own `ml-kem`/`ml-dsa` crates covered in `rust.toml`
+
+`#Y145` (filed by the ecosystem lens's seventh same-day pass, 2026-09-03) named a coverage gap
+distinct from the already-covered aws-lc-rs (`DecapsulationKey::generate`/`PqdsaKeyPair::generate`)
+and oqs (`Kem::new`/`Sig::new`) Rust PQC paths: RustCrypto's own pure-Rust `ml-kem`
+(crates.io/crates/ml-kem) and `ml-dsa` crates, a distinct call shape from either. The filing left
+the exact shape unscoped ("likely needs its own extract query... left for the implementing pass to
+scope").
+
+**Confirmed the real call shapes directly from RustCrypto/KEMs and RustCrypto/signatures source**
+(`gh api repos/RustCrypto/{KEMs,signatures}/contents/...`), not assumed from the docs.rs prose
+summary, which underspecified both: `MlKem512`/`768`/`1024`::`generate_keypair()` takes no
+arguments — the parameter set is the receiver type, not a call argument — and
+`SigningKey::<MlDsa44|65|87>::generate()` carries the parameter set in the turbofish, the same shape
+`rsa::SigningKey::<Sha256>::new()` already uses for its hash algorithm.
+
+**No new scanner code needed for either shape.** `MlKemNNN::generate_keypair` reuses the existing
+`RUST_CALLEE_APIS` table (three new entries, one per size — no argument capture required, unlike
+`oqs::Kem::new`). `SigningKey::<MlDsaNNN>::generate` reuses `normalize_rust_callee`'s existing
+turbofish-stripping, but its normalized 2-segment form (`SigningKey::generate`) is identical to
+ed25519_dalek's own `SigningKey::generate()` — a real collision, the same class the `oqs::Kem`/`Sig`
+table comment already names as a standing risk. Resolved the same way that comment resolves it: the
+table entry is shared, and the three new turbofish-gated classify arms (`when.args.turbofish =
+"MlDsa44"/"65"/"87"`) are ordered *before* the existing plain `ed25519` arm (`CRYPTO-550`) in
+`rust.toml`, since the classify layer takes the first matching rule. Verified this ordering
+actually matters, not just asserted it: the new fixture test
+(`scans_rust_rustcrypto_ml_kem_ml_dsa`) asserts zero `CRYPTO-550` findings fire on the three ml-dsa
+call sites.
+
+**Corpus effect: 0 added, 0 removed — dumps row-identical, 2238 findings both sides.** Measured with
+a pre-change binary built from `git stash` back to HEAD (`ad55711`) and a post-change binary from
+the same tree after `stash pop`, both dumped against the full 150-project corpus
+(`work/y145_pre.json` ↔ `work/y145_post.json`, `dump_findings_local.py`). No corpus project depends
+on RustCrypto's `ml-kem`/`ml-dsa` crates — checked directly (`grep -rl` for the crate names across
+every `Cargo.toml` in `work/corpus-clones`, zero hits) before writing the rule, not inferred from a
+zero afterward. Coverage instead verified against the new fixture,
+`tests/fixtures/rust/rustcrypto_pqc.rs`: exactly one finding per algorithm id
+(`ml-kem-512/768/1024`, `ml-dsa-44/65/87`), matching six-for-six.
+
+**Precision: `bin/precision.py` disagrees with `state/precision.json`'s anchored 2070-finding corpus
+by 168 findings (2238 on both this cycle's dumps) — corpus drift, not this change.** Both this
+cycle's pre-change and post-change dumps already show 2238 findings before either
+touches `ml_kem`/`ml_dsa` detection, so the drift predates and is independent of this diff; the
+row-identical 0/0 diff above is the actual falsification that this change moved nothing. Since the
+168-finding gap is unexplained (the standing, unresolved `OPEN-ASK #CORPUSDRIFT`) and re-deriving a
+fresh headline figure over it would publish a number that mixes real coverage work with an
+unrelated, uninvestigated corpus-size change, the published figure is **held at 97.33%** rather than
+moved to the fresh-population figure (97.29%) `precision.py` computed on the drifted corpus — this
+cycle is not the one authorised to re-anchor the baseline (`Backlog.md`
+[[gate-blocked-on-stale-baseline]] reasoning). `state/precision.json` and `state/estimator.json` are
+unmodified.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy
+--all-targets --workspace -- -D warnings`, `cargo test --release --workspace` all clean (one new
+`scan_test.rs` case). Both trust-invariant tests untouched and pass. README's classify-arm total
+(876→882) and extract-block total (151→152) were the only other sites needing a fix, caught by
+`readme_rule_pack_counts_match_the_rule_packs`.
+
+**Not done, said out loud:** the corpus-drift gap (2070 anchored vs. 2238 measured, both pre- and
+post-change) is disclosed, not investigated — that is `OPEN-ASK #CORPUSDRIFT`'s scope, not this
+coverage change's. Whether the 168 additional findings are legitimate corpus growth (updated clones)
+or a labelling/dedup regression is unknown and not this cycle's to determine.
+
+PRECISION: 97.33%

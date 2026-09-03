@@ -3307,6 +3307,21 @@ const RUST_CALLEE_APIS: &[(&str, &str)] = &[
     // type sits with the classify layer's `MlKem*`/`MlDsa*` arms, not here.
     ("Kem::new", "oqs.kem.Kem.new"),
     ("Sig::new", "oqs.sig.Sig.new"),
+    // RustCrypto's own `ml-kem` crate (crates.io/crates/ml-kem) — the
+    // parameter set lives in the receiver type itself, not an argument, so
+    // each size gets its own entry rather than a turbofish/arg capture.
+    (
+        "MlKem512::generate_keypair",
+        "ml_kem.MlKem512.generate_keypair",
+    ),
+    (
+        "MlKem768::generate_keypair",
+        "ml_kem.MlKem768.generate_keypair",
+    ),
+    (
+        "MlKem1024::generate_keypair",
+        "ml_kem.MlKem1024.generate_keypair",
+    ),
     ("pbkdf2", "pbkdf2.pbkdf2"),
     ("pbkdf2_hmac", "pbkdf2.pbkdf2_hmac"),
     ("pbkdf2_hmac_array", "pbkdf2.pbkdf2_hmac"),

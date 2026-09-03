@@ -1916,6 +1916,44 @@ fn scans_rust_signature_scheme() {
     );
 }
 
+#[test]
+fn scans_rust_rustcrypto_ml_kem_ml_dsa() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("rust/rustcrypto_pqc.rs"))
+        .expect("scan succeeds");
+
+    for algorithm_id in [
+        "ml-kem-512",
+        "ml-kem-768",
+        "ml-kem-1024",
+        "ml-dsa-44",
+        "ml-dsa-65",
+        "ml-dsa-87",
+    ] {
+        let n = findings
+            .iter()
+            .filter(|f| f.algorithm_id == algorithm_id)
+            .count();
+        assert_eq!(
+            n,
+            1,
+            "expected exactly 1 finding for {algorithm_id}, got {n}: {:#?}",
+            findings.iter().map(|f| &f.algorithm_id).collect::<Vec<_>>()
+        );
+    }
+
+    // A turbofish-qualified ml-dsa call must not also fire CRYPTO-550
+    // (the plain ed25519_dalek arm sharing the same `SigningKey::generate`
+    // api) — the turbofish-gated arms must win by coming first in the file.
+    assert!(
+        !findings.iter().any(|f| f.rule_id == "CRYPTO-550"),
+        "ml-dsa calls must not be misclassified as ed25519: {:#?}",
+        findings.iter().map(|f| &f.algorithm_id).collect::<Vec<_>>()
+    );
+}
+
 // ============================================================================
 // C# fixtures
 // ============================================================================
