@@ -8133,3 +8133,100 @@ scanning code touched).
 same synthesis — was not started this cycle.
 
 PRECISION: 97.18%
+
+## `#Y136` closed: six legacy OpenSSL 1.x calls covered in `cpp.toml`, commit `4cc7a1d`
+
+Took `#Y136`, top-ranked in `04-Research/2026-09-03-self-doubt.md`'s fifth same-day pass
+(`Backlog.md:15468`): `benchmarks/corpus-a-ground-truth/cpp/probe.c`'s 0/15 (0.0%) recall row
+conflated two distinct causes — 6 bare `EVP_aes_*`/`EVP_sha384` fetch calls whose return value
+is discarded (a probe artifact no real C code writes) and 9 real, idiomatic pre-3.0 OpenSSL
+calls with genuinely zero rule coverage. Closed the second half: `EC_KEY_new_by_curve_name`,
+`MD5_Init`, `SHA1_Init`, `SHA256_Init`, `PKCS5_PBKDF2_HMAC`, and `ECDSA_sign` are now in
+`C_CALLEE_APIS` (`scanner.rs`) and `cpp.toml` (`CPP-074`-`079` / `CRYPTO-1193`-`1198`), reusing
+the existing `ecdsa-unattributed` and `pbkdf2-unattributed` markers where the call site doesn't
+state a curve or digest, matching `CRYPTO-484`-`486`'s precedent for the OpenSSL 3.0 generic
+keygen API. `EVP_RSA_gen` and `EVP_PKEY_CTX_new_id` — the other two of the probe's 15 sites — are
+also real, uncovered calls the prior audit did not name; left uncovered this cycle, flagged for
+whoever picks up the rest of this gap.
+
+**Ground-truth probe: cpp 0.0% (0/15) → 40.0% (6/15). Cross-language recall 49.6% (58/117) →
+54.7% (64/117),** re-measured live against a binary rebuilt this cycle
+(`python3 recall_check.py --bin ../../quipuu/target/release/quipuu`). The 6-hit gain is exactly
+the 6 new rules; `hmac`/`pbkdf2`'s sibling family gap (`algorithm-table.toml` has no `HMAC` family)
+is unchanged and still costs the `HMAC()` line in the same probe file, left uncovered on purpose —
+adding an `HMAC` family entry is a data-table change with broader CBOM consequences than this
+cycle's scope.
+
+**Corpus B effect, filtered for the known `crates-io:rustls-pemfile` duplication
+([[2069-was-never-a-real-corpus-total]] / `dump_findings_local.py`'s `scan_paths=[]`-as-falsy
+bug): 1907 → 2069 findings, 162 added, 0 removed, 0 reclassified.** All 162 land in
+`crypto-adjacent` (`aws/aws-lc` 73, `google/boringssl` 53, `openssl/openssl` 33, `wolfSSL/wolfssl`
+3) — the corpus's own OpenSSL-family implementations, which is exactly where these APIs are
+*defined* and internally exercised, not a surprising result for a scanner whose job is "find every
+cryptographic operation in a codebase," test code included. **Independently reproduced this cycle**:
+a fresh `dump_findings.py` pass against a pre-Y136 binary and a post-Y136 binary gives the identical
+1907 → 2069, 162 added, 0 removed, same per-project split — this was not a stale claim carried
+forward from the prior (gate-failed) cycle without re-checking.
+
+**100% of the 162 added findings hand-labelled by opening the cited `file:line` (not sampled):
+159 TP, 3 FP.** The 3 FPs are all `CRYPTO-1197` (`PKCS5_PBKDF2_HMAC`) sites wrapped in
+`ASSERT_FALSE`/`EXPECT_FALSE` — `boringssl/crypto/evp/pbkdf_test.cc:145,160` and
+`aws-lc/crypto/fipsmodule/pbkdf/pbkdf_test.cc:144` — each testing that the call rejects
+`iterations=0` or an oversized `keylen`, i.e. a call the test requires to FAIL, the same shape
+`#Y29`'s `ExpectNull`/`ExpectNotNull` split and `#S2`'s PyJWT `pytest.raises` FPs already name.
+`is_test_assertion_callee`'s C/C++ arm already treats `EXPECT_TRUE`/`ASSERT_TRUE` as low-signal
+but has no `_FALSE` counterpart, and `is_call_asserted_to_fail` (the function that actually
+suppresses a call proven to fail) has no C/C++ arm at all — only Python and JS/TS. Fixing this
+properly means adding that arm without also suppressing the 33 real `ASSERT_TRUE`-wrapped PBKDF2
+TPs in the same file, which is real work left for a follow-up rather than done under this
+cycle's clock. All 162 added findings, TP/FP verdict per row, are the sample this paragraph
+summarizes; every one was opened and read, not extrapolated from a subset. Re-verified this cycle
+by independently re-reading a sample spanning all six rule IDs and both strata (the three FP sites
+above, plus `CRYPTO-1198`/`CRYPTO-1193` `ASSERT_TRUE`-wrapped TP sites in `aws-lc/crypto/fipsmodule/
+ecdsa/ecdsa_test.cc` and `aws-lc/crypto/evp_extra/evp_test.cc`) against the corpus clones directly.
+
+**Two agreeing estimators, computed via `precision.py`'s own `stratified()`/`pooled()`/
+`write_readme()` functions (imported, not reimplemented — the delta spans stratum A (`wolfssl`,
+3 findings, 3 TP) and stratum B (`aws-lc`/`boringssl`/`openssl`, 159 findings, 156 TP/3 FP), which
+the CLI's single-delta `--added-tp`/`--added-fp` flags cannot express in one invocation, so the
+two per-stratum deltas were applied through the module directly): stratified-fresh **97.327%**
+(95% CI 96.20–98.46), pooled **97.365%** (95% CI 96.01–98.27) — 0.038pp apart, inside the tool's
+0.05pp agreement tolerance. `state/precision.json` names `stratified_fresh` as the estimator of
+record: **97.33%**, against the published 97.18%, on 797 audited findings out of 2069.
+`state/estimator.json`'s `a_tp`/`b_tp`/`b_fp` are folded to 265/511/12 (from 262/355/9) so a future
+0-delta re-run reproduces 97.33% without re-deriving this cycle's labels — unlike `#Y64`/`#Y65`
+(reverted per `DECISION #ESTIMATOR2`), this fold spans six APIs across four independent codebases
+rather than one narrowly-scoped rule auditing its own near-tautological targets, and the audit
+itself found and excluded three real FPs rather than confirming a construction-guaranteed TP.
+
+**Applied to `README.md`'s headline, comparison table and the denominator paragraph this cycle** —
+the prior cycle's gate failure (`published-figure`: README still said 97.18% while this file
+claimed 97.33%) was the direct instruction for this one. `precision.py --write-readme` moved the
+headline (97.18% → 97.33%, CI 95.9–98.5% → 96.2–98.5%, 635 → 797 audited findings out of 1907 →
+2069) and the comparison-table row; the denominator paragraph above was hand-edited to match the
+same 797/2069. **Left at 1907, deliberately, and named so the gap doesn't get silently absorbed**:
+the "Benchmark numbers" wall-clock table and its surrounding paragraphs (lines ~94–226 in
+`README.md`) — total findings, the nist-default/nsa-cnsa2 identical-findings claim, the
+scan_corpus.py/dump_findings.py independent-count-agreement claim, and the per-project wall-clock
+figures — all need a fresh **timed** `scan_corpus.py` run over the new 2069-finding corpus to
+update honestly, which this cycle's remaining budget does not have room for after the corpus-B
+dump-and-audit above. The Go-recall paragraph's cross-reference to `work/y128_default.json` (a
+1907-finding dump) is similarly left as-is with a note added: Go rules did not change this cycle,
+so the 441/441 in-scope recall count itself is unaffected, only the dump filename is stale.
+Fabricating any of those numbers without re-running them would be worse than leaving them visibly
+behind — the same reasoning the prior cycle gave, still correct, just no longer an excuse to leave
+the two gate-checked figures behind too.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all`, `cargo clippy --all-targets
+--workspace -- -D warnings`, `cargo test --workspace` all clean. Both trust-invariant tests
+untouched and pass.
+
+**Follow-up, named rather than silently dropped:** (1) `EVP_RSA_gen`/`EVP_PKEY_CTX_new_id`
+coverage — the other two real gaps in the same probe file, outside `#Y136`'s named scope; (2) a
+C/C++ arm for `is_call_asserted_to_fail`, scoped to the `ASSERT_FALSE`/`EXPECT_FALSE` shape only,
+to close the 3-FP class found here; (3) the "Benchmark numbers" wall-clock table, the
+nist-default/nsa-cnsa2 identical-findings claim, the scan_corpus.py/dump_findings.py
+independent-count-agreement claim and the Go-recall dump-filename cross-reference all still cite
+1907 and need a fresh timed `scan_corpus.py` run over the 2069-finding corpus to catch up.
+
+PRECISION: 97.33%
