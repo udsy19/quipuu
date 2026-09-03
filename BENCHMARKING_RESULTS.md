@@ -8370,3 +8370,39 @@ buildable. `#Y145` (RustCrypto's own `ml-kem`/`ml-dsa` crates in `rust.toml`) re
 unscoped, for a future cycle.
 
 PRECISION: 97.33%
+
+## `#Y146` closed: README's precision/recall "same finding set" claim re-measured, not just re-worded
+
+`#Y146` (filed by the self-doubt lens's seventh same-day pass, 2026-09-03) named a real gap between
+assertion and evidence at `README.md:320`: the sentence claimed 97.33% precision and 100.0% recall
+are "two different measurements of the same finding set", but the recall figure two sentences later
+disclosed it was actually last measured against `work/y128_default.json`, a 1907-finding dump —
+163 findings short of the 2070-finding dump the precision figure is measured against, and predating
+`#Y136`'s C/C++ coverage add. The reconciliation claim was unverified on the dump it claimed to
+verify it on — a direct instance of the "measure, don't assert" rule.
+
+**No detection code touched; precision unmeasured because nothing could have moved it — this item
+is a recall re-verification, not a precision cycle.** Built the release binary at this cycle's HEAD
+(`c89b19c`) and ran `dump_findings.py` against the full 150-project corpus fresh
+(`work/y146_dump.json`): **2070 findings**, multiset-identical to `work/y142_post.json` (the dump
+the 97.33%/798-audited figure is measured against) across every field including message — 0 added,
+0 removed, confirming the two dumps describe the same finding set before recall was re-measured
+against either.
+
+**`recall_check.py --dump work/y146_dump.json` reads 441/441 = 100.0% in-scope recall** — both
+`constructors` (320/320) and `operations` (121/121) unchanged from every prior measurement. This is
+the first time the Go recall figure has been checked against a dump that actually contains the same
+2070 findings the precision headline cites, rather than carried forward from an older, smaller dump
+by inference. The predicted outcome (recall unaffected, since `#Y136`/`#Y137`/`#Y142`/`#Y147` are
+entirely outside Go's ground-truth scope) held.
+
+**README fix:** `README.md:320` no longer cites a stale dump filename in a parenthetical aside; it
+states plainly that the 100% recall figure was re-measured against the current 2070-finding dump,
+and drops the now-unnecessary caveat about the dump predating the C/C++ coverage add.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy
+--all-targets -- -D warnings`, `cargo test --workspace` all clean. Both trust-invariant tests
+untouched and pass. Neither `state/precision.json` nor `state/estimator.json` was touched — no
+finding was added, removed or reclassified, so there is nothing for either to fold.
+
+PRECISION: 97.33%
