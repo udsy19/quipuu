@@ -602,6 +602,21 @@ rather than quoting it verbatim.
 
 ---
 
+### 28. NIST SP 800-73-6 / SP 800-78-6 — PIV Post-Quantum Working Drafts
+
+**Issuing body:** NIST, Computer Security Division (PIV standards)
+**Primary sources:**
+- Announcement: https://www.nist.gov/news-events/news/2026/06/working-drafts-post-quantum-cryptography-updates-piv-standards (June 12, 2026)
+- Gap-analysis page: https://pages.nist.gov/piv-standards/pqc-overview/
+
+**Status: "preliminary working materials, not formal public drafts"** — NIST's own characterization, not an IPD or comment-period draft. No finalization timeline given.
+
+**Scope:** Initial working drafts of SP 800-73 Parts 1/2 (PIV card interface) and SP 800-78 (cryptographic algorithms and key sizes for PIV) add ML-DSA and ML-KEM to the federal PIV smart-card standard via a dual-stack, backward-compatible design. The gap-analysis page names seven principal gap areas: algorithm definitions, command updates, new public-key encodings, new BER-TLV containers, certificate profiles, new authentication mechanisms, and secure-messaging extensions.
+
+**Implication for quipuu: none — no detection-surface action follows.** The gap these drafts describe is at the smart-card layer (APDU command formats, BER-TLV tags, card-application namespace), which quipuu cannot observe both by design and by trust invariant **P4** (never execute the scanned project's code, which includes never talking to a smart card). PIV certificates are ordinary X.509 certificates with federal policy OIDs, and that OID-level surface is already covered by the RFC 9935/RFC 9881 citations in `knowledge/05-x509-pqc/README.md`. Recorded here as a real, dated, primary-sourced NIST process this project should track, the same framing as FIPS 207/HQC (`knowledge/02-nist-pqc-timeline/README.md` §5.6) — a narrative-documentation entry, not a coverage gap.
+
+---
+
 ## DEADLINES THAT MATTER
 
 | Deadline | Instrument | Jurisdiction | Binding? | What triggers it |
