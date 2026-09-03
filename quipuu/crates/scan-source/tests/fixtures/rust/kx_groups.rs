@@ -78,17 +78,3 @@ fn build_pq_config() -> u8 {
 fn build_classical_config() -> u8 {
     rustls_aws_lc_rs::DEFAULT_PROVIDER
 }
-
-// Shape 4: a builder method call, `with_kx_groups(&[...])` — the array sits
-// in a `call_expression`'s argument list, not a field initializer or a
-// `KX_GROUPS`-named item.
-struct Builder;
-impl Builder {
-    fn with_kx_groups(self, _groups: &[u8]) -> Self {
-        self
-    }
-}
-
-fn build_with_method() -> Builder {
-    Builder.with_kx_groups(&[kx_group::X25519MLKEM768, kx_group::SECP384R1])
-}

@@ -7775,3 +7775,48 @@ untouched and pass.
 remain open, none bearing on this cycle.
 
 PRECISION: 97.18%
+
+## `#Y127` reverted — `with_kx_groups(&[...])` is not a real `rustls-post-quantum` API; the entry above shipped a matcher for a fictional call shape
+
+Vault `Precision-Tracker.md`/`Backlog.md` "Track A cycle 253" had already investigated this exact
+claim before `#Y127` shipped: it read `rustls-post-quantum`'s own corpus clone directly and found no
+`with_kx_groups` method anywhere in the crate family — `kx_groups` exists only as a plain
+`CryptoProvider` struct field, and the string `with_kx_groups` appears in the corpus only as a
+substring of two unrelated test-harness helper names (`make_client_config_with_kx_groups`/
+`make_server_config_with_kx_groups` in `rustls-test`). Cycle 253's writeup concluded "building a
+matcher for this call shape would add detection for an API that does not exist in the ecosystem"
+and closed the item without shipping code. `#Y127` (this file, previous entry) was appended to the
+vault's Backlog/Precision-Tracker files *after* cycle 253 in file position despite an earlier cycle
+number — the two entries directly contradict each other on the same claim — and shipped the matcher
+anyway, without re-checking cycle 253's own finding first.
+
+**Independently re-verified this cycle, not taken on either prior entry's word.** Read
+`rustls-post-quantum`'s entire `src/lib.rs` (280 lines, the whole public API surface of the crate) in
+full: `DEFAULT_PROVIDER` is a `pub const CryptoProvider`, used directly as `Arc::new(DEFAULT_PROVIDER)`
+in the crate's own test; there is no builder type and no `with_kx_groups` method anywhere in the file.
+A corpus-wide `grep -rn with_kx_groups work/corpus-clones/` (not scoped to one crate) confirms the same
+two `rustls-test` helper-function names are the only matches anywhere in the 150-project corpus. The
+fixture `#Y127` added did not exercise the real crate's API either — it declared its own local
+`struct Builder { fn with_kx_groups(...) }` inside the test fixture, i.e. the test proved the matcher
+could match a method the test itself invented, not that the method exists in any real dependency.
+
+**Reverted:** `scanner.rs`'s `call_expression` arm in `match_rust_kx_groups` and the `walk()` kind
+guard's `call_expression` addition; `kx_groups.rs`'s `Builder`/`with_kx_groups` fixture shape;
+`scan_test.rs`'s `scans_rust_kx_groups_list` counts back to their pre-`#Y127` values (`x25519-mlkem768`
+4→3, `ecdh-p384` 2→1, total 9→7). This restores the state cycle 253 already recommended keeping.
+
+**No corpus effect either way** — `#Y127`'s own writeup already reported 0 added/0 removed against
+corpus B (no real call site to detect), so reverting it also changes nothing on the corpus; precision
+remains 97.18%, unmeasured because nothing detectable moved in either direction.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy --release
+--all-targets --workspace -- -D warnings`, `cargo test --release --workspace` all clean. Both
+trust-invariant tests untouched and pass.
+
+**Not done, said out loud:** this does not change shape (b) — `rustls_post_quantum::DEFAULT_PROVIDER`
+referenced by qualified path — which is real and was correctly shipped by cycle 231
+(`match_rust_post_quantum_provider`); only the fictional `with_kx_groups` builder-call shape is
+reverted. `OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` and `#CORPUSDRIFT` remain open, none
+bearing on this cycle.
+
+PRECISION: 97.18%
