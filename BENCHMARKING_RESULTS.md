@@ -7922,3 +7922,55 @@ to fully verify this one within budget.
 PRECISION: 97.18%
 
 PRECISION: 97.18%
+
+## Measurement, 2026-09-03 (`#Y129` closed: Go recall ground truth gains `crypto/mldsa` coverage)
+
+`Backlog.md:14486` named the gap directly: `recall_check.py`'s 33-API ground-truth list had zero
+`mldsa`/`ML-DSA` coverage while the precision figure beside it already credits Go 1.27's
+`crypto/mldsa` package (`MLDSA44`/`65`/`87` construction calls, `jwx`'s real usage) with real
+findings — the two headline numbers on the same README page were sampling different scanner
+surfaces, one with `mldsa` support in its ground truth and one without.
+
+**What changed.** Added three entries to `recall_check.py`'s `APIS` list —
+`mldsa.MLDSA44(`/`MLDSA65(`/`MLDSA87(`, the same `pkg.Func(` selector shape every existing entry
+uses, matching Go 1.27 stdlib `crypto/mldsa`'s only construction call
+(`data/rules/go.toml:1076-1124`'s own comment: "the only way to construct one is to call
+`MLDSA44()`/`MLDSA65()`/`MLDSA87()`") — and `"mldsa": "crypto/mldsa"` to `IMPORT_PKG`, so a site
+only counts if the file also imports the real stdlib package. Verified against the real corpus
+source before writing the regex: `grep -rn "mldsa\.MLDSA"
+work/corpus-clones/go-modules/jwx/{jwk,jws}/mldsa.go` shows the exact call shape
+(`mldsa.MLDSA44()` etc., alongside a same-named-function but different-package `jwa.MLDSA44()`
+that the anchored regex correctly does not match).
+
+**Re-ran `recall_check.py` against the current 1907-finding dump** (`work/y128_default.json`, the
+same dump `#Y128` measured this cycle, current `main`): **in-scope recall 440/440 = 100.0%** (was
+401/401), **whole-tree ground truth 1087** (was 1048), **whole-tree recall 440/1087 = 40.5%**
+(was 401/1048 = 38.3%). All 39 new ground-truth sites (13 `MLDSA44` + 19 `MLDSA65` + 7 `MLDSA87`,
+all in `jwx`) are inside `jwx`'s scanned subtree, so the outside-scope count is unchanged at 647
+sites — coincidence of where the new sites happen to sit, not a property of the fix. By API kind:
+constructors unchanged at 319/319 (the `is_constructor` heuristic classifies `mldsa.MLDSA44` as
+an operation, the same way it already classifies `mlkem.GenerateKey768`/`1024`, since none of the
+three end in `GenerateKey`/`.New`/`NewCipher`/`NewTripleDESCipher` or start with `ecdh.` — an
+existing quirk, not something this cycle introduced or fixed); operations 121/121 (was 82/82).
+
+**No detection code touched — precision carried at 97.18%, not re-measured.** This is a
+benchmark-harness-only change (`benchmarks/corpus-b-realworld/recall_check.py`); it cannot move a
+TP/FP ratio because it adds no scanner-visible finding.
+
+**README.md updated in the same commit**, both sites that named the old figures: the recall
+paragraph (401→440 in-scope, 1048→1087 whole-tree, 38.3%→40.5% whole-tree, 33→36 APIs, dump
+reference updated to `y128_default.json`/1907), the by-API-kind table (operations row 82→121,
+example list gains `mldsa.MLDSA44`/`65`/`87`), and the comparison table's "Published recall" cell
+(401/401 → 440/440).
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy
+--release --all-targets --workspace -- -D warnings`, `cargo test --release --workspace` all clean.
+Both trust-invariant tests untouched and pass — this change touches no Rust source at all.
+
+**Not done, said out loud:** the `work/synth_family_gap.py` CBOM-family-loss figure (`README.md`,
+"12 to 11 family-losses") is not reproducible from this repo and was not re-run; it is a separate
+measurement this item's scope does not cover. The cross-language recall probe
+(`benchmarks/corpus-a-ground-truth/`) is untouched — it is a hand-planted fixture, not a
+real-world ground truth, and was never in scope for this item.
+
+PRECISION: 97.18%

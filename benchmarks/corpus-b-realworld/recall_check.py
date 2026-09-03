@@ -82,6 +82,9 @@ APIS = [
     (r"\brc4\.NewCipher\s*\(", "rc4.NewCipher"),
     (r"\bmlkem\.GenerateKey768\s*\(", "mlkem.GenerateKey768"),
     (r"\bmlkem\.GenerateKey1024\s*\(", "mlkem.GenerateKey1024"),
+    (r"\bmldsa\.MLDSA44\s*\(", "mldsa.MLDSA44"),
+    (r"\bmldsa\.MLDSA65\s*\(", "mldsa.MLDSA65"),
+    (r"\bmldsa\.MLDSA87\s*\(", "mldsa.MLDSA87"),
 ]
 COMPILED = [(re.compile(p), lab) for p, lab in APIS]
 
@@ -105,6 +108,7 @@ IMPORT_PKG = {
     "des": "crypto/des",
     "rc4": "crypto/rc4",
     "mlkem": "crypto/mlkem",
+    "mldsa": "crypto/mldsa",
 }
 
 # A site whose API constructs a key or a hash/cipher object, as opposed to one
