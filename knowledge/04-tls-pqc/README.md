@@ -13,7 +13,7 @@ Items marked **[VERIFY]** require a fresh registry lookup before shipping.
 
 ### Governing IETF document
 
-`RFC 10024` (Standards Track, published August 2026; formerly `draft-ietf-tls-ecdhe-mlkem`, formerly `draft-kwiatkowski-tls-ecdhe-mlkem`). IESG approved the hybrid-design framework via RFC 9794 (Sep 2025).
+`RFC 10024` (Standards Track, published August 2026; formerly `draft-ietf-tls-ecdhe-mlkem`, formerly `draft-kwiatkowski-tls-ecdhe-mlkem`). IESG approved the hybrid-design framework as RFC 9954, "Hybrid Key Exchange in TLS 1.3" (Informational, July 2026).
 
 | Group name | Decimal | Hex | DTLS-OK | Recommended | Notes |
 |---|---|---|---|---|---|
