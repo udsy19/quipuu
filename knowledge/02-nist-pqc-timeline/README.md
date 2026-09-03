@@ -186,6 +186,27 @@ SHA-256, SHA-384, SHA-512, and SHA-512/256 are not subject to deprecation or dis
 
 **UNCONFIRMED:** The exact IPD publication date for FIPS 206. As of the 6th PQC Standardization Conference (September 24–26, 2025), the draft was still in NIST/DoC clearance. No public IPD URL confirmed from primary sources as of 2026-06-12.
 
+### 5.5 Additional Digital Signature Schemes ("On-Ramp") — Round 3 Status
+
+A separate track from FIPS 203–206: NIST's 2022 call for additional signature schemes, meant to
+diversify beyond lattice-based assumptions (ML-DSA, FN-DSA) rather than replace them.
+
+| Field | Value |
+|---|---|
+| Purpose | Diversify signature algorithms beyond lattice-based assumptions; not a replacement for ML-DSA/FN-DSA |
+| Status | **Round 3 candidates named — no algorithm finalized or drafted as FIPS yet** |
+| Round 3 candidates (9) | FAEST, HAWK, MAYO, MQOM, QR-UOV, SDitH, SNOVA, SQIsign, UOV |
+| Rationale document | NIST IR 8610, "Status Report on the Second Round of the Additional Digital Signature Schemes for the NIST Post-Quantum Cryptography Standardization Process," published 2026-05-14 |
+| CSRC page | https://csrc.nist.gov/pubs/ir/8610/final |
+| Local PDF (mirror) | https://nvlpubs.nist.gov/nistpubs/ir/2026/NIST.IR.8610.pdf |
+| Round-3 project page | https://csrc.nist.gov/projects/pqc-dig-sig/round-3-additional-signatures |
+| HAWK status | **Withdrawn**, 2026-07-29 — the submission team withdrew HAWK from the process. NIST's round-3 page states this without naming who found the issue or why; no discoverer is attributed anywhere in the primary sources. |
+| quipuu coverage | None of the 9 round-3 candidates has a shipped rule in any language pack — no FIPS number exists yet for any of them |
+
+**UNCONFIRMED — do not hard-code:** which, if any, round-3 candidate becomes a FIPS standard, or
+when. This on-ramp is independent of FIPS 203/204/205/206's already-final status above and does not
+change it.
+
 ---
 
 ## 6. CNSA 2.0 Timeline (NSA)
@@ -379,4 +400,5 @@ Source: https://github.com/CycloneDX/specification/blob/1.6/schema/bom-1.6.schem
 | SP 800-131A Rev 3 IPD (Oct 2024) | /knowledge/sources/NIST.SP.800-131Ar3.ipd.pdf | https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar3.ipd.pdf | IPD |
 | NSA CNSA 2.0 Advisory (May 2025) | Not downloadable (403) | https://media.defense.gov/2025/May/30/2003728741/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS.PDF | Final |
 | NSA CNSA 2.0 FAQ v2.1 (Dec 2024) | Not downloadable (403) | https://media.defense.gov/2022/Sep/07/2003071836/-1/-1/1/CSI_CNSA_2.0_FAQ_.PDF | Final |
+| NIST IR 8610 (May 2026) — additional signatures round 3 | Not downloaded | https://nvlpubs.nist.gov/nistpubs/ir/2026/NIST.IR.8610.pdf | Final (IR) |
 | CycloneDX 1.6 JSON Schema | /knowledge/sources/bom-1.6.schema.json | https://github.com/CycloneDX/specification/blob/1.6/schema/bom-1.6.schema.json | Final |
