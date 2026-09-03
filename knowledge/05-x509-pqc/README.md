@@ -228,7 +228,7 @@ Composite public key encoding: concatenation `mldsaPK || tradPK`. Signature pref
 
 ### 2.6 Composite KEM OIDs (IETF LAMPS)
 
-**Primary source:** `draft-ietf-lamps-pq-composite-kem-21` (Submitted to IESG for Publication, on the 2026-09-03 IESG telechat agenda, RFC number not yet assigned).
+**Primary source:** `draft-ietf-lamps-pq-composite-kem-21` (returned to authors — IESG state 'Revised I-D Needed' — after the 2026-09-03 telechat; a revised draft, not an RFC number, is the next expected artifact).
 
 OID arc: leaves 55–66 of same `1.3.6.1.5.5.7.6` arc.
 
@@ -306,7 +306,7 @@ Azure Front Door hybrid TLS key exchange groups: `X25519_MLKEM768` (IANA group `
 
 ### 4.1 Composite Public Key (IETF LAMPS WG — Primary Approach)
 
-**Sources:** `draft-ietf-lamps-pq-composite-sigs-19` (RFC Editor Queue, In Progress: First Edit, last updated 2026-08-26); `draft-ietf-lamps-pq-composite-kem-21` (Submitted to IESG for Publication, on the 2026-09-03 IESG telechat agenda).
+**Sources:** `draft-ietf-lamps-pq-composite-sigs-19` (RFC Editor Queue, In Progress: First Edit, last updated 2026-08-26); `draft-ietf-lamps-pq-composite-kem-21` (returned to authors, 'Revised I-D Needed,' after the 2026-09-03 IESG telechat).
 
 **Mechanism:** A single X.509 certificate carries a composite OID in both `subjectPublicKeyInfo.algorithm.algorithm` and `signatureAlgorithm`. The composite public key is the concatenation of the component keys (`mldsaPK || tradPK`); the composite signature is a DER-encoded sequence of the two component signatures with a fixed domain-separation prefix `"CompositeAlgorithmSignatures2025"`.
 
@@ -816,7 +816,7 @@ pub enum AlgorithmClass {
 
 **Decision:** When a composite OID (arc `1.3.6.1.5.5.7.6.37–66`) is seen in `signatureAlgorithm`, report `HYBRID-COMPOSITE` and decode both component algorithm names from the OID string (they are embedded in the OID name). Do not attempt to split the composite signature bytes — report at the OID level only. If the composite OID is from the draft range, note that OIDs may change before RFC publication.
 
-**Evidence:** `draft-ietf-lamps-pq-composite-sigs-19` is in the RFC Editor Queue (In Progress: First Edit) as of 2026-08-26, meaning OIDs are stable but not formally IANA-registered until RFC publication. `draft-ietf-lamps-pq-composite-kem-21` is Submitted to IESG for Publication, on the 2026-09-03 IESG telechat agenda, one vote from an RFC number. Draft-19/-21 OIDs are safe to hardcode with a `PQC-DRAFT` flag.
+**Evidence:** `draft-ietf-lamps-pq-composite-sigs-19` is in the RFC Editor Queue (In Progress: First Edit) as of 2026-08-26, meaning OIDs are stable but not formally IANA-registered until RFC publication. `draft-ietf-lamps-pq-composite-kem-21` was returned to authors (IESG state 'Revised I-D Needed') after the 2026-09-03 IESG telechat, not advancing toward an RFC number. Draft-19/-21 OIDs are safe to hardcode with a `PQC-DRAFT` flag.
 
 ---
 
