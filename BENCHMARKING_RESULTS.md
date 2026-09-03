@@ -8585,15 +8585,35 @@ maven ecosystems), run honestly and reported as found:**
 
 | ecosystem | floor | projects clearing it | manifests clearing it (incl. nested modules) |
 |---|---|---|---|
-| Go (`go-modules`, 25 top-level projects) | `go.mod` `go >= 1.24` | **22 / 25** | 659 |
+| Go (`go-modules`, 25 top-level projects) | `go.mod` `go >= 1.24` (stdlib `crypto/mlkem`, FIPS 203) | **22 / 25** | 659 |
+| Go (`go-modules`, 25 top-level projects) | `go.mod` `go >= 1.27` (stdlib `crypto/mldsa`, FIPS 204) | **0 / 25** | 0 |
 | Maven (`maven`, 24 top-level projects) | `maven.compiler.release >= 27` | **0 / 24** | 0 |
 
 Maven's zero is real, not a parser gap: a direct grep of every `pom.xml` in the corpus for
 `maven.compiler.release` finds 20 explicit declarations, all `8`, plus one unresolved
 `${jdk.version}` property this scanner correctly declines to guess at (JDK 27 GA is 2026-09-15,
-12 days from this measurement — no corpus project has moved yet). The Go number is high because
-Go's own toolchain has shipped 1.24+ as its default `go.mod` floor for new projects since before
-this corpus was cloned, not because any project deliberately adopted it for PQC.
+12 days from this measurement — no corpus project has moved yet). The Go `mlkem` number is high
+because Go's own toolchain has shipped 1.24+ as its default `go.mod` floor for new projects since
+before this corpus was cloned, not because any project deliberately adopted it for PQC. The Go
+`mldsa` floor is a separate, later one — Go 1.27, not 1.24, per `go.dev/blog/go1.27` — and no
+corpus project has reached it yet; **none of the 22 projects clearing the mlkem floor can call
+`crypto/mldsa` without a toolchain upgrade.**
+
+**Correction, `#Y150`.** The two floors above originally shipped as one bundled `CAPABILITY_TABLE`
+entry at 1.24 whose `unlocks` text claimed both `crypto/mlkem` *and* `crypto/mldsa` became
+available together. They do not: `crypto/mldsa` is a Go 1.27 addition, three minor versions later
+(`go.dev/blog/go1.27`, and this vault's own prior research had the correct split on record in at
+least seven places predating this feature's implementation). The practical effect: the original
+`quipuu capabilities` output told all 22 of the projects above that they could sign with ML-DSA
+today, in the stdlib, with no dependency — false for all 22, since none is on 1.27 yet. Split into
+two `CapabilityEntry` rows (`crates/scan-deps/src/capability.rs`), each unlocking exactly one FIPS
+primitive; the module doc comment corrected to match; two new unit tests
+(`go_directive_below_mldsa_floor_unlocks_only_mlkem`, `go_directive_at_mldsa_floor_unlocks_both`)
+assert the split at `go 1.24`-`1.26` (mlkem only) and `go 1.27` (both). The table above is this
+fix's own re-measurement, split by floor as the correction requires — re-run against the current
+`go-modules` corpus-clones state with the post-fix release binary, matching the prior 659-manifest
+mlkem total exactly (confirming no other counting logic moved) while adding the previously-hidden
+mldsa 0/25.
 
 **Bug found and fixed before this measurement, worth recording.** The first working version of
 `scan_capabilities` called `std::fs::read_to_string` on every file the walk visited, before

@@ -9,11 +9,15 @@
 //! code does this", which is a false claim [[Precision-Tracker]] exists to
 //! prevent.
 //!
-//! Two entries today, both picked for being the nearest, highest-certainty
-//! version floors: Go's `go.mod` `go` directive (stdlib `crypto/mlkem` and
-//! `crypto/mldsa`, available since Go 1.24) and Maven's
+//! Three entries today, all picked for being the nearest, highest-certainty
+//! version floors: Go's `go.mod` `go` directive at two separate floors —
+//! stdlib `crypto/mlkem` (FIPS 203), available since Go 1.24, and stdlib
+//! `crypto/mldsa` (FIPS 204), available since Go 1.27 — and Maven's
 //! `maven.compiler.release` property (JDK 27's default-on hybrid PQC TLS
-//! groups, JEP 527, GA 2026-09-15).
+//! groups, JEP 527, GA 2026-09-15). The two Go floors are separate entries,
+//! not one: `go.dev/blog/go1.27` documents `crypto/mldsa` as new in 1.27,
+//! three minor versions after `crypto/mlkem` shipped at 1.24, so a project on
+//! `go 1.24`-`1.26` clears the mlkem floor without clearing the mldsa one.
 
 use std::path::{Path, PathBuf};
 
@@ -40,9 +44,19 @@ pub static CAPABILITY_TABLE: &[CapabilityEntry] = &[
         manifest_file: "go.mod",
         field: "go.mod `go` directive",
         floor: (1, 24),
-        unlocks: "stdlib crypto/mlkem (FIPS 203) and crypto/mldsa (FIPS 204) become available \
-                  in the standard library — no third-party dependency needed to call them, \
-                  though a project must still write the call site to use either",
+        unlocks: "stdlib crypto/mlkem (FIPS 203) becomes available in the standard library — \
+                  no third-party dependency needed to call it, though a project must still \
+                  write the call site to use it",
+    },
+    CapabilityEntry {
+        manifest_file: "go.mod",
+        field: "go.mod `go` directive",
+        floor: (1, 27),
+        unlocks: "stdlib crypto/mldsa (FIPS 204) becomes available in the standard library — \
+                  no third-party dependency needed to call it, though a project must still \
+                  write the call site to use it. This is a separate, later floor than \
+                  crypto/mlkem above: go.dev/blog/go1.27 documents crypto/mldsa as new in \
+                  1.27, three minor versions after crypto/mlkem shipped at 1.24",
     },
     CapabilityEntry {
         manifest_file: "pom.xml",
@@ -246,6 +260,57 @@ mod tests {
         let signals = scan_capabilities(dir.path());
         assert_eq!(signals.len(), 1);
         assert_eq!(signals[0].declared_version, "1.26");
+    }
+
+    /// `go 1.24`-`1.26` clears only the `crypto/mlkem` floor (FIPS 203); the
+    /// `crypto/mldsa` floor (FIPS 204) is later, at 1.27 — the split #Y150
+    /// fixed after the two were shipped bundled under a single 1.24 floor.
+    #[test]
+    fn go_directive_below_mldsa_floor_unlocks_only_mlkem() {
+        for version in ["1.24", "1.25", "1.26"] {
+            let dir = ScratchDir::new("go-mlkem-only");
+            fs::write(
+                dir.path().join("go.mod"),
+                format!("module example.com/x\n\ngo {version}\n"),
+            )
+            .unwrap();
+            let signals = scan_capabilities(dir.path());
+            assert_eq!(
+                signals.len(),
+                1,
+                "go {version} should clear exactly one floor"
+            );
+            assert!(
+                signals[0].entry.unlocks.contains("crypto/mlkem"),
+                "go {version} should unlock crypto/mlkem"
+            );
+            assert!(
+                !signals[0].entry.unlocks.contains("crypto/mldsa"),
+                "go {version} should not unlock crypto/mldsa"
+            );
+        }
+    }
+
+    #[test]
+    fn go_directive_at_mldsa_floor_unlocks_both() {
+        let dir = ScratchDir::new("go-both");
+        fs::write(
+            dir.path().join("go.mod"),
+            "module example.com/x\n\ngo 1.27\n",
+        )
+        .unwrap();
+        let signals = scan_capabilities(dir.path());
+        assert_eq!(signals.len(), 2);
+        assert!(
+            signals
+                .iter()
+                .any(|s| s.entry.unlocks.contains("crypto/mlkem"))
+        );
+        assert!(
+            signals
+                .iter()
+                .any(|s| s.entry.unlocks.contains("crypto/mldsa"))
+        );
     }
 
     #[test]
