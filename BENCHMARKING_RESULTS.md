@@ -8451,7 +8451,7 @@ by 168 findings (2238 on both this cycle's dumps) — corpus drift, not this cha
 cycle's pre-change and post-change dumps already show 2238 findings before either
 touches `ml_kem`/`ml_dsa` detection, so the drift predates and is independent of this diff; the
 row-identical 0/0 diff above is the actual falsification that this change moved nothing. Since the
-168-finding gap is unexplained (the standing, unresolved `OPEN-ASK #CORPUSDRIFT`) and re-deriving a
+168-finding gap is unexplained (the standing, unresolved corpus-drift discrepancy) and re-deriving a
 fresh headline figure over it would publish a number that mixes real coverage work with an
 unrelated, uninvestigated corpus-size change, the published figure is **held at 97.33%** rather than
 moved to the fresh-population figure (97.29%) `precision.py` computed on the drifted corpus — this
@@ -8466,8 +8466,8 @@ unmodified.
 `readme_rule_pack_counts_match_the_rule_packs`.
 
 **Not done, said out loud:** the corpus-drift gap (2070 anchored vs. 2238 measured, both pre- and
-post-change) is disclosed, not investigated — that is `OPEN-ASK #CORPUSDRIFT`'s scope, not this
-coverage change's. Whether the 168 additional findings are legitimate corpus growth (updated clones)
+post-change) is disclosed, not investigated — that is the standing corpus-drift discrepancy's
+scope, not this coverage change's. Whether the 168 additional findings are legitimate corpus growth (updated clones)
 or a labelling/dedup regression is unknown and not this cycle's to determine.
 
 PRECISION: 97.33%
