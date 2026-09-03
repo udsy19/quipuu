@@ -1176,6 +1176,38 @@ algorithm_id = "ml-dsa-87"
 severity_hint = "auto"
 message = "ML-DSA-87 parameter set ({fn}) — FIPS 204, quantum-resistant. Go 1.27 crypto/mldsa or a same-API third-party package (e.g. filippo.io/mldsa) — the callee text alone does not distinguish them."
 
+# crypto.MLDSAMu — Go 1.27's crypto.Hash constant signalling "external mu"
+# ML-DSA signing (pkg.go.dev/crypto: PrivateKey.Sign's opts.HashFunc() must
+# return this value before the caller may pass a pre-hashed mu representative
+# instead of a raw message). Sibling of pyca's MLDSAMuHasher (PY-082) and
+# OpenSSL's EVP_MD_fetch(..., "ML-DSA-MU", ...) (CRYPTO-1045) — same
+# parameter-set-not-statically-knowable shape, reusing their "ml-dsa-unattributed"
+# id rather than a Go-specific one. Unlike those two, crypto.MLDSAMu is not a
+# constructor call; it appears as a bare selector-expression argument at
+# whatever call site passes it as `opts` (typically `.Sign(rand, mu, crypto.MLDSAMu)`),
+# so the query matches the argument itself rather than any particular callee name —
+# nothing else in real Go code would pass this exact constant.
+[[extract]]
+id = "GO-081"
+language = "go"
+query = """
+(call_expression
+  arguments: (argument_list
+    (selector_expression
+      operand: (identifier) @crypto_pkg (#eq? @crypto_pkg "crypto")
+      field: (field_identifier) @const (#eq? @const "MLDSAMu"))))
+"""
+captures = { crypto_pkg = "ident", const = "ident" }
+api = "crypto.MLDSAMu"
+description = "crypto.MLDSAMu passed as a call argument — Go 1.27's external-mu ML-DSA signalling constant, FIPS 204."
+
+[[classify]]
+id = "CRYPTO-1208"
+when.api = "^crypto\\.MLDSAMu$"
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "crypto.MLDSAMu passed to a signing call — FIPS 204 ML-DSA external-mu message representative, quantum-resistant, but the parameter set is carried by the key this call site does not expose."
+
 [[extract]]
 id = "GO-073"
 language = "go"

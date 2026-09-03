@@ -115,10 +115,11 @@ void openssl_groups_list_classical_only(void) {
     SSL_CTX_set1_groups_list(ctx, "P-521:*P-256/P-384:X25519");
 }
 
-/* #Y62(a) / CRYPTO-909 — the hybrid ML-KEM group, plus a `?`-ignorable
-   unknown name and the `DEFAULT` pseudo-group, neither of which may fire. */
+/* #Y62(a) / CRYPTO-909, CRYPTO-1209 — the hybrid ML-KEM groups, plus a
+   `?`-ignorable unknown name and the `DEFAULT` pseudo-group, neither of
+   which may fire. */
 void openssl_groups_list_hybrid(SSL *ssl) {
-    SSL_set1_groups_list(ssl, "X25519MLKEM768:?curveSM2:DEFAULT");
+    SSL_set1_groups_list(ssl, "X25519MLKEM768:curveSM2MLKEM768:?curveSM2:DEFAULT");
 }
 
 /* #Y62(b) / CRYPTO-912, CRYPTO-914 — SSL_CONF_cmd's "Groups" config-string

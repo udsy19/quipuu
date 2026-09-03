@@ -852,6 +852,17 @@ fn walk(
     {
         out.extend(ms);
     }
+    // Go `crypto.MLDSAMu` (`#Y140(a)`) — Go 1.27's external-mu ML-DSA
+    // signalling constant. It is not a callee, it is an argument (typically
+    // `sk.Sign(rand, mu, crypto.MLDSAMu)`, since `crypto.Hash` satisfies
+    // `SignerOpts` by returning itself), so it needs its own argument-scanning
+    // matcher rather than a callee-table entry.
+    if language == Language::Go
+        && kind == "call_expression"
+        && let Some(m) = match_go_mldsa_mu(node, source)
+    {
+        out.push(m);
+    }
     // Go `KeyExchanges: []string{ssh.KeyExchangeMLKEM768X25519, …}` — SSH's
     // counterpart to CurvePreferences (`#Y88`, RFC 10042).
     if language == Language::Go
@@ -1895,6 +1906,8 @@ const STRUCTURAL_APIS: &[&str] = &[
     "crypto/tls.Config.MinVersion",
     // match_go_supported_signature_algorithms
     "crypto/tls.Certificate.SupportedSignatureAlgorithms",
+    // match_go_mldsa_mu
+    "crypto.MLDSAMu",
     // match_go_ssh_key_exchanges
     "golang.org/x/crypto/ssh.Config.KeyExchanges",
     // match_java_set_named_groups
@@ -2612,6 +2625,45 @@ fn match_go_supported_signature_algorithms(
     } else {
         Some(results)
     }
+}
+
+/// Match Go `crypto.MLDSAMu` passed as a call argument — Go 1.27's
+/// external-mu ML-DSA signalling constant (`#Y140(a)`). `crypto.Hash`
+/// satisfies `crypto.SignerOpts` by returning itself, so real usage passes
+/// the bare constant directly (e.g. `sk.Sign(rand, mu, crypto.MLDSAMu)`)
+/// rather than through a named helper; nothing else in real Go code has
+/// reason to reference this exact constant, so the argument alone is the
+/// signal — no callee-name check needed.
+fn match_go_mldsa_mu(call: Node<'_>, source: &[u8]) -> Option<RawMatch> {
+    let args = call.child_by_field_name("arguments")?;
+    let mut cursor = args.walk();
+    for arg in args.named_children(&mut cursor) {
+        if arg.kind() != "selector_expression" {
+            continue;
+        }
+        let Some(operand) = arg.child_by_field_name("operand") else {
+            continue;
+        };
+        let Some(field) = arg.child_by_field_name("field") else {
+            continue;
+        };
+        if operand.kind() == "identifier"
+            && node_text(operand, source) == "crypto"
+            && node_text(field, source) == "MLDSAMu"
+        {
+            let start = call.start_position();
+            return Some(RawMatch {
+                api: "crypto.MLDSAMu".into(),
+                args: HashMap::new(),
+                line: (start.row + 1) as u32,
+                offset: call.start_byte() as u32,
+                symbol: "crypto.MLDSAMu".into(),
+                snippet: node_text(call, source),
+                site_context: quipuu_core::SiteContext::Call,
+            });
+        }
+    }
+    None
 }
 
 /// Go constant name → wire identifier string, for the

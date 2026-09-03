@@ -424,6 +424,20 @@ algorithm_id = "secp384r1-mlkem1024"
 severity_hint = "auto"
 message = "TLS group SecP384r1MLKEM1024 in {fn_name} — hybrid secp384r1 + ML-KEM-1024 (FIPS 203). Meets the CNSA 2.0 ML-KEM parameter set."
 
+# curveSM2MLKEM768 — OpenSSL 4.0 (GA 2026-04-14, "Changes between 3.6 and
+# 4.0.0"), pairing the GB/T 32918 SM2 curve with ML-KEM-768 for GB/T-compliant
+# TLS stacks. Confirmed spelling directly against OpenSSL's own 4.0 release
+# notes (openssl-library.org/news/openssl-4.0-notes, fetched 2026-09-03),
+# which also lists it appended to the default group list alongside
+# X25519MLKEM768. Distinct from the plain curveSM2 classical group.
+[[classify]]
+id = "CRYPTO-1209"
+when.api = "^openssl\\.SSL_CTX_set1_groups_list$"
+when.args.group = "curveSM2MLKEM768"
+algorithm_id = "sm2-mlkem768"
+severity_hint = "auto"
+message = "TLS group curveSM2MLKEM768 in {fn_name} — hybrid SM2 + ML-KEM-768 (FIPS 203), OpenSSL 4.0's GB/T-compliant group. Migrated key-establishment config."
+
 [[classify]]
 id = "CRYPTO-912"
 when.api = "^openssl\\.SSL_CTX_set1_groups_list$"

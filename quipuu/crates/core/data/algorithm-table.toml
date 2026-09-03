@@ -1270,6 +1270,15 @@ quantum_status = "PqcFinal"
 notes = "IANA codepoint 4589 (0x11ED)."
 
 [[algorithm]]
+id = "sm2-mlkem768"
+display_name = "curveSM2MLKEM768 (TLS hybrid, GB/T)"
+family = "Hybrid-KEM"
+primitive = "combiner"
+nist_quantum_security_level = 3
+quantum_status = "PqcFinal"
+notes = "IANA TLS supported_groups codepoint 4590 (0x11EE), reference draft-yang-tls-hybrid-sm2-mlkem-03, Recommended=N (draft-track registration; both component algorithms — SM2/GB.T 32918 and ML-KEM-768 — are themselves finalized standards). Shipped in OpenSSL 4.0 (GA 2026-04-14), appended to the default TLS group list alongside X25519MLKEM768, for GB/T-compliant stacks."
+
+[[algorithm]]
 id = "x448-mlkem1024"
 display_name = "X448MLKEM1024 (OpenSSL hybrid KEM)"
 family = "Hybrid-KEM"

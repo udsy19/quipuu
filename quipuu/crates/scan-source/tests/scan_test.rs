@@ -280,11 +280,12 @@ fn go_stdlib_mldsa_is_classified() {
     let findings = scanner.scan_path(&path).expect("scan succeeds");
 
     for (rule, algorithm_id, line) in [
-        ("CRYPTO-1053", "ml-dsa-44", 16),
-        ("CRYPTO-1055", "ml-dsa-87", 20),
-        ("CRYPTO-1053", "ml-dsa-44", 24),
-        ("CRYPTO-1054", "ml-dsa-65", 24),
-        ("CRYPTO-1055", "ml-dsa-87", 24),
+        ("CRYPTO-1053", "ml-dsa-44", 19),
+        ("CRYPTO-1055", "ml-dsa-87", 23),
+        ("CRYPTO-1053", "ml-dsa-44", 27),
+        ("CRYPTO-1054", "ml-dsa-65", 27),
+        ("CRYPTO-1055", "ml-dsa-87", 27),
+        ("CRYPTO-1208", "ml-dsa-unattributed", 36),
     ] {
         assert!(
             findings.iter().any(|f| f.rule_id == rule
@@ -1460,7 +1461,10 @@ fn scans_c_ssl_groups_list_splits_the_colon_and_tuple_separated_names() {
 
     let group_findings: Vec<_> = findings
         .iter()
-        .filter(|f| f.rule_id.starts_with("CRYPTO-9") && (909..=919).contains(&rule_num(f)))
+        .filter(|f| {
+            (f.rule_id.starts_with("CRYPTO-9") && (909..=919).contains(&rule_num(f)))
+                || rule_num(f) == 1209
+        })
         .collect();
 
     for (algorithm_id, expected) in [
@@ -1469,6 +1473,7 @@ fn scans_c_ssl_groups_list_splits_the_colon_and_tuple_separated_names() {
         ("ecdh-p384", 2),       // P-384 + SSL_CONF_cmd "CURVES" alias's P-384
         ("x25519", 2),          // X25519 + SSL_CONF_cmd's X25519
         ("x25519-mlkem768", 1), // X25519MLKEM768
+        ("sm2-mlkem768", 1),    // curveSM2MLKEM768
     ] {
         let n = group_findings
             .iter()
@@ -1488,11 +1493,11 @@ fn scans_c_ssl_groups_list_splits_the_colon_and_tuple_separated_names() {
     // `?curveSM2` (unknown name, ignorable prefix) and `DEFAULT` (the
     // built-in-list pseudo-group) name no algorithm and must not fire; the
     // SSL_CONF_cmd variable-value and non-Groups-command fixture calls must
-    // not fire either — so the fixture produces exactly the 8 group
+    // not fire either — so the fixture produces exactly the 9 group
     // findings above, nothing more.
     assert_eq!(
         group_findings.len(),
-        8,
+        9,
         "curveSM2, DEFAULT, the SSL_CONF_cmd variable value, and the non-Groups command must not add findings: {:#?}",
         group_findings
             .iter()
