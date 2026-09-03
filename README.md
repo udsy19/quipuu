@@ -92,9 +92,9 @@ ship today:
 | `nsa-cnsa2` | NSA CNSA 2.0, for national security systems | CNSA 2.0 approves AES-256 and SHA-384+ only, so SHA-256 and ChaCha20-Poly1305 stop being quantum-safe inventory and become findings, AES-128 is scored as off-suite rather than Grover-weakened, and SLH-DSA / FN-DSA / the sub-1024 ML-KEM and ML-DSA parameter sets are reported as non-compliant |
 
 A policy reweights findings; it never creates, drops, or reclassifies a
-detection. Measured on the 150-project benchmark corpus (1907 findings,
-2026-09-03): the two profiles produce the **same 1907 findings, identical
-`algorithm_id` on every row**, of which **464 (24.3 %) land in a different
+detection. Measured on the 150-project benchmark corpus (2069 findings,
+2026-09-03): the two profiles produce the **same 2069 findings, identical
+`algorithm_id` on every row**, of which **516 (25.2 %) land in a different
 severity band** — mostly SHA-256 and the sub-256-bit PQC parameter sets CNSA
 2.0 does not approve. The precision figure below therefore holds under both.
 
@@ -149,7 +149,7 @@ not perform.
 
 **HTML report** — self-contained, auditor-grade. Every finding includes a "Why this matters" explanation tied to NIST IR 8547 policy, a severity rollup, and explicit HNDL flagging for findings that expose data to long-term harvest attacks. Open it in any browser; no server required.
 
-*What is verified:* the HNDL flag is **computed from the active policy's `[hndl_flag]` block**, not asserted. Until 2026-08-28 it was not computed at all: every scanner wrote a hard-coded `false` and `summary.json.totals.hndl_critical` was `0` for every input. Today an X.509 certificate whose public key is a key-agreement key — the fixture is X25519, OID `1.3.101.110` — is flagged, and the same certificate's long-lived *signature* is not. **The scope is certificate findings.** Source and dependency findings still report zero, because `scan-source` fixes two of the flag's three inputs (`usage_context`, `shelf_life_bucket`) at compile time; over the benchmark corpus the count is **0 of 1907** (149 of 150 scanned, one recorded `unscannable`, none errored). Making it non-zero there means making those axes vary, which moves severity bands across the whole corpus, and that is a calibration change we have not made. Gated by `hndl_critical_is_reachable_end_to_end` and three sibling checks in `crates/cli/tests/hndl_flag.rs`. **The HTML report used to contradict that sentence.** Its HNDL section filtered on `hndl_critical || severity == Critical`, so on one RSA-2048/SHA-256 certificate it rendered **2** `HNDL-CRITICAL` badges while `summary.json` from the same scan reported `hndl_critical: 0` — and its own HNDL card, three sections above the badges, reported 0 as well. It now filters on the flag alone; on the X25519 fixture the flag, the card and the badge count are all **1**, and the certificate's Ed25519 signature — Critical, not HNDL — is no longer badged. Gated by `every_artifact_reports_the_same_hndl_count` in `crates/cli/tests/artifact_agreement.rs`, the first test in the repo that reads the HTML.
+*What is verified:* the HNDL flag is **computed from the active policy's `[hndl_flag]` block**, not asserted. Until 2026-08-28 it was not computed at all: every scanner wrote a hard-coded `false` and `summary.json.totals.hndl_critical` was `0` for every input. Today an X.509 certificate whose public key is a key-agreement key — the fixture is X25519, OID `1.3.101.110` — is flagged, and the same certificate's long-lived *signature* is not. **The scope is certificate findings.** Source and dependency findings still report zero, because `scan-source` fixes two of the flag's three inputs (`usage_context`, `shelf_life_bucket`) at compile time; over the benchmark corpus the count is **0 of 2069** (149 of 150 scanned, one recorded `unscannable`, none errored) — `#Y136`'s 162 added findings are all source findings, not certificates, so the numerator is unaffected. Making it non-zero there means making those axes vary, which moves severity bands across the whole corpus, and that is a calibration change we have not made. Gated by `hndl_critical_is_reachable_end_to_end` and three sibling checks in `crates/cli/tests/hndl_flag.rs`. **The HTML report used to contradict that sentence.** Its HNDL section filtered on `hndl_critical || severity == Critical`, so on one RSA-2048/SHA-256 certificate it rendered **2** `HNDL-CRITICAL` badges while `summary.json` from the same scan reported `hndl_critical: 0` — and its own HNDL card, three sections above the badges, reported 0 as well. It now filters on the flag alone; on the X25519 fixture the flag, the card and the badge count are all **1**, and the certificate's Ed25519 signature — Critical, not HNDL — is no longer badged. Gated by `every_artifact_reports_the_same_hndl_count` in `crates/cli/tests/artifact_agreement.rs`, the first test in the repo that reads the HTML.
 
 **SARIF 2.1.0** — drop into GitHub Advanced Security (`security-events: write`) or GitLab Advanced Security. Findings appear inline on PRs. Rule IDs (`CRYPTO-NNN`) are stable and documented.
 
@@ -161,7 +161,7 @@ not perform.
 
 **JSON summary** — machine-readable finding counts by severity, ecosystem, and algorithm family. Pipe it into your CI dashboard, Slack alerts, or compliance reports.
 
-*What is verified:* a finding whose `algorithm_id` has no algorithm-table row is reported as **`unscored`**, in every artifact, and is not folded into a band. `algorithm_vulnerability` is 40 of the 100 points the risk engine assigns and is read entirely from that row, so there is nothing to band. Until 2026-08-28 each surface decided this privately and they disagreed: on one `openssl = "0.10"` line in a `Cargo.toml` — which `scan-deps` reports with its `unknown` sentinel — stdout printed `?`, `summary.json` and the HTML report said **Medium**, SARIF said `warning` with `security-severity: 5.0`, and the TUI said **Safe**. Four answers, one finding, and the loudest of them asserted a mid-band CVSS to GitHub Advanced Security for a finding we decline to score. `totals.unscored` is a new field; `totals.medium` no longer counts these rows, SARIF emits level `none` and omits `security-severity`, and `--fail-on` still skips them and says how many it skipped. Over the benchmark corpus this is **13 of 1907 findings (0.68 %)**, all `DEP-001`. It read 131 of 1399 (9.4 %) until 2026-08-29, when the corpus scope repair stopped four projects being scanned over their whole repository: 119 of those 131 were root `Cargo.toml` and `pom.xml` manifests that the projects' declared scopes excluded. Gated by `an_unscored_finding_is_unscored_in_every_artifact` and by a source-text check that fails when a new surface derives its own band instead of calling `quipuu_core::score_of`.
+*What is verified:* a finding whose `algorithm_id` has no algorithm-table row is reported as **`unscored`**, in every artifact, and is not folded into a band. `algorithm_vulnerability` is 40 of the 100 points the risk engine assigns and is read entirely from that row, so there is nothing to band. Until 2026-08-28 each surface decided this privately and they disagreed: on one `openssl = "0.10"` line in a `Cargo.toml` — which `scan-deps` reports with its `unknown` sentinel — stdout printed `?`, `summary.json` and the HTML report said **Medium**, SARIF said `warning` with `security-severity: 5.0`, and the TUI said **Safe**. Four answers, one finding, and the loudest of them asserted a mid-band CVSS to GitHub Advanced Security for a finding we decline to score. `totals.unscored` is a new field; `totals.medium` no longer counts these rows, SARIF emits level `none` and omits `security-severity`, and `--fail-on` still skips them and says how many it skipped. Over the benchmark corpus this is **13 of 2069 findings (0.63 %)**, all `DEP-001` — `#Y136`'s 162 added findings are all `CRYPTO-119x` source findings, not `DEP-*`, so the numerator is unaffected. It read 131 of 1399 (9.4 %) until 2026-08-29, when the corpus scope repair stopped four projects being scanned over their whole repository: 119 of those 131 were root `Cargo.toml` and `pom.xml` manifests that the projects' declared scopes excluded. Gated by `an_unscored_finding_is_unscored_in_every_artifact` and by a source-text check that fails when a new surface derives its own band instead of calling `quipuu_core::score_of`.
 
 **MCP server** — `quipuu mcp-serve` exposes every scan verb over newline-delimited JSON-RPC on stdio, following the Model Context Protocol. Agentic clients use this interface to drive the scanner programmatically. The JSON schemas for `Finding`, `CryptoAsset`, and `RiskScore` live in `crates/core/schema/`.
 
@@ -178,24 +178,28 @@ with nothing to find, which `corpus-integrity.toml` records as `files_scanned = 
 
 | Metric | Value |
 |---|---|
-| Total findings | 1907 |
+| Total findings | 2069 |
 | Projects scanned | 149 of 150, 1 `unscannable`, **0 errored** |
 | Wall-clock time | 257.1s (4m 17s) for all 150 |
 | Per project | median 190ms · mean 1724ms · p90 1.24s · max 141.0s |
 | Languages covered | 7 (Go, Python, Java, JavaScript/TypeScript, C/C++, Rust, C#) |
 
-Every row above comes from **one run**: `python3 scan_corpus.py --include-safe`, flags
-`--source --deps --include-safe`, profile `nist-default`, release build, single-threaded,
-on **2 cores of an AMD EPYC 9354P with 7 GB RAM**, 2026-09-02, re-run after this cycle's
-detection change (`is_call_asserted_to_fail` narrowed to the sole statement a test-required-
-failure assertion actually wraps, `#Y119` — see `BENCHMARKING_RESULTS.md`). `results/all_findings.json`
-is the per-finding dump from `dump_findings.py` under the same binary, flags and corpus; the two
-agree at **1907** by independent count, ecosystem by ecosystem — once `dump_findings.py`'s
-own copy is filtered for the `crates-io:rustls-pemfile` symlink duplicate the corpus's own
-`unscannable` declaration exists to prevent, which a prior cycle found the script was silently
-ignoring (falling back to scanning the shared `rustls` clone under the wrong project name
-when `scan_paths` resolved empty, rather than honoring `scan_hints.unscannable`). That
-population is what the precision figure below is sampled from.
+Every row above except **Total findings** comes from **one timed run**: `python3 scan_corpus.py
+--include-safe`, flags `--source --deps --include-safe`, profile `nist-default`, release build,
+single-threaded, on **2 cores of an AMD EPYC 9354P with 7 GB RAM**, 2026-09-02, re-run after that
+cycle's detection change (`is_call_asserted_to_fail` narrowed to the sole statement a
+test-required-failure assertion actually wraps, `#Y119` — see `BENCHMARKING_RESULTS.md`). That
+run's `results/all_findings.json` — the per-finding dump from `dump_findings.py` under the same
+binary, flags and corpus — agreed with the timed run at **1907** by independent count that day,
+once `dump_findings.py`'s own copy is filtered for the `crates-io:rustls-pemfile` symlink
+duplicate the corpus's own `unscannable` declaration exists to prevent, which a prior cycle found
+the script was silently ignoring (falling back to scanning the shared `rustls` clone under the
+wrong project name when `scan_paths` resolved empty, rather than honoring
+`scan_hints.unscannable`). **Total findings** above is **2069**, `#Y136`'s six new
+legacy-OpenSSL-1.x rules re-verified via a fresh `dump_findings.py` pass, 2026-09-03 — the
+wall-clock/median/mean/p90/max figures have not been re-timed against the larger corpus and still
+describe the 2026-09-02 run. That 2069-finding population is what the precision figure below is
+sampled from.
 
 **Read the mean and the median as different facts.** The gap between them is three
 repositories: `aws-sdk-go-v2` alone takes 141.0s, and with `aws-sdk-go` (27.3s) and `wolfssl`
@@ -209,7 +213,7 @@ shared cores," not as a real speed change; see the note below on run-to-run vari
 same flags gave 230.0s, 236.6s, 246.3s, 277.3s, 281.1s, 282.0s, 294.9s, 329.0s, 341.9s and 367.4s
 against the 257.1s above — the 367.4s pass was over a wider corpus scope than this one. Read
 the whole-corpus figure as "between four and six minutes on two shared cores", not as three
-significant figures. This run's **1907** is reproduced exactly by an independent
+significant figures. The 2026-09-02 run's **1907** was reproduced exactly by an independent
 `dump_findings.py` pass on the same binary, once that pass's own
 `crates-io:rustls-pemfile` double-count (above) is filtered out — a pre-existing bug in the
 script, not a corpus change. The steps down from
@@ -217,13 +221,14 @@ script, not a corpus change. The steps down from
 `BENCHMARKING_RESULTS.md`, and the step from 1399 to 1056 is the 2026-08-29 corpus scope
 repair described there and below. Coverage commits since then took the total from 1056 to
 1917, and a false-positive suppression — jsonwebtoken/PyJWT calls a test requires to fail,
-`PRECISION_AUDIT_V4.md` § 6 — removed 11, down to 1906. **This cycle's own fix recovered 1 of
+`PRECISION_AUDIT_V4.md` § 6 — removed 11, down to 1906. **`#Y119`'s own fix recovered 1 of
 those 11**: `is_call_asserted_to_fail` was suppressing every crypto call sharing a
 `with pytest.raises(...):`/`expect(...).to.throw(...)` block with the call actually asserted
 to fail, not only that call itself — collateral damage on any setup call sharing the block,
 one real corpus instance of which (`npm/jsonwebtoken/test/wrong_alg.tests.js:46`, a genuine
 successful `jwt.sign(...)` one line above the `jwt.verify(...)` the assertion requires to
-throw) is restored here, up to **1907** (`#Y119`).
+throw) was restored, up to **1907**. `#Y136` (2026-09-03) then added 162 more via six new
+`cpp.toml` legacy-OpenSSL-1.x rules — see the precision section below — up to **2069**.
 
 **These figures replace a published `~22s / ~150ms`, which was wrong.** That pair came from
 `results/summary.json` at `include_safe:false`, in a run where **9 of 150 clones were
