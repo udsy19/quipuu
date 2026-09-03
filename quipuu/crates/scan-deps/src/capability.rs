@@ -9,15 +9,18 @@
 //! code does this", which is a false claim [[Precision-Tracker]] exists to
 //! prevent.
 //!
-//! Three entries today, all picked for being the nearest, highest-certainty
+//! Four entries today, all picked for being the nearest, highest-certainty
 //! version floors: Go's `go.mod` `go` directive at two separate floors —
 //! stdlib `crypto/mlkem` (FIPS 203), available since Go 1.24, and stdlib
-//! `crypto/mldsa` (FIPS 204), available since Go 1.27 — and Maven's
+//! `crypto/mldsa` (FIPS 204), available since Go 1.27 — Maven's
 //! `maven.compiler.release` property (JDK 27's default-on hybrid PQC TLS
-//! groups, JEP 527, GA 2026-09-15). The two Go floors are separate entries,
-//! not one: `go.dev/blog/go1.27` documents `crypto/mldsa` as new in 1.27,
-//! three minor versions after `crypto/mlkem` shipped at 1.24, so a project on
-//! `go 1.24`-`1.26` clears the mlkem floor without clearing the mldsa one.
+//! groups, JEP 527, GA 2026-09-15), and `requirements.txt`'s `cryptography`
+//! package pin (pyca/cryptography 50.0.0's X.509 verification APIs accept
+//! ML-DSA-44/65/87 certificates by default, no call site needed). The two Go
+//! floors are separate entries, not one: `go.dev/blog/go1.27` documents
+//! `crypto/mldsa` as new in 1.27, three minor versions after `crypto/mlkem`
+//! shipped at 1.24, so a project on `go 1.24`-`1.26` clears the mlkem floor
+//! without clearing the mldsa one.
 
 use std::path::{Path, PathBuf};
 
@@ -68,6 +71,15 @@ pub static CAPABILITY_TABLE: &[CapabilityEntry] = &[
                   change, so this floor alone is sufficient for TLS key establishment, \
                   unlike the Go entry above",
     },
+    CapabilityEntry {
+        manifest_file: "requirements.txt",
+        field: "cryptography package version constraint",
+        floor: (50, 0),
+        unlocks: "pyca/cryptography's X.509 verification APIs (PolicyBuilder/Store) accept \
+                  ML-DSA-44/65/87 (RFC 9881) public keys and signatures by default — like the \
+                  Maven entry above, this needs no call site referencing ML-DSA at all, only \
+                  ordinary X.509 chain verification through the library's standard path",
+    },
 ];
 
 /// One capability floor cleared by a project's manifest.
@@ -102,7 +114,7 @@ pub fn scan_capabilities(root: &Path) -> Vec<CapabilitySignal> {
             Some(n) => n,
             None => continue,
         };
-        if file_name != "go.mod" && file_name != "pom.xml" {
+        if file_name != "go.mod" && file_name != "pom.xml" && file_name != "requirements.txt" {
             continue;
         }
 
@@ -120,6 +132,11 @@ pub fn scan_capabilities(root: &Path) -> Vec<CapabilitySignal> {
             "pom.xml" => {
                 if let Some(declared) = parse_maven_compiler_release(&src) {
                     check_and_push(&mut signals, path, "pom.xml", declared, &src);
+                }
+            }
+            "requirements.txt" => {
+                if let Some(declared) = parse_requirements_cryptography_version(&src) {
+                    check_and_push(&mut signals, path, "requirements.txt", declared, &src);
                 }
             }
             _ => unreachable!("filtered above"),
@@ -154,7 +171,7 @@ fn check_and_push(
 /// the parsed `(major, minor)` pair so both ecosystems format consistently.
 fn format_declared(manifest_file: &str, _raw: &str, declared: (u32, u32)) -> String {
     match manifest_file {
-        "go.mod" => format!("{}.{}", declared.0, declared.1),
+        "go.mod" | "requirements.txt" => format!("{}.{}", declared.0, declared.1),
         _ => declared.0.to_string(),
     }
 }
@@ -181,6 +198,51 @@ fn parse_maven_compiler_release(src: &str) -> Option<(u32, u32)> {
     let value = src[start..end].trim();
     let major: u32 = value.parse().ok()?;
     Some((major, 0))
+}
+
+/// Parse the `cryptography` package's version constraint out of a
+/// `requirements.txt` file. Only `==`, `>=`, and `~=` are treated as
+/// establishing a floor a declared version can clear — a bare unversioned
+/// name, `<`, `!=`, or an environment-marker suffix that leaves no
+/// recognised operator is skipped rather than guessed, matching this
+/// module's own "report what's provably true" principle already applied to
+/// an unresolved Maven property above.
+fn parse_requirements_cryptography_version(src: &str) -> Option<(u32, u32)> {
+    for raw_line in src.lines() {
+        let trimmed = raw_line.trim();
+        if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.starts_with('-') {
+            continue;
+        }
+        let line = match trimmed.find('#') {
+            Some(pos) => trimmed[..pos].trim(),
+            None => trimmed,
+        };
+
+        let name_end = line
+            .find(|c: char| !(c.is_alphanumeric() || c == '-' || c == '_' || c == '.'))
+            .unwrap_or(line.len());
+        let name = &line[..name_end];
+        if !name.eq_ignore_ascii_case("cryptography") {
+            continue;
+        }
+
+        let rest = line[name_end..].trim_start();
+        // Skip past an extras marker: `cryptography[ssh]>=50.0`.
+        let rest = match rest.strip_prefix('[') {
+            Some(after_bracket) => {
+                let end = after_bracket.find(']')?;
+                after_bracket[end + 1..].trim_start()
+            }
+            None => rest,
+        };
+
+        return rest
+            .strip_prefix(">=")
+            .or_else(|| rest.strip_prefix("=="))
+            .or_else(|| rest.strip_prefix("~="))
+            .and_then(|version| parse_major_minor(version.trim()));
+    }
+    None
 }
 
 /// Parse a leading `X.Y` (ignoring any further `.Z` patch component) out of a
@@ -347,6 +409,48 @@ mod tests {
             "<project><properties><maven.compiler.release>${jdk.version}</maven.compiler.release></properties></project>",
         )
         .unwrap();
+        let signals = scan_capabilities(dir.path());
+        assert!(signals.is_empty());
+    }
+
+    #[test]
+    fn requirements_txt_cryptography_below_floor_produces_no_signal() {
+        let dir = ScratchDir::new("reqs-below");
+        fs::write(
+            dir.path().join("requirements.txt"),
+            "cryptography>=48.0.0\n",
+        )
+        .unwrap();
+        let signals = scan_capabilities(dir.path());
+        assert!(signals.is_empty());
+    }
+
+    #[test]
+    fn requirements_txt_cryptography_at_floor_produces_a_signal() {
+        let dir = ScratchDir::new("reqs-at");
+        fs::write(
+            dir.path().join("requirements.txt"),
+            "cryptography>=50.0.0\n",
+        )
+        .unwrap();
+        let signals = scan_capabilities(dir.path());
+        assert_eq!(signals.len(), 1);
+        assert_eq!(signals[0].declared_version, "50.0");
+        assert_eq!(signals[0].entry.manifest_file, "requirements.txt");
+    }
+
+    #[test]
+    fn requirements_txt_cryptography_unpinned_dependency_is_skipped_not_guessed() {
+        let dir = ScratchDir::new("reqs-unpinned");
+        fs::write(dir.path().join("requirements.txt"), "cryptography\n").unwrap();
+        let signals = scan_capabilities(dir.path());
+        assert!(signals.is_empty());
+    }
+
+    #[test]
+    fn requirements_txt_cryptography_upper_bound_only_is_skipped_not_guessed() {
+        let dir = ScratchDir::new("reqs-upper-bound");
+        fs::write(dir.path().join("requirements.txt"), "cryptography<50.0.0\n").unwrap();
         let signals = scan_capabilities(dir.path());
         assert!(signals.is_empty());
     }

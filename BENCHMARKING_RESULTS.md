@@ -8718,4 +8718,69 @@ more than a sourced-but-unmeasured gap is now done (0 hits, reported above, not 
 Security categories for all 16 parameter-set rows are unverified and explicitly omitted rather than
 guessed — a future cycle with an authoritative KpqC category mapping should add them.
 
+---
+
+## `#Y153` closed: `capability.rs` gains a fourth entry — `requirements.txt`'s `cryptography` pin, pyca's ML-DSA X.509 default-accept floor
+
+Built the item ranked second among the three opened by the eleventh same-day pass
+(`Backlog.md:17149`, "`capability.rs` has zero Python-ecosystem entries"), the highest-ranked
+still-open item once `#Y152` (ranked first, a correction to already-shipped rows) closed.
+`cryptography.io`'s 50.0.0 changelog (2026-07-31) states that library's X.509 verification APIs
+now accept ML-DSA-44/65/87 (RFC 9881) public keys and signatures by default, and that surface is
+stable, not experimental — a project pinning `cryptography>=50.0.0` and doing ordinary chain
+verification through the standard path accepts quantum-resistant certificates with no call site
+naming ML-DSA anywhere, the same "no code change needed" shape as the existing Maven/JDK-27 entry.
+
+**What shipped.** A fourth `CAPABILITY_TABLE` entry (`crates/scan-deps/src/capability.rs`):
+`requirements.txt`, field "cryptography package version constraint", floor `(50, 0)`. A dedicated
+`parse_requirements_cryptography_version` walks a `requirements.txt` file (the existing
+`scan-deps::parsers::parse_requirements_txt` strips its operator character, so it can't tell `>=`
+from `<`; this module needs the operator to decide whether a constraint clears a floor, so it gets
+its own small parser rather than reusing one that would silently misreport). Per the item's own
+spec: `==`, `>=`, and `~=` at or above the floor clear it; a bare unversioned name, `<`, `!=`, or an
+environment-marker suffix that leaves no recognised operator does not — skipped, not guessed, the
+same principle the existing unresolved-Maven-property arm already applies. Extras markers
+(`cryptography[ssh]>=50.0`) are parsed past correctly. `scan_capabilities`'s walker and
+`format_declared` extended for the new manifest file name; no change to any other entry.
+
+**Corpus effect on existing detection: none, provably.** Falsified the same way `#Y138` did:
+built a pre-change binary (`git stash`) and this cycle's post-change binary, ran both as
+`quipuu scan <path> --source --deps --include-safe` against the two corpus projects that pin
+`cryptography` in a `requirements.txt` (`pypi/oauthlib`, `crates-io/rustls-webpki` — see incidence
+table below) and diffed stdout — byte-identical on both. The new code lives in a new match arm and
+a new standalone parser function; no existing function body changed.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all`, `cargo clippy --all-targets -- -D
+warnings`, `cargo test --workspace` all clean (13 `capability::tests` cases, four new:
+`requirements_txt_cryptography_below_floor_produces_no_signal`,
+`..._at_floor_produces_a_signal`, `..._unpinned_dependency_is_skipped_not_guessed`, and
+`..._upper_bound_only_is_skipped_not_guessed` for the `<` case, mirroring the item's own two
+requested tests plus the third the spec called out by name). Both trust-invariant tests
+(`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
+`state/precision.json` and `state/estimator.json` unmodified — `capability.rs` sits outside the
+`Finding`/precision pipeline by design.
+
+**The corpus incidence measurement the item asked for, run rather than left at zero-by-assumption:**
+
+| ecosystem slice | projects with a `requirements.txt` pinning `cryptography` | clearing the `>=50.0.0` floor |
+|---|---|---|
+| `pypi`, `crates-io`, `crypto-adjacent` (150-project corpus, all slices with any Python manifest) | **3** | **0 / 3** |
+
+The three: `pypi/oauthlib` (`cryptography>=3.0.0`), `crates-io/rustls-webpki`
+(`cryptography==44.0.1`, a *test-tooling* dependency, not the crate's own Rust code), and
+`crypto-adjacent/curl` (`cryptography==49.0.0`, one minor version below the floor, in
+`tests/http/requirements.txt`). None clears 50.0.0 today — the closest is 49.0.0, one release
+short. Real incidence is 0, reported as found rather than assumed, matching this project's own
+"measure, don't assert" discipline for a discovery feature that carries no precision claim.
+
+**Not built, said out loud:** `pyproject.toml` (Poetry/PDM/Hatch/`uv`'s manifest, more common than
+`requirements.txt` for modern Python tooling) is still unparsed by `scan-deps` entirely — the item
+itself named this as a real, larger, separately-scoped gap and explicitly did not ask for it this
+cycle. The three other ecosystems the original `#Y138` filing named (BouncyCastle Java, .NET,
+OpenSSL version floors) remain open, unclaimed follow-up.
+
+PRECISION: 97.33% (carried — falsified unmoved by byte-identical scan output on two real corpus
+projects, not re-derived from a fresh corpus dump; `capability.rs` is outside the finding pipeline
+and no existing scan code path was touched).
+
 PRECISION: 97.33%
