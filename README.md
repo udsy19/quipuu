@@ -92,9 +92,9 @@ ship today:
 | `nsa-cnsa2` | NSA CNSA 2.0, for national security systems | CNSA 2.0 approves AES-256 and SHA-384+ only, so SHA-256 and ChaCha20-Poly1305 stop being quantum-safe inventory and become findings, AES-128 is scored as off-suite rather than Grover-weakened, and SLH-DSA / FN-DSA / the sub-1024 ML-KEM and ML-DSA parameter sets are reported as non-compliant |
 
 A policy reweights findings; it never creates, drops, or reclassifies a
-detection. Measured on the 150-project benchmark corpus (1915 findings,
-2026-09-02): the two profiles produce the **same 1915 findings, identical
-`algorithm_id` on every row**, of which **467 (24.4 %) land in a different
+detection. Measured on the 150-project benchmark corpus (1907 findings,
+2026-09-03): the two profiles produce the **same 1907 findings, identical
+`algorithm_id` on every row**, of which **464 (24.3 %) land in a different
 severity band** — mostly SHA-256 and the sub-256-bit PQC parameter sets CNSA
 2.0 does not approve. The precision figure below therefore holds under both.
 

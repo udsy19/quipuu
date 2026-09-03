@@ -7872,4 +7872,53 @@ open) and not this cycle's decision to make unilaterally. Did not investigate or
 registered worktrees under `/opt/cryptoscope/work/*-base`; they were not implicated in the disk
 exhaustion and may belong to concurrent work.
 
+## Measurement, 2026-09-03 (`#Y128` closed: README's `--policy` divergence paragraph re-run against the current 1907-finding corpus)
+
+`Backlog.md`'s "Track A cycle" synthesis flagged that `README.md`'s policy-profile paragraph
+(then lines 94-97) still read "1915 findings, 2026-09-02" while the benchmark table, the
+`dump_findings.py` agreement sentence and the precision headline three paragraphs later had all
+already moved to 1907, dated 2026-09-03 — the same `1916→1915` drift a prior cycle hand-fixed
+once (`Backlog.md:11431`) without generalizing the fix, so it reopened silently on this one
+paragraph while two sibling tests kept the other two sites in sync.
+
+**Re-ran the measurement rather than just editing the digits.** Built no new binary — the release
+binary at `main` (`462329a`, the `#Y127` revert) already reflects the current tree — and ran
+`dump_findings.py --clones /opt/cryptoscope/work/corpus-clones --bin
+quipuu/target/release/quipuu --out y128_default.json --policy nist-default` and the same with
+`--policy nsa-cnsa2`, both over the full 150-project corpus (149/150 scanned, one recorded
+`unscannable`, matching every other current measurement in this file).
+
+**Both profiles: 1907 findings, identical site set, identical `algorithm_id` on every row.**
+Diffed the two dumps by `(project, rule_id, file, line)` key (1907 keys, sets equal): 0
+`algorithm_id` differences, **464 severity differences (24.3%)** — down from the stale
+paragraph's 467/24.4% on 1915, consistent with the corpus's small net changes since (`#Y125`
+Python HPKE, `#Y126` JarSigner, the `#Y127` revert) rather than any change in policy behaviour.
+The structural claim — a policy reweights findings and never creates, drops or reclassifies a
+detection — reconfirmed exactly on the current corpus.
+
+**README.md updated in the same commit:** the paragraph now reads "1907 findings, 2026-09-03" /
+"same 1907 findings" / "464 (24.3%)", matching the other three sites.
+
+**Gate added so a fourth site can't drift the same way.** New test
+`readme_policy_paragraph_agrees_with_the_precision_denominator` in
+`crates/cli/tests/readme_benchmark_table_agrees_with_precision.rs` anchors the policy paragraph's
+restated total against the precision sentence's `out of N` denominator, the same textual-anchor
+technique its two siblings (`#Y84`, `#Y121`) already use — confirmed to fail loudly (not silently
+pass) by temporarily reverting the paragraph's number back to 1915 and re-running the test before
+committing the real fix.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy
+--release --all-targets --workspace -- -D warnings`, `cargo test --release --workspace` all clean
+(164 `cli` integration-test cases, one new). Both trust-invariant tests untouched and pass. No
+detection code touched, so precision itself is not re-measured here — it is carried at the
+existing anchor.
+
+**Not done, said out loud:** the sibling backlog item `#Y129` (`recall_check.py` has zero
+`crypto/mldsa` coverage, so the published "100.0% Go recall" headline measures a narrower API
+surface than the precision figure beside it) is a separate, larger piece of work — adding new
+ground-truth API patterns and re-measuring recall — and was not started this cycle to leave room
+to fully verify this one within budget.
+
+PRECISION: 97.18%
+
 PRECISION: 97.18%

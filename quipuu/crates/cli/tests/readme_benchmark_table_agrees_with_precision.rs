@@ -173,3 +173,33 @@ fn readme_denominator_paragraph_agrees_with_the_precision_headline() {
 
     println!("headline and denominator paragraph agree at {headline_audited} audited rows");
 }
+
+/// `#Y128`: the policy-profile paragraph restates the corpus total a third
+/// time ("Measured on the 150-project benchmark corpus (`N` findings, ...)
+/// ... the same `N` findings") to describe the `--policy` divergence run.
+/// It drifted from the other two sites twice (1916->1915 once, then silently
+/// to 1915 again while the table and headline moved to 1907) because neither
+/// sibling test above reads this paragraph. This closes that third site so a
+/// fourth can't open the same way.
+#[test]
+fn readme_policy_paragraph_agrees_with_the_precision_denominator() {
+    let root = workspace_root();
+    let readme = fs::read_to_string(root.join("../README.md")).expect("README.md readable");
+
+    // "measured 2026-09-03 on **635 audited findings** out of 1907, every one labelled"
+    let precision_denominator = number_before(&readme, ", every one labelled by opening its cited");
+    // "the two profiles produce the **same 1907 findings, identical `algorithm_id`"
+    let policy_paragraph_total = number_before(&readme, " findings, identical");
+
+    assert_eq!(
+        precision_denominator, policy_paragraph_total,
+        "README.md's precision sentence says \"out of {precision_denominator}\", but the \
+         policy-profile paragraph says \"the same {policy_paragraph_total} findings\" — one was \
+         updated without the other. See `#Y128` in 03-Product/Backlog.md for why this drift \
+         recurs (the same paragraph drifted once already, 1916 -> 1915, before this test existed)."
+    );
+
+    println!(
+        "policy-profile paragraph agrees with the precision denominator at {policy_paragraph_total}"
+    );
+}
