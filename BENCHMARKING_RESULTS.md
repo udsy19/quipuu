@@ -8784,3 +8784,71 @@ projects, not re-derived from a fresh corpus dump; `capability.rs` is outside th
 and no existing scan code path was touched).
 
 PRECISION: 97.33%
+
+---
+
+## `#Y156` closed: `csharp.toml` gains Classic McEliece coverage
+
+Highest-ranked open item once `#Y155` (a documentation-only citation wording fix) and `#Y157` (a
+documentation-only NIST SP 800-56C addition) are set aside by the ladder in `03-Product/Backlog.md`
+("Precision up, coverage held" outranks "coverage held, doc fix") — this is a rung-2 coverage item,
+the highest actionable rung with a concrete, drafted first change. `java.toml` already classifies
+both BC's family-generic `"CMCE"` string and its 32+ qualified `"mceliece<params>"` names to the
+`classic-mceliece-unattributed` sentinel row `algorithm-table.toml` already carries; `csharp.toml`
+had zero Classic McEliece coverage, the same shape as the HQC/BIKE gap `#Y131` closed.
+
+**What shipped.** Confirmed directly against `bcgit/bc-csharp`'s **released** `release-2.7.0` tag
+(not trunk — `#Y152`'s lesson about shipping a present-tense capability claim against a real
+release rather than a source-trunk guess): `crypto/src/pqc/crypto/cmce/CmceKeyGenerationParameters.cs`
+takes `(SecureRandom random, CmceParameters CmceParams)`, the identical two-argument,
+static-field-parameter constructor shape `Hqc`/`BikeKeyGenerationParameters` already use.
+`CmceParameters.cs` exposes 10 static fields (`mceliece348864r3` .. `mceliece8192128fr3`, the `f`
+suffix marking the fast-decoding variant) — fewer than the 20 the filing item estimated, since the
+actual count was read from the released source rather than assumed. `csharp.toml` gets one new
+`[[extract]]` (`CSH-085`, documentation only — the extract layer records intended tree-sitter
+shape but does not execute; matching is a hand-written Rust walker) and one `[[classify]]`
+(`CRYPTO-1250`) mapping the constructor to `classic-mceliece-unattributed` unconditionally — one
+family-level sentinel rather than 10 per-parameter rows, mirroring `java.toml`'s
+`CRYPTO-1019`/`CRYPTO-1020` and `algorithm-table.toml`'s own stated reason for not enumerating this
+family (no FIPS number or OID yet; an unselected NIST 4th-round candidate). The actual dispatch
+lives in `scanner.rs`'s `CSHARP_CTOR_APIS` table (`"CmceKeyGenerationParameters"` → the new api
+string) — the reachability gate `every_classify_rule_targets_an_api_the_extractor_can_emit` would
+have failed the build had this row been left out, which is what makes the TOML extract block
+documentation rather than the executing layer.
+
+**Corpus effect: none, provably — and caught a live measurement-tooling trap while confirming it.**
+Corpus B has no C#/NuGet ecosystem at all (`ls work/corpus-clones/` lists six ecosystems —
+`crates-io`, `crypto-adjacent`, `go-modules`, `maven`, `npm`, `pypi` — no C# slice exists), so this
+change is architecturally incapable of moving anything corpus B scans. Falsified rather than
+assumed: built a pre-change binary from `acb34cf` in a worktree, dumped the 150-project corpus with
+both binaries. A **first pass using `work/dump_findings_local.py`** (a `work/`-tree copy, not this
+repo's own `benchmarks/corpus-b-realworld/dump_findings.py`) produced 2238 findings on **both**
+sides — byte-identical to each other, but 168 over the published 2070, and would have written a
+false "97.29%, out of 2238" over a correct, already-accurate 97.33%/2070 headline had it been
+trusted. This is the **third** independent reproduction of the documented
+`scan_paths = [] treated as falsy` fallback bug in that script (cycle 249's reproduction is the
+entry two above this one; `[[2069-was-never-a-real-corpus-total]]`) — re-scanning
+`crates-io:rustls-pemfile` under the shared `rustls` clone it symlinks to and double-counting the
+168-finding difference. Re-run with this repo's own `benchmarks/corpus-b-realworld/dump_findings.py`
+(which runs `corpus_integrity.check()` first and honors `scan_hints.unscannable`): **2070 findings,
+byte-identical set, both sides.** `precision.py` against the canonical pair reproduces the published
+97.33% exactly and reports nothing to write.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all`, `cargo clippy --all-targets -- -D
+warnings`, `cargo test --workspace` all clean (171 `scan_test.rs` cases, one new:
+`scans_csharp_bouncycastle_classic_mceliece`, asserting `CRYPTO-1250`/`classic-mceliece-unattributed`
+on the extended `tests/fixtures/csharp/Pqc.cs` fixture). Both trust-invariant tests untouched and
+pass. `#Y156` also flagged `csharp.toml`'s classify-arm count moving 131 → 132 and the repo-wide
+extract/classify totals moving 153/924 → 154/925; both corrected in `README.md` in the same commit,
+per this file's own "correct every copy of a number" discipline.
+
+**Not done, said out loud:** no `algorithm-table.toml` change — the item's own scope, since no
+per-parameter row exists for any language yet, C# included. `csharp.toml`'s `classic-mceliece-unattributed`
+notes text (`algorithm-table.toml:1179`) still reads Java-only-worded (mentions only BC's JCA
+provider), the same choice `#Y131` made for `hqc-unattributed`/`bike-unattributed` when C# started
+sharing those sentinels too — not touched here either, for consistency with that precedent rather
+than by oversight.
+
+PRECISION: 97.33% (held, exactly — corpus B has no C# ecosystem to move; canonical
+`dump_findings.py` pre/post dumps are byte-identical at 2070 findings, and `precision.py` reproduces
+the published 97.33% without a README write).
