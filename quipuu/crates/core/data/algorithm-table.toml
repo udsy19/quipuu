@@ -1180,8 +1180,15 @@ notes = "BouncyCastle's JCA provider accepts both the family-generic 'CMCE' stri
 
 # KpqC — South Korea's national PQC standard (final winners announced 2025-01,
 # 2026 named the active migration year). BouncyCastle 1.85 (2026-07-28) ships
-# full JCA support for all four selected algorithms (backlog #Y151); no
-# NIST FIPS number or OID exists for any of them, so quantum_status is
+# JCA support for three of the four selected algorithms — AIMer, HAETAE,
+# NTRU+ (backlog #Y151). SMAUG-T's rows below are sourced from bc-java's
+# unreleased development trunk, not from 1.85 or the newer 1.85.2: neither
+# published `bcprov-jdk18on` jar contains a `SmaugT` class (verified by
+# listing both jars' contents directly — backlog #Y152). Kept rather than
+# removed because the literal strings are real, present-tense source on
+# bc-java's trunk, not a guess; re-check `maven-metadata.xml`'s `<latest>`
+# each cycle and drop this note once a tagged release ships them. No NIST
+# FIPS number or OID exists for any of the four, so quantum_status is
 # PqcDraft like the unselected NIST candidates above, not because status is
 # in doubt but because "FIPS-final" is a NIST-specific milestone this
 # non-NIST standard does not have. Security categories are not published in
@@ -1230,7 +1237,7 @@ display_name = "SMAUG-T Mode1"
 family = "PQC-candidate"
 primitive = "kem"
 quantum_status = "PqcDraft"
-notes = "KpqC (Korea's national PQC standard) KEM, BouncyCastle JCA name 'SMAUGT-MODE1'. No FIPS number or OID exists."
+notes = "KpqC (Korea's national PQC standard) KEM, BouncyCastle JCA name 'SMAUGT-MODE1'. No FIPS number or OID exists. Not yet in a published bcprov-jdk18on release (1.85/1.85.2 both lack it) — sourced from bc-java's development trunk."
 
 [[algorithm]]
 id = "smaug-t-mode3"
@@ -1238,7 +1245,7 @@ display_name = "SMAUG-T Mode3"
 family = "PQC-candidate"
 primitive = "kem"
 quantum_status = "PqcDraft"
-notes = "KpqC (Korea's national PQC standard) KEM, BouncyCastle JCA name 'SMAUGT-MODE3'. No FIPS number or OID exists."
+notes = "KpqC (Korea's national PQC standard) KEM, BouncyCastle JCA name 'SMAUGT-MODE3'. No FIPS number or OID exists. Not yet in a published bcprov-jdk18on release (1.85/1.85.2 both lack it) — sourced from bc-java's development trunk."
 
 [[algorithm]]
 id = "smaug-t-mode5"
@@ -1246,7 +1253,7 @@ display_name = "SMAUG-T Mode5"
 family = "PQC-candidate"
 primitive = "kem"
 quantum_status = "PqcDraft"
-notes = "KpqC (Korea's national PQC standard) KEM, BouncyCastle JCA name 'SMAUGT-MODE5'. No FIPS number or OID exists."
+notes = "KpqC (Korea's national PQC standard) KEM, BouncyCastle JCA name 'SMAUGT-MODE5'. No FIPS number or OID exists. Not yet in a published bcprov-jdk18on release (1.85/1.85.2 both lack it) — sourced from bc-java's development trunk."
 
 [[algorithm]]
 id = "smaug-t-modet"
@@ -1254,7 +1261,7 @@ display_name = "SMAUG-T ModeT"
 family = "PQC-candidate"
 primitive = "kem"
 quantum_status = "PqcDraft"
-notes = "KpqC (Korea's national PQC standard) KEM, BouncyCastle JCA name 'SMAUGT-MODET'. No FIPS number or OID exists."
+notes = "KpqC (Korea's national PQC standard) KEM, BouncyCastle JCA name 'SMAUGT-MODET'. No FIPS number or OID exists. Not yet in a published bcprov-jdk18on release (1.85/1.85.2 both lack it) — sourced from bc-java's development trunk."
 
 [[algorithm]]
 id = "smaug-t-unattributed"
@@ -1262,7 +1269,7 @@ display_name = "SMAUG-T (parameter set not stated at this call site)"
 family = "PQC-candidate"
 primitive = "kem"
 quantum_status = "PqcDraft"
-notes = "BouncyCastle's JCA provider accepts the family-generic 'SMAUGT' string at KeyPairGenerator/KeyGenerator/Cipher/KEM.getInstance; the parameter set (SMAUGT-MODE1/3/5/T) is chosen separately. The call site is unambiguously SMAUG-T; only the parameter set is unattributed."
+notes = "BouncyCastle's JCA provider accepts the family-generic 'SMAUGT' string at KeyPairGenerator/KeyGenerator/Cipher/KEM.getInstance; the parameter set (SMAUGT-MODE1/3/5/T) is chosen separately. The call site is unambiguously SMAUG-T; only the parameter set is unattributed. Not yet in a published bcprov-jdk18on release (1.85/1.85.2 both lack it) — sourced from bc-java's development trunk."
 
 [[algorithm]]
 id = "aimer-128f"

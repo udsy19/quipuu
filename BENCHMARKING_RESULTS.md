@@ -8640,12 +8640,23 @@ not re-derived from a fresh corpus dump; no detection or existing-scan code path
 
 ## `#Y151` closed: BouncyCastle KpqC taxonomy (AIMer/HAETAE/NTRU+/SMAUG-T) covered in `java.toml`
 
+**Correction, `#Y152`.** This entry originally claimed BouncyCastle 1.85 "ships full JCA support"
+for all four KpqC algorithms. False for one of the four: listing both the `bcprov-jdk18on-1.85.jar`
+and `-1.85.2.jar` class lists directly finds `AIMer.class`/`Haetae.class`/`NTRUPlus.class` in both
+and zero `smaug`-anything in either. The SMAUG-T literal strings this entry describes below were
+read from `bcgit/bc-java`'s unpinned development trunk (`corpus-clones/maven/bcpkix-jdk18on` tracks
+`origin/main`, no reachable tag), not from any released artifact. The rows and classify arms are
+kept — the strings are real, present-tense trunk source, not a guess, and no released jar can
+trigger a false positive from them today — but every "all four" claim below is corrected to "three
+of four shipped, SMAUG-T sourced from trunk." See `algorithm-table.toml`'s and `java.toml`'s own
+KpqC header comments for the same correction in place.
+
 Backlog item `#Y151` (Backlog.md, "Appended 2026-09-03 — Track B synthesis, tenth same-day pass,"
-item 2): BouncyCastle 1.85 (2026-07-28) ships full JCA support for Korea's national PQC standard,
-KpqC — AIMer/HAETAE signatures and NTRU+/SMAUG-T KEMs, final winners announced 2025-01, 2026 named
-Korea's active migration year — and `java.toml`/`algorithm-table.toml` had zero taxonomy rows for
-any of the four, so a codebase that has migrated reported as "Safe, unrecognized algorithm" instead
-of PQC-inventory progress.
+item 2): BouncyCastle 1.85 (2026-07-28) ships JCA support for three of Korea's national PQC
+standard's four selected algorithms — AIMer/HAETAE signatures and NTRU+ KEM shipped, SMAUG-T KEM
+not yet released — final winners announced 2025-01, 2026 named Korea's active migration year — and
+`java.toml`/`algorithm-table.toml` had zero taxonomy rows for any of the four, so a codebase that
+has migrated reported as "Safe, unrecognized algorithm" instead of PQC-inventory progress.
 
 **Literal strings sourced by reading bc-java's own provider code directly**, not reconstructed from
 naming convention: the corpus's own `maven:org.bouncycastle:bcprov-jdk18on` clone contains
@@ -8666,7 +8677,9 @@ independently, so the field is omitted rather than guessed. 40 new `java.toml` c
 KEMs, AIMer/HAETAE as signatures, matching bc-java's own registration of all four under this API),
 `javax.crypto.KEM.getInstance` (9, NTRU+/SMAUG-T only), `Signature.getInstance` (11, AIMer/HAETAE
 only) — each family's bare-name arm ordered last within its `when.api` block so the qualified
-parameter-set arms win first, mirroring the existing HQC/BIKE convention. No `scanner.rs` change:
+parameter-set arms win first, mirroring the existing HQC/BIKE convention. Per the correction above,
+the 10 SMAUG-T arms across the first two APIs match bc-java's development trunk, not a released
+JCA registration. No `scanner.rs` change:
 every KpqC string states its full parameter set as a literal at the call site, unlike BC's
 lightweight-API PQC classes (`CRYPTO-811`–`819`), which take theirs from a runtime
 `KeyGenerationParameters` object.

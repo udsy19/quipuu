@@ -696,7 +696,11 @@ message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-
 # (backlog #Y151). NTRU+ and SMAUG-T are KEMs; AIMer and HAETAE are signatures,
 # covered under Signature.getInstance further below. Literal strings sourced by
 # reading bc-java's Mappings.configure() directly (prov/src/main/java/org/
-# bouncycastle/pqc/jcajce/provider/{NTRUPlus,SmaugT}.java).
+# bouncycastle/pqc/jcajce/provider/{NTRUPlus,SmaugT}.java). SMAUG-T's arms below
+# match a real service name on bc-java's development trunk, but neither
+# published bcprov-jdk18on 1.85 nor 1.85.2 contains a SmaugT class yet
+# (backlog #Y152) — kept because no released jar can trigger a false positive
+# from these arms today, not because the algorithm has shipped.
 [[classify]]
 id = "CRYPTO-1210"
 when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
