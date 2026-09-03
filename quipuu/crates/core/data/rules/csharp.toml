@@ -1851,3 +1851,41 @@ when.api = "^Org\\.BouncyCastle\\.Pqc\\.Crypto\\.Bike\\.BikeKeyGenerationParamet
 algorithm_id = "bike-unattributed"
 severity_hint = "auto"
 message = "new BikeKeyGenerationParameters(random, …) with a non-literal or OID-looked-up parameter set — NIST 4th-round PQC KEM candidate (BIKE, not selected as the standardized backup), but the parameter set is not statically knowable at this call site."
+
+# ============================================================================
+# BouncyCastle.Cryptography — Classic McEliece (NIST 4th-round KEM candidate,
+# not selected as the standardized backup, #Y156)
+#
+# Confirmed directly against bcgit/bc-csharp's release-2.7.0 tag (the
+# released NuGet package, not trunk — #Y152's lesson):
+# crypto/src/pqc/crypto/cmce/CmceKeyGenerationParameters.cs takes the same
+# `(SecureRandom random, CmceParameters param)` constructor shape as
+# Hqc/BikeKeyGenerationParameters above, and CmceParameters.cs exposes 10
+# static fields (mceliece348864r3 .. mceliece8192128fr3). Unlike HQC/BIKE,
+# this ships one family-level sentinel rather than 10 per-parameter rows —
+# mirroring java.toml's CRYPTO-1019/1020 and algorithm-table.toml's
+# classic-mceliece-unattributed row, which made the identical call for BC's
+# Java provider's 32+ qualified names. No new algorithm-table.toml row.
+# ============================================================================
+
+[[extract]]
+id = "CSH-085"
+language = "csharp"
+query = """
+(object_creation_expression
+  type: (identifier) @cls (#eq? @cls "CmceKeyGenerationParameters")
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "CmceParameters")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", paramcls = "ident", paramset = "ident" }
+api = "Org.BouncyCastle.Pqc.Crypto.Cmce.CmceKeyGenerationParameters.new"
+description = "new CmceKeyGenerationParameters(random, CmceParameters.mceliece348864r3) — Classic McEliece parameter selection."
+
+[[classify]]
+id = "CRYPTO-1250"
+when.api = "^Org\\.BouncyCastle\\.Pqc\\.Crypto\\.Cmce\\.CmceKeyGenerationParameters\\.new$"
+algorithm_id = "classic-mceliece-unattributed"
+severity_hint = "auto"
+message = "new CmceKeyGenerationParameters(random, CmceParameters.mceliece…) — NIST 4th-round PQC KEM candidate (Classic McEliece, not selected as the standardized backup). Migrated key-establishment call site; specific parameter set not tracked."

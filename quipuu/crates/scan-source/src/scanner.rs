@@ -3634,6 +3634,10 @@ const CSHARP_CTOR_APIS: &[(&str, &str)] = &[
         "BikeKeyGenerationParameters",
         "Org.BouncyCastle.Pqc.Crypto.Bike.BikeKeyGenerationParameters.new",
     ),
+    (
+        "CmceKeyGenerationParameters",
+        "Org.BouncyCastle.Pqc.Crypto.Cmce.CmceKeyGenerationParameters.new",
+    ),
 ];
 
 fn match_csharp_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {

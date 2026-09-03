@@ -5,6 +5,7 @@ using Org.BouncyCastle.Crypto.Kems;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
 using Org.BouncyCastle.Pqc.Crypto.Bike;
+using Org.BouncyCastle.Pqc.Crypto.Cmce;
 using Org.BouncyCastle.Pqc.Crypto.Hqc;
 using Org.BouncyCastle.Pqc.Crypto.Lms;
 using Org.BouncyCastle.Security;
@@ -112,5 +113,12 @@ public class PqcFixture
     {
         var random = new SecureRandom();
         var keyGenParameters = new BikeKeyGenerationParameters(random, chosen);
+    }
+
+    // CSH-085 / CRYPTO-1250 — Classic McEliece key-generation parameters (#Y156)
+    public static void CmceKeyPair()
+    {
+        var random = new SecureRandom();
+        var keyGenParameters = new CmceKeyGenerationParameters(random, CmceParameters.mceliece348864r3);
     }
 }

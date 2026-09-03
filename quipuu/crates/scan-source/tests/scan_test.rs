@@ -2194,6 +2194,31 @@ fn scans_csharp_bouncycastle_hqc_bike() {
 }
 
 #[test]
+fn scans_csharp_bouncycastle_classic_mceliece() {
+    // #Y156 — CmceKeyGenerationParameters lives under the same experimental
+    // Org.BouncyCastle.Pqc.Crypto namespace as Hqc/BikeKeyGenerationParameters
+    // (release-2.7.0 tag), and — like java.toml's CRYPTO-1019/1020 sentinel for
+    // BC's Java provider's 32+ qualified names — this ships one family-level
+    // sentinel rather than a row per CmceParameters static field.
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("csharp/Pqc.cs"))
+        .expect("scan succeeds");
+
+    assert!(
+        findings.iter().any(
+            |f| f.rule_id == "CRYPTO-1250" && f.algorithm_id == "classic-mceliece-unattributed"
+        ),
+        "expected CRYPTO-1250 (classic-mceliece-unattributed) in C# BouncyCastle CMCE fixture; findings: {:#?}",
+        findings
+            .iter()
+            .map(|f| (&f.rule_id, &f.algorithm_id))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
 fn scans_csharp_native_mlkem_mldsa_slhdsa() {
     let b = load_builtins().unwrap();
     let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
