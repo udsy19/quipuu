@@ -555,6 +555,7 @@ fn test_scan_source_warnings_field_present_on_clean_scan() {
 // ── Test 15: scan_source surfaces UnreadableFile warning ─────────────────────
 
 #[test]
+#[cfg(unix)]
 fn test_scan_source_returns_warnings_for_unreadable_file() {
     use std::fs;
     use std::os::unix::fs::PermissionsExt;

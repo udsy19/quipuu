@@ -2687,6 +2687,7 @@ fn phase7_go_main_fixture_unchanged() {
 // ── Phase 6: non-fatal warnings ─────────────────────────────────────────────
 
 #[test]
+#[cfg(unix)]
 fn phase6_unreadable_file_becomes_warning_not_error() {
     use quipuu_core::ScanWarningKind;
     use std::fs;
