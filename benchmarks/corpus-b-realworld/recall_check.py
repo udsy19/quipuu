@@ -151,6 +151,8 @@ IMPORT_PKG = {
 def is_constructor(label: str) -> bool:
     return (
         label.endswith("GenerateKey")
+        or label.endswith("GenerateKeyPair")
+        or label.endswith("NewKeyFromSeed")
         or label.endswith(".New")
         or label.endswith("NewCipher")
         or label.endswith("NewTripleDESCipher")

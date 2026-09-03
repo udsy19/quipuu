@@ -8098,3 +8098,38 @@ work/-script defect, not this repo's, and is worked around rather than fixed for
 cycle 249's `#Y123` entry).
 
 PRECISION: 97.18%
+
+## Measurement, 2026-09-03 (`#Y133` closed: `recall_check.py`'s `is_constructor()` gains `GenerateKeyPair`/`NewKeyFromSeed`)
+
+Backlog synthesis (fourth same-day pass, `Backlog.md:15231`) flagged that `#Y130`'s own landed fix
+(`3df04a3`) widened `recall_check.py`'s ground truth with 12 circl `APIS` entries — `mldsa{44,65,87}.
+GenerateKey`/`.NewKeyFromSeed` and `mlkem{512,768,1024}.GenerateKeyPair`/`.NewKeyFromSeed` — without
+extending `is_constructor()` to recognize the two new verb shapes. `is_constructor()` matched
+`.endswith("GenerateKey")` but not `"GenerateKeyPair"` or `"NewKeyFromSeed"`, so every circl constructor
+site fell through to the `not is_constructor(...)` "operations" bucket by default, the same quirk
+`#Y130`'s own commit message named but did not fix.
+
+**Measured against `work/y128_default.json` (1907 findings, the same dump the `#Y134` precision run
+above used) before touching the predicate:** only one of the 12 new circl labels has an actual in-scope
+corpus site — `mlkem768.NewKeyFromSeed` at `go-modules/circl/kem/xwing/xwing.go`, previously the sole
+site sitting in the `operations` bucket (`recall_check.py`'s own by-API-kind breakdown: `constructors
+319/319`, `operations 122/122`). The backlog item's own predicted split (`322/119`) does not reproduce
+against this dump — measured live rather than trusted, per this track's "measure, do not assert" rule.
+
+Added `label.endswith("GenerateKeyPair")` and `label.endswith("NewKeyFromSeed")` to `is_constructor()`.
+Re-ran `recall_check.py` against the same dump: **constructors 320/320, operations 121/121** — one site
+moved, in-scope recall unchanged at 441/441 = 100.0% (a reclassification, not a detection change).
+`README.md`'s by-kind table (`Generators and constructors` 319→320, gains `mlkem768.NewKeyFromSeed`;
+`Operations` 122→121, drops it) updated to match.
+
+**No scanner-visible finding changes** — this is benchmark-harness-only, like `#Y130` itself; precision
+is carried at 97.18% from `#Y134`'s measurement above, not re-measured a second time (no detection or
+scanning code touched).
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all`, `cargo clippy --all-targets --workspace
+-- -D warnings`, `cargo test --workspace` all clean. Both trust-invariant tests untouched and pass.
+
+**Not done, said out loud:** `#Y135` (CRYPTREC documentation-currency gap) — ranked below `#Y133` in the
+same synthesis — was not started this cycle.
+
+PRECISION: 97.18%

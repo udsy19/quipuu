@@ -305,8 +305,8 @@ Ground truth is built independently of our own rule files, by scanning the 25 Go
 
 | API kind | in-scope sites | found | recall |
 |---|---|---|---|
-| Generators and constructors (`rsa.GenerateKey`, `ecdsa.GenerateKey`, `ed25519.GenerateKey`, `dsa.GenerateKey`, `ecdh.*`, `md5.New`, `sha1.New`, `des.NewTripleDESCipher`, `rc4.NewCipher`) | 319 | 319 | **100.0%** |
-| Operations (`ecdsa.Sign`, `ecdsa.Verify`, `rsa.SignPSS`, `rsa.VerifyPKCS1v15`, `ed25519.Sign`, `dsa.Sign`, `dsa.Verify`, `md5.Sum`, `sha1.Sum`, `mldsa.MLDSA44`, `mldsa.MLDSA65`, `mldsa.MLDSA87`, `mlkem768.NewKeyFromSeed`, …) | 122 | 122 | **100.0%** |
+| Generators and constructors (`rsa.GenerateKey`, `ecdsa.GenerateKey`, `ed25519.GenerateKey`, `dsa.GenerateKey`, `ecdh.*`, `md5.New`, `sha1.New`, `des.NewTripleDESCipher`, `rc4.NewCipher`, `mlkem768.NewKeyFromSeed`) | 320 | 320 | **100.0%** |
+| Operations (`ecdsa.Sign`, `ecdsa.Verify`, `rsa.SignPSS`, `rsa.VerifyPKCS1v15`, `ed25519.Sign`, `dsa.Sign`, `dsa.Verify`, `md5.Sum`, `sha1.Sum`, `mldsa.MLDSA44`, `mldsa.MLDSA65`, `mldsa.MLDSA87`, …) | 121 | 121 | **100.0%** |
 
 Every API in the ground truth, constructor and operation alike, is now at 100% in-scope recall. **The precision/recall trade this section used to describe no longer exists on this axis**: on the 1907-finding dump above, 97.18% precision and 100.0% recall are two different measurements of the same finding set, neither one bounding the other.
 
