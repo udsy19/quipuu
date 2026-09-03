@@ -49,7 +49,9 @@ fn number_before(haystack: &str, needle: &str) -> usize {
 #[test]
 fn readme_benchmark_table_total_matches_the_precision_denominator() {
     let root = workspace_root();
-    let readme = fs::read_to_string(root.join("../README.md")).expect("README.md readable");
+    let readme = fs::read_to_string(root.join("../README.md"))
+        .expect("README.md readable")
+        .replace("\r\n", "\n");
 
     // "| Total findings | 1853 |"
     let table_total = number_before(&readme, " |\n| Projects scanned |");
