@@ -268,6 +268,57 @@ algorithm_id = "ed25519"
 severity_hint = "auto"
 message = "Ed25519 keypair generated via generateKeyPair('{algo}'). Quantum-vulnerable."
 
+# Node has accepted ML-KEM/ML-DSA type strings in generateKeyPair(Sync) since
+# v24.7.0 (nodejs/node #59461, #59259), the same shape as CRYPTO-320..322.
+
+[[classify]]
+id = "CRYPTO-1202"
+when.api = "^node:crypto\\.generateKeyPair$"
+when.args.algo = { regex = "(?i)^['\"]?ml-kem-512['\"]?$" }
+algorithm_id = "ml-kem-512"
+severity_hint = "auto"
+message = "ML-KEM-512 keypair generated via generateKeyPair('{algo}'). FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1203"
+when.api = "^node:crypto\\.generateKeyPair$"
+when.args.algo = { regex = "(?i)^['\"]?ml-kem-768['\"]?$" }
+algorithm_id = "ml-kem-768"
+severity_hint = "auto"
+message = "ML-KEM-768 keypair generated via generateKeyPair('{algo}'). FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1204"
+when.api = "^node:crypto\\.generateKeyPair$"
+when.args.algo = { regex = "(?i)^['\"]?ml-kem-1024['\"]?$" }
+algorithm_id = "ml-kem-1024"
+severity_hint = "auto"
+message = "ML-KEM-1024 keypair generated via generateKeyPair('{algo}'). FIPS 203, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1205"
+when.api = "^node:crypto\\.generateKeyPair$"
+when.args.algo = { regex = "(?i)^['\"]?ml-dsa-44['\"]?$" }
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "ML-DSA-44 keypair generated via generateKeyPair('{algo}'). FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1206"
+when.api = "^node:crypto\\.generateKeyPair$"
+when.args.algo = { regex = "(?i)^['\"]?ml-dsa-65['\"]?$" }
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "ML-DSA-65 keypair generated via generateKeyPair('{algo}'). FIPS 204, quantum-resistant."
+
+[[classify]]
+id = "CRYPTO-1207"
+when.api = "^node:crypto\\.generateKeyPair$"
+when.args.algo = { regex = "(?i)^['\"]?ml-dsa-87['\"]?$" }
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "ML-DSA-87 keypair generated via generateKeyPair('{algo}'). FIPS 204, quantum-resistant."
+
 # ============================================================================
 # jose (panva/jose) — generateKeyPair(alg, options)
 # ============================================================================

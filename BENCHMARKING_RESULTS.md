@@ -8328,3 +8328,45 @@ what was sampled. This entry is that evidence, added against the dumps the prior
 produced (verified reproducible above, not re-run from scratch).
 
 PRECISION: 97.33%
+
+## `#Y147` closed: `node:crypto.generateKeyPair(Sync)` ML-KEM/ML-DSA type strings covered in `javascript.toml`
+
+Minimal buildable slice of `#V7` (filed 2026-08-28, full scope: 18 PQC arms including all twelve
+SLH-DSA sets plus six missing classical arms), re-derived independently by the ecosystem lens's
+seventh same-day pass (`Backlog.md`, 2026-09-03): `JST-020`'s existing extract rule for
+`generateKeyPair`/`generateKeyPairSync` already captures the algorithm-type string but had exactly
+three classify arms (`rsa`, `ec`, `ed25519`) — zero matching `ml-kem-*`/`ml-dsa-*`, a live Node API
+since v24.7.0 (`nodejs/node` PRs #59461/#59259). Six new `[[classify]]` arms (`CRYPTO-1202..1207`)
+added under the existing extract rule, no new extract/scanner work needed — same shape as the three
+existing arms, reusing the standard `ml-kem-{512,768,1024}`/`ml-dsa-{44,65,87}` algorithm IDs every
+other language pack already defines. New fixture coverage (`crypto.js`) and a
+`scans_js_generatekeypair_ml_kem_and_ml_dsa` test in `scan_test.rs` assert all six.
+
+**Corpus effect: 0 added, 0 removed — 2070 findings both sides, byte-identical finding sets.**
+Pre-change binary built from `main` at `1548761` (`quipuu-pre`), post-change binary built from this
+cycle's tree (`quipuu-post`), both dumped with the canonical, in-repo `dump_findings.py` against the
+full 150-project corpus (`pre.json`, `post.json`). No consumer of `generateKeyPair('ml-kem-*'|
+'ml-dsa-*', ...)` exists in the sample — same zero-corpus-recall shape as `#Y137`/`#Y142`/prior
+structural-matcher additions; reported honestly rather than read as "the new rule does not work"
+(the fixture tree is the instrument for this rule family, per the cycle-23 corpus note).
+
+**One estimator, computed via `precision.py`** (`bin/precision.py pre.json post.json
+--write-readme`, no `--added-tp`/`--added-fp` needed since the dumps are row-identical): both dumps
+2070 findings, 0 added, 0 removed. stratified-fresh **97.331%** (95% CI 96.20–98.46), pooled
+**97.368%** (95% CI 96.01–98.27) — 0.037pp apart, inside the tool's 0.05pp agreement tolerance;
+both round to the published **97.33%**, unchanged since `#Y142`. `state/precision.json` and
+`state/estimator.json` are unmodified — nothing moved to fold. README's headline, comparison table
+and denominator paragraph already stated 97.33% / 798 audited / 2070 total; `--write-readme`
+confirmed the match and wrote nothing. README's classify-arm total (870→876) was the only other site
+needing a fix, caught by `readme_rule_pack_counts_match_the_rule_packs`.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all`, `cargo clippy --all-targets -- -D
+warnings`, `cargo test --workspace` all clean. Both trust-invariant tests untouched and pass.
+
+**Not done, said out loud:** `#V7`'s classical-arm (RSA-PSS/OAEP variants already covered by the
+three existing arms notwithstanding) and full twelve-set SLH-DSA scope remains open and unchanged
+by this slice — this entry closes only the ML-KEM/ML-DSA half `#V7`'s evidence-appendix scoped as
+buildable. `#Y145` (RustCrypto's own `ml-kem`/`ml-dsa` crates in `rust.toml`) remains open,
+unscoped, for a future cycle.
+
+PRECISION: 97.33%

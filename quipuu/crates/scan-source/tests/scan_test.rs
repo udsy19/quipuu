@@ -1058,6 +1058,31 @@ fn scans_js_generatekeypair_ec() {
     );
 }
 
+#[test]
+fn scans_js_generatekeypair_ml_kem_and_ml_dsa() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/crypto.js"))
+        .expect("scan succeeds");
+
+    for (rule_id, algorithm_id) in [
+        ("CRYPTO-1202", "ml-kem-512"),
+        ("CRYPTO-1203", "ml-kem-768"),
+        ("CRYPTO-1204", "ml-kem-1024"),
+        ("CRYPTO-1205", "ml-dsa-44"),
+        ("CRYPTO-1206", "ml-dsa-65"),
+        ("CRYPTO-1207", "ml-dsa-87"),
+    ] {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) via node:crypto.generateKeyPairSync in JS fixture"
+        );
+    }
+}
+
 // `#Y4` — bare identifier calls reached through a name import, not the
 // module object. Every assertion here failed before `collect_bare_bindings`.
 

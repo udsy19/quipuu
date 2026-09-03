@@ -69,6 +69,20 @@ function keyPairEd25519() {
     crypto.generateKeyPairSync("ed25519");
 }
 
+// JST-020 / CRYPTO-1202..1204 — ML-KEM generateKeyPair
+function keyPairMlKem() {
+    crypto.generateKeyPairSync("ml-kem-512");
+    crypto.generateKeyPairSync("ml-kem-768");
+    crypto.generateKeyPairSync("ml-kem-1024");
+}
+
+// JST-020 / CRYPTO-1205..1207 — ML-DSA generateKeyPair
+function keyPairMlDsa() {
+    crypto.generateKeyPairSync("ml-dsa-44");
+    crypto.generateKeyPairSync("ml-dsa-65");
+    crypto.generateKeyPairSync("ml-dsa-87");
+}
+
 // JST-030 / CRYPTO-330 — RSA-SHA256 createSign
 function signRsa() {
     const sign = crypto.createSign("RSA-SHA256");
