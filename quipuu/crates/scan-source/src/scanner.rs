@@ -1093,8 +1093,10 @@ fn match_java_method_invocation(call: Node<'_>, source: &[u8]) -> Option<RawMatc
 /// name, so unlike every `JAVA_CALLEE_APIS` row there is no receiver text to
 /// key a lookup table on (resolving the variable's declared type means
 /// building the project, which P4 forbids). The method name alone is
-/// specific enough that a false match is not a real risk, the same
-/// assumption `WEBCRYPTO_METHOD_APIS`'s method-only rows already make.
+/// specific enough that a false match is not a real risk — this is more
+/// permissive than `WEBCRYPTO_METHOD_APIS`'s method-only rows, which still
+/// require the receiver to be (or end in) `.subtle` before matching; this
+/// rule reads no receiver text at all.
 /// Backlog `#Y24`: this is TLS hardening configuration written for reasons
 /// unrelated to PQC, so a classical-only group list here silently blocks the
 /// PQC upgrade JDK 27's own default would otherwise make.
