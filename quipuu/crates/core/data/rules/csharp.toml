@@ -1739,3 +1739,115 @@ when.api = "^System\\.Security\\.Cryptography\\.CompositeMLKem\\.GenerateKey$"
 algorithm_id = "ml-kem-unattributed"
 severity_hint = "auto"
 message = "CompositeMLKem.GenerateKey(CompositeMLKemAlgorithm…) — composite PQ/T KEM key generation (FIPS 203 ML-KEM paired with a classical algorithm). The ML-KEM component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+# ============================================================================
+# BouncyCastle.Cryptography — HQC / BIKE (NIST PQC candidates, #Y131)
+#
+# Unlike ML-KEM/ML-DSA above, BC.NET's HQC and BIKE ports still live under
+# the experimental Org.BouncyCastle.Pqc.Crypto namespace (they are
+# PqcDraft/non-finalised candidates, not yet promoted out of it) — confirmed
+# directly against bcgit/bc-csharp's HqcKeyGenerationParameters.cs and
+# BikeKeyGenerationParameters.cs (master branch): both take a single
+# constructor `(SecureRandom random, HqcParameters/BikeParameters param)`,
+# the identical two-argument, static-field-parameter shape MLKemKeyGeneration-
+# Parameters uses above. HqcParameters/BikeParameters each expose exactly
+# three static fields (hqc128/192/256, bike128/192/256) — no per-language
+# fallback bucket exists for either family in this file the way liboqs's
+# catch-all sentinels degrade an unmatched C/C++ call, so before this rule an
+# HQC or BIKE key-generation call in C# produced zero findings, not a
+# degraded one. java.toml already covers the identical BC construct via its
+# JCA string-name registration (#Y80's precedent for shipping this family
+# once BC's own provider gives it a production consumer).
+# ============================================================================
+
+[[extract]]
+id = "CSH-083"
+language = "csharp"
+query = """
+(object_creation_expression
+  type: (identifier) @cls (#eq? @cls "HqcKeyGenerationParameters")
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "HqcParameters")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", paramcls = "ident", paramset = "ident" }
+api = "Org.BouncyCastle.Pqc.Crypto.Hqc.HqcKeyGenerationParameters.new"
+description = "new HqcKeyGenerationParameters(random, HqcParameters.hqc128) — NIST-selected backup KEM (HQC) parameter selection."
+
+[[classify]]
+id = "CRYPTO-1182"
+when.api = "^Org\\.BouncyCastle\\.Pqc\\.Crypto\\.Hqc\\.HqcKeyGenerationParameters\\.new$"
+when.args.paramset = "hqc128"
+algorithm_id = "hqc-128"
+severity_hint = "auto"
+message = "new HqcKeyGenerationParameters(random, HqcParameters.hqc128) — NIST-selected backup KEM (HQC), FIPS standard pending. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1183"
+when.api = "^Org\\.BouncyCastle\\.Pqc\\.Crypto\\.Hqc\\.HqcKeyGenerationParameters\\.new$"
+when.args.paramset = "hqc192"
+algorithm_id = "hqc-192"
+severity_hint = "auto"
+message = "new HqcKeyGenerationParameters(random, HqcParameters.hqc192) — NIST-selected backup KEM (HQC), FIPS standard pending. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1184"
+when.api = "^Org\\.BouncyCastle\\.Pqc\\.Crypto\\.Hqc\\.HqcKeyGenerationParameters\\.new$"
+when.args.paramset = "hqc256"
+algorithm_id = "hqc-256"
+severity_hint = "auto"
+message = "new HqcKeyGenerationParameters(random, HqcParameters.hqc256) — NIST-selected backup KEM (HQC), FIPS standard pending. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1185"
+when.api = "^Org\\.BouncyCastle\\.Pqc\\.Crypto\\.Hqc\\.HqcKeyGenerationParameters\\.new$"
+algorithm_id = "hqc-unattributed"
+severity_hint = "auto"
+message = "new HqcKeyGenerationParameters(random, …) with a non-literal or OID-looked-up parameter set — NIST-selected backup KEM (HQC), FIPS standard pending, but the parameter set is not statically knowable at this call site."
+
+[[extract]]
+id = "CSH-084"
+language = "csharp"
+query = """
+(object_creation_expression
+  type: (identifier) @cls (#eq? @cls "BikeKeyGenerationParameters")
+  arguments: (argument_list
+    (argument (member_access_expression
+      expression: (identifier) @paramcls (#eq? @paramcls "BikeParameters")
+      name: (identifier) @paramset))))
+"""
+captures = { cls = "ident", paramcls = "ident", paramset = "ident" }
+api = "Org.BouncyCastle.Pqc.Crypto.Bike.BikeKeyGenerationParameters.new"
+description = "new BikeKeyGenerationParameters(random, BikeParameters.bike128) — NIST 4th-round PQC KEM candidate (BIKE) parameter selection."
+
+[[classify]]
+id = "CRYPTO-1186"
+when.api = "^Org\\.BouncyCastle\\.Pqc\\.Crypto\\.Bike\\.BikeKeyGenerationParameters\\.new$"
+when.args.paramset = "bike128"
+algorithm_id = "bike-128"
+severity_hint = "auto"
+message = "new BikeKeyGenerationParameters(random, BikeParameters.bike128) — NIST 4th-round PQC KEM candidate (BIKE, not selected as the standardized backup). Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1187"
+when.api = "^Org\\.BouncyCastle\\.Pqc\\.Crypto\\.Bike\\.BikeKeyGenerationParameters\\.new$"
+when.args.paramset = "bike192"
+algorithm_id = "bike-192"
+severity_hint = "auto"
+message = "new BikeKeyGenerationParameters(random, BikeParameters.bike192) — NIST 4th-round PQC KEM candidate (BIKE, not selected as the standardized backup). Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1188"
+when.api = "^Org\\.BouncyCastle\\.Pqc\\.Crypto\\.Bike\\.BikeKeyGenerationParameters\\.new$"
+when.args.paramset = "bike256"
+algorithm_id = "bike-256"
+severity_hint = "auto"
+message = "new BikeKeyGenerationParameters(random, BikeParameters.bike256) — NIST 4th-round PQC KEM candidate (BIKE, not selected as the standardized backup). Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1189"
+when.api = "^Org\\.BouncyCastle\\.Pqc\\.Crypto\\.Bike\\.BikeKeyGenerationParameters\\.new$"
+algorithm_id = "bike-unattributed"
+severity_hint = "auto"
+message = "new BikeKeyGenerationParameters(random, …) with a non-literal or OID-looked-up parameter set — NIST 4th-round PQC KEM candidate (BIKE, not selected as the standardized backup), but the parameter set is not statically knowable at this call site."

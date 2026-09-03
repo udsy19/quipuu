@@ -2005,6 +2005,39 @@ fn scans_csharp_bouncycastle_lms_hss() {
 }
 
 #[test]
+fn scans_csharp_bouncycastle_hqc_bike() {
+    // #Y131 — HqcKeyGenerationParameters/BikeKeyGenerationParameters live under
+    // the experimental Org.BouncyCastle.Pqc.Crypto namespace (PqcDraft, not yet
+    // promoted like ML-KEM/ML-DSA above), and neither family has a fallback
+    // bucket in this file the way liboqs's catch-all sentinels do — before
+    // this rule, a call here produced a true silent zero, not a degraded one.
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("csharp/Pqc.cs"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-1182", "hqc-128"), // new HqcKeyGenerationParameters(random, HqcParameters.hqc128)
+        ("CRYPTO-1185", "hqc-unattributed"), // parameter set read from a variable
+        ("CRYPTO-1186", "bike-128"), // new BikeKeyGenerationParameters(random, BikeParameters.bike128)
+        ("CRYPTO-1189", "bike-unattributed"), // parameter set read from a variable
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in C# BouncyCastle HQC/BIKE fixture; findings: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+}
+
+#[test]
 fn scans_csharp_native_mlkem_mldsa_slhdsa() {
     let b = load_builtins().unwrap();
     let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");

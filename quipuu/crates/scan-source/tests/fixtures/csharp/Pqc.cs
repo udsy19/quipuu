@@ -4,6 +4,8 @@ using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Kems;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
+using Org.BouncyCastle.Pqc.Crypto.Bike;
+using Org.BouncyCastle.Pqc.Crypto.Hqc;
 using Org.BouncyCastle.Pqc.Crypto.Lms;
 using Org.BouncyCastle.Security;
 
@@ -82,5 +84,33 @@ public class PqcFixture
         var generator = new HssKeyPairGenerator();
         generator.Init(new HssKeyGenerationParameters(lmsParameters, random));
         var keyPair = generator.GenerateKeyPair();
+    }
+
+    // CSH-083 / CRYPTO-1182 — HQC-128 key-generation parameters (#Y131)
+    public static void HqcKeyPair()
+    {
+        var random = new SecureRandom();
+        var keyGenParameters = new HqcKeyGenerationParameters(random, HqcParameters.hqc128);
+    }
+
+    // CSH-083 / CRYPTO-1185 — parameter set read from a variable, not a literal
+    public static void HqcKeyPairUnattributed(HqcParameters chosen)
+    {
+        var random = new SecureRandom();
+        var keyGenParameters = new HqcKeyGenerationParameters(random, chosen);
+    }
+
+    // CSH-084 / CRYPTO-1186 — BIKE-128 key-generation parameters (#Y131)
+    public static void BikeKeyPair()
+    {
+        var random = new SecureRandom();
+        var keyGenParameters = new BikeKeyGenerationParameters(random, BikeParameters.bike128);
+    }
+
+    // CSH-084 / CRYPTO-1189 — parameter set read from a variable, not a literal
+    public static void BikeKeyPairUnattributed(BikeParameters chosen)
+    {
+        var random = new SecureRandom();
+        var keyGenParameters = new BikeKeyGenerationParameters(random, chosen);
     }
 }
