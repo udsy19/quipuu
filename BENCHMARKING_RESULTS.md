@@ -8049,3 +8049,52 @@ implementations the way it can for `mldsa44`/`mlkem768` — a real ambiguity, no
 and worth its own pass rather than a rushed one here.
 
 PRECISION: 97.18%
+
+## Measurement, 2026-09-03 (`#Y134` closed: `tls.Certificate.SupportedSignatureAlgorithms` gains ML-DSA coverage)
+
+Backlog synthesis (fourth same-day pass, `Backlog.md:15188`) found `crypto/tls.Certificate.
+SupportedSignatureAlgorithms []tls.SignatureScheme` — a pre-existing field restricting which
+`SignatureScheme` values a `crypto.Signer` backing the certificate may use (the HSM/PKCS11-backed-signer
+pattern) — had zero rule coverage in `go.toml`, unlike its `CipherSuites`/`CurvePreferences` siblings on
+the same `tls.Config`-adjacent struct family. Go 1.27 (2026-08-04) added `tls.MLDSA44`/`MLDSA65`/`MLDSA87`
+as legitimate `SignatureScheme` constants; a three-line struct literal setting all three produced 0
+findings before this change, confirmed against a release binary built from HEAD before writing any code.
+
+`match_go_supported_signature_algorithms` (`scanner.rs`) mirrors `match_go_curve_preferences` exactly:
+same `keyed_element` walker hook, same slice-type guard (`qualified_type` `tls.SignatureScheme` in place
+of `tls.CurveID`), one `RawMatch` per `selector_expression` element. `crypto/tls.Certificate.
+SupportedSignatureAlgorithms` added to `STRUCTURAL_APIS` so the reachability gate
+(`every_classify_rule_targets_an_api_the_extractor_can_emit`) sees it; three new classify arms
+(`CRYPTO-1190`/`1191`/`1192`) reuse the existing `ml-dsa-44`/`65`/`87` algorithm ids, no new table entries
+needed. New fixture case (`hsmBackedCertificate`, `tls_pqc_groups.go`) and test
+(`go_tls_certificate_signature_schemes_are_classified`) assert all three rule/algorithm_id/line triples.
+
+**Corpus effect: 0 added, 0 removed — 1907 findings both sides.** Full pre/post corpus dump: pre-change
+binary built in a worktree at HEAD (`9f011a9`), post-change binary from this cycle's tree, both dumped
+with `work/dump_findings_local.py` against the full 150-project corpus. Both raw dumps read 2069 —
+`work/dump_findings_local.py`'s known `scan_paths = [] treated as falsy` bug re-scanning
+`crates-io:rustls-pemfile` as a second, undeclared 162-finding copy of the `rustls` clone it shares a
+working tree with (see `[[2069-was-never-a-real-corpus-total]]`) — filtered out of both dumps before
+diffing, which restores the canonical 1907 total on both sides and confirms the diff is real: 0 added, 0
+removed, every row byte-identical. Zero corpus recall is the expected outcome, not a surprise — corpus B
+has no project that populates `tls.Certificate.SupportedSignatureAlgorithms`.
+
+**Precision unchanged at 97.18%.** `bin/precision.py` on the two filtered 1907-finding dumps: stratified-
+fresh 97.177% (95% CI 95.89–98.46), stratified-carried 97.159%, pooled Wilson 97.165% (95% CI
+95.56–98.20) — all round to the already-published 97.18%. Sample `A 262/271, B 355/364`, populations
+`A=788 B=1119` (re-derived fresh). `--write-readme` found nothing to change — README already states
+97.18% and 635 audited findings — the `#ESTIMATORPERSIST2` 636→635 dip prior zero-delta cycles hit did
+not recur this run.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all` (clean, no diff), `cargo clippy --release
+--all-targets --workspace -- -D warnings`, `cargo test --release --workspace` all clean (166
+`scan_test.rs` cases, one new). Both trust-invariant tests (`test_run_acvp_kats_rejects_code_execution`,
+`test_network_disabled_error`) untouched and pass.
+
+**Not done, said out loud:** the backlog synthesis's `#Y133`/`#Y135` items (a `recall_check.py`
+`is_constructor()` misclassification and a CRYPTREC documentation-currency gap) were ranked below `#Y134`
+as P2/doc-only and not started this cycle. `work/dump_findings_local.py`'s `scan_paths=[]` bug is a
+work/-script defect, not this repo's, and is worked around rather than fixed for a second time (first:
+cycle 249's `#Y123` entry).
+
+PRECISION: 97.18%

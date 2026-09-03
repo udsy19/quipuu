@@ -170,6 +170,36 @@ fn go_tls_hybrid_groups_are_classified() {
     );
 }
 
+/// `tls.Certificate.SupportedSignatureAlgorithms` — backlog `#Y134`. Unlike
+/// `CurvePreferences`/`CipherSuites` on `tls.Config`, this field on
+/// `tls.Certificate` had zero rule coverage, so a config naming Go 1.27's
+/// `tls.MLDSA44`/`65`/`87` scheme constants produced no findings at all.
+#[test]
+fn go_tls_certificate_signature_schemes_are_classified() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let path = fixtures_root().join("go/tls_pqc_groups.go");
+    let findings = scanner.scan_path(&path).expect("scan succeeds");
+
+    for (rule, algorithm_id, line) in [
+        ("CRYPTO-1190", "ml-dsa-44", 36),
+        ("CRYPTO-1191", "ml-dsa-65", 37),
+        ("CRYPTO-1192", "ml-dsa-87", 38),
+    ] {
+        let f = findings
+            .iter()
+            .find(|f| f.rule_id == rule)
+            .unwrap_or_else(|| panic!("{rule} must fire on the fixture"));
+        assert_eq!(f.algorithm_id, algorithm_id, "{rule} algorithm_id");
+        assert_eq!(f.location.line, Some(line), "{rule} line");
+        assert!(
+            f.location.location.ends_with("tls_pqc_groups.go"),
+            "{rule} must resolve to the fixture file, got {:?}",
+            f.location.location
+        );
+    }
+}
+
 /// `golang.org/x/crypto/ssh` `Config.KeyExchanges` — SSH's counterpart to
 /// `CurvePreferences`, backlog `#Y88` (RFC 10042). Covers both spellings a
 /// caller can use: the package constant and the raw wire identifier string.

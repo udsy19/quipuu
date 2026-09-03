@@ -29,3 +29,13 @@ func staleDraftClient() *tls.Config {
 		},
 	}
 }
+
+func hsmBackedCertificate() *tls.Certificate {
+	return &tls.Certificate{
+		SupportedSignatureAlgorithms: []tls.SignatureScheme{
+			tls.MLDSA44,
+			tls.MLDSA65,
+			tls.MLDSA87,
+		},
+	}
+}

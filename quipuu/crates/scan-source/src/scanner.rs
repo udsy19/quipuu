@@ -843,6 +843,15 @@ fn walk(
     {
         out.push(m);
     }
+    // Go `SupportedSignatureAlgorithms: []tls.SignatureScheme{tls.MLDSA65, …}`
+    // on `tls.Certificate` — restricts which signer schemes an HSM/PKCS11-backed
+    // `crypto.Signer` may use. Same `keyed_element` shape as CurvePreferences.
+    if language == Language::Go
+        && kind == "keyed_element"
+        && let Some(ms) = match_go_supported_signature_algorithms(node, source)
+    {
+        out.extend(ms);
+    }
     // Go `KeyExchanges: []string{ssh.KeyExchangeMLKEM768X25519, …}` — SSH's
     // counterpart to CurvePreferences (`#Y88`, RFC 10042).
     if language == Language::Go
@@ -1831,6 +1840,8 @@ const STRUCTURAL_APIS: &[&str] = &[
     "crypto/tls.Config.CurvePreferences",
     // match_go_tls_min_version
     "crypto/tls.Config.MinVersion",
+    // match_go_supported_signature_algorithms
+    "crypto/tls.Certificate.SupportedSignatureAlgorithms",
     // match_go_ssh_key_exchanges
     "golang.org/x/crypto/ssh.Config.KeyExchanges",
     // match_java_set_named_groups
@@ -2451,6 +2462,91 @@ fn match_go_curve_preferences(keyed: Node<'_>, source: &[u8]) -> Option<Vec<RawM
             line: (start.row + 1) as u32,
             offset: element.start_byte() as u32,
             symbol: format!("tls.{}", curve),
+            snippet: node_text(element, source),
+            site_context: quipuu_core::SiteContext::Call,
+        });
+    }
+
+    if results.is_empty() {
+        None
+    } else {
+        Some(results)
+    }
+}
+
+/// Match Go `SupportedSignatureAlgorithms: []tls.SignatureScheme{tls.MLDSA65, …}`
+/// on a `tls.Certificate` literal — restricts which `SignatureScheme` values an
+/// HSM/PKCS11-backed `crypto.Signer` may use. Go 1.27 added `tls.MLDSA44`/
+/// `MLDSA65`/`MLDSA87` scheme constants; this field had no matcher at all,
+/// unlike its `CurvePreferences` sibling on the same struct family, whose
+/// `[]tls.CurveID`-typed shape this function mirrors exactly for
+/// `[]tls.SignatureScheme`.
+fn match_go_supported_signature_algorithms(
+    keyed: Node<'_>,
+    source: &[u8],
+) -> Option<Vec<RawMatch>> {
+    let key_le = keyed.named_child(0)?;
+    let value_le = keyed.named_child(1)?;
+
+    let key_inner = key_le.named_child(0)?;
+    if key_inner.kind() != "identifier" {
+        return None;
+    }
+    if node_text(key_inner, source) != "SupportedSignatureAlgorithms" {
+        return None;
+    }
+
+    let composite = value_le.named_child(0)?;
+    if composite.kind() != "composite_literal" {
+        return None;
+    }
+
+    let slice_type = composite.child_by_field_name("type")?;
+    if slice_type.kind() != "slice_type" {
+        return None;
+    }
+    let element_type = slice_type.named_child(0)?;
+    if element_type.kind() != "qualified_type" {
+        return None;
+    }
+    let pkg = element_type.child_by_field_name("package")?;
+    let name = element_type.child_by_field_name("name")?;
+    if node_text(pkg, source) != "tls" || node_text(name, source) != "SignatureScheme" {
+        return None;
+    }
+
+    let body = composite.child_by_field_name("body")?;
+    if body.kind() != "literal_value" {
+        return None;
+    }
+
+    let mut results = Vec::new();
+    let mut cursor = body.walk();
+    for element in body.children(&mut cursor) {
+        if element.kind() != "literal_element" {
+            continue;
+        }
+        let Some(sel) = element.named_child(0) else {
+            continue;
+        };
+        if sel.kind() != "selector_expression" {
+            continue;
+        }
+        let operand = sel.child_by_field_name("operand")?;
+        let field = sel.child_by_field_name("field")?;
+        if operand.kind() != "identifier" || node_text(operand, source) != "tls" {
+            continue;
+        }
+        let scheme = node_text(field, source);
+        let mut args = HashMap::new();
+        args.insert("scheme".into(), ArgValue::Str(scheme.clone()));
+        let start = element.start_position();
+        results.push(RawMatch {
+            api: "crypto/tls.Certificate.SupportedSignatureAlgorithms".into(),
+            args,
+            line: (start.row + 1) as u32,
+            offset: element.start_byte() as u32,
+            symbol: format!("tls.{}", scheme),
             snippet: node_text(element, source),
             site_context: quipuu_core::SiteContext::Call,
         });

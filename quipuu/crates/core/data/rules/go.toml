@@ -469,6 +469,59 @@ algorithm_id = "x25519-kyber768-draft00"
 severity_hint = "auto"
 message = "TLS group X25519Kyber768Draft00 — pre-standard Kyber, obsoleted by RFC 10024. Replace with tls.X25519MLKEM768."
 
+# tls.Certificate.SupportedSignatureAlgorithms — restricts which SignatureScheme
+# values a crypto.Signer backing this certificate may use (an HSM/PKCS11-backed
+# signer pattern). Go 1.27 (2026-08-04) added ML-DSA SignatureScheme constants
+# but this field had no rule at all — unlike its CurvePreferences sibling above
+# on the same tls.Config-adjacent struct family, a config that names tls.MLDSA65
+# here produced zero findings. Same query shape as CurvePreferences: a
+# []tls.SignatureScheme composite literal, one selector_expression per element.
+
+[[extract]]
+id = "GO-080"
+language = "go"
+query = """
+(keyed_element
+  (literal_element (identifier) @key (#eq? @key "SupportedSignatureAlgorithms"))
+  (literal_element (composite_literal
+    type: (slice_type
+      element: (qualified_type
+        package: (package_identifier) @tls_t (#eq? @tls_t "tls")
+        name: (type_identifier) @typ_name (#eq? @typ_name "SignatureScheme")))
+    body: (literal_value
+      (literal_element
+        (selector_expression
+          operand: (identifier) @tls_pkg (#eq? @tls_pkg "tls")
+          field: (field_identifier) @scheme))))))
+"""
+captures = { key = "ident", tls_t = "ident", typ_name = "ident", tls_pkg = "ident", scheme = "ident" }
+api = "crypto/tls.Certificate.SupportedSignatureAlgorithms"
+description = "TLS signature-scheme allowlist on tls.Certificate — restricts which SignatureScheme values a crypto.Signer may use."
+
+[[classify]]
+id = "CRYPTO-1190"
+when.api = "^crypto/tls\\.Certificate\\.SupportedSignatureAlgorithms$"
+when.args.scheme = "MLDSA44"
+algorithm_id = "ml-dsa-44"
+severity_hint = "auto"
+message = "TLS signature scheme MLDSA44 — FIPS 204 ML-DSA-44, quantum-resistant (Go 1.27+)."
+
+[[classify]]
+id = "CRYPTO-1191"
+when.api = "^crypto/tls\\.Certificate\\.SupportedSignatureAlgorithms$"
+when.args.scheme = "MLDSA65"
+algorithm_id = "ml-dsa-65"
+severity_hint = "auto"
+message = "TLS signature scheme MLDSA65 — FIPS 204 ML-DSA-65, quantum-resistant (Go 1.27+)."
+
+[[classify]]
+id = "CRYPTO-1192"
+when.api = "^crypto/tls\\.Certificate\\.SupportedSignatureAlgorithms$"
+when.args.scheme = "MLDSA87"
+algorithm_id = "ml-dsa-87"
+severity_hint = "auto"
+message = "TLS signature scheme MLDSA87 — FIPS 204 ML-DSA-87, quantum-resistant (Go 1.27+)."
+
 # golang.org/x/crypto/ssh Config.KeyExchanges — SSH's counterpart to
 # CurvePreferences above (#Y88). RFC 10042 (Informational, Aug 2026)
 # registers three hybrid ML-KEM SSH KEX identifiers; OpenSSH has shipped
