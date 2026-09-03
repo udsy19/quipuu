@@ -633,6 +633,17 @@ fn scans_java_pqc_keypairgenerator_and_signature_and_kem() {
         ("CRYPTO-1022", "xmss-mt"), // KeyPairGenerator.getInstance("XMSSMT", "BCPQC")
         ("CRYPTO-1025", "xmss"), // Signature.getInstance("XMSS-SHA256", "BCPQC")
         ("CRYPTO-1029", "xmss-mt"), // Signature.getInstance("XMSSMT-SHA256", "BCPQC")
+        ("CRYPTO-1210", "ntru-plus-768"), // KeyPairGenerator.getInstance("NTRU+KEM768", "BCPQC")
+        ("CRYPTO-1213", "ntru-plus-unattributed"), // KeyPairGenerator.getInstance("NTRUPLUS", "BCPQC")
+        ("CRYPTO-1214", "smaug-t-mode1"), // KeyPairGenerator.getInstance("SMAUGT-MODE1", "BCPQC")
+        ("CRYPTO-1231", "ntru-plus-864"), // KEM.getInstance("NTRU+KEM864")
+        ("CRYPTO-1235", "smaug-t-mode3"), // KEM.getInstance("SMAUGT-MODE3")
+        ("CRYPTO-1219", "aimer-128f"),    // KeyPairGenerator.getInstance("AIMer-128f", "BCPQC")
+        ("CRYPTO-1225", "aimer-unattributed"), // KeyPairGenerator.getInstance("AIMer", "BCPQC")
+        ("CRYPTO-1239", "aimer-128f"),    // Signature.getInstance("AIMer-128f", "BCPQC")
+        ("CRYPTO-1226", "haetae-2"),      // KeyPairGenerator.getInstance("HAETAE-2", "BCPQC")
+        ("CRYPTO-1229", "haetae-unattributed"), // KeyPairGenerator.getInstance("Haetae", "BCPQC")
+        ("CRYPTO-1246", "haetae-2"),      // Signature.getInstance("HAETAE-2", "BCPQC")
     ];
     for (rule_id, algorithm_id) in want {
         assert!(

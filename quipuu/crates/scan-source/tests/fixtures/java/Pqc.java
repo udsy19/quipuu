@@ -116,4 +116,59 @@ public class Pqc {
     public static void xmssMtSignature() throws Exception {
         Signature s = Signature.getInstance("XMSSMT-SHA256", "BCPQC");
     }
+
+    // JAV-010 / CRYPTO-1210 — NTRU+ (KpqC) keypair generation
+    public static void ntruPlusKeypair() throws Exception {
+        KeyPairGenerator g = KeyPairGenerator.getInstance("NTRU+KEM768", "BCPQC");
+    }
+
+    // JAV-010 / CRYPTO-1213 — NTRU+ family-generic name, no parameter set stated
+    public static void ntruPlusKeypairUnattributed() throws Exception {
+        KeyPairGenerator g = KeyPairGenerator.getInstance("NTRUPLUS", "BCPQC");
+    }
+
+    // JAV-010 / CRYPTO-1214 — SMAUG-T (KpqC) keypair generation
+    public static void smaugTKeypair() throws Exception {
+        KeyPairGenerator g = KeyPairGenerator.getInstance("SMAUGT-MODE1", "BCPQC");
+    }
+
+    // JAV-040 / CRYPTO-1231 — NTRU+ (KpqC) encapsulation object
+    public static void ntruPlusKem() throws Exception {
+        KEM kem = KEM.getInstance("NTRU+KEM864");
+    }
+
+    // JAV-040 / CRYPTO-1235 — SMAUG-T (KpqC) encapsulation object
+    public static void smaugTKem() throws Exception {
+        KEM kem = KEM.getInstance("SMAUGT-MODE3");
+    }
+
+    // JAV-010 / CRYPTO-1219 — AIMer (KpqC) keypair generation
+    public static void aimerKeypair() throws Exception {
+        KeyPairGenerator g = KeyPairGenerator.getInstance("AIMer-128f", "BCPQC");
+    }
+
+    // JAV-010 / CRYPTO-1225 — AIMer family-generic name, no parameter set stated
+    public static void aimerKeypairUnattributed() throws Exception {
+        KeyPairGenerator g = KeyPairGenerator.getInstance("AIMer", "BCPQC");
+    }
+
+    // JAV-090 / CRYPTO-1239 — AIMer (KpqC) signature
+    public static void aimerSignature() throws Exception {
+        Signature s = Signature.getInstance("AIMer-128f", "BCPQC");
+    }
+
+    // JAV-010 / CRYPTO-1226 — HAETAE (KpqC) keypair generation
+    public static void haetaeKeypair() throws Exception {
+        KeyPairGenerator g = KeyPairGenerator.getInstance("HAETAE-2", "BCPQC");
+    }
+
+    // JAV-010 / CRYPTO-1229 — HAETAE family-generic name, no parameter set stated
+    public static void haetaeKeypairUnattributed() throws Exception {
+        KeyPairGenerator g = KeyPairGenerator.getInstance("Haetae", "BCPQC");
+    }
+
+    // JAV-090 / CRYPTO-1246 — HAETAE (KpqC) signature
+    public static void haetaeSignature() throws Exception {
+        Signature s = Signature.getInstance("HAETAE-2", "BCPQC");
+    }
 }

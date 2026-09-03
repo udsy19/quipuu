@@ -692,6 +692,171 @@ algorithm_id = "ml-dsa-87"
 severity_hint = "auto"
 message = "KeyPairGenerator.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-87 paired with ECDSA P-521). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
 
+# --- KpqC (Korea's national PQC standard), BouncyCastle 1.85's JCA registration ---
+# (backlog #Y151). NTRU+ and SMAUG-T are KEMs; AIMer and HAETAE are signatures,
+# covered under Signature.getInstance further below. Literal strings sourced by
+# reading bc-java's Mappings.configure() directly (prov/src/main/java/org/
+# bouncycastle/pqc/jcajce/provider/{NTRUPlus,SmaugT}.java).
+[[classify]]
+id = "CRYPTO-1210"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?NTRU\\+KEM-?768\"?$" }
+algorithm_id = "ntru-plus-768"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1211"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?NTRU\\+KEM-?864\"?$" }
+algorithm_id = "ntru-plus-864"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1212"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?NTRU\\+KEM-?1152\"?$" }
+algorithm_id = "ntru-plus-1152"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1213"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?NTRUPLUS\"?$" }
+algorithm_id = "ntru-plus-unattributed"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM, but the parameter set is not stated at this call site (BC's family-generic 'NTRUPLUS' name)."
+
+[[classify]]
+id = "CRYPTO-1214"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SMAUGT-MODE1\"?$" }
+algorithm_id = "smaug-t-mode1"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1215"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SMAUGT-MODE3\"?$" }
+algorithm_id = "smaug-t-mode3"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1216"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SMAUGT-MODE5\"?$" }
+algorithm_id = "smaug-t-mode5"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1217"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SMAUGT-MODET\"?$" }
+algorithm_id = "smaug-t-modet"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1218"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SMAUGT\"?$" }
+algorithm_id = "smaug-t-unattributed"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM, but the parameter set is not stated at this call site (BC's family-generic 'SMAUGT' name)."
+
+[[classify]]
+id = "CRYPTO-1219"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?AIMer-128f\"?$" }
+algorithm_id = "aimer-128f"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1220"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?AIMer-128s\"?$" }
+algorithm_id = "aimer-128s"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1221"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?AIMer-192f\"?$" }
+algorithm_id = "aimer-192f"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1222"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?AIMer-192s\"?$" }
+algorithm_id = "aimer-192s"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1223"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?AIMer-256f\"?$" }
+algorithm_id = "aimer-256f"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1224"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?AIMer-256s\"?$" }
+algorithm_id = "aimer-256s"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1225"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?AIMer\"?$" }
+algorithm_id = "aimer-unattributed"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature, but the parameter set is not stated at this call site (BC's family-generic 'AIMer' name)."
+
+[[classify]]
+id = "CRYPTO-1226"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?HAETAE-2\"?$" }
+algorithm_id = "haetae-2"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1227"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?HAETAE-3\"?$" }
+algorithm_id = "haetae-3"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1228"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?HAETAE-5\"?$" }
+algorithm_id = "haetae-5"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1229"
+when.api = "^java\\.security\\.KeyPairGenerator\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?Haetae\"?$" }
+algorithm_id = "haetae-unattributed"
+severity_hint = "auto"
+message = "KeyPairGenerator.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature, but the parameter set is not stated at this call site (BC's family-generic 'Haetae' name)."
+
 # `KeyPairGenerator.getInstance(keyType)` with `keyType` a variable (netty's
 # `pkitesting/Algorithms.java` is the corpus's own example) matches none of
 # CRYPTO-210..223 above — none of their regexes match the variable's
@@ -812,6 +977,81 @@ when.args.algo = { regex = "(?i)^\"?(CMCE|MCELIECE[0-9A-Z]*)\"?$" }
 algorithm_id = "classic-mceliece-unattributed"
 severity_hint = "auto"
 message = "KEM.getInstance('{algo}') — NIST 4th-round PQC KEM candidate (Classic McEliece, not selected as the standardized backup). Migrated key-establishment call site; specific parameter set not tracked."
+
+# --- KpqC (Korea's national PQC standard), BouncyCastle 1.85's KEM.getInstance
+# registration (backlog #Y151) — same two KEM families as the KeyPairGenerator
+# arms above.
+[[classify]]
+id = "CRYPTO-1230"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?NTRU\\+KEM-?768\"?$" }
+algorithm_id = "ntru-plus-768"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1231"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?NTRU\\+KEM-?864\"?$" }
+algorithm_id = "ntru-plus-864"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1232"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?NTRU\\+KEM-?1152\"?$" }
+algorithm_id = "ntru-plus-1152"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1233"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?NTRUPLUS\"?$" }
+algorithm_id = "ntru-plus-unattributed"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM, but the parameter set is not stated at this call site (BC's family-generic 'NTRUPLUS' name)."
+
+[[classify]]
+id = "CRYPTO-1234"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SMAUGT-MODE1\"?$" }
+algorithm_id = "smaug-t-mode1"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1235"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SMAUGT-MODE3\"?$" }
+algorithm_id = "smaug-t-mode3"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1236"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SMAUGT-MODE5\"?$" }
+algorithm_id = "smaug-t-mode5"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1237"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SMAUGT-MODET\"?$" }
+algorithm_id = "smaug-t-modet"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM. Migrated key-establishment call site."
+
+[[classify]]
+id = "CRYPTO-1238"
+when.api = "^javax\\.crypto\\.KEM\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?SMAUGT\"?$" }
+algorithm_id = "smaug-t-unattributed"
+severity_hint = "auto"
+message = "KEM.getInstance('{algo}') — KpqC (Korea's national PQC standard) KEM, but the parameter set is not stated at this call site (BC's family-generic 'SMAUGT' name)."
 
 # `KEM.getInstance(algorithmName)` with a variable argument matches none of
 # CRYPTO-227..229 above and vanished from the report entirely. Unlike
@@ -2050,6 +2290,97 @@ when.args.algo = { regex = "(?i)^\"?MLDSA87-ECDSA-P521-SHA512(-PREHASH)?\"?$" }
 algorithm_id = "ml-dsa-87"
 severity_hint = "auto"
 message = "Signature.getInstance('{algo}') — BouncyCastle Composite ML-DSA (FIPS 204 ML-DSA-87 paired with ECDSA P-521). The ML-DSA component is quantum-resistant; algorithm-table.toml has no composite-family row, so the specific classical pairing is not published as a separate id."
+
+# --- KpqC (Korea's national PQC standard), BouncyCastle 1.85's Signature.getInstance
+# registration (backlog #Y151) — same two signature families as the
+# KeyPairGenerator arms above.
+[[classify]]
+id = "CRYPTO-1239"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?AIMer-128f\"?$" }
+algorithm_id = "aimer-128f"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1240"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?AIMer-128s\"?$" }
+algorithm_id = "aimer-128s"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1241"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?AIMer-192f\"?$" }
+algorithm_id = "aimer-192f"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1242"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?AIMer-192s\"?$" }
+algorithm_id = "aimer-192s"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1243"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?AIMer-256f\"?$" }
+algorithm_id = "aimer-256f"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1244"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?AIMer-256s\"?$" }
+algorithm_id = "aimer-256s"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1245"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?AIMer\"?$" }
+algorithm_id = "aimer-unattributed"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature, but the parameter set is not stated at this call site (BC's family-generic 'AIMer' name)."
+
+[[classify]]
+id = "CRYPTO-1246"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?HAETAE-2\"?$" }
+algorithm_id = "haetae-2"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1247"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?HAETAE-3\"?$" }
+algorithm_id = "haetae-3"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1248"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?HAETAE-5\"?$" }
+algorithm_id = "haetae-5"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature."
+
+[[classify]]
+id = "CRYPTO-1249"
+when.api = "^java\\.security\\.Signature\\.getInstance$"
+when.args.algo = { regex = "(?i)^\"?Haetae\"?$" }
+algorithm_id = "haetae-unattributed"
+severity_hint = "auto"
+message = "Signature.getInstance('{algo}') — KpqC (Korea's national PQC standard) signature, but the parameter set is not stated at this call site (BC's family-generic 'Haetae' name)."
 
 # `Signature.getInstance(algorithmIdentifier)` with a variable argument (the
 # same netty `pkitesting/Algorithms.java` call site as CRYPTO-234's

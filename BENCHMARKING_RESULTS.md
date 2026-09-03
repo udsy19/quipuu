@@ -1,8 +1,8 @@
 # quipuu — 150-project corpus benchmark
 
 Sections are appended in date order. **The current run is the last dated section**
-(*RFC 10024 citation swap re-measured, 0 added/removed — 2026-09-02*); everything above it is
-the record of an earlier phase and is kept as history, not as a current claim.
+(*`#Y151` closed: BouncyCastle KpqC taxonomy covered in `java.toml` — 2026-09-03*); everything
+above it is the record of an earlier phase and is kept as history, not as a current claim.
 
 ---
 
@@ -8635,3 +8635,74 @@ not silently dropped.
 
 PRECISION: 97.33% (carried — falsified unmoved by row-identical scan output on a real project,
 not re-derived from a fresh corpus dump; no detection or existing-scan code path was touched).
+
+---
+
+## `#Y151` closed: BouncyCastle KpqC taxonomy (AIMer/HAETAE/NTRU+/SMAUG-T) covered in `java.toml`
+
+Backlog item `#Y151` (Backlog.md, "Appended 2026-09-03 — Track B synthesis, tenth same-day pass,"
+item 2): BouncyCastle 1.85 (2026-07-28) ships full JCA support for Korea's national PQC standard,
+KpqC — AIMer/HAETAE signatures and NTRU+/SMAUG-T KEMs, final winners announced 2025-01, 2026 named
+Korea's active migration year — and `java.toml`/`algorithm-table.toml` had zero taxonomy rows for
+any of the four, so a codebase that has migrated reported as "Safe, unrecognized algorithm" instead
+of PQC-inventory progress.
+
+**Literal strings sourced by reading bc-java's own provider code directly**, not reconstructed from
+naming convention: the corpus's own `maven:org.bouncycastle:bcprov-jdk18on` clone contains
+`bcpkix-jdk18on/prov/src/main/java/org/bouncycastle/pqc/jcajce/provider/{AIMer,Haetae,NTRUPlus,
+SmaugT}.java`, whose `Mappings.configure()` methods register the exact JCA service names —
+`AIMer-128f/128s/192f/192s/256f/256s` (KeyFactory/KeyPairGenerator/Signature), `HAETAE-2/3/5`
+(KeyFactory/KeyPairGenerator/Signature), `NTRU+KEM768/864/1152` (KeyFactory/KeyPairGenerator/
+KeyGenerator/Cipher/KEM), `SMAUGT-MODE1/3/5/T` (same five services) — plus each family's bare
+family-generic name (`AIMer`, `Haetae`, `NTRUPLUS`, `SMAUGT`).
+
+**What shipped.** 20 new `algorithm-table.toml` rows (16 per-parameter-set leaves + 4
+`*-unattributed` family sentinels, `family = "PQC-candidate"`, `quantum_status = "PqcDraft"` — no
+FIPS number or OID exists for KpqC, the same status BIKE/Classic McEliece/HQC already carry).
+Security categories are *not* published: unlike HQC/BIKE's NIST-submission category-per-suffix
+naming, bc-java's own KpqC parameter source carries no category annotation this table could verify
+independently, so the field is omitted rather than guessed. 40 new `java.toml` classify arms
+(`CRYPTO-1210`–`1249`): `KeyPairGenerator.getInstance` (20, all four families — NTRU+/SMAUG-T as
+KEMs, AIMer/HAETAE as signatures, matching bc-java's own registration of all four under this API),
+`javax.crypto.KEM.getInstance` (9, NTRU+/SMAUG-T only), `Signature.getInstance` (11, AIMer/HAETAE
+only) — each family's bare-name arm ordered last within its `when.api` block so the qualified
+parameter-set arms win first, mirroring the existing HQC/BIKE convention. No `scanner.rs` change:
+every KpqC string states its full parameter set as a literal at the call site, unlike BC's
+lightweight-API PQC classes (`CRYPTO-811`–`819`), which take theirs from a runtime
+`KeyGenerationParameters` object.
+
+**Fixture and test coverage.** `tests/fixtures/java/Pqc.java` gained 11 new call sites (one bare +
+one qualified per family across its natural APIs); `scans_java_pqc_keypairgenerator_and_signature_and_kem`
+asserts all 11 by exact `(rule_id, algorithm_id)` pair.
+
+**Precision 97.33% held exactly — 0 added, 0 removed, dumps row-identical.** Full 150-project
+corpus dump (`dump_findings_local.py`) with pre-change (`77463342`) and post-change binaries: both
+2238 findings, byte-for-byte identical row set (project, rule_id, algorithm_id, severity, file,
+line). No corpus project reaches any of the 40 new literal strings — the item's own "honest prior"
+that "a one-release-old family may show zero outside-BC incidence today" held, including inside
+bc-java's own clone (its KpqC call sites live in `prov/src/test/**`, outside `scan_hints.scan_paths`
+for that project).
+
+**Corpus-count discrepancy found and isolated, not this cycle's to fix.** The raw 2238-finding dump
+does not match the last published total (2070). The entire gap is one project: `crates-io:
+rustls-pemfile`, 168 findings both pre and post — the same `dump_findings_local.py` defect cycle
+249 already diagnosed and flagged (`scan_paths = hints.get("scan_paths") or [""]` treats this
+project's deliberate `scan_hints.unscannable`/`scan_paths = []` as falsy and scans the whole clone
+instead of nothing). Filtering that one project out of both dumps restores exactly 2070 findings on
+both sides and reproduces the anchored 97.33% figure to three decimal places
+(`state/precision.json`'s recorded 97.33, cycle 322). `bin/precision.py --write-readme` was run
+once unfiltered (confirming the drift is real and reproducible, not a fluke) and once filtered
+(the version committed); the unfiltered run is not published. This is the second independent
+reproduction of the `dump_findings_local.py` bug (cycle 249, this cycle); it remains a work/-script
+defect outside this repo's write authority, not a detection change.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy
+--release --all-targets --workspace -- -D warnings`, `cargo test --release --workspace` all clean
+(170 `scan_test.rs` cases, one new). Both trust-invariant tests untouched and pass.
+
+**Not done, said out loud:** the corpus incidence check the item asked for before treating this as
+more than a sourced-but-unmeasured gap is now done (0 hits, reported above, not silently skipped).
+Security categories for all 16 parameter-set rows are unverified and explicitly omitted rather than
+guessed — a future cycle with an authoritative KpqC category mapping should add them.
+
+PRECISION: 97.33%

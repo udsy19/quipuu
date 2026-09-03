@@ -1178,6 +1178,180 @@ primitive = "kem"
 quantum_status = "PqcDraft"
 notes = "BouncyCastle's JCA provider accepts both the family-generic 'CMCE' string and 32+ qualified 'mceliece<params>[f|pc|pcf]' strings across KeyPairGenerator/Cipher/KEM.getInstance; this table has no per-parameter row for any of them yet (unselected NIST 4th-round candidate, no FIPS number or OID). The call site is unambiguously Classic McEliece; the specific parameter set is unattributed."
 
+# KpqC — South Korea's national PQC standard (final winners announced 2025-01,
+# 2026 named the active migration year). BouncyCastle 1.85 (2026-07-28) ships
+# full JCA support for all four selected algorithms (backlog #Y151); no
+# NIST FIPS number or OID exists for any of them, so quantum_status is
+# PqcDraft like the unselected NIST candidates above, not because status is
+# in doubt but because "FIPS-final" is a NIST-specific milestone this
+# non-NIST standard does not have. Security categories are not published in
+# a form this table could independently verify (bc-java's own parameter
+# source carries no category annotation, unlike HQC/BIKE's NIST submission
+# naming) — omitted rather than guessed, per this table's own precedent for
+# an unverifiable field. NTRU+ and SMAUG-T are KEMs; AIMer and HAETAE are
+# signatures — all four literal strings sourced by reading bc-java's own
+# Mappings.configure() in the corpus clone (prov/src/main/java/org/
+# bouncycastle/pqc/jcajce/provider/{NTRUPlus,SmaugT,AIMer,Haetae}.java).
+[[algorithm]]
+id = "ntru-plus-768"
+display_name = "NTRU+KEM768"
+family = "PQC-candidate"
+primitive = "kem"
+quantum_status = "PqcDraft"
+notes = "KpqC (Korea's national PQC standard) KEM, BouncyCastle JCA name 'NTRU+KEM768'. No FIPS number or OID exists."
+
+[[algorithm]]
+id = "ntru-plus-864"
+display_name = "NTRU+KEM864"
+family = "PQC-candidate"
+primitive = "kem"
+quantum_status = "PqcDraft"
+notes = "KpqC (Korea's national PQC standard) KEM, BouncyCastle JCA name 'NTRU+KEM864'. No FIPS number or OID exists."
+
+[[algorithm]]
+id = "ntru-plus-1152"
+display_name = "NTRU+KEM1152"
+family = "PQC-candidate"
+primitive = "kem"
+quantum_status = "PqcDraft"
+notes = "KpqC (Korea's national PQC standard) KEM, BouncyCastle JCA name 'NTRU+KEM1152'. No FIPS number or OID exists."
+
+[[algorithm]]
+id = "ntru-plus-unattributed"
+display_name = "NTRU+ (parameter set not stated at this call site)"
+family = "PQC-candidate"
+primitive = "kem"
+quantum_status = "PqcDraft"
+notes = "BouncyCastle's JCA provider accepts the family-generic 'NTRUPLUS' string at KeyPairGenerator/KeyGenerator/Cipher/KEM.getInstance; the parameter set (NTRU+KEM768/864/1152) is chosen separately. The call site is unambiguously NTRU+; only the parameter set is unattributed."
+
+[[algorithm]]
+id = "smaug-t-mode1"
+display_name = "SMAUG-T Mode1"
+family = "PQC-candidate"
+primitive = "kem"
+quantum_status = "PqcDraft"
+notes = "KpqC (Korea's national PQC standard) KEM, BouncyCastle JCA name 'SMAUGT-MODE1'. No FIPS number or OID exists."
+
+[[algorithm]]
+id = "smaug-t-mode3"
+display_name = "SMAUG-T Mode3"
+family = "PQC-candidate"
+primitive = "kem"
+quantum_status = "PqcDraft"
+notes = "KpqC (Korea's national PQC standard) KEM, BouncyCastle JCA name 'SMAUGT-MODE3'. No FIPS number or OID exists."
+
+[[algorithm]]
+id = "smaug-t-mode5"
+display_name = "SMAUG-T Mode5"
+family = "PQC-candidate"
+primitive = "kem"
+quantum_status = "PqcDraft"
+notes = "KpqC (Korea's national PQC standard) KEM, BouncyCastle JCA name 'SMAUGT-MODE5'. No FIPS number or OID exists."
+
+[[algorithm]]
+id = "smaug-t-modet"
+display_name = "SMAUG-T ModeT"
+family = "PQC-candidate"
+primitive = "kem"
+quantum_status = "PqcDraft"
+notes = "KpqC (Korea's national PQC standard) KEM, BouncyCastle JCA name 'SMAUGT-MODET'. No FIPS number or OID exists."
+
+[[algorithm]]
+id = "smaug-t-unattributed"
+display_name = "SMAUG-T (parameter set not stated at this call site)"
+family = "PQC-candidate"
+primitive = "kem"
+quantum_status = "PqcDraft"
+notes = "BouncyCastle's JCA provider accepts the family-generic 'SMAUGT' string at KeyPairGenerator/KeyGenerator/Cipher/KEM.getInstance; the parameter set (SMAUGT-MODE1/3/5/T) is chosen separately. The call site is unambiguously SMAUG-T; only the parameter set is unattributed."
+
+[[algorithm]]
+id = "aimer-128f"
+display_name = "AIMer-128f"
+family = "PQC-candidate"
+primitive = "signature"
+quantum_status = "PqcDraft"
+notes = "KpqC (Korea's national PQC standard) signature, BouncyCastle JCA name 'AIMer-128f'. No FIPS number or OID exists."
+
+[[algorithm]]
+id = "aimer-128s"
+display_name = "AIMer-128s"
+family = "PQC-candidate"
+primitive = "signature"
+quantum_status = "PqcDraft"
+notes = "KpqC (Korea's national PQC standard) signature, BouncyCastle JCA name 'AIMer-128s'. No FIPS number or OID exists."
+
+[[algorithm]]
+id = "aimer-192f"
+display_name = "AIMer-192f"
+family = "PQC-candidate"
+primitive = "signature"
+quantum_status = "PqcDraft"
+notes = "KpqC (Korea's national PQC standard) signature, BouncyCastle JCA name 'AIMer-192f'. No FIPS number or OID exists."
+
+[[algorithm]]
+id = "aimer-192s"
+display_name = "AIMer-192s"
+family = "PQC-candidate"
+primitive = "signature"
+quantum_status = "PqcDraft"
+notes = "KpqC (Korea's national PQC standard) signature, BouncyCastle JCA name 'AIMer-192s'. No FIPS number or OID exists."
+
+[[algorithm]]
+id = "aimer-256f"
+display_name = "AIMer-256f"
+family = "PQC-candidate"
+primitive = "signature"
+quantum_status = "PqcDraft"
+notes = "KpqC (Korea's national PQC standard) signature, BouncyCastle JCA name 'AIMer-256f'. No FIPS number or OID exists."
+
+[[algorithm]]
+id = "aimer-256s"
+display_name = "AIMer-256s"
+family = "PQC-candidate"
+primitive = "signature"
+quantum_status = "PqcDraft"
+notes = "KpqC (Korea's national PQC standard) signature, BouncyCastle JCA name 'AIMer-256s'. No FIPS number or OID exists."
+
+[[algorithm]]
+id = "aimer-unattributed"
+display_name = "AIMer (parameter set not stated at this call site)"
+family = "PQC-candidate"
+primitive = "signature"
+quantum_status = "PqcDraft"
+notes = "BouncyCastle's JCA provider accepts the family-generic 'AIMer' string at KeyFactory/KeyPairGenerator/Signature.getInstance; the parameter set (AIMer-128f/128s/192f/192s/256f/256s) is chosen separately. The call site is unambiguously AIMer; only the parameter set is unattributed."
+
+[[algorithm]]
+id = "haetae-2"
+display_name = "HAETAE-2"
+family = "PQC-candidate"
+primitive = "signature"
+quantum_status = "PqcDraft"
+notes = "KpqC (Korea's national PQC standard) signature, BouncyCastle JCA name 'HAETAE-2'. No FIPS number or OID exists."
+
+[[algorithm]]
+id = "haetae-3"
+display_name = "HAETAE-3"
+family = "PQC-candidate"
+primitive = "signature"
+quantum_status = "PqcDraft"
+notes = "KpqC (Korea's national PQC standard) signature, BouncyCastle JCA name 'HAETAE-3'. No FIPS number or OID exists."
+
+[[algorithm]]
+id = "haetae-5"
+display_name = "HAETAE-5"
+family = "PQC-candidate"
+primitive = "signature"
+quantum_status = "PqcDraft"
+notes = "KpqC (Korea's national PQC standard) signature, BouncyCastle JCA name 'HAETAE-5'. No FIPS number or OID exists."
+
+[[algorithm]]
+id = "haetae-unattributed"
+display_name = "HAETAE (parameter set not stated at this call site)"
+family = "PQC-candidate"
+primitive = "signature"
+quantum_status = "PqcDraft"
+notes = "BouncyCastle's JCA provider accepts the family-generic 'Haetae' string at KeyFactory/KeyPairGenerator/Signature.getInstance; the parameter set (HAETAE-2/3/5) is chosen separately. The call site is unambiguously HAETAE; only the parameter set is unattributed."
+
 [[algorithm]]
 id = "sig-unattributed"
 display_name = "Post-quantum signature (algorithm family not in the quipuu table)"
