@@ -93,7 +93,10 @@
 product-categories list by 2025-12-01. CISA published *"Product Categories for Technologies That
 Use Post-Quantum Cryptography Standards"* 53 days late, on 2026-01-23 — a procurement-category list
 organized by cryptographic function. Record-only: it sets no algorithm rules and imposes no new
-deadline of its own.
+deadline of its own. For "Widely Available" categories (Table 2), the list states organizations
+"should acquire only PQC-capable products when planning acquisitions" — an advisory acquisition
+recommendation, not a binding requirement; "Transitioning" categories (Table 3) carry no such
+language.
 
 ---
 
