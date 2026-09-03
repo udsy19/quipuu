@@ -11,6 +11,14 @@ from the pkg.go.dev package indexes rather than from `data/rules/go.toml`. A
 ground truth derived from our own rules would inherit our blind spots and score
 100% by construction.
 
+Every entry below must cite, in an adjacent comment, the upstream source it
+was read from (a pkg.go.dev URL or the package's own godoc) — never
+`go.toml`, and never a commit message that says "matching go.toml's own
+rule". Even when a pattern is unambiguous enough that independent derivation
+converges on the same regex `go.toml` uses (backlog #Y130: circl's ML-DSA/
+ML-KEM function names have no second reasonable spelling), the citation is
+what makes that convergence verifiable instead of assumed.
+
 TWO DENOMINATORS, AND YOU MUST SAY WHICH ONE YOU MEAN.
 
   in-scope  call sites inside the subtrees `scan_hints.scan_paths` actually
@@ -85,6 +93,26 @@ APIS = [
     (r"\bmldsa\.MLDSA44\s*\(", "mldsa.MLDSA44"),
     (r"\bmldsa\.MLDSA65\s*\(", "mldsa.MLDSA65"),
     (r"\bmldsa\.MLDSA87\s*\(", "mldsa.MLDSA87"),
+    # github.com/cloudflare/circl — a third-party library, not Go stdlib, but
+    # in scope because README.md's Go recall figure already credits circl
+    # rules with hand-verified findings (backlog #Y130). Function names read
+    # from each package's own pkg.go.dev entry, not from go.toml:
+    # pkg.go.dev/github.com/cloudflare/circl/sign/mldsa/mldsa{44,65,87}
+    # (GenerateKey, NewKeyFromSeed) and
+    # pkg.go.dev/github.com/cloudflare/circl/kem/mlkem/mlkem{512,768,1024}
+    # (GenerateKeyPair, NewKeyFromSeed).
+    (r"\bmldsa44\.GenerateKey\s*\(", "mldsa44.GenerateKey"),
+    (r"\bmldsa44\.NewKeyFromSeed\s*\(", "mldsa44.NewKeyFromSeed"),
+    (r"\bmldsa65\.GenerateKey\s*\(", "mldsa65.GenerateKey"),
+    (r"\bmldsa65\.NewKeyFromSeed\s*\(", "mldsa65.NewKeyFromSeed"),
+    (r"\bmldsa87\.GenerateKey\s*\(", "mldsa87.GenerateKey"),
+    (r"\bmldsa87\.NewKeyFromSeed\s*\(", "mldsa87.NewKeyFromSeed"),
+    (r"\bmlkem512\.GenerateKeyPair\s*\(", "mlkem512.GenerateKeyPair"),
+    (r"\bmlkem512\.NewKeyFromSeed\s*\(", "mlkem512.NewKeyFromSeed"),
+    (r"\bmlkem768\.GenerateKeyPair\s*\(", "mlkem768.GenerateKeyPair"),
+    (r"\bmlkem768\.NewKeyFromSeed\s*\(", "mlkem768.NewKeyFromSeed"),
+    (r"\bmlkem1024\.GenerateKeyPair\s*\(", "mlkem1024.GenerateKeyPair"),
+    (r"\bmlkem1024\.NewKeyFromSeed\s*\(", "mlkem1024.NewKeyFromSeed"),
 ]
 COMPILED = [(re.compile(p), lab) for p, lab in APIS]
 
@@ -109,6 +137,12 @@ IMPORT_PKG = {
     "rc4": "crypto/rc4",
     "mlkem": "crypto/mlkem",
     "mldsa": "crypto/mldsa",
+    "mldsa44": "github.com/cloudflare/circl/sign/mldsa/mldsa44",
+    "mldsa65": "github.com/cloudflare/circl/sign/mldsa/mldsa65",
+    "mldsa87": "github.com/cloudflare/circl/sign/mldsa/mldsa87",
+    "mlkem512": "github.com/cloudflare/circl/kem/mlkem/mlkem512",
+    "mlkem768": "github.com/cloudflare/circl/kem/mlkem/mlkem768",
+    "mlkem1024": "github.com/cloudflare/circl/kem/mlkem/mlkem1024",
 }
 
 # A site whose API constructs a key or a hash/cipher object, as opposed to one

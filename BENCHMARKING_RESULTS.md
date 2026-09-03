@@ -7974,3 +7974,78 @@ measurement this item's scope does not cover. The cross-language recall probe
 real-world ground truth, and was never in scope for this item.
 
 PRECISION: 97.18%
+
+## Measurement, 2026-09-03 (`#Y131` closed: BouncyCastle .NET HQC/BIKE coverage; `#Y130` closed: recall ground-truth independence + circl widening)
+
+Two backlog items closed together because the second was found auditing the first's own prior
+fix (`Backlog.md:14929`).
+
+**`#Y131`.** `csharp.toml` gained extract/classify rules for
+`HqcKeyGenerationParameters`/`BikeKeyGenerationParameters` (`Org.BouncyCastle.Pqc.Crypto.{Hqc,Bike}`),
+the same two-argument static-field-parameter shape `MLKemKeyGenerationParameters` already used —
+8 classify arms, 2 extract blocks, keyed on the `HqcParameters.hqc{128,192,256}`/
+`BikeParameters.bike{128,192,256}` argument, plus the `-unattributed` fallback both families
+already had `algorithm_id` rows for. Unlike liboqs's C/C++ catch-all sentinel, neither family had
+a fallback bucket in `csharp.toml`, so an unmatched call was a true silent zero, not a degraded
+finding — `java.toml` already covered the identical BouncyCastle construct (`#Y80`). The first
+commit landed only the TOML rules and a fixture; `every_classify_rule_targets_an_api_the_extractor_can_emit`
+caught that the extract layer's tree-sitter query text is documentation only — matching is done by
+a hand-written walker in `scanner.rs` — so a second commit registered both constructors in
+`CSHARP_CTOR_APIS` and their `paramset` capture in `populate_args`, the same registration
+`MLKemKeyGenerationParameters` already has. Verified end-to-end against the release binary: the
+fixture now reports `CRYPTO-1182/1185/1186/1189` (`hqc-128`, `hqc-unattributed`, `bike-128`,
+`bike-unattributed`) at `crates/scan-source/tests/fixtures/csharp/Pqc.cs:93,100,107,114`.
+**Corpus B has no C# projects**; re-ran the full 150-project dump anyway (`work/y131_post.json`)
+and it is byte-identical to the prior baseline (`work/y128_default.json`) on `(project, rule_id,
+file, line, algorithm_id, severity)` — 1907 findings, 0 added, 0 removed — so precision is held
+exactly, not estimated. `README.md`'s rule-pack-count sentences (142 extract blocks, was 140; 856
+classify arms, was 848; C#'s classify-arm count 131, was 123) updated in the same commit the
+`readme_rule_pack_counts_match_the_rule_packs` test reads.
+
+**`#Y130`.** Commit `47ed98c`'s own message read "matching `go.toml`'s own rule" — the exact
+failure mode `recall_check.py`'s docstring exists to rule out (a ground truth derived from the
+rule file under test inherits that file's blind spots). Added a docstring convention requiring
+every `APIS`/`IMPORT_PKG` entry to cite its upstream source, and independently re-derived circl's
+ML-DSA/ML-KEM call shapes from each package's own pkg.go.dev entry (not from `go.toml`):
+`sign/mldsa/mldsa{44,65,87}` exports `GenerateKey(rand)`/`NewKeyFromSeed(seed)`;
+`kem/mlkem/mlkem{512,768,1024}` exports `GenerateKeyPair(rand)`/`NewKeyFromSeed(seed)` — both
+converge on the same regex shape `go.toml`'s extract queries already use, confirming the backlog's
+own steelman (these names have no second reasonable spelling) rather than assuming it. 12 new
+`APIS` entries, 6 new `IMPORT_PKG` entries.
+
+**Re-ran `recall_check.py` against `work/y131_post.json`** (1907 findings, same corpus dump
+`#Y131`'s measurement used): **in-scope recall 441/441 = 100.0%** (was 440/440) — the widened
+ground truth found exactly one new site, `mlkem768.NewKeyFromSeed` at
+`go-modules/circl/kem/xwing/xwing.go`, and the scanner already reported it (`circl/kem/xwing.Op`
+→ `x-wing`, `#Y20`), so recall held rather than dropped. **Whole-tree ground truth 1088** (was
+1087); **whole-tree recall 441/1088 = 40.5%** (was 440/1087 = 40.5%, same to one decimal). By API
+kind: constructors unchanged 319/319; operations 122/122 (was 121/121) — `NewKeyFromSeed` does
+not end in `GenerateKey`/`.New`/`NewCipher`/`NewTripleDESCipher` and does not start with `ecdh.`,
+so `is_constructor` places it with the operations, the same existing heuristic quirk `#Y129`'s
+entry already named for `mlkem.GenerateKey768`/`1024`.
+
+**No scanner-visible finding changes from either the docstring convention or the `IMPORT_PKG`
+widening** — this is benchmark-harness-only for `#Y130`; precision is carried at 97.18% from
+`#Y131`'s measurement, not re-measured a second time. `README.md`'s recall section updated in the
+same commit: the headline paragraph (440→441 in-scope, "standard-library" reworded since 12 of 48
+ground-truth APIs are now third-party `circl`, cited per-entry rather than asserted), the by-kind
+table (operations 121→122, gains `mlkem768.NewKeyFromSeed`), the whole-tree paragraph (1087→1088
+sites, 440/1087→441/1088), and the comparison table's "Published recall" cell (440/440→441/441,
+"Go stdlib"→"Go stdlib + circl").
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all`, `cargo clippy --all-targets --
+-D warnings`, `cargo test --workspace` all clean. Both trust-invariant tests
+(`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
+
+**Not done, said out loud:** `#Y132` (HQC/FIPS 207 documentation gap in
+`knowledge/02-nist-pqc-timeline/README.md`) — ranked third in the same backlog synthesis, pure
+narrative-documentation work with no detection surface — was not started this cycle. `xwing`'s own
+`GenerateKeyPair`/`DeriveKeyPair`/`Encapsulate`/`Decapsulate` family was left out of the
+`recall_check.py` widening: unlike `mldsa`/`mlkem`, `go.toml`'s own comment
+(`data/rules/go.toml:1253-1262`) documents that circl's `kem/xwing` and Google Tink's internal
+`hybrid/internal/xwing` package export the same function names under the same local identifier
+`xwing`, so a ground-truth regex keyed on the identifier alone cannot distinguish the two
+implementations the way it can for `mldsa44`/`mlkem768` — a real ambiguity, not a scoping choice,
+and worth its own pass rather than a rushed one here.
+
+PRECISION: 97.18%
