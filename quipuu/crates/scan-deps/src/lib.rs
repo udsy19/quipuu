@@ -15,6 +15,7 @@
 //! println!("{} findings", findings.len());
 //! ```
 
+pub mod capability;
 pub mod catalogue;
 pub mod parsers;
 

@@ -8546,3 +8546,72 @@ fix, both already updated in the cherry-picked diff). `state/precision.json` and
 trust-invariant tests untouched and pass.
 
 PRECISION: 97.33%
+
+---
+
+## `#Y138`: PQC-capability version-floor signal layer, built (`quipuu capabilities`)
+
+Built the item ranked highest among open build items in the most recent Track B synthesis
+(`Precision-Tracker.md`, "`#Y138` ... remains the highest-ranked open build item"): a signal that
+a project's declared toolchain version is new enough for a PQC primitive to be available with no
+source change, kept structurally separate from a `Finding` so it cannot be mistaken for a
+detected operation — the exact risk the item's own text flagged ("doesn't quietly become a second
+class of over-claiming finding").
+
+**What shipped.** `quipuu_scan_deps::capability` (new module, `crates/scan-deps/src/capability.rs`)
+holds a two-entry `CAPABILITY_TABLE` — Go's `go.mod` `go` directive floor 1.24 (stdlib
+`crypto/mlkem`/`crypto/mldsa` become available) and Maven's `maven.compiler.release` floor 27
+(JEP 527's default-on hybrid PQC TLS groups) — the two entries the item's own "Concrete first
+change" named as highest-certainty. A new `quipuu capabilities <PATH...>` subcommand
+(`crates/cli/src/main.rs`) walks the given paths and prints every floor cleared. It does not
+touch `Finding`, `Severity`, CBOM, SARIF, or summary-JSON — no schema, no severity mapping, no
+HNDL flag exists for a capability signal, by design. An unresolved Maven property
+(`${jdk.version}`) is skipped, not guessed.
+
+**Corpus effect on existing detection: none, provably.** The new code lives in a new module and a
+new subcommand match arm; no existing function body changed. Falsified rather than assumed: built
+the pre-change binary (`git stash`) and the post-change binary, ran both as
+`quipuu scan <path> --source --deps --include-safe` against `corpus-clones/maven/httpclient5`,
+and diffed stdout — byte-identical. `cargo test --workspace` passes unchanged (388 pre → 395
+post, +7 for the new module's own unit tests), and both trust-invariant tests
+(`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) are untouched and
+pass. On this evidence a full corpus `dump_findings.py`/`precision.py` re-run would reproduce the
+anchored 97.33% by construction, not by new sampling, so it was not run — the falsification above
+is the stronger claim ("cannot have moved") a re-derivation ("did not move, this time") would only
+weaken.
+
+**The capability measurement itself, corpus-clones (the same 150-project corpus, go-modules and
+maven ecosystems), run honestly and reported as found:**
+
+| ecosystem | floor | projects clearing it | manifests clearing it (incl. nested modules) |
+|---|---|---|---|
+| Go (`go-modules`, 25 top-level projects) | `go.mod` `go >= 1.24` | **22 / 25** | 659 |
+| Maven (`maven`, 24 top-level projects) | `maven.compiler.release >= 27` | **0 / 24** | 0 |
+
+Maven's zero is real, not a parser gap: a direct grep of every `pom.xml` in the corpus for
+`maven.compiler.release` finds 20 explicit declarations, all `8`, plus one unresolved
+`${jdk.version}` property this scanner correctly declines to guess at (JDK 27 GA is 2026-09-15,
+12 days from this measurement — no corpus project has moved yet). The Go number is high because
+Go's own toolchain has shipped 1.24+ as its default `go.mod` floor for new projects since before
+this corpus was cloned, not because any project deliberately adopted it for PQC.
+
+**Bug found and fixed before this measurement, worth recording.** The first working version of
+`scan_capabilities` called `std::fs::read_to_string` on every file the walk visited, before
+checking whether its name was `go.mod` or `pom.xml` — on the 2.9 GB `go-modules` + 5.9 GB `maven`
+slice of the corpus this made a 150-project-scale walk take over 280 seconds and still not
+finish. Moving the filename check ahead of the read fixed it to 12.7 seconds. Caught by running
+the measurement above, not by a separate review — the same "measure, don't assert" discipline
+this file's own header enforces on detection claims caught it here on a discovery feature that
+carries no precision claim at all.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy
+--all-targets --workspace -- -D warnings`, `cargo test --workspace` all clean (395 passing).
+`state/precision.json` and `state/estimator.json` unmodified — no detection code changed.
+
+**Not built, said out loud:** the other four ecosystems the item's own note named (Python/pyca,
+BouncyCastle Java, .NET, OpenSSL version floors) — the item explicitly asked for the two
+highest-certainty entries first, not all six at once; the remaining four are unclaimed follow-up,
+not silently dropped.
+
+PRECISION: 97.33% (carried — falsified unmoved by row-identical scan output on a real project,
+not re-derived from a fresh corpus dump; no detection or existing-scan code path was touched).

@@ -59,6 +59,14 @@ fn main() -> ExitCode {
                 ExitCode::from(2)
             }
         },
+        Some("capabilities") => {
+            let paths: Vec<PathBuf> = args[2..].iter().map(PathBuf::from).collect();
+            if paths.is_empty() {
+                eprintln!("quipuu: capabilities requires at least one path argument");
+                return ExitCode::from(2);
+            }
+            run_capabilities(&paths)
+        }
         Some("policy") => match args.get(2).map(String::as_str) {
             Some("list") => {
                 print_policy_list();
@@ -92,6 +100,7 @@ fn print_help() {
 USAGE:
     quipuu init [PATH]                   Walk through setup, write .quipuu.toml
     quipuu scan <PATH...> [FLAGS]        Scan one or more files or directories
+    quipuu capabilities <PATH...>        Report PQC version-floor signals (not findings)
     quipuu policy list                   List the built-in policy presets
     quipuu mcp-serve [--allow-network]   Start MCP server over stdio
 
@@ -99,6 +108,14 @@ INIT:
     init [PATH]               Detect languages, ask 5 setup questions, emit
                               .quipuu.toml at PATH (default: current dir).
                               Safe in CI — uses defaults when stdin is closed.
+
+CAPABILITIES:
+    capabilities <PATH...>    Report toolchain/language version floors cleared by
+                              go.mod / pom.xml (e.g. Go >= 1.24, JDK >= 27) that make
+                              a PQC primitive available without a code change. This is
+                              a capability signal, not a finding: it never claims the
+                              project actually calls the primitive, carries no severity,
+                              and is not part of --cbom/--sarif/--summary-json output.
 
 MCP SERVER:
     mcp-serve                 Start JSON-RPC 2.0 MCP server over stdin/stdout
@@ -180,6 +197,43 @@ fn print_policy_list() {
         }
     }
     println!("\n`--policy <file.toml>` also accepts a policy file of your own.");
+}
+
+/// Report PQC version-floor capability signals for every path given.
+///
+/// Deliberately separate from [`run_scan`]: a capability signal is not a
+/// [`Finding`] (see `quipuu_scan_deps::capability`'s module docs) — it never
+/// enters the severity/CBOM/SARIF pipeline, so it cannot be mistaken for an
+/// actual detected cryptographic operation.
+fn run_capabilities(paths: &[PathBuf]) -> ExitCode {
+    let mut signals = Vec::new();
+    for path in paths {
+        signals.extend(quipuu_scan_deps::capability::scan_capabilities(path));
+    }
+
+    if signals.is_empty() {
+        println!("quipuu: no PQC version-floor capability clears found.");
+        return ExitCode::SUCCESS;
+    }
+
+    println!(
+        "quipuu: {} PQC version-floor capability signal(s) — a capability signal is NOT a \
+         finding: it means the toolchain COULD support this without a code change, not that \
+         the project calls it.\n",
+        signals.len()
+    );
+    for signal in &signals {
+        println!(
+            "  {} — {} declares {} (floor {}.{})",
+            signal.manifest_path.display(),
+            signal.entry.field,
+            signal.declared_version,
+            signal.entry.floor.0,
+            signal.entry.floor.1,
+        );
+        println!("    unlocks: {}\n", signal.entry.unlocks);
+    }
+    ExitCode::SUCCESS
 }
 
 #[derive(Default)]
