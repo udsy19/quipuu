@@ -3389,6 +3389,14 @@ const CSHARP_CTOR_APIS: &[(&str, &str)] = &[
         "HssKeyGenerationParameters",
         "Org.BouncyCastle.Pqc.Crypto.Lms.HssKeyGenerationParameters.new",
     ),
+    (
+        "HqcKeyGenerationParameters",
+        "Org.BouncyCastle.Pqc.Crypto.Hqc.HqcKeyGenerationParameters.new",
+    ),
+    (
+        "BikeKeyGenerationParameters",
+        "Org.BouncyCastle.Pqc.Crypto.Bike.BikeKeyGenerationParameters.new",
+    ),
 ];
 
 fn match_csharp_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> {
@@ -3629,6 +3637,21 @@ fn populate_args(
             // the OID-lookup overload passes an expression here instead, and a
             // variable is always possible, so this can legitimately capture
             // nothing.
+            if let Some(paramset) = nth_csharp_arg_member_access_name(args_node, 1, source) {
+                out.insert("paramset".into(), ArgValue::Str(paramset));
+            }
+        }
+        (
+            Language::CSharp,
+            "Org.BouncyCastle.Pqc.Crypto.Hqc.HqcKeyGenerationParameters.new"
+            | "Org.BouncyCastle.Pqc.Crypto.Bike.BikeKeyGenerationParameters.new",
+        ) => {
+            // new HqcKeyGenerationParameters(random, HqcParameters.hqc128)
+            // new BikeKeyGenerationParameters(random, BikeParameters.bike128)
+            // — same two-argument, static-field-parameter shape as
+            // MLKemKeyGenerationParameters above; arg 1 is the member access
+            // naming the static parameter-set field, and a variable there
+            // captures nothing.
             if let Some(paramset) = nth_csharp_arg_member_access_name(args_node, 1, source) {
                 out.insert("paramset".into(), ArgValue::Str(paramset));
             }
