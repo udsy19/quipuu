@@ -8195,9 +8195,9 @@ two per-stratum deltas were applied through the module directly): stratified-fre
 record: **97.33%**, against the published 97.18%, on 797 audited findings out of 2069.
 `state/estimator.json`'s `a_tp`/`b_tp`/`b_fp` are folded to 265/511/12 (from 262/355/9) so a future
 0-delta re-run reproduces 97.33% without re-deriving this cycle's labels — unlike `#Y64`/`#Y65`
-(reverted per `DECISION #ESTIMATOR2`), this fold spans six APIs across four independent codebases
-rather than one narrowly-scoped rule auditing its own near-tautological targets, and the audit
-itself found and excluded three real FPs rather than confirming a construction-guaranteed TP.
+(reverted earlier this file, "97.71% -> 97.11%"), this fold spans six APIs across four independent
+codebases rather than one narrowly-scoped rule auditing its own near-tautological targets, and the
+audit itself found and excluded three real FPs rather than confirming a construction-guaranteed TP.
 
 **Applied to `README.md`'s headline, comparison table and the denominator paragraph this cycle** —
 the prior cycle's gate failure (`published-figure`: README still said 97.18% while this file
