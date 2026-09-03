@@ -8471,3 +8471,40 @@ scope, not this coverage change's. Whether the 168 additional findings are legit
 or a labelling/dedup regression is unknown and not this cycle's to determine.
 
 PRECISION: 97.33%
+
+---
+
+## `#Y148` closed: gate re-measured after `#Y143`/`#Y144`'s comment-only diffs
+
+`parked/20260903T152201-gate-red` failed `gate_precision` — its diff touched
+`quipuu/crates/scan-source/src/scanner.rs` (a `DETECTION_PATHS` match) with no
+`PRECISION:` measurement attached, so the gate blocked on principle regardless of what the
+diff actually did. The change itself, cherry-picked unmodified, is two doc-comment lines in
+`match_java_set_named_groups`'s precedent note (`#Y144`) plus an unrelated regulatory-citation
+addition to `knowledge/09-regulatory/README.md` (`#Y143`, outside `DETECTION_PATHS` entirely) —
+no rule, extract query or classify arm touched.
+
+**Measured rather than assumed.** Built a pre-change binary at HEAD (`6708177`) and a post-change
+binary after cherry-picking both commits, dumped both against the full 150-project corpus with
+the canonical `benchmarks/corpus-b-realworld/dump_findings.py`
+(`work/y148_pre.json` ↔ `work/y148_post.json`): **0 added, 0 removed, 2070 findings both sides.**
+`bin/precision.py` reproduces the anchored baseline exactly — stratified-fresh 97.33%, matching
+`state/precision.json` — with no `--added-tp`/`--added-fp` needed since nothing moved.
+
+**On the standing corpus-drift disclosure from `#Y145`/`#Y146`:** those cycles measured 2238
+findings on the same 150-project corpus using `work/dump_findings_local.py`, a `work/` copy of
+the dump script (`[[precision-corpus-harness]]`). This cycle's canonical `dump_findings.py` run
+gives 2070 — exactly the anchored figure, not 2238. One corpus project
+(`crates-io:rustls-pemfile`) reports `integrity: unscannable` in this run's own `projects`
+census rather than being silently included via the fallback path a `work/` copy might take. This
+is consistent with, but does not confirm, the same `work/`-copy double-count failure mode
+`[[2069-was-never-a-real-corpus-total]]` already documents for a different script generation —
+raised here as an observation for whoever next touches the drift, not resolved: re-diagnosing
+`#Y145`/`#Y146`'s own dumps is out of this cycle's scope.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy
+--all-targets --workspace -- -D warnings`, `cargo test --workspace` all clean. Both
+trust-invariant tests untouched and pass. `state/precision.json` and `state/estimator.json`
+unmodified — the figure did not move.
+
+PRECISION: 97.33%
