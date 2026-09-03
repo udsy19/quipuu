@@ -2999,6 +2999,11 @@ const JS_CALLEE_APIS: &[(&str, &str)] = &[
 const WEBCRYPTO_METHOD_APIS: &[(&str, &str)] = &[
     ("generateKey", "webcrypto.subtle.generateKey"),
     ("sign", "webcrypto.subtle.sign"),
+    ("verify", "webcrypto.subtle.verify"),
+    ("encapsulateKey", "webcrypto.subtle.kemOperation"),
+    ("decapsulateKey", "webcrypto.subtle.kemOperation"),
+    ("encapsulateBits", "webcrypto.subtle.kemOperation"),
+    ("decapsulateBits", "webcrypto.subtle.kemOperation"),
 ];
 
 /// Resolve a `SubtleCrypto` method call reached through any receiver chain.
@@ -3876,7 +3881,10 @@ fn populate_args(
         }
         (
             Language::JavaScript | Language::TypeScript,
-            "webcrypto.subtle.generateKey" | "webcrypto.subtle.sign",
+            "webcrypto.subtle.generateKey"
+            | "webcrypto.subtle.sign"
+            | "webcrypto.subtle.verify"
+            | "webcrypto.subtle.kemOperation",
         ) => {
             // WebCrypto argument 0 is the algorithm: either a bare name string
             // (`subtle.sign('Ed25519', …)`) or an object whose `name` property

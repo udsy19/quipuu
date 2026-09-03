@@ -3909,6 +3909,13 @@ fn webcrypto_classifies_from_the_algorithm_argument() {
         (44, "CRYPTO-392", "aes-256-gcm"),
         (51, "CRYPTO-340", "webcrypto-unattributed"),
         (56, "CRYPTO-398", "webcrypto-unattributed"),
+        (71, "CRYPTO-343", "ml-dsa-87"),
+        (75, "CRYPTO-346", "ml-kem-1024"),
+        (79, "CRYPTO-344", "ml-kem-512"),
+        (83, "CRYPTO-354", "ed25519"),
+        (88, "CRYPTO-397", "webcrypto-unattributed"),
+        (93, "CRYPTO-398", "webcrypto-unattributed"),
+        (98, "CRYPTO-399", "webcrypto-unattributed"),
     ];
     for (line, rule, algo) in expected {
         let f = findings
@@ -3984,6 +3991,48 @@ fn webcrypto_matches_every_receiver_chain() {
         assert!(
             findings.iter().any(|f| f.location.line == Some(line)),
             "no finding on line {line}"
+        );
+    }
+}
+
+/// `#Y137`: `subtle.verify` and the four ML-KEM encapsulate/decapsulate
+/// methods had zero coverage — a codebase that fully migrates a KEM exchange
+/// to these methods produced no PQC findings at all, indistinguishable from
+/// unscanned code.
+#[test]
+fn webcrypto_verify_and_kem_operations_are_covered() {
+    let b = load_builtins().expect("builtins");
+    let scanner = Scanner::with_builtins(b.algorithms.clone()).expect("scanner");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("javascript/webcrypto.js"))
+        .expect("scan succeeds");
+
+    let expected = [
+        (71, "CRYPTO-343", "ml-dsa-87"),
+        (75, "CRYPTO-346", "ml-kem-1024"),
+        (79, "CRYPTO-344", "ml-kem-512"),
+        (83, "CRYPTO-354", "ed25519"),
+        (88, "CRYPTO-397", "webcrypto-unattributed"),
+        (93, "CRYPTO-398", "webcrypto-unattributed"),
+        (98, "CRYPTO-399", "webcrypto-unattributed"),
+    ];
+    for (line, rule, algo) in expected {
+        let f = findings
+            .iter()
+            .find(|f| f.location.line == Some(line))
+            .unwrap_or_else(|| panic!("expected finding on line {line}"));
+        assert_eq!(f.rule_id, rule, "wrong rule on line {line}");
+        assert_eq!(f.algorithm_id, algo, "wrong algorithm_id on line {line}");
+    }
+    for line in [71, 75, 79] {
+        let f = findings
+            .iter()
+            .find(|f| f.location.line == Some(line))
+            .unwrap();
+        assert!(
+            f.algorithm_id.starts_with("ml-"),
+            "line {line} classified as {}, expected a PQC algorithm",
+            f.algorithm_id
         );
     }
 }

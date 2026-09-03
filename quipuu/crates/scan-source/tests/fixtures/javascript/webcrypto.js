@@ -62,3 +62,38 @@ async function hmac(key, data) {
 async function notWebCrypto(key, data) {
     return mySubtle.sign({ name: "ECDSA" }, key, data);
 }
+
+// --- #Y137: subtle.verify and the four ML-KEM encapsulate/decapsulate -----
+// operations — zero coverage until this fixture, the same failure mode the
+// generateKey/sign fix above targeted eight days earlier.
+
+async function pqcVerify(key, signature, data) {
+    return crypto.subtle.verify({ name: "ML-DSA-87" }, key, signature, data);
+}
+
+async function pqcEncapsulateBits(encapsulationKey) {
+    return crypto.subtle.encapsulateBits({ name: "ML-KEM-1024" }, encapsulationKey);
+}
+
+async function pqcDecapsulateKey(decapsulationKey, ciphertext) {
+    return crypto.subtle.decapsulateKey({ name: "ML-KEM-512" }, decapsulationKey, ciphertext, "AES-GCM", true, ["decrypt"]);
+}
+
+async function classicalVerify(key, signature, data) {
+    return crypto.subtle.verify("Ed25519", key, signature, data);
+}
+
+// Algorithm arrives in a variable: no capture, no assertion.
+async function kemFromVariable(algorithm, encapsulationKey) {
+    return crypto.subtle.encapsulateKey(algorithm, encapsulationKey, "AES-GCM", true, ["decrypt"]);
+}
+
+// Named, but no row in the algorithm table.
+async function verifyHmac(key, signature, data) {
+    return crypto.subtle.verify("HMAC", key, signature, data);
+}
+
+// Algorithm arrives in a variable: no capture, no assertion.
+async function verifyFromVariable(algorithm, key, signature, data) {
+    return crypto.subtle.verify(algorithm, key, signature, data);
+}

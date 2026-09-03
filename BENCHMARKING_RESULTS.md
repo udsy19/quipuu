@@ -8230,3 +8230,62 @@ independent-count-agreement claim and the Go-recall dump-filename cross-referenc
 1907 and need a fresh timed `scan_corpus.py` run over the 2069-finding corpus to catch up.
 
 PRECISION: 97.33%
+
+## `#Y137` closed: WebCrypto `subtle.verify` and the four ML-KEM encapsulate/decapsulate methods covered in `javascript.toml`
+
+`subtle.verify`, `encapsulateKey`, `decapsulateKey`, `encapsulateBits` and `decapsulateBits` had
+zero coverage in `javascript.toml` — a codebase that fully migrates a KEM exchange to ML-KEM via
+these methods produced no PQC findings at all, indistinguishable from unscanned code. The `#Y2`
+(08-27) `generateKey`/`sign` fix never extended to this neighborhood. `WEBCRYPTO_METHOD_APIS`
+(`scanner.rs`) and its `populate_args` match arm — the actual dispatch table, since the
+`[[extract]]` tree-sitter queries in `javascript.toml` are documentation only — both gained the
+five new methods; two `[[extract]]` blocks (`JST-051`, `JST-052`) and reuses of the existing
+ML-DSA/ECDSA/Ed25519/Ed448/RSA-signature classify arms for `verify` and the existing ML-KEM arms
+for the four KEM operations, plus two new unattributed-fallback arms (`CRYPTO-397`, `CRYPTO-399`)
+for a non-literal algorithm argument, same shape as the existing `generateKey`/`sign` fallbacks.
+New fixture cases in `webcrypto.js` (lines 66–98) and test `webcrypto_verify_and_kem_operations_
+are_covered` assert all seven new rule/algorithm_id/line triples, including that a non-PQC
+algorithm (`Ed25519`) on `verify` and an unnamed HMAC verify both classify correctly alongside the
+new PQC arms.
+
+**Corpus effect: 1 added, 0 removed — 2069 → 2070 findings.** Pre-change binary at `a1f3741`
+(this cycle's baseline, `y136_post.json`), post-change binary built from this cycle's tree
+(`quipuu-y137-verify`), both dumped with the canonical, in-repo `dump_findings.py` against the
+full 150-project corpus (fresh run this cycle, not reused from the parked attempt, though it
+reproduces that attempt's count exactly). The one added finding: `npm:jose` `CRYPTO-399`
+`webcrypto-unattributed`, `npm/jose/src/lib/signing.ts:87` — `crypto.subtle.verify(algorithm,
+cryptoKey, signature, data)` inside `jose`'s `verify()` helper, where `algorithm` is a computed
+value (`subtleAlgorithm(alg, cryptoKey.algorithm)`), not a literal, so the unattributed fallback
+correctly fires rather than asserting an algorithm the call site does not state. Opened and read
+directly against the corpus clone: a genuine `SubtleCrypto.verify` call, hand-verified **TP**,
+stratum A (`npm:jose` is not in `c11_stratumB.json`'s 30 stratum-B projects).
+
+**One estimator, computed via `precision.py`** (`bin/precision.py y136_post.json
+y137_verify_post.json --added-tp 1 --added-fp 0 --write-readme`): stratified-fresh **97.331%**
+(95% CI 96.20–98.46), pooled **97.368%** (95% CI 96.01–98.27) — 0.037pp apart, inside the tool's
+0.05pp agreement tolerance; both round to the published **97.33%**, so the headline is unchanged
+by this cycle's one-row addition. `state/precision.json` continues to name `stratified_fresh` as
+the estimator of record. `state/estimator.json`'s `a_tp` folded 265 → 266 (stratum A gains the one
+new TP; `a_fp`/`b_tp`/`b_fp` unchanged at 9/511/12), so a future 0-delta re-run reproduces 97.33%
+on 798 audited findings without re-deriving this cycle's one label.
+
+**Applied to `README.md`'s headline, comparison table and the denominator paragraph this cycle** —
+the prior (parked) cycle's gate failure (`precision`: claimed 97.33% but the diff recorded no
+audit evidence) was the direct instruction for this one. `precision.py --write-readme` found the
+headline and table already matched this run's figures (798 audited out of 2070, 97.33%, CI
+96.2–98.5%) — the parked cycle's hand-edit had gotten those two spots right by arithmetic
+coincidence (798 total, 777 TP) while leaving the denominator paragraph's parenthetical
+`state/estimator.json` figures stale (`a_tp=265`, which sums to 797, not 798). That paragraph is
+hand-edited in this cycle's diff to `a_tp=266` and a sentence naming the one-row `#Y137` delta.
+Every other `2069`/`797` reference in this file is a historical entry describing a prior cycle's
+state and is left as-is, per this file's own convention of not rewriting past entries.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all`, `cargo clippy --all-targets -- -D
+warnings`, `cargo test --workspace` all clean. Both trust-invariant tests untouched and pass.
+
+**Not done, said out loud:** the "Benchmark numbers" wall-clock table (median/mean/p90/max) is
+still a 2026-09-02 timing and was not re-timed against the now-2070-finding corpus — a pre-existing
+gap named in the `#Y136` entry above, not introduced by this cycle, and this cycle's budget does
+not extend to a full timed `scan_corpus.py` re-run on top of the dump-and-audit above.
+
+PRECISION: 97.33%
