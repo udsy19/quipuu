@@ -7820,3 +7820,56 @@ reverted. `OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2` and `#CORPUSDRIFT` r
 bearing on this cycle.
 
 PRECISION: 97.18%
+
+## Gate-red cycle recovered: the `#Y127` revert above was correct, the merge gate failure was disk exhaustion, not a code defect — and this cycle actually ran the corpus measurement the parked commit's own writeup called "unmeasured"
+
+The previous cycle's `cargo test --workspace` run failed at the rustc link/compile step with a bare
+`(exit status: 1)` and no accompanying error text, and the cycle was parked to
+`parked/20260903T001612-gate-red`. Reproduced the parked branch's tree directly (`git worktree add`,
+`cargo build --workspace --tests`, `cargo test --workspace`): every crate compiled and all 163 (plus
+19+20 TUI) tests passed cleanly, including both trust-invariant tests. The parked commit's own diff —
+reverting `#Y127`'s fictional `with_kx_groups` matcher — was sound as written; nothing about the code
+needed changing. `df -h` on the repo's filesystem read 99% full, 1.1GB free, at the moment of
+reproduction, and a `cc` invocation mid-build failed separately with `fatal error: error writing to
+/tmp/ccfV6iI3.s: No space left on device` — the same failure class (a bare rustc/cc exit 1 with no
+diagnostic surviving in the captured log) as the original gate failure. Freed ~4GB by removing two
+stale, uncommitted-work-free git worktrees (`/tmp/pre-y_testassert`, a detached-HEAD scratch clone
+from an earlier cycle's own precision measurement; the parked-branch reproduction worktree itself)
+before cherry-picking `fdf6339` onto `main` as `f902038`.
+
+**This cycle then ran the actual corpus measurement the parked writeup deferred.** The parked commit's
+"precision remains 97.18%, unmeasured because nothing detectable moved" was reasoning from the
+matcher's own logic (no real call site exists to detect), not a corpus run. To measure rather than
+assert (rule 5), built the pre-revert binary (`8ecf3a7`, matcher present) and the post-revert binary
+(`f902038`, matcher absent) from the same `target/` (checkout scanner.rs/fixture/test files per-commit
+in place, rebuild, copy the binary out, restore) and ran the repo's own
+`benchmarks/corpus-b-realworld/dump_findings.py` against the full 150-project corpus
+(`corpus_integrity.py` confirmed 150/150 populated, 150/150 matching baseline first) with each:
+`pre_gatefix_findings.json` and `post_gatefix_findings.json`, both 1907 findings from 149/150 scanned
+projects. `bin/precision.py` on the two dumps: **0 added, 0 removed** — confirms by direct measurement,
+not inference, that the matcher never fired on any real corpus call site in either direction.
+
+**Figure unchanged, denominator label corrected: 97.18% (636 → 635 audited).** `bin/precision.py
+--write-readme` reproduced the anchored 97.18% figure exactly (stratified-fresh 97.177%, pooled Wilson
+97.165%, agreeing within 0.01pp) but updated the audited-row count from 636 to 635. This is the same
+"fresh populations re-derived from `state/estimator.json`'s persisted `a_tp`/`b_tp` vs. a prior cycle's
+one-time `--added-tp` fold that was never persisted back into that file" drift documented repeatedly
+above (see the `SHA384.Create()`/`RSA.generate` entries) — `state/estimator.json` still reads
+`a_tp=262, b_tp=355` (271+364=635 audited), while the `#Y89` cycle's reclassification fold that
+produced 636 applied `--added-tp 1` for that single measurement without writing the resulting 263 back
+into the persisted file. Not this cycle's regression to fix (it predates this cycle and is orthogonal
+to the `with_kx_groups` revert, which measured 0/0), but rule 4 applies to the label regardless of
+cause: updated both the headline and the "What the denominator excludes" paragraph's TP/FP breakdown
+(618/18 → 617/18) in `README.md` in this same diff so the two copies agree.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy --all-targets
+-- -D warnings`, `cargo test --workspace` (163+19+20 tests, all doctests) all clean on `main` after the
+cherry-pick. Both trust-invariant tests pass.
+
+**Not done, said out loud:** did not persist the `#Y89` fold into `state/estimator.json` — that is a
+pre-existing, separately-tracked gap (`OPEN-ASK #ESTIMATORPERSIST`/`#ESTIMATORPERSIST2`, both already
+open) and not this cycle's decision to make unilaterally. Did not investigate or clean the other three
+registered worktrees under `/opt/cryptoscope/work/*-base`; they were not implicated in the disk
+exhaustion and may belong to concurrent work.
+
+PRECISION: 97.18%
