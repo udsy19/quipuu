@@ -207,6 +207,25 @@ diversify beyond lattice-based assumptions (ML-DSA, FN-DSA) rather than replace 
 when. This on-ramp is independent of FIPS 203/204/205/206's already-final status above and does not
 change it.
 
+### 5.6 FIPS 207 — HQC (backup KEM)
+
+| Field | Value |
+|---|---|
+| Full title | Not yet assigned — draft not published |
+| Status | **IN DEVELOPMENT — NO IPD PUBLISHED AS OF 2026-09-03** |
+| Selected | **2025-03-11**, NIST's fifth selected PQC algorithm and designated backup KEM to ML-KEM |
+| Based on | HQC (Hamming Quasi-Cyclic) |
+| NIST's stated timeline | Draft standard for public comment "in about a year" of the 2025-03-11 selection (~2026-03); final standard in 2027 |
+| CSRC page | https://csrc.nist.gov/pubs/fips/207/ipd (404 as of 2026-09-03) |
+| Primary source | https://www.nist.gov/news-events/news/2025/03/nist-selects-hqc-fifth-algorithm-post-quantum-encryption |
+| quipuu coverage | `algorithm-table.toml` already carries HQC-128/192/256 rows (`quantum_status = "PqcDraft"`) — this is a narrative-documentation gap, not a detection gap |
+
+**UNCONFIRMED — do not hard-code:** NIST's own "about a year" draft estimate is now roughly six
+months unmet as of this entry's verification date (2026-09-03), with no FIPS 207 IPD found via
+CSRC's page, its 2026 news listing, or web search. This is disclosed as absence-of-evidence, not
+confirmed non-publication — a draft could exist at a URL or listing this check didn't hit. Re-check
+https://csrc.nist.gov/pubs/fips/207 periodically for a live page.
+
 ---
 
 ## 6. CNSA 2.0 Timeline (NSA)
@@ -401,4 +420,5 @@ Source: https://github.com/CycloneDX/specification/blob/1.6/schema/bom-1.6.schem
 | NSA CNSA 2.0 Advisory (May 2025) | Not downloadable (403) | https://media.defense.gov/2025/May/30/2003728741/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS.PDF | Final |
 | NSA CNSA 2.0 FAQ v2.1 (Dec 2024) | Not downloadable (403) | https://media.defense.gov/2022/Sep/07/2003071836/-1/-1/1/CSI_CNSA_2.0_FAQ_.PDF | Final |
 | NIST IR 8610 (May 2026) — additional signatures round 3 | Not downloaded | https://nvlpubs.nist.gov/nistpubs/ir/2026/NIST.IR.8610.pdf | Final (IR) |
+| NIST HQC selection announcement (Mar 2025) | Not downloaded | https://www.nist.gov/news-events/news/2025/03/nist-selects-hqc-fifth-algorithm-post-quantum-encryption | News (primary) |
 | CycloneDX 1.6 JSON Schema | /knowledge/sources/bom-1.6.schema.json | https://github.com/CycloneDX/specification/blob/1.6/schema/bom-1.6.schema.json | Final |
