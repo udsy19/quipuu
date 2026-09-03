@@ -8289,3 +8289,42 @@ gap named in the `#Y136` entry above, not introduced by this cycle, and this cyc
 not extend to a full timed `scan_corpus.py` re-run on top of the dump-and-audit above.
 
 PRECISION: 97.33%
+
+## `#Y142` closed: rustls `SignatureScheme::ML_DSA_{44,65,87}` covered in `rust.toml`
+
+rustls's IANA TLS `SignatureScheme` registry gained ML-DSA variants governing certificate-based
+authentication in a custom `ClientCertVerifier`/`ServerCertVerifier`'s `supported_verify_schemes()`
+— a distinct surface from `CryptoProvider.kx_groups`, which only covers the KEM key-exchange group.
+Reuses the bare `scoped_identifier` hook `match_rust_openmls_ciphersuite` already established for
+enum-variant path expressions; catches array-literal (`&[SignatureScheme::ML_DSA_65, ...]`) and
+standalone references. `vec![...]` macro bodies are a disclosed, known gap (same limitation already
+named on `match_rust_kx_groups`), since tree-sitter flattens a `macro_invocation`'s token tree to
+bare identifier tokens with no path structure. New fixture `signature_scheme.rs` and test coverage
+in `scan_test.rs` assert the array-literal and standalone-reference shapes classify correctly.
+
+**Corpus effect: 0 added, 0 removed — 2070 findings both sides.** Pre-change binary built from
+`main` at `baff9b6` (`quipuu-y142-pre`), post-change binary built from this cycle's tree
+(`quipuu-y142-post`), both dumped with the canonical, in-repo `dump_findings.py` against the full
+150-project corpus (`y142_pre.json`, `y142_post.json`). No independent consumer of the rustls
+`SignatureScheme` ML-DSA constants exists in the sample — same zero-corpus-recall shape as prior
+structural-matcher additions (`match_rust_kx_groups` itself, the openmls ciphersuite hook).
+
+**One estimator, computed via `precision.py`** (`bin/precision.py y142_pre.json y142_post.json
+--write-readme`, no `--added-tp`/`--added-fp` needed since the dumps are row-identical): both dumps
+2070 findings, 0 added, 0 removed. stratified-fresh **97.331%** (95% CI 96.20–98.46), pooled
+**97.368%** (95% CI 96.01–98.27) — 0.037pp apart, inside the tool's 0.05pp agreement tolerance;
+both round to the published **97.33%**, unchanged since `#Y137`. `state/precision.json` and
+`state/estimator.json` are unmodified — nothing moved to fold. README's headline, comparison table
+and denominator paragraph already stated 97.33% / 798 audited / 2070 total; `--write-readme`
+confirmed the match and wrote nothing.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all`, `cargo clippy --all-targets -- -D
+warnings`, `cargo test --workspace` all clean. Both trust-invariant tests untouched and pass.
+
+**Why this entry exists:** the prior cycle ran the corpus dump and the measurement correctly but
+committed the rule change without writing the audit evidence `gate_precision` requires in the same
+diff — the commit message stated "Precision held exactly at 97.33%" with nothing on disk saying
+what was sampled. This entry is that evidence, added against the dumps the prior cycle already
+produced (verified reproducible above, not re-run from scratch).
+
+PRECISION: 97.33%
