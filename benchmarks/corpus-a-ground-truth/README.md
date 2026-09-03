@@ -37,9 +37,9 @@ callee tables are entirely independent code paths — see `FAMILY_ALIASES` in
 score (`hmac`/`scrypt`/`bcrypt`/`argon2` — 20 of 117 sites — map to no `algorithm-table.toml`
 family at all, so those tags miss unconditionally; that is the recall gap, not a scoring bug).
 
-## Measured 2026-09-01
+## Measured 2026-09-03
 
-**49.6% (58/117)** against release binary `549cf56`.
+**54.7% (64/117)** against release binary `bed7559`.
 
 | language | recall |
 |---|---|
@@ -49,19 +49,19 @@ family at all, so those tags miss unconditionally; that is the recall gap, not a
 | rust | 53.3% (8/15) |
 | python | 52.9% (9/17) |
 | js | 52.6% (10/19) |
-| cpp | **0.0% (0/15)** |
+| cpp | **40.0% (6/15)** |
 
-**The `cpp` row needs a caveat this cycle did not have time to fix in the corpus itself.**
+**The `cpp` row's caveat, updated after `#Y136` closed most of the real gap.**
 Several of its 15 planted sites call an OpenSSL primitive the way no real codebase would —
 `EVP_aes_128_gcm()` invoked bare, with its return value discarded, rather than passed as the
 `cipher` argument to `EVP_EncryptInit_ex(ctx, EVP_aes_128_gcm(), ...)`, which is the only shape
-`cpp.toml` has a rule for and the only shape that ever appears in real C. `EC_KEY_new_by_curve_name`,
-bare `MD5_Init`/`SHA1_Init`/`SHA256_Init`, `HMAC(...)`, `PKCS5_PBKDF2_HMAC(...)`, and
-`ECDSA_sign(...)` are real, idiomatic OpenSSL 1.x calls that genuinely have no rule in
-`cpp.toml` today — that part of the 0% is a real, if narrow, coverage gap, distinct from the
-bare-`EVP_aes_*` lines which test a call shape that cannot occur. Left unedited per this
-cycle's scope (`#T11(a)` says commit the 117 sites as they are); flagged here rather than
-silently reported as "quipuu detects 0% of C" without the distinction.
+`cpp.toml` has a rule for and the only shape that ever appears in real C; those 8 EVP-fetch
+sites still cannot score and are not a coverage gap. `EC_KEY_new_by_curve_name`, bare
+`MD5_Init`/`SHA1_Init`/`SHA256_Init`, `PKCS5_PBKDF2_HMAC(...)`, and `ECDSA_sign(...)` were real,
+idiomatic OpenSSL 1.x calls with no rule in `cpp.toml` — `#Y136` added all six. `EVP_RSA_gen`
+and `EVP_PKEY_CTX_new_id` remain real, uncovered gaps; `HMAC(...)` remains real but unscoreable
+regardless of rule coverage, because `algorithm-table.toml` has no `HMAC` family for any
+language to map to.
 
 **This is a supplementary probe, not a claim about recall on real-world code.** 117 planted
 sites cannot represent the distribution of crypto usage in the wild the way 150 real projects
