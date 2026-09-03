@@ -198,7 +198,7 @@ Public key sizes for reference (so the scanner can emit "unknown PQC key" with h
 
 ### 2.5 Composite Signature OIDs (IETF LAMPS)
 
-**Primary source:** `draft-ietf-lamps-pq-composite-sigs-19` (last revised 2026-04-21, in RFC Editor Queue).  
+**Primary source:** `draft-ietf-lamps-pq-composite-sigs-19` (RFC Editor Queue, In Progress: First Edit, last updated 2026-08-26).  
 Authors: Mike Ounsworth, John Gray (Entrust), Massimiliano Pala, Jan Klaußner, Scott Fluhrer.
 
 OID arc: `id-composite-sig-algs ::= { 1.3.6.1.5.5.7.6 }`, leaves 37–54.
@@ -228,7 +228,7 @@ Composite public key encoding: concatenation `mldsaPK || tradPK`. Signature pref
 
 ### 2.6 Composite KEM OIDs (IETF LAMPS)
 
-**Primary source:** `draft-ietf-lamps-pq-composite-kem-14` (last revised 2026-03-27, submitted to IESG).
+**Primary source:** `draft-ietf-lamps-pq-composite-kem-21` (Submitted to IESG for Publication, on the 2026-09-03 IESG telechat agenda, RFC number not yet assigned).
 
 OID arc: leaves 55–66 of same `1.3.6.1.5.5.7.6` arc.
 
@@ -306,7 +306,7 @@ Azure Front Door hybrid TLS key exchange groups: `X25519_MLKEM768` (IANA group `
 
 ### 4.1 Composite Public Key (IETF LAMPS WG — Primary Approach)
 
-**Sources:** `draft-ietf-lamps-pq-composite-sigs-19` (RFC Editor Queue, April 2026); `draft-ietf-lamps-pq-composite-kem-14` (IESG, March 2026).
+**Sources:** `draft-ietf-lamps-pq-composite-sigs-19` (RFC Editor Queue, In Progress: First Edit, last updated 2026-08-26); `draft-ietf-lamps-pq-composite-kem-21` (Submitted to IESG for Publication, on the 2026-09-03 IESG telechat agenda).
 
 **Mechanism:** A single X.509 certificate carries a composite OID in both `subjectPublicKeyInfo.algorithm.algorithm` and `signatureAlgorithm`. The composite public key is the concatenation of the component keys (`mldsaPK || tradPK`); the composite signature is a DER-encoded sequence of the two component signatures with a fixed domain-separation prefix `"CompositeAlgorithmSignatures2025"`.
 
@@ -720,7 +720,7 @@ OID                           Name                                  Class       
 1.3.6.1.5.5.7.6.52            id-MLDSA87-RSA3072-PSS-SHA512          PQC-DRAFT     Composite sig
 1.3.6.1.5.5.7.6.53            id-MLDSA87-RSA4096-PSS-SHA512          PQC-DRAFT     Composite sig
 1.3.6.1.5.5.7.6.54            id-MLDSA87-ECDSA-P521-SHA512           PQC-DRAFT     Composite sig
-# Composite KEMs (draft-ietf-lamps-pq-composite-kem-14)
+# Composite KEMs (draft-ietf-lamps-pq-composite-kem-21)
 1.3.6.1.5.5.7.6.55            id-MLKEM768-RSA2048-SHA3-256           PQC-DRAFT     Composite KEM
 1.3.6.1.5.5.7.6.56            id-MLKEM768-RSA3072-SHA3-256           PQC-DRAFT     Composite KEM
 1.3.6.1.5.5.7.6.57            id-MLKEM768-RSA4096-SHA3-256           PQC-DRAFT     Composite KEM
@@ -816,7 +816,7 @@ pub enum AlgorithmClass {
 
 **Decision:** When a composite OID (arc `1.3.6.1.5.5.7.6.37–66`) is seen in `signatureAlgorithm`, report `HYBRID-COMPOSITE` and decode both component algorithm names from the OID string (they are embedded in the OID name). Do not attempt to split the composite signature bytes — report at the OID level only. If the composite OID is from the draft range, note that OIDs may change before RFC publication.
 
-**Evidence:** `draft-ietf-lamps-pq-composite-sigs-19` is in the RFC Editor Queue as of mid-2026, meaning OIDs are stable but not formally IANA-registered until RFC publication. Draft-19 OIDs are safe to hardcode with a `PQC-DRAFT` flag.
+**Evidence:** `draft-ietf-lamps-pq-composite-sigs-19` is in the RFC Editor Queue (In Progress: First Edit) as of 2026-08-26, meaning OIDs are stable but not formally IANA-registered until RFC publication. `draft-ietf-lamps-pq-composite-kem-21` is Submitted to IESG for Publication, on the 2026-09-03 IESG telechat agenda, one vote from an RFC number. Draft-19/-21 OIDs are safe to hardcode with a `PQC-DRAFT` flag.
 
 ---
 
@@ -834,7 +834,7 @@ pub enum AlgorithmClass {
 | RFC 4055 | https://www.rfc-editor.org/rfc/rfc4055 | RSASSA-PSS, RSAES-OAEP, SHA-2 |
 | RFC 3279 | https://www.rfc-editor.org/rfc/rfc3279 | Classic algorithm identifiers |
 | draft-ietf-lamps-pq-composite-sigs-19 | https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs/ | Composite sig OIDs |
-| draft-ietf-lamps-pq-composite-kem-14 | https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-kem/ | Composite KEM OIDs |
+| draft-ietf-lamps-pq-composite-kem-21 | https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-kem/ | Composite KEM OIDs |
 | draft-bonnell-lamps-chameleon-certs-07 | https://datatracker.ietf.org/doc/draft-bonnell-lamps-chameleon-certs/ | Chameleon certificate format |
 | CA/B Forum Baseline Req. | https://cabforum.org/working-groups/server/baseline-requirements/ | SHA-1 sunset, SC097, SMC-013 |
 | x509-parser docs | https://docs.rs/x509-parser/latest/x509_parser/ | Rust crate API |
