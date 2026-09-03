@@ -584,6 +584,21 @@ rather than quoting it verbatim.
 
 ---
 
+### 27. IETF RFC 8784 / RFC 9867 — IKEv2 Post-Quantum Preshared Keys
+
+**Issuing body:** IETF, IPsecME working group
+**Primary sources:**
+- RFC 8784, June 2020, "Mixing Preshared Keys in the Internet Key Exchange Protocol Version 2 (IKEv2) for Post-quantum Security": https://www.rfc-editor.org/rfc/rfc8784
+- RFC 9867, November 2025, "Mixing Preshared Keys in the IKE_INTERMEDIATE and CREATE_CHILD_SA Exchanges of the Internet Key Exchange Protocol Version 2 (IKEv2) for Post-quantum Security": https://www.rfc-editor.org/rfc/rfc9867
+
+**RFC 9867 does not obsolete RFC 8784** — quoted directly from RFC 9867: "This specification does not replace the approach defined in RFC 8784. Both approaches for using PPKs in IKEv2 can be used depending on the circumstances." RFC 8784 mixes a postquantum preshared key (PPK) into an already-established IKEv2 SA via CREATE_CHILD_SA; RFC 9867 extends PPK protection to the initial IKE SA (uncovered by RFC 8784's mechanism) and allows a fresh PPK to be mixed into an active SA without SA recreation.
+
+**Scope note — citation only, no rule to build:** IKEv2 PPK configuration lives in VPN-daemon and network-device config (strongSwan, Libreswan, vendor IOS/JunOS blocks), not in any programming-language source tree. Every quipuu rule pack (`quipuu/crates/core/data/rules/`) is a tree-sitter language grammar; there is no config-file, network-protocol, or infrastructure-as-code rule pack. This entry documents a real HNDL-relevant IETF standard outside quipuu's current detection surface, not a gap in an existing rule pack.
+
+**Implication for quipuu:** none directly detectable today. Relevant only as background for a future config-parsing rule-pack category, should one be built.
+
+---
+
 ## DEADLINES THAT MATTER
 
 | Deadline | Instrument | Jurisdiction | Binding? | What triggers it |
