@@ -1600,3 +1600,125 @@ when.args.alg = { regex = "^BCRYPT_MLDSA_ALGORITHM$" }
 algorithm_id = "ml-dsa-unattributed"
 severity_hint = "auto"
 message = "Windows CNG {fn}(..., BCRYPT_MLDSA_ALGORITHM, ...) — FIPS 204 ML-DSA, quantum-resistant, but the parameter set (44/65/87) is set on a later BCryptSetProperty call this rule does not trace."
+
+# ============================================================================
+# OpenSSL 1.x legacy typed APIs — EC_KEY_new_by_curve_name, MD5_Init,
+# SHA1_Init, SHA256_Init, PKCS5_PBKDF2_HMAC, ECDSA_sign
+#
+# Six real, idiomatic pre-3.0 OpenSSL call shapes named in Backlog #Y136 as a
+# genuine coverage gap (distinct from the EVP_aes_*/EVP_sha384 lines in the
+# same probe file, which discard the fetch return value and test a shape no
+# real C code writes). Each is a bare identifier call with no algorithm
+# argument to inspect — same reasoning CRYPTO-484/485/486 already use for the
+# OpenSSL 3.0 generic keygen API.
+# ============================================================================
+
+[[extract]]
+id = "CPP-074"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "EC_KEY_new_by_curve_name"))
+"""
+captures = { fn = "ident" }
+api = "openssl.EC_KEY_new_by_curve_name"
+description = "OpenSSL EC_KEY_new_by_curve_name(nid) — legacy EC key constructor, curve given as a NID, no way to know if the key is used for ECDSA or ECDH."
+
+[[classify]]
+id = "CRYPTO-1193"
+when.api = "^openssl\\.EC_KEY_new_by_curve_name$"
+algorithm_id = "ecdsa-unattributed"
+severity_hint = "auto"
+message = "OpenSSL EC_KEY_new_by_curve_name — EC key generation, curve not captured at this call and the key may sign (ECDSA) or exchange (ECDH). Quantum-vulnerable at every curve."
+
+[[extract]]
+id = "CPP-075"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "MD5_Init"))
+"""
+captures = { fn = "ident" }
+api = "openssl.MD5_Init"
+description = "OpenSSL MD5_Init(ctx) — legacy typed digest init, algorithm baked into the function name."
+
+[[classify]]
+id = "CRYPTO-1194"
+when.api = "^openssl\\.MD5_Init$"
+algorithm_id = "md5"
+severity_hint = "critical"
+message = "MD5_Init — MD5 digest. Classically broken."
+cwe = "CWE-327"
+
+[[extract]]
+id = "CPP-076"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "SHA1_Init"))
+"""
+captures = { fn = "ident" }
+api = "openssl.SHA1_Init"
+description = "OpenSSL SHA1_Init(ctx) — legacy typed digest init, algorithm baked into the function name."
+
+[[classify]]
+id = "CRYPTO-1195"
+when.api = "^openssl\\.SHA1_Init$"
+algorithm_id = "sha-1"
+severity_hint = "critical"
+message = "SHA1_Init — SHA-1 digest. Classically broken (SHAttered, 2017)."
+cwe = "CWE-327"
+
+[[extract]]
+id = "CPP-077"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "SHA256_Init"))
+"""
+captures = { fn = "ident" }
+api = "openssl.SHA256_Init"
+description = "OpenSSL SHA256_Init(ctx) — legacy typed digest init, algorithm baked into the function name."
+
+[[classify]]
+id = "CRYPTO-1196"
+when.api = "^openssl\\.SHA256_Init$"
+algorithm_id = "sha-256"
+severity_hint = "auto"
+message = "SHA256_Init — SHA-256 digest. Quantum-safe hash."
+
+[[extract]]
+id = "CPP-078"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "PKCS5_PBKDF2_HMAC"))
+"""
+captures = { fn = "ident" }
+api = "openssl.PKCS5_PBKDF2_HMAC"
+description = "OpenSSL PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, iter, digest, keylen, out) — the digest is a call_expression argument, not a literal this rule captures, so the finding stays unattributed rather than guess a hash."
+
+[[classify]]
+id = "CRYPTO-1197"
+when.api = "^openssl\\.PKCS5_PBKDF2_HMAC$"
+algorithm_id = "pbkdf2-unattributed"
+severity_hint = "auto"
+message = "PKCS5_PBKDF2_HMAC — PBKDF2 key derivation, digest not captured at this call. Residual risk is the iteration count, not the quantum one."
+
+[[extract]]
+id = "CPP-079"
+language = "c"
+query = """
+(call_expression
+  function: (identifier) @fn (#eq? @fn "ECDSA_sign"))
+"""
+captures = { fn = "ident" }
+api = "openssl.ECDSA_sign"
+description = "OpenSSL ECDSA_sign(type, dgst, dgstlen, sig, siglen, eckey) — legacy typed ECDSA signing call, curve lives on the eckey argument this rule does not trace."
+
+[[classify]]
+id = "CRYPTO-1198"
+when.api = "^openssl\\.ECDSA_sign$"
+algorithm_id = "ecdsa-unattributed"
+severity_hint = "auto"
+message = "ECDSA_sign — ECDSA signature, curve not captured at this call. Quantum-vulnerable at every curve."

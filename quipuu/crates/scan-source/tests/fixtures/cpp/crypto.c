@@ -335,3 +335,17 @@ void cng_mldsa_open_provider(void) {
 void cng_mldsa_is_supported(NCRYPT_PROV_HANDLE prov) {
     NCryptIsAlgSupported(prov, BCRYPT_MLDSA_ALGORITHM, NCRYPT_SILENT_FLAG);
 }
+
+/* CPP-074..079 / CRYPTO-1193..1198 — Backlog #Y136's six real, idiomatic
+   pre-3.0 OpenSSL call shapes, previously zero coverage. */
+void legacy_openssl_1x(void) {
+    EC_KEY *eckey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+    MD5_CTX md5_ctx;
+    MD5_Init(&md5_ctx);
+    SHA_CTX sha1_ctx;
+    SHA1_Init(&sha1_ctx);
+    SHA256_CTX sha256_ctx;
+    SHA256_Init(&sha256_ctx);
+    PKCS5_PBKDF2_HMAC("pass", 4, NULL, 0, 600000, EVP_sha256(), 32, NULL);
+    ECDSA_sign(0, NULL, 0, NULL, NULL, eckey);
+}

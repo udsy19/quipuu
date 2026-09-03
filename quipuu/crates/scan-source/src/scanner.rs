@@ -3023,6 +3023,20 @@ const C_CALLEE_APIS: &[(&str, &str)] = &[
     ("EVP_EncryptInit_ex", "openssl.EVP_EncryptInit_ex"),
     ("EVP_DigestInit_ex", "openssl.EVP_DigestInit_ex"),
     ("SSL_CTX_set_cipher_list", "openssl.SSL_CTX_set_cipher_list"),
+    // Pre-3.0 typed digest/keygen/signature entry points — no algorithm
+    // argument to inspect (the name itself is the algorithm, or, for
+    // EC_KEY_new_by_curve_name/ECDSA_sign, the curve is elsewhere and stays
+    // unattributed the same way CRYPTO-485's generic EC keygen arm does).
+    // Backlog #Y136.
+    (
+        "EC_KEY_new_by_curve_name",
+        "openssl.EC_KEY_new_by_curve_name",
+    ),
+    ("MD5_Init", "openssl.MD5_Init"),
+    ("SHA1_Init", "openssl.SHA1_Init"),
+    ("SHA256_Init", "openssl.SHA256_Init"),
+    ("PKCS5_PBKDF2_HMAC", "openssl.PKCS5_PBKDF2_HMAC"),
+    ("ECDSA_sign", "openssl.ECDSA_sign"),
     ("crypto_box_keypair", "libsodium.crypto_box_keypair"),
     // Not `libsodium.` — `crypto_sign_keypair` is the NaCl signature keygen
     // name and the NIST PQC reference API name, so the identifier alone does

@@ -4573,6 +4573,42 @@ fn scans_c_windows_cng_mlkem_mldsa() {
     );
 }
 
+/// Backlog `#Y136`: six real, idiomatic pre-3.0 OpenSSL call shapes — legacy
+/// typed digest inits, the legacy EC key constructor, legacy `ECDSA_sign`,
+/// and `PKCS5_PBKDF2_HMAC` — had zero rule coverage, the coverage gap
+/// `benchmarks/corpus-a-ground-truth/cpp/probe.c`'s 0% recall row was
+/// conflating with a distinct, unfixable probe-artifact shape (bare
+/// `EVP_aes_*`/`EVP_sha384` fetch calls whose return value is discarded).
+#[test]
+fn scans_c_legacy_openssl_1x_apis() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let findings = scanner
+        .scan_path(&fixtures_root().join("cpp/crypto.c"))
+        .expect("scan succeeds");
+
+    let want = [
+        ("CRYPTO-1193", "ecdsa-unattributed"), // EC_KEY_new_by_curve_name(...)
+        ("CRYPTO-1194", "md5"),                // MD5_Init(&md5_ctx)
+        ("CRYPTO-1195", "sha-1"),              // SHA1_Init(&sha1_ctx)
+        ("CRYPTO-1196", "sha-256"),            // SHA256_Init(&sha256_ctx)
+        ("CRYPTO-1197", "pbkdf2-unattributed"), // PKCS5_PBKDF2_HMAC(...)
+        ("CRYPTO-1198", "ecdsa-unattributed"), // ECDSA_sign(...)
+    ];
+    for (rule_id, algorithm_id) in want {
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule_id == rule_id && f.algorithm_id == algorithm_id),
+            "expected {rule_id} ({algorithm_id}) in cpp/crypto.c; got: {:#?}",
+            findings
+                .iter()
+                .map(|f| (&f.rule_id, &f.algorithm_id))
+                .collect::<Vec<_>>()
+        );
+    }
+}
+
 /// Backlog `#Y113`: OpenSSL 3.6 shipped native LMS signature support through
 /// the same generic keygen entry point ML-KEM/ML-DSA/SLH-DSA already use, but
 /// `cpp.toml` had zero classify coverage for it — 11 months after GA.
