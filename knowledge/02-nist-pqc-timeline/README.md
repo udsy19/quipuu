@@ -90,6 +90,20 @@ This was a revision from prior NIST guidance. SP 800-57 Part 1 had projected dis
 
 Source: SP 800-57 Part 1 Rev 5, Table 2.
 
+### 2.4 SP 800-56A/C Revision — Hybrid PQC Key Establishment (decided, not yet drafted)
+
+| Field | Value |
+|---|---|
+| Status | **DECIDED, 2026-01-06 — no IPD published yet** |
+| What NIST decided | Update SP 800-56A and revise SP 800-56C so a KEM-derived shared secret (e.g. from ML-KEM) becomes a first-class input alongside classical DH/ECDH, letting SP 800-56C format a hybrid shared secret `Z` for federal key derivation |
+| SP 800-56A scope | Classical-only update; explicitly treats X25519/X448 as "secondary in the ongoing transition to post-quantum cryptography" |
+| Primary source (decision) | https://csrc.nist.gov/news/2025/proposal-for-sp-800-56-reports (2025, public comment closed 2025-09-15) |
+| Primary source (announcement) | https://www.nist.gov/news-events/news/2026/01/nist-update-special-publication-800-56a-and-revise-800-56c (2026-01-06) |
+| IPD | Not yet published — `csrc.nist.gov/pubs/sp/800-56c/rev-3/ipd` returns 404 as of 2026-09-03 |
+| quipuu coverage | The generic hybrid-KEM/TLS-ML-KEM detection surface is already covered via existing RFC 10024/RFC 9370 and `algorithm-table.toml` entries; SP 800-56C's eventual revision would formalize this at the federal-standard level but changes no algorithm this repo classifies. Narrative-documentation gap only, no detection-rule action follows. |
+
+Same shape as §5.6 (FIPS 207/HQC): a real, dated NIST process with no detection-surface consequence.
+
 ---
 
 ## 3. AES — Status Under NIST IR 8547
