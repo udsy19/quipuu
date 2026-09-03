@@ -779,7 +779,7 @@ fn walk_text_files(root: &std::path::Path) -> Vec<(String, String)> {
                     .strip_prefix(root)
                     .unwrap_or(&path)
                     .to_string_lossy()
-                    .into_owned();
+                    .replace('\\', "/");
                 out.push((rel, text));
             }
         }
