@@ -8852,3 +8852,63 @@ than by oversight.
 PRECISION: 97.33% (held, exactly — corpus B has no C# ecosystem to move; canonical
 `dump_findings.py` pre/post dumps are byte-identical at 2070 findings, and `precision.py` reproduces
 the published 97.33% without a README write).
+
+---
+
+## `#Y160` closed: Go x509 cert issuance coverage for externally-sourced ML-DSA keys
+
+Go 1.27's `crypto/x509` gained ML-DSA certificate support, but a key loaded from a KMS/HSM/vault
+and only ever touched through `x509.CreateCertificate`/`.ParseCertificate`/`.CreateCertificateRequest`
+produced no finding: `GO-077`/`GO-081` both require a local `mldsa.MLDSA{44,65,87}()` construction
+call site in the same file. `CRYPTO-1251` closes that gap — one new `[[extract]]` (`GO-082`) on the
+three x509 call shapes, qualified in `[[classify]]` by a new whole-file marker,
+`go_mldsa_external_key_marker` (`scanner.rs`): present when the file imports `crypto/mldsa` but
+never itself calls the constructor, which is exactly the "key arrives from outside this file"
+shape and does not double-count a file `GO-077` already scores. Two new fixtures
+(`x509_mldsa_external_key.go`, `x509_mldsa_local_key.go`) and two new `scan_test.rs` cases pin both
+the positive case (fires at both call sites) and the negative control (does not fire when the key
+is constructed locally, and `GO-077`'s own finding is untouched).
+
+**Corpus effect: measured, not assumed.** Built a pre-change binary from `73c2b94` (the last commit
+on `main` before this change) and a post-change binary with `CRYPTO-1251` added, in a worktree so
+the release tree was free to keep rebuilding. Dumped the full 150-project corpus with each via this
+repo's own `benchmarks/corpus-b-realworld/dump_findings.py` (`--clones
+/opt/cryptoscope/work/corpus-clones`): **2070 findings, byte-identical set, both sides** — the
+KMS/HSM/vault-sourced-key shape `CRYPTO-1251` targets does not occur in any of the 150 projects
+(no Go project in this corpus issues a certificate from an externally-loaded ML-DSA key), so the
+rule is architecturally incapable of moving this corpus's finding count. `precision.py
+/opt/cryptoscope/work/y160/pre.json /opt/cryptoscope/work/y160/post.json --write-readme`:
+
+```
+stratum-B projects: 30   dump: 2070 findings
+populations (re-derived fresh): A=792  B=1278
+
+pre 2070 -> post 2070   added 0  removed 0
+
+stratified, fresh populations : 97.331%  (95% CI 96.20-98.46)
+pooled Wilson (unweighted)   : 97.368%  (95% CI 96.01-98.27)
+
+sample: A 266/275  B 511/523  populations A=792 B=1278  method=stratified_fresh
+```
+
+Both estimators agree (0.037pp spread, well inside the 0.05pp tolerance), so the figure needed no
+`change_estimator` decision. Zero added findings means no new TP/FP labelling was required — the
+existing 798-row audited sample (266/275 stratum A, 511/523 stratum B) is untouched, so **97.33%
+held exactly**, same figure and same CI as `#Y156`. `--write-readme` re-anchored only the measured
+date (`2026-09-03` → `2026-09-04`); figure, interval, audited count and corpus total were already
+current and the tool reports them unchanged.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all`, `cargo clippy --all-targets -- -D
+warnings`, `cargo test --workspace` all clean (173 `scan_test.rs` cases, two new:
+`go_x509_external_mldsa_key_is_classified` and `go_x509_local_mldsa_key_is_not_double_counted`).
+Both trust-invariant tests (`test_run_acvp_kats_rejects_code_execution`,
+`test_network_disabled_error`) untouched and pass. Repo-wide extract/classify totals move
+154/925 → 155/926 (Go's own count 110 → 111); both already corrected in `README.md` in the same
+commit that added the rule, per this file's own "correct every copy of a number" discipline.
+
+**Not done, said out loud:** no cross-function type-flow tracing of which key reaches the x509 call
+(P1 forbids it) — a file that imports `crypto/mldsa` for an unrelated reason and issues a
+certificate for an unrelated classical key would still match, degrading to "ML-DSA parameter set
+not stated" rather than a wrong one, the same restraint `CRYPTO-1045`/`CRYPTO-1208` already apply.
+
+PRECISION: 97.33%
