@@ -185,6 +185,7 @@ fn every_algorithm_emits_a_bom_valid_at_the_version_it_declares() {
         .algorithms
         .iter()
         .map(|rec| Finding {
+            id: format!("QPU-TEST-{}", rec.id),
             rule_id: "CRYPTO-000".into(),
             algorithm_id: rec.id.clone(),
             location: Location {

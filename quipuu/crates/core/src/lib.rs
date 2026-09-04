@@ -22,7 +22,9 @@ pub mod risk;
 pub mod warnings;
 
 pub use algorithm::{AlgorithmRecord, AlgorithmTable, Primitive, QuantumStatus};
-pub use finding::{Confidence, Exposure, Finding, Location, Severity, SiteContext, UsageContext};
+pub use finding::{
+    Confidence, Exposure, Finding, Location, Severity, SiteContext, UsageContext, stable_finding_id,
+};
 pub use oid::{Determines, OidMapping, OidTable};
 pub use policy::Policy;
 pub use risk::{QuantumRiskScore, score_of, severity_of};

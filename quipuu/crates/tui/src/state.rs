@@ -489,6 +489,7 @@ mod tests {
 
     fn dummy_finding(rule_id: &str, algorithm_id: &str, msg: &str) -> Finding {
         Finding {
+            id: format!("QPU-TEST-{rule_id}"),
             rule_id: rule_id.to_string(),
             algorithm_id: algorithm_id.to_string(),
             location: Location {

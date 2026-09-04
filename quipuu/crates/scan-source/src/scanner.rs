@@ -5219,12 +5219,20 @@ fn apply_classify(
     }
 
     let path_str: PathBuf = path.to_path_buf();
+    let location_str = path_str.to_string_lossy().into_owned();
 
     Ok(Some(Finding {
+        id: quipuu_core::stable_finding_id(
+            &rule.id,
+            &rule.algorithm_id,
+            &location_str,
+            Some(raw.line),
+            Some(&raw.symbol),
+        ),
         rule_id: rule.id.clone(),
         algorithm_id: rule.algorithm_id.clone(),
         location: Location {
-            location: path_str.to_string_lossy().into_owned(),
+            location: location_str,
             line: Some(raw.line),
             offset: Some(raw.offset),
             symbol: Some(raw.symbol.clone()),

@@ -331,6 +331,13 @@ impl CertScanner {
         };
 
         findings.push(Finding {
+            id: quipuu_core::stable_finding_id(
+                "CERT-001",
+                &pk_algo_id,
+                &path_str,
+                None,
+                Some("X509::SubjectPublicKey"),
+            ),
             rule_id: "CERT-001".into(),
             algorithm_id: pk_algo_id.clone(),
             location: Location {
@@ -374,6 +381,13 @@ impl CertScanner {
             .map(|(_, reason)| *reason);
 
         findings.push(Finding {
+            id: quipuu_core::stable_finding_id(
+                "CERT-002",
+                &sig_algo_id,
+                &path_str,
+                None,
+                Some("X509::Signature"),
+            ),
             rule_id: "CERT-002".into(),
             algorithm_id: sig_algo_id.clone(),
             location: Location {
@@ -394,6 +408,13 @@ impl CertScanner {
         // ── 3. Weak/broken signature algorithm — CERT-100 ─────────────────
         if let Some(reason) = weak_reason {
             findings.push(Finding {
+                id: quipuu_core::stable_finding_id(
+                    "CERT-100",
+                    &sig_algo_id,
+                    &path_str,
+                    None,
+                    Some("X509::Signature"),
+                ),
                 rule_id: "CERT-100".into(),
                 algorithm_id: sig_algo_id.clone(),
                 location: Location {
@@ -414,6 +435,13 @@ impl CertScanner {
             // Catch anything in the algorithm table flagged BrokenClassically
             // that is not in our explicit WEAK list (belt-and-suspenders).
             findings.push(Finding {
+                id: quipuu_core::stable_finding_id(
+                    "CERT-100",
+                    &sig_algo_id,
+                    &path_str,
+                    None,
+                    Some("X509::Signature"),
+                ),
                 rule_id: "CERT-100".into(),
                 algorithm_id: sig_algo_id.clone(),
                 location: Location {

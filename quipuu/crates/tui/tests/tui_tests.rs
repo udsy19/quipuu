@@ -30,6 +30,7 @@ fn key(code: KeyCode) -> KeyEvent {
 
 fn finding(rule_id: &str, algorithm_id: &str, msg: &str, hndl: bool) -> Finding {
     Finding {
+        id: "QPU-TEST".into(),
         rule_id: rule_id.to_string(),
         algorithm_id: algorithm_id.to_string(),
         location: Location {

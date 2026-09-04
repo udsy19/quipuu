@@ -204,6 +204,7 @@ fn cnsa2_scores_aes_128_as_a_compliance_finding_and_nist_does_not() {
         .expect("loads");
     let aes128 = b.algorithms.get("aes-128-gcm").expect("aes-128-gcm");
     let finding = Finding {
+        id: "QPU-TEST".into(),
         rule_id: "CRYPTO-XXX".into(),
         algorithm_id: "aes-128-gcm".into(),
         location: Location {
@@ -268,6 +269,7 @@ fn pqc_final_scores_safe_not_medium() {
     let b = load_builtins().expect("builtins");
     let ml_kem_1024 = b.algorithms.get("ml-kem-1024").expect("ml-kem-1024");
     let finding = Finding {
+        id: "QPU-TEST".into(),
         rule_id: "CRYPTO-XXX".into(),
         algorithm_id: "ml-kem-1024".into(),
         location: Location {
@@ -308,6 +310,7 @@ fn pqc_final_disallowed_by_cnsa2_still_alerts() {
         .expect("loads");
     let ml_kem_768 = b.algorithms.get("ml-kem-768").expect("ml-kem-768");
     let finding = Finding {
+        id: "QPU-TEST".into(),
         rule_id: "CRYPTO-XXX".into(),
         algorithm_id: "ml-kem-768".into(),
         location: Location {
@@ -338,6 +341,7 @@ fn pqc_draft_is_not_gated_to_safe() {
     let b = load_builtins().expect("builtins");
     let fn_dsa = b.algorithms.get("fn-dsa-512").expect("fn-dsa-512");
     let finding = Finding {
+        id: "QPU-TEST".into(),
         rule_id: "CRYPTO-XXX".into(),
         algorithm_id: "fn-dsa-512".into(),
         location: Location {

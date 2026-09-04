@@ -166,9 +166,42 @@ impl Severity {
     }
 }
 
+/// Derive a stable finding id from the fields that identify a call site.
+///
+/// FNV-1a over `rule_id|algorithm_id|location|line|symbol`, not
+/// `std::hash::DefaultHasher` — `RandomState` reseeds per process, so a
+/// `DefaultHasher` id would change on every scan of the same tree and
+/// silently defeat `diff`/`baseline` (M3), which key on this id staying put
+/// across scans of unchanged code.
+pub fn stable_finding_id(
+    rule_id: &str,
+    algorithm_id: &str,
+    location: &str,
+    line: Option<u32>,
+    symbol: Option<&str>,
+) -> String {
+    let mut hash: u64 = 0xcbf29ce484222325;
+    let input = format!(
+        "{rule_id}|{algorithm_id}|{location}|{}|{}",
+        line.unwrap_or(0),
+        symbol.unwrap_or("")
+    );
+    for byte in input.bytes() {
+        hash ^= u64::from(byte);
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
+    format!("QPU-{:08X}", hash as u32)
+}
+
 /// One cryptographic finding.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Finding {
+    /// Stable finding id (`QPU-XXXXXXXX`), derived from
+    /// [`stable_finding_id`]. Survives across scans of an unchanged tree —
+    /// the key `diff`/`baseline` (Program M3) need to tell a carried-forward
+    /// finding from a new one.
+    #[serde(default)]
+    pub id: String,
     /// SARIF rule id (CRYPTO-NNN).
     pub rule_id: String,
     /// Canonical algorithm-id from the algorithm table.
@@ -187,4 +220,48 @@ pub struct Finding {
     pub shelf_life_bucket: String,
     /// True if this finding meets the HNDL flagging criteria.
     pub hndl_critical: bool,
+}
+
+#[cfg(test)]
+mod stable_id_tests {
+    use super::stable_finding_id;
+
+    #[test]
+    fn same_inputs_produce_the_same_id() {
+        let a = stable_finding_id(
+            "CRYPTO-340",
+            "rsa-2048",
+            "src/keys.rs",
+            Some(84),
+            Some("rsa.GenerateKey"),
+        );
+        let b = stable_finding_id(
+            "CRYPTO-340",
+            "rsa-2048",
+            "src/keys.rs",
+            Some(84),
+            Some("rsa.GenerateKey"),
+        );
+        assert_eq!(a, b);
+        assert!(a.starts_with("QPU-"));
+    }
+
+    #[test]
+    fn different_lines_produce_different_ids() {
+        let a = stable_finding_id(
+            "CRYPTO-340",
+            "rsa-2048",
+            "src/keys.rs",
+            Some(84),
+            Some("rsa.GenerateKey"),
+        );
+        let b = stable_finding_id(
+            "CRYPTO-340",
+            "rsa-2048",
+            "src/keys.rs",
+            Some(85),
+            Some("rsa.GenerateKey"),
+        );
+        assert_ne!(a, b);
+    }
 }

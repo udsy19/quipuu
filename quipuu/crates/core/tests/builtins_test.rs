@@ -183,6 +183,7 @@ fn risk_score_rsa_public_tls_is_critical() {
     let b = load_builtins().unwrap();
     let rsa = b.algorithms.get("rsa-2048").unwrap();
     let finding = Finding {
+        id: "QPU-TEST".into(),
         rule_id: "CRYPTO-002".into(),
         algorithm_id: "rsa-2048".into(),
         location: Location {
@@ -217,6 +218,7 @@ fn risk_score_aes_256_local_ephemeral_is_safe() {
     let b = load_builtins().unwrap();
     let aes = b.algorithms.get("aes-256-gcm").unwrap();
     let finding = Finding {
+        id: "QPU-TEST".into(),
         rule_id: "CRYPTO-XXX".into(),
         algorithm_id: "aes-256-gcm".into(),
         location: Location {
@@ -247,6 +249,7 @@ fn hndl_flag_triggers_on_long_lived_rsa() {
     let b = load_builtins().unwrap();
     let rsa = b.algorithms.get("rsa-2048").unwrap();
     let finding = Finding {
+        id: "QPU-TEST".into(),
         rule_id: "CRYPTO-002".into(),
         algorithm_id: "rsa-2048".into(),
         location: Location {
@@ -273,6 +276,7 @@ fn hndl_flag_does_not_trigger_on_ephemeral_signature() {
     let b = load_builtins().unwrap();
     let rsa = b.algorithms.get("rsa-2048").unwrap();
     let finding = Finding {
+        id: "QPU-TEST".into(),
         rule_id: "CRYPTO-002".into(),
         algorithm_id: "rsa-2048".into(),
         location: Location {

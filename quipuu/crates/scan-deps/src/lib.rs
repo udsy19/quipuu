@@ -189,11 +189,19 @@ impl DepScanner {
                     dep.version.clone()
                 };
 
+                let location_str = path.to_string_lossy().into_owned();
                 let finding = Finding {
+                    id: quipuu_core::stable_finding_id(
+                        "DEP-001",
+                        entry.algorithm_id,
+                        &location_str,
+                        Some(dep.line),
+                        Some(&symbol),
+                    ),
                     rule_id: "DEP-001".to_string(),
                     algorithm_id: entry.algorithm_id.to_string(),
                     location: Location {
-                        location: path.to_string_lossy().into_owned(),
+                        location: location_str,
                         line: Some(dep.line),
                         offset: None,
                         symbol: Some(symbol.clone()),

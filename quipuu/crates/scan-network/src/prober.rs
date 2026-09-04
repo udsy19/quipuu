@@ -259,6 +259,16 @@ fn loc(target: &str, label: &str) -> Location {
     }
 }
 
+fn finding_id(rule_id: &str, algorithm_id: &str, target: &str, label: &str) -> String {
+    quipuu_core::stable_finding_id(
+        rule_id,
+        algorithm_id,
+        target,
+        None,
+        Some(&format!("TLS::probe[{label}]")),
+    )
+}
+
 fn handshake_finding(
     target: &str,
     label: &str,
@@ -279,6 +289,7 @@ fn handshake_finding(
         }
     );
     Finding {
+        id: finding_id(rule_id, algorithm_id, target, label),
         rule_id: rule_id.into(),
         algorithm_id: algorithm_id.to_owned(),
         location: loc(target, label),
@@ -293,6 +304,7 @@ fn handshake_finding(
 
 fn probe_failure_finding(target: &str, label: &str, err: &ScanError) -> Finding {
     Finding {
+        id: finding_id("NET-002", "tls-handshake", target, label),
         rule_id: "NET-002".into(),
         algorithm_id: "tls-handshake".into(),
         location: loc(target, label),
@@ -307,6 +319,7 @@ fn probe_failure_finding(target: &str, label: &str, err: &ScanError) -> Finding 
 
 fn group_rejected_finding(target: &str, g: &ProbeGroup) -> Finding {
     Finding {
+        id: finding_id("NET-003", g.algorithm_id, target, g.name),
         rule_id: "NET-003".into(),
         algorithm_id: g.algorithm_id.into(),
         location: loc(target, g.name),
@@ -334,6 +347,7 @@ fn group_not_probed_finding(target: &str, g: &ProbeGroup) -> Finding {
     // x25519-mlkem768) for a mechanism nobody checked for; the sentinel
     // carries the specific group name and codepoint in the message instead.
     Finding {
+        id: finding_id("NET-900", "tls-group-not-probed", target, g.name),
         rule_id: "NET-900".into(),
         algorithm_id: "tls-group-not-probed".into(),
         location: loc(target, g.name),

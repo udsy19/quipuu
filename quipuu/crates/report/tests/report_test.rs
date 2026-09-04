@@ -312,6 +312,7 @@ fn summary_json_by_algorithm_sorted_by_count_desc_then_alpha() {
 fn finding_for(algo_id: &str) -> quipuu_core::Finding {
     use quipuu_core::{Confidence, Exposure, Finding, Location, UsageContext};
     Finding {
+        id: "QPU-TEST".into(),
         rule_id: format!("TEST-{algo_id}"),
         algorithm_id: algo_id.to_string(),
         location: Location {
