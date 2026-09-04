@@ -8912,3 +8912,46 @@ certificate for an unrelated classical key would still match, degrading to "ML-D
 not stated" rather than a wrong one, the same restraint `CRYPTO-1045`/`CRYPTO-1208` already apply.
 
 PRECISION: 97.33%
+
+---
+
+## `#Y161` closed: stable finding id (M1) touched three scanner crates — measured, not assumed
+
+The prior cycle's gate failed because `stable_finding_id` (`crates/core/src/finding.rs`) is
+threaded through `Finding` construction in `scan-certs/src/lib.rs`, `scan-deps/src/lib.rs` and
+`scan-network/src/prober.rs` — all three are in `gates.py`'s `DETECTION_PATHS`, so `gate_precision`
+correctly demanded a measurement even though the change only appends a new `id: String` field and
+touches no `[[extract]]`/`[[classify]]` rule or match logic. `finding_key` in `precision.py`
+(`project, rule_id, file, line, algorithm_id, severity`) does not include `id`, so this is exactly
+the shape the estimator should read as detection-neutral.
+
+**Corpus effect: measured, not assumed.** Pre-change dump is `y160_post.json` (2070 findings, the
+same dump the current 97.33% headline is anchored to, `a09e889`). Built a post-change release
+binary with the `id` field threaded through and dumped the full 150-project corpus via this repo's
+own `benchmarks/corpus-b-realworld/dump_findings.py` (`--clones /opt/cryptoscope/work/corpus-clones`):
+**2070 findings, 0 added, 0 removed** — confirms the field addition moves no site, algorithm id or
+severity. `python3 /opt/cryptoscope/bin/precision.py /opt/cryptoscope/work/y160_post.json
+/opt/cryptoscope/work/y161_post.json --write-readme`:
+
+```
+stratum-B projects: 30   dump: 2070 findings
+populations (re-derived fresh): A=792  B=1278
+
+pre 2070 -> post 2070   added 0  removed 0
+
+stratified, fresh populations : 97.331%  (95% CI 96.20-98.46)
+pooled Wilson (unweighted)   : 97.368%  (95% CI 96.01-98.27)
+
+sample: A 266/275  B 511/523  populations A=792 B=1278  method=stratified_fresh
+```
+
+Both estimators agree (0.037pp spread, inside the 0.05pp tolerance). Zero added findings means no
+new TP/FP labelling was required — the existing 798-row audited sample is untouched, so **97.33%
+held exactly**. The README already stated this figure, date and sample size, so `--write-readme`
+made no change (confirmed by re-running it: "README already states this claim — nothing to write").
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all -- --check`, `cargo clippy
+--all-targets -- -D warnings`, `cargo test --workspace` all clean. Both trust-invariant tests
+(`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
+
+PRECISION: 97.33%
