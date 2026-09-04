@@ -1,6 +1,6 @@
 # quipuu
 
-**A single Rust binary that finds the cryptography in your codebase, classifies each finding against NIST's post-quantum migration timeline, and tells you exactly which ones a quantum adversary can harvest today.** It detects constructors and key-generation sites precisely rather than every call site exhaustively — [measured recall is below](#benchmark-numbers).
+**A single Rust binary that discovers cryptographic control points in your codebase — key generation, algorithm selection, protocol configuration, certificates, crypto wrappers — and classifies each against NIST's post-quantum migration timeline to produce an evidence-backed PQC migration inventory.** It detects constructors and key-generation sites precisely rather than every call site exhaustively — [measured recall is below](#benchmark-numbers). Harvest-Now-Decrypt-Later exposure is flagged only where a finding combines a classical public-key confidentiality mechanism, plausible exposure, and a configured long confidentiality lifetime; every other quantum-vulnerable finding is reported as quantum-vulnerable, not as harvestable.
 
 ```bash
 cargo install --git https://github.com/udsy19/quipuu --locked
