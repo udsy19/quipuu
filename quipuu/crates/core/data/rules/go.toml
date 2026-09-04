@@ -1208,6 +1208,46 @@ algorithm_id = "ml-dsa-unattributed"
 severity_hint = "auto"
 message = "crypto.MLDSAMu passed to a signing call — FIPS 204 ML-DSA external-mu message representative, quantum-resistant, but the parameter set is carried by the key this call site does not expose."
 
+# x509.CreateCertificate / .ParseCertificate / .CreateCertificateRequest with
+# an externally-sourced ML-DSA key — `#Y160`. Go 1.27's crypto/x509 gained
+# ML-DSA certificate support (go.dev/doc/go1.27), but a key loaded from a
+# KMS/HSM/vault (typically via x509.ParsePKCS8PrivateKey on bytes this file
+# never generates) and only ever touched through certificate issuance or
+# parsing produces zero findings from GO-077/GO-081 above, both of which
+# require a local `mldsa.MLDSA{44,65,87}()`/`crypto.MLDSAMu` call site.
+#
+# Qualified on `go_mldsa_external_key_marker` (scanner.rs), a whole-file,
+# syntactic-only fact: the file imports "crypto/mldsa" and never itself
+# calls `mldsa.MLDSA{44,65,87}(...)`. This is what keeps a file GO-077
+# already covers (key constructed and used in the same file) from also
+# matching here — construction and issuance are routinely in different
+# functions, so a same-function co-location check would under-suppress.
+# No cross-function type-flow tracing is attempted (P1): a file that
+# imports crypto/mldsa for an unrelated reason and issues a certificate for
+# an unrelated classical key would still match, so this degrades to
+# "ML-DSA parameter set not stated" rather than a specific one, the same
+# restraint CRYPTO-1045/CRYPTO-1208 above already apply.
+[[extract]]
+id = "GO-082"
+language = "go"
+query = """
+(call_expression
+  function: (selector_expression
+    operand: (identifier) @pkg (#eq? @pkg "x509")
+    field: (field_identifier) @fn (#match? @fn "^(CreateCertificate|ParseCertificate|CreateCertificateRequest)$")))
+"""
+captures = { pkg = "ident", fn = "ident" }
+api = "crypto/x509.CertOp"
+description = "x509.CreateCertificate/.ParseCertificate/.CreateCertificateRequest — certificate issuance/parsing, qualified against an externally-sourced ML-DSA key by this file's import set."
+
+[[classify]]
+id = "CRYPTO-1251"
+when.api = "^crypto/x509\\.CertOp$"
+when.imports = ["^crypto/mldsa:external-key$"]
+algorithm_id = "ml-dsa-unattributed"
+severity_hint = "auto"
+message = "{fn} on a key this file never constructs locally (imports crypto/mldsa, never calls mldsa.MLDSA44/65/87) — FIPS 204 ML-DSA, quantum-resistant, but the parameter set is carried by a key sourced outside this file (KMS/HSM/vault) and not statically knowable here."
+
 [[extract]]
 id = "GO-073"
 language = "go"

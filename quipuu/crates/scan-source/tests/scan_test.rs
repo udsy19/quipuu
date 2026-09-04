@@ -297,6 +297,63 @@ fn go_stdlib_mldsa_is_classified() {
     }
 }
 
+/// `#Y160`: crypto/x509 certificate issuance/parsing on an ML-DSA key this
+/// file never constructs locally (loaded from a KMS/HSM/vault instead).
+/// CRYPTO-1251 must fire at both the CreateCertificate and ParseCertificate
+/// call sites — see `x509_mldsa_local_key_is_not_double_counted` below for
+/// the sibling case where it must NOT fire.
+#[test]
+fn go_x509_external_mldsa_key_is_classified() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let path = fixtures_root().join("go/x509_mldsa_external_key.go");
+    let findings = scanner.scan_path(&path).expect("scan succeeds");
+
+    for (rule, algorithm_id, line) in [
+        ("CRYPTO-1251", "ml-dsa-unattributed", 35),
+        ("CRYPTO-1251", "ml-dsa-unattributed", 39),
+    ] {
+        assert!(
+            findings.iter().any(|f| f.rule_id == rule
+                && f.algorithm_id == algorithm_id
+                && f.location.line == Some(line)),
+            "expected {rule}/{algorithm_id} at line {line} in x509_mldsa_external_key.go, got {:#?}",
+            findings,
+        );
+    }
+}
+
+/// `#Y160`'s control case: a file where the ML-DSA key is constructed
+/// locally (GO-077's own `mldsa.MLDSA65()` shape) and then passed straight
+/// into x509.CreateCertificate. CRYPTO-1251 must not also fire here, or
+/// every file GO-077 already scores would be double-counted.
+#[test]
+fn go_x509_local_mldsa_key_is_not_double_counted() {
+    let b = load_builtins().unwrap();
+    let scanner = Scanner::with_builtins(b.algorithms).expect("scanner builds");
+    let path = fixtures_root().join("go/x509_mldsa_local_key.go");
+    let findings = scanner.scan_path(&path).expect("scan succeeds");
+
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.rule_id == "CRYPTO-1054" && f.algorithm_id == "ml-dsa-65"),
+        "expected GO-077's CRYPTO-1054/ml-dsa-65 to still fire, got {:#?}",
+        findings,
+    );
+    assert!(
+        !findings.iter().any(|f| f.rule_id == "CRYPTO-1251"),
+        "CRYPTO-1251 must not fire on a file whose ML-DSA key is constructed locally, got {:#?}",
+        findings,
+    );
+    assert_eq!(
+        findings.len(),
+        1,
+        "expected exactly one finding (GO-077's), got {:#?}",
+        findings,
+    );
+}
+
 /// X-Wing (draft-connolly-cfrg-xwing-kem) — the X25519+ML-KEM-768 hybrid KEM
 /// combiner used by HPKE, reached through circl's own `kem/xwing` package;
 /// Google Tink's internal `hybrid/internal/xwing` package exports the same

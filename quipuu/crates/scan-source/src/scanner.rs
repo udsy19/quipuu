@@ -292,36 +292,98 @@ struct ExtractedFile {
     imports: Vec<String>,
 }
 
-/// Every import target named in the file, verbatim.
+/// Every import target named in the file, verbatim, for C and C++; a single
+/// synthetic marker for Go (see [`go_mldsa_external_key_marker`]).
 ///
-/// C and C++ only. `#include <sodium.h>` and `#include "../sign.h"` both
-/// yield the text between the delimiters; nothing is resolved, followed, or
+/// C and C++: `#include <sodium.h>` and `#include "../sign.h"` both yield the
+/// text between the delimiters; nothing is resolved, followed, or
 /// normalised, because resolving an include path means reproducing the
 /// project's build (P4). A rule matches against these strings with a regex,
 /// so it decides for itself how much of the path it cares about.
 ///
-/// Returns empty for the other languages. Their import statements have the
-/// same shape and would slot in here, but nothing reads them yet and an
+/// Returns empty for the remaining languages. Their import statements have
+/// the same shape and would slot in here, but nothing reads them yet and an
 /// unread collector is a claim that something is qualified when it is not.
 fn collect_imports(root: Node<'_>, source: &[u8], language: Language) -> Vec<String> {
-    if !matches!(language, Language::C | Language::Cpp) {
-        return Vec::new();
+    match language {
+        Language::C | Language::Cpp => {
+            let mut out = Vec::new();
+            let mut cursor = root.walk();
+            // `preproc_include` is a top-level node in the C and C++
+            // grammars; an include inside `#ifdef` sits one level down,
+            // under `preproc_ifdef`. One extra level covers the guarded
+            // case without walking the whole tree.
+            for child in root.children(&mut cursor) {
+                push_include_target(child, source, &mut out);
+                if child.kind().starts_with("preproc_if") {
+                    let mut inner = child.walk();
+                    for grandchild in child.children(&mut inner) {
+                        push_include_target(grandchild, source, &mut out);
+                    }
+                }
+            }
+            out
+        }
+        Language::Go => go_mldsa_external_key_marker(root, source)
+            .into_iter()
+            .collect(),
+        _ => Vec::new(),
     }
-    let mut out = Vec::new();
-    let mut cursor = root.walk();
-    // `preproc_include` is a top-level node in the C and C++ grammars; an
-    // include inside `#ifdef` sits one level down, under `preproc_ifdef`.
-    // One extra level covers the guarded case without walking the whole tree.
-    for child in root.children(&mut cursor) {
-        push_include_target(child, source, &mut out);
-        if child.kind().starts_with("preproc_if") {
-            let mut inner = child.walk();
-            for grandchild in child.children(&mut inner) {
-                push_include_target(grandchild, source, &mut out);
+}
+
+/// `#Y160`: a synthetic import-set marker, not a real import path. Present
+/// (as the single string `"crypto/mldsa:external-key"`) when the file
+/// imports `crypto/mldsa` but never itself calls `mldsa.MLDSA44/65/87(...)`
+/// — i.e. an ML-DSA key reaches this file (typically through
+/// `x509.ParsePKCS8PrivateKey` on bytes loaded from a KMS/HSM/vault) without
+/// ever being locally constructed, the cross-boundary shape `go.toml`'s
+/// `x509.CreateCertificate`/`.ParseCertificate`/`.CreateCertificateRequest`
+/// classify rule needs in order to not double-count a file GO-077 already
+/// covers via its own `mldsa.MLDSA{44,65,87}()` construction-site match.
+///
+/// Whole-file, not per-function: the construction call and the x509 call are
+/// routinely in different functions (a key loader and an issuer), so a
+/// same-function co-location check (as `find_go_pq_colocation` uses) would
+/// under-suppress. No cross-function type-flow tracing is attempted (P1) —
+/// this is purely "does the literal text `mldsa.MLDSA{44,65,87}(` appear
+/// anywhere in the file", the same syntactic-only discipline `when.imports`
+/// already applies to C/C++ header names.
+fn go_mldsa_external_key_marker(root: Node<'_>, source: &[u8]) -> Option<String> {
+    let mut imports_mldsa = false;
+    let mut constructs_locally = false;
+    walk_all(root, &mut |node| match node.kind() {
+        "import_spec" => {
+            if let Some(path_node) = node.child_by_field_name("path")
+                && string_literal_value(path_node, source) == "crypto/mldsa"
+            {
+                imports_mldsa = true;
             }
         }
-    }
-    out
+        "call_expression" => {
+            let Some(function) = node.child_by_field_name("function") else {
+                return;
+            };
+            if function.kind() != "selector_expression" {
+                return;
+            }
+            let (Some(operand), Some(field)) = (
+                function.child_by_field_name("operand"),
+                function.child_by_field_name("field"),
+            ) else {
+                return;
+            };
+            if node_text(operand, source) == "mldsa"
+                && matches!(
+                    node_text(field, source).as_str(),
+                    "MLDSA44" | "MLDSA65" | "MLDSA87"
+                )
+            {
+                constructs_locally = true;
+            }
+        }
+        _ => {}
+    });
+    (imports_mldsa && !constructs_locally).then(|| "crypto/mldsa:external-key".to_string())
 }
 
 /// Local names bound directly (not through a member expression) from a
@@ -1886,6 +1948,14 @@ const GO_CALLEE_APIS: &[(&str, &str)] = &[
     ("xwing.EncapsulateTo", "circl/kem/xwing.Op"),
     ("xwing.DecapsulateTo", "circl/kem/xwing.Op"),
     ("xwing.PublicFromSecret", "circl/kem/xwing.Op"),
+    // crypto/x509 certificate issuance/parsing — `#Y160`. Not a construction
+    // site for any key; qualified by `go_mldsa_external_key_marker`'s
+    // `when.imports` gate in go.toml's CRYPTO-1251, which is what tells this
+    // apart from a file GO-077's `mldsa.MLDSA{44,65,87}()` row already
+    // covers.
+    ("x509.CreateCertificate", "crypto/x509.CertOp"),
+    ("x509.ParseCertificate", "crypto/x509.CertOp"),
+    ("x509.CreateCertificateRequest", "crypto/x509.CertOp"),
 ];
 
 /// Exact-match lookup in one of the callee → api tables.
@@ -2025,7 +2095,8 @@ fn match_go_callee(callee: &str) -> Option<(String, HashMap<String, ArgValue>)> 
         || api == "crypto/dsa.Op"
         || api == "crypto/mlkem.KeyOp"
         || api == "crypto/mldsa.ParamSet"
-        || api == "circl/kem/xwing.Op")
+        || api == "circl/kem/xwing.Op"
+        || api == "crypto/x509.CertOp")
         && let Some(fn_name) = callee.split('.').nth(1)
     {
         args.insert("fn".into(), ArgValue::Str(fn_name.into()));
