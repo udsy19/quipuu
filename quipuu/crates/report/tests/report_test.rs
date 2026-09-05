@@ -104,6 +104,47 @@ fn sarif_is_valid_json_with_version_and_schema() {
     }
 }
 
+/// T1b — SARIF `partialFingerprints."quipuu/stableId"` carries `Finding.id`
+///       (M1) and is identical across two independent scans of the same
+///       unchanged fixture — the stability claim `stable_finding_id` makes,
+///       checked here from an actual output surface rather than only from
+///       the unit tests in `quipuu_core::finding`.
+#[test]
+fn sarif_stable_id_survives_two_scans_of_unchanged_code() {
+    let (findings_a, algorithms, policy) = make_findings();
+    let (findings_b, _, _) = make_findings();
+
+    let json_a = emit_sarif(&findings_a, &algorithms, &policy, &default_opts())
+        .expect("emit_sarif should succeed");
+    let json_b = emit_sarif(&findings_b, &algorithms, &policy, &default_opts())
+        .expect("emit_sarif should succeed");
+
+    let val_a: serde_json::Value = serde_json::from_str(&json_a).expect("valid JSON");
+    let val_b: serde_json::Value = serde_json::from_str(&json_b).expect("valid JSON");
+
+    let results_a = val_a["runs"][0]["results"].as_array().unwrap();
+    let results_b = val_b["runs"][0]["results"].as_array().unwrap();
+    assert_eq!(results_a.len(), results_b.len());
+    assert!(!results_a.is_empty(), "fixture must produce findings");
+
+    for (i, (ra, rb)) in results_a.iter().zip(results_b.iter()).enumerate() {
+        let id_a = ra["partialFingerprints"]["quipuu/stableId"]
+            .as_str()
+            .unwrap_or_else(|| panic!("result[{i}] missing quipuu/stableId"));
+        let id_b = rb["partialFingerprints"]["quipuu/stableId"]
+            .as_str()
+            .unwrap_or_else(|| panic!("result[{i}] missing quipuu/stableId"));
+        assert!(
+            id_a.starts_with("QPU-"),
+            "result[{i}] quipuu/stableId must start with QPU-, got {id_a:?}"
+        );
+        assert_eq!(
+            id_a, id_b,
+            "result[{i}] quipuu/stableId must be identical across two scans of unchanged code"
+        );
+    }
+}
+
 /// T2 — SARIF severity mapping: a Critical finding gets level "error" and
 ///       security-severity "9.0" on its rule.
 #[test]

@@ -4,6 +4,9 @@
 //! * `$schema` = OASIS canonical URL (§8.8 of `knowledge/07-sarif/README.md`).
 //! * One rule entry per distinct `rule_id` in the findings.
 //! * `partialFingerprints.primaryLocationLineHash` = SHA-256(`ruleId:snippet`)[:16].
+//! * `partialFingerprints."quipuu/stableId"` = `Finding.id` (M1), so a rerun of
+//!   the same analysis on unchanged code carries the same fingerprint per the
+//!   SARIF definition of `partialFingerprints`.
 //! * `security-severity` on the rule, not the result (§3.2 / §8.9 of SARIF README).
 //! * Cross-ref CBOM via `properties."quipuu/cbom-ref"` on each result.
 
@@ -141,7 +144,8 @@ pub fn emit_sarif(
             "message": { "text": finding.message },
             "locations": [location_json],
             "partialFingerprints": {
-                "primaryLocationLineHash": fingerprint
+                "primaryLocationLineHash": fingerprint,
+                "quipuu/stableId": finding.id
             },
             "properties": {
                 "quipuu/cbom-ref": cbom_ref
