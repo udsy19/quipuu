@@ -349,6 +349,9 @@ impl CertScanner {
             },
             message: pk_msg,
             confidence: Confidence::LiteralArg,
+            confidence_reason: format!(
+                "SubjectPublicKeyInfo algorithm OID {spki_oid_str} resolved via the certificate OID table"
+            ),
             usage_context: pk_usage,
             exposure: Exposure::InternalService,
             shelf_life_bucket: "medium".into(),
@@ -399,6 +402,9 @@ impl CertScanner {
             },
             message: sig_msg,
             confidence: Confidence::LiteralArg,
+            confidence_reason: format!(
+                "signature algorithm OID {sig_oid_str} resolved via the certificate OID table"
+            ),
             usage_context: UsageContext::SignatureLongLived,
             exposure: Exposure::InternalService,
             shelf_life_bucket: "medium".into(),
@@ -426,6 +432,9 @@ impl CertScanner {
                 },
                 message: format!("WEAK: {reason}"),
                 confidence: Confidence::LiteralArg,
+                confidence_reason: format!(
+                    "signature algorithm OID {sig_oid_str} matched the weak/broken-signature OID table: {reason}"
+                ),
                 usage_context: UsageContext::SignatureLongLived,
                 exposure: Exposure::InternalService,
                 shelf_life_bucket: "medium".into(),
@@ -453,6 +462,10 @@ impl CertScanner {
                 },
                 message: format!("WEAK: signature algorithm {sig_algo_id} is classically broken"),
                 confidence: Confidence::LiteralArg,
+                confidence_reason: format!(
+                    "signature algorithm {sig_algo_id} is flagged BrokenClassically in the \
+                     algorithm table (OID {sig_oid_str} is not in the explicit weak-OID list)"
+                ),
                 usage_context: UsageContext::SignatureLongLived,
                 exposure: Exposure::InternalService,
                 shelf_life_bucket: "medium".into(),

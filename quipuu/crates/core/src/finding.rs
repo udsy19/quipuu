@@ -212,6 +212,12 @@ pub struct Finding {
     pub message: String,
     /// Detection confidence at extraction time.
     pub confidence: Confidence,
+    /// WHY `confidence` is the value it is — e.g. which literal argument was
+    /// read, which callee name matched, which catalogue entry fired. M1
+    /// evidence completeness: the ladder in [`Confidence`] said HOW; this
+    /// says WHY, so a reviewer can check the claim without opening an IDE.
+    #[serde(default)]
+    pub confidence_reason: String,
     /// How the algorithm is being used.
     pub usage_context: UsageContext,
     /// Exposure assessment.

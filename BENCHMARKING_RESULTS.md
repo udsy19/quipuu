@@ -8955,3 +8955,66 @@ made no change (confirmed by re-running it: "README already states this claim �
 (`test_run_acvp_kats_rejects_code_execution`, `test_network_disabled_error`) untouched and pass.
 
 PRECISION: 97.33%
+
+---
+
+## `#Y162` closed: M1's third field — `confidence_reason`, WHY alongside `Confidence`
+
+Direction.md names this gap explicitly: `Confidence` is already the high/medium/low ladder
+(`LiteralArg | TypeName | Variable | StringTable | Unknown`), keyed to HOW the algorithm-id was
+resolved — "what is missing is carrying WHY alongside it." Added `Finding.confidence_reason:
+String` (`crates/core/src/finding.rs`) and populated it at all ten production construction sites
+(`scan-source::apply_classify`, `scan-deps::scan_manifest`, four sites in
+`scan-certs::classify_cert`, four in `scan-network::prober`) with a rule/OID/catalogue-specific
+sentence — e.g. "classify rule CRYPTO-002 matched literal argument(s) [bits] on callee
+`rsa.GenerateKey`" or "SubjectPublicKeyInfo algorithm OID 1.2.840.113549.1.1.1 resolved via the
+certificate OID table" — rather than leaving the enum value unexplained. `scan-source`'s
+`apply_classify` is the one honest surprise: confidence there is a v0-documented constant
+(`Confidence::LiteralArg` unconditionally, per the existing comment), so the new reason string
+says outright when a rule matched on callee name alone with no argument literal, instead of
+implying a literal was inspected when the rule's `when.args` is empty. `Confidence::Variable` and
+`Confidence::StringTable` remain unconstructed anywhere in the codebase (reserved for dataflow
+work that doesn't exist yet), so they have no call site needing a reason.
+
+**Corpus effect: measured, not assumed.** `finding_key` in `precision.py` (`project, rule_id,
+file, line, algorithm_id, severity`) does not include `confidence_reason`, so this is exactly the
+detection-neutral shape the estimator should read as a hold. Built pre-change (`cc2b587`) and
+post-change release binaries and dumped the full 150-project corpus via
+`benchmarks/corpus-b-realworld/dump_findings.py`:
+
+```
+pre 2070 -> post 2070   added 0  removed 0
+
+stratified, fresh populations : 97.331%  (95% CI 96.20-98.46)
+pooled Wilson (unweighted)   : 97.368%  (95% CI 96.01-98.27)
+
+sample: A 266/275  B 511/523  populations A=792 B=1278  method=stratified_fresh
+```
+
+Zero added or removed findings — the field is additive-only, no `[[extract]]`/`[[classify]]` rule
+or match logic changed, so the existing 798-row audited sample applies unchanged. **97.33% held
+exactly.** `--write-readme` only bumped the "measured" date (2026-09-04 → 2026-09-05); the figure,
+CI and sample counts were already correct and unchanged.
+
+**Not threaded to every output surface, deliberately, same discipline as the stable id field.**
+`confidence_reason` is not yet in `--summary-json`, `--sarif`, or `--cbom` — those surfaces don't
+read `finding.confidence` today either, so there is nothing for this field to sit next to there
+yet. `scans_go_fixture` (`crates/scan-source/tests/scan_test.rs`) gained two assertions that the
+fixture's `CRYPTO-001` finding carries a non-empty `confidence_reason` naming that rule.
+
+**Remaining M1 fields, still unclaimed:** line RANGE, package/module, commit SHA, extracted
+parameters (key size, curve, hash, mode, padding, IV/nonce), detection category, schema version
+bump.
+
+**CAPABILITY DEBT not taken this cycle, said out loud.** M4 (call-path evidence, the keystone)
+remains untouched and is still the highest-leverage item in the Program. This cycle took another
+M1 slice because it is a fully-specified, non-design-decision continuation with a small, provably
+detection-neutral blast radius, completable and verified inside the time budget — not because it
+moves the metric.
+
+**Held:** `cargo build --release --workspace`, `cargo fmt --all`, `cargo clippy --all-targets --
+-D warnings`, `cargo test --workspace` all clean, including the 173 `scan-source` integration
+tests. Both trust-invariant tests (`test_run_acvp_kats_rejects_code_execution`,
+`test_network_disabled_error`) untouched and pass.
+
+PRECISION: 97.33%

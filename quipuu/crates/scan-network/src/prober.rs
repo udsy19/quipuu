@@ -295,6 +295,10 @@ fn handshake_finding(
         location: loc(target, label),
         message,
         confidence: Confidence::LiteralArg,
+        confidence_reason: format!(
+            "observed directly in a live TLS handshake with {target}: protocol {} cipher {}",
+            out.protocol_version, out.cipher_suite
+        ),
         usage_context: UsageContext::KeyEstablishmentEphemeral,
         exposure: Exposure::PublicInternet,
         shelf_life_bucket: "short".into(),
@@ -310,6 +314,9 @@ fn probe_failure_finding(target: &str, label: &str, err: &ScanError) -> Finding 
         location: loc(target, label),
         message: format!("{label} TLS probe failed: {err}"),
         confidence: Confidence::Unknown,
+        confidence_reason: format!(
+            "TLS probe to {target} failed before a handshake completed: {err}"
+        ),
         usage_context: UsageContext::Unknown,
         exposure: Exposure::PublicInternet,
         shelf_life_bucket: "short".into(),
@@ -328,6 +335,11 @@ fn group_rejected_finding(target: &str, g: &ProbeGroup) -> Finding {
             g.name, g.codepoint
         ),
         confidence: Confidence::LiteralArg,
+        confidence_reason: format!(
+            "single-group probe explicitly requested group {} (0x{:04X}); \
+             the codepoint checked is certain even though the server rejected it",
+            g.name, g.codepoint
+        ),
         usage_context: UsageContext::Unknown,
         exposure: Exposure::PublicInternet,
         shelf_life_bucket: "short".into(),
@@ -356,6 +368,10 @@ fn group_not_probed_finding(target: &str, g: &ProbeGroup) -> Finding {
             g.name, g.codepoint, suffix
         ),
         confidence: Confidence::Unknown,
+        confidence_reason: format!(
+            "group {} was catalogued but never probed for {target}; no observation to report",
+            g.name
+        ),
         usage_context: UsageContext::Unknown,
         exposure: Exposure::PublicInternet,
         shelf_life_bucket: "short".into(),

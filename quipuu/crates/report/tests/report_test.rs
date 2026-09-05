@@ -365,6 +365,7 @@ fn finding_for(algo_id: &str) -> quipuu_core::Finding {
         },
         message: format!("{algo_id} usage detected"),
         confidence: Confidence::LiteralArg,
+        confidence_reason: "test fixture".into(),
         usage_context: UsageContext::DataAtRestEncryption,
         exposure: Exposure::InternalService,
         shelf_life_bucket: "medium".to_string(),

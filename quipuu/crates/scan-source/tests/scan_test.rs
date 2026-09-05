@@ -41,6 +41,18 @@ fn scans_go_fixture() {
         .expect("an undersized RSA key must trigger CRYPTO-001");
     assert_eq!(undersized.algorithm_id, "rsa-undersized");
 
+    // M1: every finding carries a non-empty, rule-specific reason for its
+    // confidence value — not just the confidence enum by itself.
+    assert!(
+        !undersized.confidence_reason.is_empty(),
+        "confidence_reason must not be empty"
+    );
+    assert!(
+        undersized.confidence_reason.contains("CRYPTO-001"),
+        "confidence_reason should name the rule that matched, got: {}",
+        undersized.confidence_reason
+    );
+
     // RSA-2048 → CRYPTO-002.
     let rsa2048 = findings
         .iter()

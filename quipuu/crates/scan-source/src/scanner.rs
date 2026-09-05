@@ -5240,6 +5240,24 @@ fn apply_classify(
         },
         message,
         confidence: Confidence::LiteralArg,
+        confidence_reason: if rule.when.args.is_empty() {
+            format!(
+                "classify rule {} matched callee `{}` alone; no argument literal required",
+                rule.id, raw.api
+            )
+        } else {
+            format!(
+                "classify rule {} matched literal argument(s) [{}] on callee `{}`",
+                rule.id,
+                rule.when
+                    .args
+                    .keys()
+                    .cloned()
+                    .collect::<Vec<_>>()
+                    .join(", "),
+                raw.api
+            )
+        },
         // v0 defaults; the risk engine consumes these. Network/cert scanners
         // and per-rule overrides will refine these in subsequent passes.
         usage_context: UsageContext::Unknown,

@@ -501,6 +501,7 @@ mod tests {
             },
             message: msg.to_string(),
             confidence: Confidence::LiteralArg,
+            confidence_reason: "test fixture".into(),
             usage_context: UsageContext::KeyEstablishmentLongLived,
             exposure: Exposure::PublicInternet,
             shelf_life_bucket: "medium".to_string(),

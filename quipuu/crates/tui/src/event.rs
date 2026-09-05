@@ -384,6 +384,7 @@ mod tests {
             },
             message: "test".to_string(),
             confidence: Confidence::LiteralArg,
+            confidence_reason: "test fixture".into(),
             usage_context: UsageContext::Unknown,
             exposure: Exposure::LocalOnly,
             shelf_life_bucket: "short".to_string(),

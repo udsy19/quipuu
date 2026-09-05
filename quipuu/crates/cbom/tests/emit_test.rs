@@ -197,6 +197,7 @@ fn every_algorithm_emits_a_bom_valid_at_the_version_it_declares() {
             },
             message: format!("synthetic occurrence for {}", rec.id),
             confidence: Confidence::LiteralArg,
+            confidence_reason: "test fixture".into(),
             usage_context: UsageContext::Unknown,
             exposure: Exposure::LocalOnly,
             shelf_life_bucket: "short".into(),
