@@ -7,6 +7,7 @@
 //! TOML rule file under `crates/core/data/rules/` and wiring up a grammar
 //! in `scanner::language_for`.
 
+pub mod dataflow;
 pub mod rules;
 pub mod scanner;
 
