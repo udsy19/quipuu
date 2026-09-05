@@ -303,6 +303,7 @@ fn handshake_finding(
         exposure: Exposure::PublicInternet,
         shelf_life_bucket: "short".into(),
         hndl_critical: false,
+        commit_sha: None,
     }
 }
 
@@ -321,6 +322,7 @@ fn probe_failure_finding(target: &str, label: &str, err: &ScanError) -> Finding 
         exposure: Exposure::PublicInternet,
         shelf_life_bucket: "short".into(),
         hndl_critical: false,
+        commit_sha: None,
     }
 }
 
@@ -344,6 +346,7 @@ fn group_rejected_finding(target: &str, g: &ProbeGroup) -> Finding {
         exposure: Exposure::PublicInternet,
         shelf_life_bucket: "short".into(),
         hndl_critical: false,
+        commit_sha: None,
     }
 }
 
@@ -376,6 +379,7 @@ fn group_not_probed_finding(target: &str, g: &ProbeGroup) -> Finding {
         exposure: Exposure::PublicInternet,
         shelf_life_bucket: "short".into(),
         hndl_critical: false,
+        commit_sha: None,
     }
 }
 

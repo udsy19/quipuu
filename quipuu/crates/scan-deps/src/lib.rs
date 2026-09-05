@@ -227,6 +227,7 @@ impl DepScanner {
                     exposure: Exposure::InternalService,
                     shelf_life_bucket: "short".to_string(),
                     hndl_critical: false,
+                    commit_sha: None,
                 };
 
                 findings.push(finding);

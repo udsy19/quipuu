@@ -226,6 +226,14 @@ pub struct Finding {
     pub shelf_life_bucket: String,
     /// True if this finding meets the HNDL flagging criteria.
     pub hndl_critical: bool,
+    /// The scanned tree's `git rev-parse HEAD` at scan time, when the scan
+    /// root is a git repository. `None` outside a repo or when `git` is
+    /// unavailable — M1 evidence completeness: which commit this finding's
+    /// file:line claim was checked against. Every scanner constructs this as
+    /// `None`; the CLI backfills it once per scan (same pattern as
+    /// `hndl_critical`), since it is a property of the scan, not the match.
+    #[serde(default)]
+    pub commit_sha: Option<String>,
 }
 
 #[cfg(test)]

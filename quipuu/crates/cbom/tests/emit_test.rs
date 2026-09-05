@@ -202,6 +202,7 @@ fn every_algorithm_emits_a_bom_valid_at_the_version_it_declares() {
             exposure: Exposure::LocalOnly,
             shelf_life_bucket: "short".into(),
             hndl_critical: false,
+            commit_sha: None,
         })
         .collect();
     assert_eq!(findings.len(), b.algorithms.len());

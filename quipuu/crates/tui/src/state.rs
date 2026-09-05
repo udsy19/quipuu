@@ -506,6 +506,7 @@ mod tests {
             exposure: Exposure::PublicInternet,
             shelf_life_bucket: "medium".to_string(),
             hndl_critical: false,
+            commit_sha: None,
         }
     }
 

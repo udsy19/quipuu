@@ -389,6 +389,7 @@ mod tests {
             exposure: Exposure::LocalOnly,
             shelf_life_bucket: "short".to_string(),
             hndl_critical: false,
+            commit_sha: None,
         }
     }
 

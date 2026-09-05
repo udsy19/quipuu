@@ -200,6 +200,7 @@ fn risk_score_rsa_public_tls_is_critical() {
         exposure: Exposure::PublicInternet,
         shelf_life_bucket: "long".into(),
         hndl_critical: false,
+        commit_sha: None,
     };
     let score = QuantumRiskScore::compute(&finding, rsa, &b.policy);
     assert_eq!(score.severity, Severity::Critical);
@@ -236,6 +237,7 @@ fn risk_score_aes_256_local_ephemeral_is_safe() {
         exposure: Exposure::LocalOnly,
         shelf_life_bucket: "ephemeral".into(),
         hndl_critical: false,
+        commit_sha: None,
     };
     let score = QuantumRiskScore::compute(&finding, aes, &b.policy);
     // `#T3`: AlgVuln 0 (QuantumSafe) gates the whole score to 0/Safe — the
@@ -268,6 +270,7 @@ fn hndl_flag_triggers_on_long_lived_rsa() {
         exposure: Exposure::PublicInternet,
         shelf_life_bucket: "long".into(),
         hndl_critical: false,
+        commit_sha: None,
     };
     assert!(quipuu_core::risk::is_hndl_critical(
         &finding, rsa, &b.policy
@@ -296,6 +299,7 @@ fn hndl_flag_does_not_trigger_on_ephemeral_signature() {
         exposure: Exposure::PublicInternet,
         shelf_life_bucket: "ephemeral".into(),
         hndl_critical: false,
+        commit_sha: None,
     };
     // Ephemeral signature → not HNDL.
     assert!(!quipuu_core::risk::is_hndl_critical(

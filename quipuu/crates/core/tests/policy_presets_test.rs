@@ -221,6 +221,7 @@ fn cnsa2_scores_aes_128_as_a_compliance_finding_and_nist_does_not() {
         exposure: Exposure::PublicInternet,
         shelf_life_bucket: "short".into(),
         hndl_critical: false,
+        commit_sha: None,
     };
 
     let nist = QuantumRiskScore::compute(&finding, aes128, &b.policy);
@@ -287,6 +288,7 @@ fn pqc_final_scores_safe_not_medium() {
         exposure: Exposure::PublicInternet,
         shelf_life_bucket: "long".into(),
         hndl_critical: false,
+        commit_sha: None,
     };
 
     let score = QuantumRiskScore::compute(&finding, ml_kem_1024, &b.policy);
@@ -329,6 +331,7 @@ fn pqc_final_disallowed_by_cnsa2_still_alerts() {
         exposure: Exposure::PublicInternet,
         shelf_life_bucket: "long".into(),
         hndl_critical: false,
+        commit_sha: None,
     };
 
     let score = QuantumRiskScore::compute(&finding, ml_kem_768, &cnsa2);
@@ -361,6 +364,7 @@ fn pqc_draft_is_not_gated_to_safe() {
         exposure: Exposure::PublicInternet,
         shelf_life_bucket: "long".into(),
         hndl_critical: false,
+        commit_sha: None,
     };
 
     let score = QuantumRiskScore::compute(&finding, fn_dsa, &b.policy);

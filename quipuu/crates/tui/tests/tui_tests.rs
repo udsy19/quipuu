@@ -47,6 +47,7 @@ fn finding(rule_id: &str, algorithm_id: &str, msg: &str, hndl: bool) -> Finding 
         exposure: Exposure::PublicInternet,
         shelf_life_bucket: "medium".to_string(),
         hndl_critical: hndl,
+        commit_sha: None,
     }
 }
 

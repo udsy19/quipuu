@@ -370,6 +370,7 @@ fn finding_for(algo_id: &str) -> quipuu_core::Finding {
         exposure: Exposure::InternalService,
         shelf_life_bucket: "medium".to_string(),
         hndl_critical: false,
+        commit_sha: None,
     }
 }
 

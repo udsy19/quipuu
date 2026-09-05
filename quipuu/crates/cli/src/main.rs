@@ -489,6 +489,11 @@ fn run_scan(mut flags: ScanFlags) -> ExitCode {
         }
     }
 
+    // Resolved once against the first scan target's directory — a scan is
+    // treated as one operation against one checkout, same granularity as
+    // the `.quipuu.toml` lookup just above.
+    let commit_sha = resolve_commit_sha(&config_dir);
+
     let mut findings: Vec<Finding> = Vec::new();
     let mut warnings: Vec<quipuu_core::ScanWarning> = Vec::new();
 
@@ -590,6 +595,7 @@ fn run_scan(mut flags: ScanFlags) -> ExitCode {
     // hard-coded `false` because none of them holds a policy; leaving it there
     // shipped a permanent zero in the field the product is named after.
     apply_hndl_flags(&mut findings, &builtins.algorithms, &builtins.policy);
+    apply_commit_sha(&mut findings, &commit_sha);
 
     // Partition into "audible" (alert-worthy) and "suppressed" (inventory-only:
     // QuantumSafe / PqcFinal / PqcDraft). The CBOM consumes the full set —
@@ -845,6 +851,42 @@ fn run_scan(mut flags: ScanFlags) -> ExitCode {
     ExitCode::SUCCESS
 }
 
+/// `git rev-parse HEAD` in `dir`, best-effort. `None` outside a git repo, if
+/// `git` is not on `PATH`, or on any other failure — a scan target need not
+/// be a git checkout, and this is provenance, not a scan requirement.
+fn resolve_commit_sha(dir: &std::path::Path) -> Option<String> {
+    let output = std::process::Command::new("git")
+        .arg("-C")
+        .arg(dir)
+        .arg("rev-parse")
+        .arg("HEAD")
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let sha = String::from_utf8(output.stdout).ok()?;
+    let sha = sha.trim();
+    if sha.is_empty() {
+        None
+    } else {
+        Some(sha.to_string())
+    }
+}
+
+/// Backfill `Finding::commit_sha` on every finding once per scan. Every
+/// scanner constructs its findings with `commit_sha: None` — this is a
+/// property of the scan (which commit was checked out), not of the match,
+/// so it is set centrally rather than threaded through each scanner's own
+/// construction site. Mirrors `apply_hndl_flags`: scanners default a field
+/// they cannot themselves resolve, and one pass over the full set fills it in.
+fn apply_commit_sha(findings: &mut [Finding], sha: &Option<String>) {
+    let Some(sha) = sha else { return };
+    for finding in findings.iter_mut() {
+        finding.commit_sha = Some(sha.clone());
+    }
+}
+
 fn current_timestamp() -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
     // RFC-3339 seconds-resolution UTC timestamp, no extra deps.
@@ -912,5 +954,69 @@ mod tests {
     fn timestamp_formats_y2k() {
         // 2000-01-01 00:00:00 UTC = 946684800
         assert_eq!(format_unix_to_rfc3339(946684800), "2000-01-01T00:00:00Z");
+    }
+
+    #[test]
+    fn resolve_commit_sha_reads_this_repos_own_head() {
+        // This test file lives inside the quipuu git checkout, so its own
+        // repo root must resolve to a real 40-char hex SHA.
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let sha = resolve_commit_sha(dir).expect("this crate is inside a git repo");
+        assert_eq!(
+            sha.len(),
+            40,
+            "git rev-parse HEAD is a 40-char hex SHA: {sha}"
+        );
+        assert!(sha.chars().all(|c| c.is_ascii_hexdigit()), "not hex: {sha}");
+    }
+
+    #[test]
+    fn resolve_commit_sha_is_none_outside_a_repo() {
+        let dir = std::env::temp_dir();
+        assert!(
+            resolve_commit_sha(&dir).is_none() || dir.join(".git").exists(),
+            "a bare tmp dir is not a git repo, so this must be None"
+        );
+    }
+
+    fn bare_finding(id: &str) -> Finding {
+        Finding {
+            id: id.to_string(),
+            rule_id: "CRYPTO-000".into(),
+            algorithm_id: "rsa-2048".into(),
+            location: quipuu_core::Location {
+                location: "main.go".into(),
+                line: Some(1),
+                offset: None,
+                symbol: None,
+                snippet: None,
+            },
+            message: "test".into(),
+            confidence: quipuu_core::Confidence::LiteralArg,
+            confidence_reason: "test fixture".into(),
+            usage_context: quipuu_core::UsageContext::Unknown,
+            exposure: quipuu_core::Exposure::InternalService,
+            shelf_life_bucket: "short".into(),
+            hndl_critical: false,
+            commit_sha: None,
+        }
+    }
+
+    #[test]
+    fn apply_commit_sha_backfills_every_finding_when_resolved() {
+        let mut findings = vec![bare_finding("QPU-1"), bare_finding("QPU-2")];
+        apply_commit_sha(&mut findings, &Some("deadbeef".to_string()));
+        assert!(
+            findings
+                .iter()
+                .all(|f| f.commit_sha.as_deref() == Some("deadbeef"))
+        );
+    }
+
+    #[test]
+    fn apply_commit_sha_leaves_none_untouched_when_unresolved() {
+        let mut findings = vec![bare_finding("QPU-1")];
+        apply_commit_sha(&mut findings, &None);
+        assert_eq!(findings[0].commit_sha, None);
     }
 }

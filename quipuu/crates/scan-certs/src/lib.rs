@@ -356,6 +356,7 @@ impl CertScanner {
             exposure: Exposure::InternalService,
             shelf_life_bucket: "medium".into(),
             hndl_critical: false,
+            commit_sha: None,
         });
 
         // ── 2. Signature-algorithm finding ────────────────────────────────
@@ -409,6 +410,7 @@ impl CertScanner {
             exposure: Exposure::InternalService,
             shelf_life_bucket: "medium".into(),
             hndl_critical: false,
+            commit_sha: None,
         });
 
         // ── 3. Weak/broken signature algorithm — CERT-100 ─────────────────
@@ -439,6 +441,7 @@ impl CertScanner {
                 exposure: Exposure::InternalService,
                 shelf_life_bucket: "medium".into(),
                 hndl_critical: false,
+                commit_sha: None,
             });
         } else if is_classically_broken {
             // Catch anything in the algorithm table flagged BrokenClassically
@@ -470,6 +473,7 @@ impl CertScanner {
                 exposure: Exposure::InternalService,
                 shelf_life_bucket: "medium".into(),
                 hndl_critical: false,
+                commit_sha: None,
             });
         }
 

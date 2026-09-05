@@ -5264,6 +5264,7 @@ fn apply_classify(
         exposure: Exposure::InternalService,
         shelf_life_bucket: "short".into(),
         hndl_critical: false,
+        commit_sha: None,
     }))
 }
 
