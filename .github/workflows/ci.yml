@@ -45,7 +45,7 @@ jobs:
     steps:
       # ── 1. Check out the full repository ──────────────────────────────────
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # ── 2. Install Rust toolchain + components ────────────────────────────
       #
@@ -104,7 +104,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Install the two Python packages the test suite needs.
       # `--user` avoids needing sudo; the user's local bin is on PATH in GHA.
@@ -123,7 +123,7 @@ jobs:
   schema-contract:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Contract is executable
